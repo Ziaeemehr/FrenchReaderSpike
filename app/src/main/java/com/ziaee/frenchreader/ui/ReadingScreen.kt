@@ -33,29 +33,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
+import com.ziaee.frenchreader.ui.theme.AppearanceState
+import com.ziaee.frenchreader.ui.theme.ReadingPalette
+import com.ziaee.frenchreader.ui.theme.readingPaletteFor
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
 
-/** A warm, paper-like reading palette -- deliberately not stock Material,
- * because a reading screen should feel like a book, not a form. */
-private object ReadingPalette {
-    val Background = Color(0xFFFBF6EC)
-    val Ink = Color(0xFF2E2A22)
-    val InkFaded = Color(0xFF6B6252)
-    val HighlightBg = Color(0xFFF6D97A)
-    val HighlightInk = Color(0xFF2E2A22)
-    val Divider = Color(0xFFE6DDC8)
-    val Accent = Color(0xFF8A6D3B)
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val vm: ReadingViewModel = viewModel()
     val state by vm.state.collectAsState()
+    val palette = readingPaletteFor(AppearanceState.readingBackground)
+    val fontScale = AppearanceState.fontScale.multiplier
 
     // word + the sentence it came from, while the dictionary sheet is open.
     var dictionaryTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -80,7 +73,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     }
 
     Scaffold(
-        containerColor = ReadingPalette.Background,
+        containerColor = palette.background,
         topBar = {
             Column {
                 TopAppBar(
@@ -99,7 +92,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         if (state.chunks.isNotEmpty()) {
                             Text(
                                 "${state.currentChunkIndex + 1}/${state.chunks.size}",
-                                color = ReadingPalette.InkFaded,
+                                color = palette.inkFaded,
                                 modifier = Modifier.padding(end = 4.dp)
                             )
                         }
@@ -139,7 +132,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             Icon(
                                 Icons.Default.SwapVert,
                                 contentDescription = "پیمایش خودکار صفحه همراه با صدا",
-                                tint = if (autoScrollEnabled) ReadingPalette.Accent
+                                tint = if (autoScrollEnabled) palette.accent
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -147,33 +140,33 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             Icon(
                                 Icons.Default.Translate,
                                 contentDescription = "نمایش/عدم‌نمایش ترجمه",
-                                tint = if (state.showTranslations) ReadingPalette.Accent
+                                tint = if (state.showTranslations) palette.accent
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = ReadingPalette.Background
+                        containerColor = palette.background
                     )
                 )
                 if (state.chunks.isNotEmpty()) {
                     LinearProgressIndicator(
                         progress = { (state.currentChunkIndex + 1).toFloat() / state.chunks.size },
                         modifier = Modifier.fillMaxWidth().height(2.dp),
-                        color = ReadingPalette.Accent,
-                        trackColor = ReadingPalette.Divider
+                        color = palette.accent,
+                        trackColor = palette.divider
                     )
                 }
             }
         },
-        bottomBar = { PlaybackControls(vm, state) }
+        bottomBar = { PlaybackControls(vm, state, palette) }
     ) { padding ->
         if (!state.ready) {
             Box(
                 Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = ReadingPalette.Accent)
+                CircularProgressIndicator(color = palette.accent)
             }
             return@Scaffold
         }
@@ -192,6 +185,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                     isCurrentChunk = chunkIndex == state.currentChunkIndex,
                     currentPositionMs = state.currentPositionMs,
                     showTranslation = state.showTranslations,
+                    palette = palette,
+                    fontScale = fontScale,
                     onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
                     onRetry = { vm.retryChunk(chunkIndex) },
                     onWordLookup = { word, sentenceText ->
@@ -255,6 +250,8 @@ private fun ChunkParagraph(
     isCurrentChunk: Boolean,
     currentPositionMs: Long,
     showTranslation: Boolean,
+    palette: ReadingPalette,
+    fontScale: Float,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onRetry: () -> Unit,
     onWordLookup: (word: String, sentence: String) -> Unit
@@ -270,29 +267,31 @@ private fun ChunkParagraph(
                             chunk = chunk,
                             isCurrentChunk = isCurrentChunk,
                             currentPositionMs = currentPositionMs,
-                            fontSize = headerFontSize(chunk.block.headerLevel),
-                            lineHeight = headerLineHeight(chunk.block.headerLevel),
+                            fontSize = headerFontSize(chunk.block.headerLevel, fontScale),
+                            lineHeight = headerLineHeight(chunk.block.headerLevel, fontScale),
                             fontWeight = FontWeight.Bold,
-                            color = ReadingPalette.Ink,
+                            color = palette.ink,
+                            palette = palette,
                             onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup
                         )
                         BlockType.LIST_ITEM -> Row {
                             Text(
                                 "•  ",
-                                fontSize = 19.sp,
-                                lineHeight = 29.sp,
-                                color = ReadingPalette.Accent
+                                fontSize = (19f * fontScale).sp,
+                                lineHeight = (29f * fontScale).sp,
+                                color = palette.accent
                             )
                             Box(modifier = Modifier.weight(1f)) {
                                 SentenceFlowText(
                                     chunk = chunk,
                                     isCurrentChunk = isCurrentChunk,
                                     currentPositionMs = currentPositionMs,
-                                    fontSize = 19.sp,
-                                    lineHeight = 29.sp,
+                                    fontSize = (19f * fontScale).sp,
+                                    lineHeight = (29f * fontScale).sp,
                                     fontWeight = null,
-                                    color = ReadingPalette.Ink,
+                                    color = palette.ink,
+                                    palette = palette,
                                     onSentenceClick = onSentenceClick,
                                     onWordLookup = onWordLookup
                                 )
@@ -302,10 +301,11 @@ private fun ChunkParagraph(
                             chunk = chunk,
                             isCurrentChunk = isCurrentChunk,
                             currentPositionMs = currentPositionMs,
-                            fontSize = 19.sp,
-                            lineHeight = 31.sp,
+                            fontSize = (19f * fontScale).sp,
+                            lineHeight = (31f * fontScale).sp,
                             fontWeight = null,
-                            color = ReadingPalette.Ink,
+                            color = palette.ink,
+                            palette = palette,
                             onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup
                         )
@@ -317,23 +317,23 @@ private fun ChunkParagraph(
                             ChunkStatus.READY -> chunk.translation?.let {
                                 Text(
                                     it,
-                                    fontSize = 14.sp,
-                                    lineHeight = 21.sp,
+                                    fontSize = (14f * fontScale).sp,
+                                    lineHeight = (21f * fontScale).sp,
                                     fontStyle = FontStyle.Italic,
-                                    color = ReadingPalette.InkFaded
+                                    color = palette.inkFaded
                                 )
                             }
                             ChunkStatus.LOADING -> Text(
                                 "در حال ترجمه...",
-                                fontSize = 13.sp,
+                                fontSize = (13f * fontScale).sp,
                                 fontStyle = FontStyle.Italic,
-                                color = ReadingPalette.InkFaded
+                                color = palette.inkFaded
                             )
                             ChunkStatus.ERROR -> Text(
                                 "ترجمه در دسترس نیست",
-                                fontSize = 13.sp,
+                                fontSize = (13f * fontScale).sp,
                                 fontStyle = FontStyle.Italic,
-                                color = ReadingPalette.InkFaded
+                                color = palette.inkFaded
                             )
                             ChunkStatus.PENDING -> {}
                         }
@@ -346,13 +346,13 @@ private fun ChunkParagraph(
                 CircularProgressIndicator(
                     modifier = Modifier.size(16.dp),
                     strokeWidth = 2.dp,
-                    color = ReadingPalette.Accent
+                    color = palette.accent
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     "در حال آماده‌سازی صدا برای این بخش...",
-                    fontSize = 13.sp,
-                    color = ReadingPalette.InkFaded
+                    fontSize = (13f * fontScale).sp,
+                    color = palette.inkFaded
                 )
             }
         }
@@ -361,7 +361,7 @@ private fun ChunkParagraph(
                 Text(
                     "خطا در تولید صدا برای این بخش: ${chunk.error}",
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 13.sp
+                    fontSize = (13f * fontScale).sp
                 )
                 TextButton(onClick = onRetry) { Text("تلاش مجدد") }
             }
@@ -370,32 +370,32 @@ private fun ChunkParagraph(
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 Text(
                     chunk.text,
-                    fontSize = 19.sp,
-                    lineHeight = 31.sp,
-                    color = ReadingPalette.InkFaded
+                    fontSize = (19f * fontScale).sp,
+                    lineHeight = (31f * fontScale).sp,
+                    color = palette.inkFaded
                 )
             }
         }
     }
 }
 
-private fun headerFontSize(level: Int): TextUnit = when (level) {
-    1 -> 26.sp
-    2 -> 24.sp
-    3 -> 22.sp
-    4 -> 20.sp
-    5 -> 19.sp
-    else -> 18.sp
-}
+private fun headerFontSize(level: Int, fontScale: Float): TextUnit = (when (level) {
+    1 -> 26f
+    2 -> 24f
+    3 -> 22f
+    4 -> 20f
+    5 -> 19f
+    else -> 18f
+} * fontScale).sp
 
-private fun headerLineHeight(level: Int): TextUnit = when (level) {
-    1 -> 34.sp
-    2 -> 31.sp
-    3 -> 29.sp
-    4 -> 27.sp
-    5 -> 26.sp
-    else -> 25.sp
-}
+private fun headerLineHeight(level: Int, fontScale: Float): TextUnit = (when (level) {
+    1 -> 34f
+    2 -> 31f
+    3 -> 29f
+    4 -> 27f
+    5 -> 26f
+    else -> 25f
+} * fontScale).sp
 
 /**
  * The shared "flowing, sentence-highlighted, tappable, long-pressable" text
@@ -424,11 +424,12 @@ private fun SentenceFlowText(
     lineHeight: TextUnit,
     fontWeight: FontWeight?,
     color: Color,
+    palette: ReadingPalette,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String) -> Unit
 ) {
     val ranges = remember(chunk.sentences) { mutableListOf<IntRange>() }
-    val annotated = remember(chunk.sentences, chunk.block, isCurrentChunk, currentPositionMs) {
+    val annotated = remember(chunk.sentences, chunk.block, isCurrentChunk, currentPositionMs, palette) {
         buildAnnotatedString {
             ranges.clear()
             chunk.sentences.forEachIndexed { i, s ->
@@ -441,7 +442,7 @@ private fun SentenceFlowText(
                     currentPositionMs < s.offsetMs + s.durationMs
                 if (isActive) {
                     addStyle(
-                        SpanStyle(background = ReadingPalette.HighlightBg, color = ReadingPalette.HighlightInk),
+                        SpanStyle(background = palette.highlightBg, color = palette.highlightInk),
                         start, end
                     )
                 }
@@ -527,27 +528,27 @@ private fun extractWordAt(text: String, offset: Int): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState) {
+private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palette: ReadingPalette) {
     var speedMenuExpanded by remember { mutableStateOf(false) }
 
-    Surface(color = ReadingPalette.Background, tonalElevation = 4.dp, shadowElevation = 8.dp) {
+    Surface(color = palette.background, tonalElevation = 4.dp, shadowElevation = 8.dp) {
         Column(modifier = Modifier.padding(top = 6.dp, bottom = 14.dp)) {
-            HorizontalDivider(color = ReadingPalette.Divider)
+            HorizontalDivider(color = palette.divider)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { vm.skipMs(-10_000) }) {
-                    Icon(Icons.Default.Replay10, contentDescription = "۱۰ ثانیه عقب", tint = ReadingPalette.Ink)
+                    Icon(Icons.Default.Replay10, contentDescription = "۱۰ ثانیه عقب", tint = palette.ink)
                 }
                 IconButton(onClick = { vm.previousSentence() }) {
-                    Icon(Icons.Default.SkipPrevious, contentDescription = "جملهٔ قبل", tint = ReadingPalette.Ink)
+                    Icon(Icons.Default.SkipPrevious, contentDescription = "جملهٔ قبل", tint = palette.ink)
                 }
                 FilledIconButton(
                     onClick = { vm.togglePlayPause() },
                     modifier = Modifier.size(58.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = ReadingPalette.Accent)
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = palette.accent)
                 ) {
                     Icon(
                         if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -557,14 +558,14 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState) {
                     )
                 }
                 IconButton(onClick = { vm.nextSentence() }) {
-                    Icon(Icons.Default.SkipNext, contentDescription = "جملهٔ بعد", tint = ReadingPalette.Ink)
+                    Icon(Icons.Default.SkipNext, contentDescription = "جملهٔ بعد", tint = palette.ink)
                 }
                 IconButton(onClick = { vm.skipMs(10_000) }) {
-                    Icon(Icons.Default.Forward10, contentDescription = "۱۰ ثانیه جلو", tint = ReadingPalette.Ink)
+                    Icon(Icons.Default.Forward10, contentDescription = "۱۰ ثانیه جلو", tint = palette.ink)
                 }
                 Box {
                     TextButton(onClick = { speedMenuExpanded = true }) {
-                        Text("${state.speed}x", color = ReadingPalette.Accent, fontWeight = FontWeight.Medium)
+                        Text("${state.speed}x", color = palette.accent, fontWeight = FontWeight.Medium)
                     }
                     DropdownMenu(expanded = speedMenuExpanded, onDismissRequest = { speedMenuExpanded = false }) {
                         SPEED_OPTIONS.forEach { s ->
