@@ -1,0 +1,50 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+app/build/
+
+# Local configuration file (contains SDK path, machine-specific)
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystores (never commit real signing keys)
+*.jks
+*.keystore
+
+# Google services (if ever added, contains project keys)
+google-services.json
+
+# Chaquopy / Python cache (if any local venv files show up)
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Log files
+*.log

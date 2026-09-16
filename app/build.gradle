@@ -1,0 +1,114 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.chaquo.python'
+    id 'com.google.devtools.ksp'
+}
+
+android {
+    namespace 'com.ziaee.frenchreader'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.ziaee.frenchreader"
+        minSdk 26
+        targetSdk 34
+        versionCode 4
+        versionName "0.4-phase2"
+
+        // Chaquopy needs at least one ABI. arm64-v8a covers virtually all
+        // real phones from the last ~8 years; x86_64 is added only so a
+        // Mac/PC emulator could also run it if needed later.
+        ndk {
+            abiFilters.addAll(["arm64-v8a", "x86_64"])
+        }
+
+        // --- Chaquopy / Python config -----------------------------------
+        // THIS BLOCK IS THE CORE OF THE SPIKE.
+        // edge-tts pulls in aiohttp, which itself needs multidict / yarl /
+        // frozenlist / propcache (C-extension packages). Chaquopy can only
+        // install packages it (or its curated mirror) has pre-built wheels
+        // for on Android's ABIs. If any of these fail to resolve during
+        // Gradle sync, that's the exact signal the design doc's "first
+        // technical test" is meant to catch -- see SPIKE_README.md for the
+        // fallback plan (pin older versions / vendor a trimmed edge-tts).
+        //
+        // NOTE: this MUST be plain Groovy (this file), not Kotlin DSL --
+        // Chaquopy's `python {}` extension on defaultConfig doesn't resolve
+        // in build.gradle.kts without extra accessor plumbing, which is
+        // exactly the "Unresolved reference: python" error we hit.
+        python {
+            pip {
+                install "edge-tts"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildFeatures {
+        compose true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion "1.5.14"
+    }
+
+    packaging {
+        resources {
+            excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"]
+        }
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2024.06.00')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.material3:material3'
+    // NOTE: Replay10 / Forward10 / SkipNext / SkipPrevious / Pause etc. are
+    // NOT in material-icons-core (only ~20 common icons are) -- they need
+    // the full "extended" icon pack. This was the "Unresolved reference"
+    // build failure.
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.activity:activity-compose:1.9.0'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1'
+
+    // Media3 for MP3 playback (used by the full app for background
+    // playback + notification controls too, per the design doc).
+    implementation 'androidx.media3:media3-exoplayer:1.3.1'
+    implementation 'androidx.media3:media3-session:1.3.1'
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+
+    // Navigation between Texts list / Reading screen.
+    implementation 'androidx.navigation:navigation-compose:2.7.7'
+
+    // Local storage for texts, reading positions, and saved vocabulary.
+    implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
+    ksp 'androidx.room:room-compiler:2.6.1'
+
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
+}
