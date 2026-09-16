@@ -184,13 +184,22 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Switches this text's TTS voice and re-synthesizes from the current
-     * chunk onward (audio already generated for the old voice can't be
+     * Switches this text's TTS voice and re-synthesizes starting at the
+     * current chunk (audio already generated for the old voice can't be
      * reused -- it's a different recording). Persisted to the text's own
-     * `voice` column so it sticks next time this text is opened. Resumes
-     * playback position at the start of the current chunk rather than
-     * trying to map the old timestamp onto new audio, since sentence
-     * timings differ slightly between voices.
+     * `voice` column so it sticks next time this text is opened.
+     *
+     * Deliberately does NOT re-synthesize the paragraphs already read
+     * (0 until resumeIndex) up front -- for a long text that could mean
+     * redoing a dozen-plus network calls before playback can resume at all.
+     * Only the current paragraph is synthesized synchronously (fast: one
+     * call), and playback picks up from the matching *sentence* within it
+     * (by index, not by millisecond offset -- a different voice speaks at a
+     * different pace, so old timings don't line up, but sentence order
+     * does). Paragraphs before it keep their text/formatting on screen
+     * exactly as before; only their now-invalid link into the cleared
+     * player timeline is dropped, so tapping a sentence there is a no-op
+     * until the text is reopened, rather than jumping to the wrong audio.
      */
     fun changeVoice(voice: String) {
         val doc = _state.value.textDoc ?: return
@@ -199,27 +208,30 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             val updatedDoc = doc.copy(voice = voice)
             db.textDao().update(updatedDoc)
 
+            val resumeIndex = _state.value.currentChunkIndex
+            val resumeSentenceIdx = (_state.value.chunks.getOrNull(resumeIndex)?.sentences
+                ?.indexOfLast { _state.value.currentPositionMs >= it.offsetMs } ?: -1)
+                .coerceAtLeast(0)
+
             backgroundSynthesisJob?.cancel()
             player.stop()
             player.clearMediaItems()
 
-            val resumeIndex = _state.value.currentChunkIndex
             _state.value = _state.value.copy(
                 textDoc = updatedDoc,
-                chunks = _state.value.chunks.map {
-                    it.copy(status = ChunkStatus.PENDING, sentences = emptyList(), playerItemIndex = null, error = null)
+                chunks = _state.value.chunks.mapIndexed { i, c ->
+                    if (i < resumeIndex) c.copy(playerItemIndex = null)
+                    else c.copy(status = ChunkStatus.PENDING, sentences = emptyList(), playerItemIndex = null, error = null)
                 },
-                currentPositionMs = 0,
                 ready = false
             )
 
-            for (i in 0..resumeIndex) {
-                synthesizeChunk(i)
-                if (_state.value.chunks.getOrNull(i)?.status == ChunkStatus.ERROR) break
-            }
-            val targetItemIndex = _state.value.chunks.getOrNull(resumeIndex)?.playerItemIndex
-            if (targetItemIndex != null) {
-                player.seekTo(targetItemIndex, 0)
+            synthesizeChunk(resumeIndex)
+            val resumed = _state.value.chunks.getOrNull(resumeIndex)
+            if (resumed?.status == ChunkStatus.READY) {
+                val seekMs = resumed.sentences.getOrNull(resumeSentenceIdx)?.offsetMs?.toLong() ?: 0L
+                player.seekTo(resumed.playerItemIndex ?: 0, seekMs)
+                _state.value = _state.value.copy(currentPositionMs = seekMs)
             }
             _state.value = _state.value.copy(ready = true)
             continueBackgroundSynthesis(resumeIndex + 1)
