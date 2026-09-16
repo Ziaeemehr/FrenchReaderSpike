@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -8,7 +9,10 @@ import androidx.room.PrimaryKey
  * phase 2). `lastPositionMs` / `lastChunkIndex` let us resume exactly where
  * the user left off (acceptance criterion #1).
  */
-@Entity(tableName = "texts")
+@Entity(
+    tableName = "texts",
+    indices = [Index(value = ["externalKey"], unique = true)]
+)
 data class TextDocument(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
@@ -26,7 +30,27 @@ data class TextDocument(
     val sourceName: String? = null,
     val author: String? = null,
     val license: String? = null,
-    val publishedAt: Long? = null // epoch ms of the source's original publish/revision date
+    val publishedAt: Long? = null, // epoch ms of the source's original publish/revision date
+    val imagePath: String? = null,
+    val externalKey: String? = null,
+    val lastAccessedAtMs: Long = 0
+)
+
+@Entity(
+    tableName = "headlines",
+    primaryKeys = ["sourceId", "externalId"],
+    indices = [Index("publishedAtMs"), Index("articleUrl")]
+)
+data class HeadlineEntity(
+    val sourceId: String,
+    val sourceLabel: String,
+    val externalId: String,
+    val title: String,
+    val snippet: String,
+    val articleUrl: String,
+    val imageUrl: String?,
+    val publishedAtMs: Long?,
+    val cachedAtMs: Long
 )
 
 /**

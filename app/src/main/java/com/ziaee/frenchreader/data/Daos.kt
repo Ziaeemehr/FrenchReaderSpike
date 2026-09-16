@@ -8,8 +8,20 @@ interface TextDao {
     @Query("SELECT * FROM texts ORDER BY createdAtMs DESC")
     fun observeAll(): Flow<List<TextDocument>>
 
+    @Query("SELECT * FROM texts ORDER BY createdAtMs DESC LIMIT 5")
+    fun observeRecent(): Flow<List<TextDocument>>
+
+    @Query("SELECT * FROM texts WHERE lastAccessedAtMs > 0 ORDER BY lastAccessedAtMs DESC LIMIT 1")
+    fun observeMostRecentlyAccessed(): Flow<TextDocument?>
+
+    @Query("SELECT * FROM texts WHERE title LIKE '%' || :query || '%' OR sourceName LIKE '%' || :query || '%' ORDER BY createdAtMs DESC")
+    fun observeMatchingTitleOrSource(query: String): Flow<List<TextDocument>>
+
     @Query("SELECT * FROM texts WHERE id = :id")
     suspend fun getById(id: Long): TextDocument?
+
+    @Query("SELECT * FROM texts WHERE externalKey = :externalKey LIMIT 1")
+    suspend fun findByExternalKey(externalKey: String): TextDocument?
 
     @Insert
     suspend fun insert(text: TextDocument): Long
@@ -22,6 +34,27 @@ interface TextDao {
 
     @Query("UPDATE texts SET lastChunkIndex = :chunkIndex, lastPositionMs = :positionMs WHERE id = :id")
     suspend fun savePosition(id: Long, chunkIndex: Int, positionMs: Long)
+
+    @Query("UPDATE texts SET lastAccessedAtMs = :now WHERE id = :id")
+    suspend fun markAccessed(id: Long, now: Long)
+}
+
+@Dao
+interface HeadlineDao {
+    @Query("SELECT * FROM headlines ORDER BY publishedAtMs DESC LIMIT :limit")
+    fun observeRecent(limit: Int): Flow<List<HeadlineEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<HeadlineEntity>)
+
+    @Query("DELETE FROM headlines WHERE sourceId = :sourceId")
+    suspend fun clearSource(sourceId: String)
+
+    @Transaction
+    suspend fun replaceSource(sourceId: String, items: List<HeadlineEntity>) {
+        clearSource(sourceId)
+        insertAll(items)
+    }
 }
 
 @Dao

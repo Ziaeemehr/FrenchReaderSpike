@@ -42,13 +42,50 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+// v4 -> v5: preserves existing texts while adding downloaded-image storage,
+// stable external keys for deduplication, recency tracking, and a small
+// per-source cache for RSS headlines.
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE texts ADD COLUMN imagePath TEXT")
+        db.execSQL("ALTER TABLE texts ADD COLUMN externalKey TEXT")
+        db.execSQL("ALTER TABLE texts ADD COLUMN lastAccessedAtMs INTEGER NOT NULL DEFAULT 0")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_texts_externalKey` " +
+                "ON `texts` (`externalKey`) WHERE `externalKey` IS NOT NULL"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `headlines` (" +
+                "`sourceId` TEXT NOT NULL, " +
+                "`sourceLabel` TEXT NOT NULL, " +
+                "`externalId` TEXT NOT NULL, " +
+                "`title` TEXT NOT NULL, " +
+                "`snippet` TEXT NOT NULL, " +
+                "`articleUrl` TEXT NOT NULL, " +
+                "`imageUrl` TEXT, " +
+                "`publishedAtMs` INTEGER, " +
+                "`cachedAtMs` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`sourceId`, `externalId`))"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_headlines_publishedAtMs` " +
+                "ON `headlines` (`publishedAtMs`)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_headlines_articleUrl` " +
+                "ON `headlines` (`articleUrl`)"
+        )
+    }
+}
+
 @Database(
-    entities = [TextDocument::class, VocabEntry::class, VocabList::class],
-    version = 4,
+    entities = [TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class],
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun textDao(): TextDao
+    abstract fun headlineDao(): HeadlineDao
     abstract fun vocabDao(): VocabDao
     abstract fun vocabListDao(): VocabListDao
 
@@ -62,7 +99,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "french_reader.db"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     // Safety net only -- covers a version jump with no
                     // matching migration (e.g. skipping straight from a
                     // much older schema); the normal v2->v3 path above
