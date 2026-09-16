@@ -48,3 +48,6 @@ __pycache__/
 
 # Log files
 *.log
+
+# Local Superpowers visual-companion sessions
+.superpowers/
