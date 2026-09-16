@@ -119,4 +119,17 @@
     <string name="accessibility_hide_meaning">Afficher ou masquer la définition</string>
     <string name="accessibility_play_sentence">Lire la phrase</string>
     <string name="accessibility_save_vocabulary">Enregistrer dans le vocabulaire</string>
+    <string name="accessibility_statistics">Statistiques</string>
+    <string name="statistics_title">Statistiques</string>
+    <string name="statistics_streak_days">%1$d jours consécutifs</string>
+    <string name="statistics_weekly_chart_title">Temps d\'écoute (7 derniers jours)</string>
+    <string name="statistics_vocab_section_title">Révision du vocabulaire</string>
+    <string name="statistics_reviewed_today">Révisés aujourd\'hui : %1$d</string>
+    <string name="statistics_reviewed_week">Révisés cette semaine : %1$d</string>
+    <string name="statistics_accuracy_percent">Précision globale : %1$d %%</string>
+    <string name="statistics_leitner_chart_title">Répartition des boîtes de Leitner</string>
+    <string name="statistics_totals_title">Totaux</string>
+    <string name="statistics_texts_saved">Textes enregistrés : %1$d</string>
+    <string name="statistics_texts_completed">Textes terminés : %1$d</string>
+    <string name="statistics_words_saved">Mots enregistrés : %1$d</string>
 </resources>

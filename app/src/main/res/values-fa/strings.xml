@@ -119,4 +119,17 @@
     <string name="accessibility_hide_meaning">نمایش یا پنهان‌کردن معنی</string>
     <string name="accessibility_play_sentence">پخش صدای جمله</string>
     <string name="accessibility_save_vocabulary">ذخیره در لغات</string>
+    <string name="accessibility_statistics">آمار</string>
+    <string name="statistics_title">آمار</string>
+    <string name="statistics_streak_days">%1$d روز پشت‌سرهم</string>
+    <string name="statistics_weekly_chart_title">زمان گوش‌دادن (۷ روز اخیر)</string>
+    <string name="statistics_vocab_section_title">مرور لغات</string>
+    <string name="statistics_reviewed_today">مرورشده امروز: %1$d</string>
+    <string name="statistics_reviewed_week">مرورشده این هفته: %1$d</string>
+    <string name="statistics_accuracy_percent">دقت کلی: %1$d%%</string>
+    <string name="statistics_leitner_chart_title">پراکندگی جعبه‌های لایتنر</string>
+    <string name="statistics_totals_title">مجموع</string>
+    <string name="statistics_texts_saved">متن‌های ذخیره‌شده: %1$d</string>
+    <string name="statistics_texts_completed">متن‌های تکمیل‌شده: %1$d</string>
+    <string name="statistics_words_saved">لغات ذخیره‌شده: %1$d</string>
 </resources>
