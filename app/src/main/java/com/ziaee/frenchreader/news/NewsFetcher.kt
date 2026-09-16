@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.news
 
 import android.util.Xml
+import com.ziaee.frenchreader.util.HtmlUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
@@ -115,8 +116,8 @@ object NewsFetcher {
                 XmlPullParser.END_TAG -> {
                     if (parser.name == "item" && inItem) {
                         val rawBody = contentEncoded?.takeIf { it.isNotBlank() } ?: description.orEmpty()
-                        val cleanTitle = stripHtml(title.orEmpty())
-                        val cleanBody = stripHtml(rawBody)
+                        val cleanTitle = HtmlUtil.stripHtml(title.orEmpty())
+                        val cleanBody = HtmlUtil.stripHtml(rawBody)
                         return if (cleanTitle.isNotBlank() && cleanBody.isNotBlank()) {
                             NewsItem(
                                 title = cleanTitle,
@@ -134,20 +135,4 @@ object NewsFetcher {
         return null
     }
 
-    /** Strips HTML tags and unescapes the handful of entities RSS feeds
-     * actually use -- not a full HTML parser, just enough for a feed
-     * description (a paragraph or two, occasionally a stray `<p>`/`<br>`
-     * or an `&nbsp;`), collapsing whitespace left behind by removed tags. */
-    private fun stripHtml(html: String): String {
-        val noTags = html.replace(Regex("<[^>]*>"), " ")
-        return noTags
-            .replace("&nbsp;", " ")
-            .replace("&amp;", "&")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&quot;", "\"")
-            .replace("&#39;", "'")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-    }
 }
