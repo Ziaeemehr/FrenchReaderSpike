@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -19,11 +18,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.ui.ReadingScreen
+import com.ziaee.frenchreader.ui.SettingsScreen
 import com.ziaee.frenchreader.ui.TextsListScreen
 import com.ziaee.frenchreader.ui.VOCAB_SCOPE_ALL
 import com.ziaee.frenchreader.ui.VocabListScreen
 import com.ziaee.frenchreader.ui.VocabReviewScreen
+import com.ziaee.frenchreader.ui.theme.AppearanceState
+import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
 import com.ziaee.frenchreader.util.SharedTextHolder
 
@@ -38,8 +41,14 @@ class MainActivity : ComponentActivity() {
 
         handleIncomingIntent(intent)
 
+        // One-time load from persisted prefs into the live state object;
+        // SettingsScreen keeps both in sync on every change after this.
+        AppearanceState.themeMode = AppearancePrefs.getThemeMode(this)
+        AppearanceState.readingBackground = AppearancePrefs.getReadingBackground(this)
+        AppearanceState.fontScale = AppearancePrefs.getFontScale(this)
+
         setContent {
-            MaterialTheme {
+            FrenchReaderTheme(themeMode = AppearanceState.themeMode) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost()
                 }
@@ -118,7 +127,8 @@ private fun AppNavHost() {
         composable("texts") {
             TextsListScreen(
                 onOpenText = { id -> navController.navigate("reading/$id") },
-                onOpenVocab = { navController.navigate("vocab") }
+                onOpenVocab = { navController.navigate("vocab") },
+                onOpenSettings = { navController.navigate("settings") }
             )
         }
         composable(
@@ -144,6 +154,9 @@ private fun AppNavHost() {
         ) { backStackEntry ->
             val scope = backStackEntry.arguments?.getLong("scope") ?: VOCAB_SCOPE_ALL
             VocabReviewScreen(scope = scope, onBack = { navController.popBackStack() })
+        }
+        composable("settings") {
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

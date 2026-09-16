@@ -173,7 +173,7 @@ class TextsListViewModel(app: Application) : AndroidViewModel(app) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
+fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenSettings: () -> Unit) {
     val vm: TextsListViewModel = viewModel()
     val texts by vm.texts.collectAsState()
     val context = LocalContext.current
@@ -235,6 +235,9 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
                     }
                     IconButton(onClick = onOpenVocab) {
                         Icon(Icons.Default.MenuBook, contentDescription = "لغات ذخیره‌شده")
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "تنظیمات")
                     }
                 }
             )
