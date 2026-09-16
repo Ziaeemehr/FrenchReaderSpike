@@ -37,6 +37,9 @@ interface TextDao {
 
     @Query("UPDATE texts SET lastAccessedAtMs = :now WHERE id = :id")
     suspend fun markAccessed(id: Long, now: Long)
+
+    @Query("UPDATE texts SET imagePath = :imagePath WHERE id = :id")
+    suspend fun updateImagePath(id: Long, imagePath: String)
 }
 
 @Dao

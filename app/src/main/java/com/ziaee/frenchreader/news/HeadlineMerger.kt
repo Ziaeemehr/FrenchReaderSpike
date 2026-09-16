@@ -32,7 +32,9 @@ fun mergeHeadlines(vararg sources: List<HeadlineEntity>, limit: Int): List<Headl
         .take(limit)
 }
 
-private fun normalizeArticleUrl(articleUrl: String): String {
+/** Also used to derive [com.ziaee.frenchreader.data.TextDocument.externalKey]
+ * so an import's duplicate check agrees with headline deduplication. */
+internal fun normalizeArticleUrl(articleUrl: String): String {
     val upgraded = httpsUrl(articleUrl.trim())
     return try {
         val uri = URI(upgraded)

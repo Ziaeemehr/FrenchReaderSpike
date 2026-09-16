@@ -22,6 +22,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.content.ArticleImportRepository
 import com.ziaee.frenchreader.content.ContentArticle
 import com.ziaee.frenchreader.content.ContentResult
 import com.ziaee.frenchreader.content.ContentSource
@@ -29,6 +30,7 @@ import com.ziaee.frenchreader.content.FranceInfoContentSource
 import com.ziaee.frenchreader.content.RfiFacileContentSource
 import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.util.SharedTextHolder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -58,6 +60,7 @@ private val CONTENT_SOURCES: List<ContentSource> = listOf(VikidiaContentSource, 
 
 class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val importRepository = ArticleImportRepository(db.textDao(), CONTENT_SOURCES, ArticleImageStore(app))
     private val _texts = MutableStateFlow<List<TextDocument>>(emptyList())
     val texts: StateFlow<List<TextDocument>> = _texts.asStateFlow()
 
@@ -84,7 +87,7 @@ class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun delete(doc: TextDocument) {
-        viewModelScope.launch { db.textDao().delete(doc) }
+        viewModelScope.launch { importRepository.deleteWithImage(doc) }
     }
 
     /** Queries every registered [ContentSource] in parallel and merges the
