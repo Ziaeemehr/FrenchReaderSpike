@@ -1,7 +1,13 @@
 package com.ziaee.frenchreader.content
 
+import com.ziaee.frenchreader.news.FRANCE_INFO_FEED_URL
+import com.ziaee.frenchreader.news.FRANCE_INFO_SOURCE_ID
+import com.ziaee.frenchreader.news.FRANCE_INFO_SOURCE_LABEL
 import com.ziaee.frenchreader.news.NewsFetcher
 import com.ziaee.frenchreader.news.NewsItem
+import com.ziaee.frenchreader.news.RFI_FACILE_FEED_URL
+import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
+import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_LABEL
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -95,10 +101,9 @@ abstract class NewsContentSource(
 /** RFI's "Journal en français facile" -- see ROADMAP.md section 6.
  * Extracts the full transcript from `div.m-transcription__content` using jsoup. */
 object RfiFacileContentSource : NewsContentSource(
-    id = "rfi_facile",
-    label = "RFI – فرانسهٔ ساده",
-    feedUrl = "https://apis.fle.rfi.fr/products/get_product/fle_getpodcast_by_nid_author_rfi" +
-        "?token_application=applepodcast_fle&program.entrepriseId=WBMZ39-FLE-FR-20220627"
+    id = RFI_FACILE_SOURCE_ID,
+    label = RFI_FACILE_SOURCE_LABEL,
+    feedUrl = RFI_FACILE_FEED_URL
 ) {
     override fun extractArticleText(html: String): String? = ArticleExtractor.extractRfiFacileTranscript(html)
 }
@@ -106,9 +111,9 @@ object RfiFacileContentSource : NewsContentSource(
 /** France Info's general headlines -- see ROADMAP.md section 6.
  * Extracts full article text from `div.c-body`, excluding related-article embeds. */
 object FranceInfoContentSource : NewsContentSource(
-    id = "france_info",
-    label = "France Info",
-    feedUrl = "https://www.francetvinfo.fr/titres.rss"
+    id = FRANCE_INFO_SOURCE_ID,
+    label = FRANCE_INFO_SOURCE_LABEL,
+    feedUrl = FRANCE_INFO_FEED_URL
 ) {
     override fun extractArticleText(html: String): String? = ArticleExtractor.extractFranceInfoArticle(html)
 }
