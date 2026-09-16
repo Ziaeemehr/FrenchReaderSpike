@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.news
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class NewsFetcherTest {
@@ -67,5 +68,64 @@ class NewsFetcherTest {
 
         val items = NewsFetcher.parseItems(xml, limit = 25)
         assertEquals("Contenu plus long.", items[0].snippet)
+    }
+
+    @Test
+    fun `parses media content image and upgrades http`() {
+        val xml = """
+            <rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item>
+            <title>Titre</title><description>Résumé.</description>
+            <media:content url="http://img.test/a.jpg" type="image/jpeg" />
+            <link>https://example.com/a</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertEquals("https://img.test/a.jpg", item.imageUrl)
+    }
+
+    @Test
+    fun `parses image enclosure`() {
+        val xml = """
+            <rss><channel><item>
+            <title>Titre</title><description>Résumé.</description>
+            <enclosure url="https://img.test/b.jpg" type="image/jpeg" />
+            <link>https://example.com/b</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertEquals("https://img.test/b.jpg", item.imageUrl)
+    }
+
+    @Test
+    fun `parses first description image`() {
+        val xml = """
+            <rss><channel><item>
+            <title>Titre</title>
+            <description><![CDATA[<p>Résumé.</p><img src="http://img.test/c.jpg"><img src="https://img.test/d.jpg">]]></description>
+            <link>https://example.com/c</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertEquals("https://img.test/c.jpg", item.imageUrl)
+    }
+
+    @Test
+    fun `missing image returns null`() {
+        val xml = """
+            <rss><channel><item>
+            <title>Titre</title><description>Résumé.</description>
+            <link>https://example.com/no-image</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertNull(item.imageUrl)
     }
 }

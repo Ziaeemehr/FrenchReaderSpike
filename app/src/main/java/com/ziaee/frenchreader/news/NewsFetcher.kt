@@ -1,13 +1,15 @@
 package com.ziaee.frenchreader.news
 
-import org.xmlpull.v1.XmlPullParserFactory
 import com.ziaee.frenchreader.util.HtmlUtil
+import com.ziaee.frenchreader.content.httpsUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 import java.io.IOException
 import java.io.StringReader
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -22,7 +24,8 @@ data class NewsItem(
     val snippet: String,
     val link: String,
     val guid: String,
-    val publishedAtMs: Long?
+    val publishedAtMs: Long?,
+    val imageUrl: String? = null
 )
 
 /**
@@ -66,6 +69,12 @@ object NewsFetcher {
         var link: String? = null
         var guid: String? = null
         var pubDate: String? = null
+        var mediaContentUrl: String? = null
+        var mediaThumbnailUrl: String? = null
+        var enclosureImageUrl: String? = null
+        var descriptionImageUrl: String? = null
+        var inDescription = false
+        var descriptionDepth = 0
         var currentTag: String? = null
 
         var event = parser.eventType
@@ -78,6 +87,27 @@ object NewsFetcher {
                         inItem = true
                         title = null; description = null; contentEncoded = null
                         link = null; guid = null; pubDate = null
+                        mediaContentUrl = null; mediaThumbnailUrl = null
+                        enclosureImageUrl = null; descriptionImageUrl = null
+                        inDescription = false; descriptionDepth = 0
+                    } else if (inItem && name == "description") {
+                        inDescription = true
+                        descriptionDepth = 1
+                    } else if (inDescription) {
+                        descriptionDepth++
+                    }
+                    if (inItem && name == "media:content" && mediaContentUrl == null) {
+                        mediaContentUrl = parser.getAttributeValue(null, "url").asImageUrl()
+                    } else if (inItem && name == "media:thumbnail" && mediaThumbnailUrl == null) {
+                        mediaThumbnailUrl = parser.getAttributeValue(null, "url").asImageUrl()
+                    } else if (inItem && name == "enclosure" && enclosureImageUrl == null) {
+                        val type = parser.getAttributeValue(null, "type").orEmpty()
+                        val url = parser.getAttributeValue(null, "url")
+                        if (type.startsWith("image/", ignoreCase = true) || url.isImageExtension()) {
+                            enclosureImageUrl = url.asImageUrl()
+                        }
+                    } else if (inDescription && name.equals("img", ignoreCase = true) && descriptionImageUrl == null) {
+                        descriptionImageUrl = parser.getAttributeValue(null, "src").asImageUrl()
                     }
                 }
                 XmlPullParser.TEXT, XmlPullParser.CDSECT -> {
@@ -91,6 +121,9 @@ object NewsFetcher {
                             "guid" -> guid = (guid ?: "") + text
                             "pubDate" -> pubDate = (pubDate ?: "") + text
                         }
+                        if (inDescription && currentTag != "description") {
+                            description = (description ?: "") + text
+                        }
                     }
                 }
                 XmlPullParser.END_TAG -> {
@@ -99,6 +132,7 @@ object NewsFetcher {
                         val rawSnippet = contentEncoded?.takeIf { it.isNotBlank() } ?: description.orEmpty()
                         val cleanTitle = HtmlUtil.stripHtml(title.orEmpty())
                         val cleanSnippet = HtmlUtil.stripHtml(rawSnippet)
+                        val escapedDescriptionImage = descriptionImageUrl ?: description.orEmpty().firstImageUrl()
                         val itemLink = link?.trim().orEmpty()
                         if (cleanTitle.isNotBlank() && cleanSnippet.isNotBlank() && itemLink.isNotBlank()) {
                             items.add(
@@ -107,9 +141,16 @@ object NewsFetcher {
                                     snippet = cleanSnippet,
                                     link = itemLink,
                                     guid = (guid?.takeIf { it.isNotBlank() } ?: itemLink).trim(),
-                                    publishedAtMs = pubDate?.let(::parseRfc822)
+                                    publishedAtMs = pubDate?.let(::parseRfc822),
+                                    imageUrl = mediaContentUrl ?: mediaThumbnailUrl ?: enclosureImageUrl ?: escapedDescriptionImage
                                 )
                             )
+                        }
+                    } else if (inDescription) {
+                        descriptionDepth--
+                        if (descriptionDepth <= 0 || parser.name == "description") {
+                            inDescription = false
+                            descriptionDepth = 0
                         }
                     }
                     currentTag = null
@@ -118,6 +159,27 @@ object NewsFetcher {
             event = parser.next()
         }
         return items
+    }
+
+    private fun String?.asImageUrl(): String? {
+        val upgraded = this?.trim()?.takeIf { it.isNotBlank() }?.let(::httpsUrl) ?: return null
+        return try {
+            val uri = URI(upgraded)
+            upgraded.takeIf { uri.isAbsolute && uri.scheme.equals("https", ignoreCase = true) && !uri.host.isNullOrBlank() }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun String?.isImageExtension(): Boolean =
+        this?.substringBefore('?')?.substringBefore('#')?.lowercase(Locale.US)?.matches(
+            Regex(".*\\.(?:jpg|jpeg|png|gif|webp|avif|bmp|svg)$")
+        ) == true
+
+    private fun String.firstImageUrl(): String? {
+        val match = Regex("<img\\b[^>]*\\bsrc\\s*=\\s*(['\\\"])(.*?)\\1", setOf(RegexOption.IGNORE_CASE)).find(this)
+            ?: return null
+        return match.groupValues[2].asImageUrl()
     }
 
     private fun parseRfc822(date: String): Long? = try {
