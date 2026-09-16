@@ -25,4 +25,9 @@ class HtmlUtilTest {
     fun `removes stray space before punctuation left by tag removal`() {
         assertEquals("l'espace. À ne pas confondre.", HtmlUtil.stripHtml("l'espace</span>. À ne pas confondre."))
     }
+
+    @Test
+    fun `preserves space before French punctuation that requires it`() {
+        assertEquals("Vraiment ? Oui ; voilà ! Bien : merci.", HtmlUtil.stripHtml("Vraiment ? Oui ; voilà ! Bien : merci."))
+    }
 }

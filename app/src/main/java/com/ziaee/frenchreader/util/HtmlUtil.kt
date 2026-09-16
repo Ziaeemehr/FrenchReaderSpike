@@ -16,7 +16,7 @@ object HtmlUtil {
             .replace("&quot;", "\"")
             .replace("&#39;", "'")
             .replace(Regex("\\s+"), " ")
-            .replace(Regex(" +([.,;:!?])"), "$1")
+            .replace(Regex(" +([.,])"), "$1")
             .trim()
     }
 }
