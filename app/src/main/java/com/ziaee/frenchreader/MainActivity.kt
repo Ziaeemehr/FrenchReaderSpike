@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,10 +24,11 @@ import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.ui.ReadingScreen
 import com.ziaee.frenchreader.ui.SettingsScreen
-import com.ziaee.frenchreader.ui.TextsListScreen
 import com.ziaee.frenchreader.ui.VOCAB_SCOPE_ALL
 import com.ziaee.frenchreader.ui.VocabListScreen
 import com.ziaee.frenchreader.ui.VocabReviewScreen
+import com.ziaee.frenchreader.ui.home.HomeScreen
+import com.ziaee.frenchreader.ui.library.LibraryScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
@@ -84,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                 val streamUri = getStreamExtra(intent)
                 val body = sharedText ?: streamUri?.let { readTextFromUri(it) }
                 if (!body.isNullOrBlank()) {
-                    val title = streamUri?.let { queryDisplayName(it) } ?: "متن اشتراک‌گذاری‌شده"
+                    val title = streamUri?.let { queryDisplayName(it) } ?: getString(R.string.text_untitled)
                     SharedTextHolder.post(IncomingShare(title, body))
                 }
             }
@@ -92,7 +94,7 @@ class MainActivity : AppCompatActivity() {
                 intent.data?.let { uri ->
                     val body = readTextFromUri(uri)
                     if (!body.isNullOrBlank()) {
-                        val title = queryDisplayName(uri) ?: "فایل وارد شده"
+                        val title = queryDisplayName(uri) ?: getString(R.string.text_untitled)
                         SharedTextHolder.post(IncomingShare(title, body))
                     }
                 }
@@ -127,12 +129,31 @@ class MainActivity : AppCompatActivity() {
 private fun AppNavHost() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "texts") {
-        composable("texts") {
-            TextsListScreen(
+    // Home <-> Library is bottom-navigation, not a push/pop stack: reusing
+    // the start destination's saved state avoids piling up duplicate Home
+    // or Library entries on every tab switch (see the implementation
+    // plan's Task 8, "Avoid duplicate Home/Library destinations").
+    fun navigateToTab(route: String) {
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") {
+            HomeScreen(
                 onOpenText = { id -> navController.navigate("reading/$id") },
+                onOpenLibrary = { navigateToTab("library") },
                 onOpenVocab = { navController.navigate("vocab") },
                 onOpenSettings = { navController.navigate("settings") }
+            )
+        }
+        composable("library") {
+            LibraryScreen(
+                onOpenText = { id -> navController.navigate("reading/$id") },
+                onOpenHome = { navigateToTab("home") }
             )
         }
         composable(

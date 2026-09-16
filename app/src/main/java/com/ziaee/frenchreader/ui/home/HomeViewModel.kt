@@ -31,9 +31,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** Every source the Home topic-search field can query -- broader than the
- * two dashboard news sources, matching the existing "find content" search
- * (see [com.ziaee.frenchreader.ui.TextsListViewModel], which this Home
- * search intentionally mirrors until it's retired -- Task 8). */
+ * two dashboard news sources used by the news dashboard above. */
 private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
     listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource)
 

@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
@@ -79,13 +81,13 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 TopAppBar(
                     title = {
                         Text(
-                            state.textDoc?.title ?: "در حال بارگذاری...",
+                            state.textDoc?.title ?: stringResource(R.string.reading_loading_title),
                             maxLines = 1
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
                         }
                     },
                     actions = {
@@ -97,16 +99,16 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             )
                         }
                         IconButton(onClick = onOpenVocab) {
-                            Icon(Icons.Default.MenuBook, contentDescription = "لغات ذخیره‌شده")
+                            Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
                         }
                         if (state.textDoc?.sourceUrl != null) {
                             IconButton(onClick = { showSourceInfoSheet = true }) {
-                                Icon(Icons.Default.Info, contentDescription = "دربارهٔ این متن")
+                                Icon(Icons.Default.Info, contentDescription = stringResource(R.string.accessibility_source_info))
                             }
                         }
                         Box {
                             IconButton(onClick = { voiceMenuExpanded = true }) {
-                                Icon(Icons.Default.RecordVoiceOver, contentDescription = "انتخاب صدا")
+                                Icon(Icons.Default.RecordVoiceOver, contentDescription = stringResource(R.string.accessibility_select_voice))
                             }
                             DropdownMenu(
                                 expanded = voiceMenuExpanded,
@@ -131,7 +133,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         IconButton(onClick = { autoScrollEnabled = !autoScrollEnabled }) {
                             Icon(
                                 Icons.Default.SwapVert,
-                                contentDescription = "پیمایش خودکار صفحه همراه با صدا",
+                                contentDescription = stringResource(R.string.accessibility_autoplay),
                                 tint = if (autoScrollEnabled) palette.accent
                                 else palette.inkFaded
                             )
@@ -139,7 +141,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         IconButton(onClick = { vm.toggleShowTranslations() }) {
                             Icon(
                                 Icons.Default.Translate,
-                                contentDescription = "نمایش/عدم‌نمایش ترجمه",
+                                contentDescription = stringResource(R.string.accessibility_toggle_translation),
                                 tint = if (state.showTranslations) palette.accent
                                 else palette.inkFaded
                             )
@@ -229,19 +231,19 @@ private fun SourceInfoSheet(doc: com.ziaee.frenchreader.data.TextDocument, onDis
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(doc.sourceName ?: "منبع", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                Text(doc.sourceName ?: stringResource(R.string.source_default_label), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 doc.sourceUrl?.let { url ->
                     IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
-                        Icon(Icons.Default.OpenInBrowser, contentDescription = "باز کردن منبع در مرورگر")
+                        Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
                     }
                 }
             }
             Spacer(Modifier.height(6.dp))
-            doc.author?.let { Text("نویسنده: $it") }
-            doc.license?.let { Text("مجوز: $it") }
+            doc.author?.let { Text(stringResource(R.string.source_author_label, it)) }
+            doc.license?.let { Text(stringResource(R.string.source_license_label, it)) }
             doc.publishedAt?.let {
                 val dateLabel = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it))
-                Text("تاریخ انتشار: $dateLabel")
+                Text(stringResource(R.string.source_published_label, dateLabel))
             }
         }
     }
@@ -327,13 +329,13 @@ private fun ChunkParagraph(
                                 )
                             }
                             ChunkStatus.LOADING -> Text(
-                                "در حال ترجمه...",
+                                stringResource(R.string.translation_loading),
                                 fontSize = (13f * fontScale).sp,
                                 fontStyle = FontStyle.Italic,
                                 color = palette.inkFaded
                             )
                             ChunkStatus.ERROR -> Text(
-                                "ترجمه در دسترس نیست",
+                                stringResource(R.string.error_translation_unavailable),
                                 fontSize = (13f * fontScale).sp,
                                 fontStyle = FontStyle.Italic,
                                 color = palette.inkFaded
@@ -353,7 +355,7 @@ private fun ChunkParagraph(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "در حال آماده‌سازی صدا برای این بخش...",
+                    stringResource(R.string.audio_preparing),
                     fontSize = (13f * fontScale).sp,
                     color = palette.inkFaded
                 )
@@ -362,11 +364,11 @@ private fun ChunkParagraph(
         ChunkStatus.ERROR -> {
             Column {
                 Text(
-                    "خطا در تولید صدا برای این بخش: ${chunk.error}",
+                    stringResource(R.string.error_audio_generation_detail, chunk.error.orEmpty()),
                     color = MaterialTheme.colorScheme.error,
                     fontSize = (13f * fontScale).sp
                 )
-                TextButton(onClick = onRetry) { Text("تلاش مجدد") }
+                TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
             }
         }
         ChunkStatus.PENDING -> {
@@ -543,10 +545,10 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palett
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { vm.skipMs(-10_000) }) {
-                    Icon(Icons.Default.Replay10, contentDescription = "۱۰ ثانیه عقب", tint = palette.ink)
+                    Icon(Icons.Default.Replay10, contentDescription = stringResource(R.string.accessibility_skip_back), tint = palette.ink)
                 }
                 IconButton(onClick = { vm.previousSentence() }) {
-                    Icon(Icons.Default.SkipPrevious, contentDescription = "جملهٔ قبل", tint = palette.ink)
+                    Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.accessibility_previous_sentence), tint = palette.ink)
                 }
                 FilledIconButton(
                     onClick = { vm.togglePlayPause() },
@@ -555,16 +557,16 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palett
                 ) {
                     Icon(
                         if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "پخش/توقف",
+                        contentDescription = stringResource(R.string.accessibility_play_pause),
                         modifier = Modifier.size(30.dp),
                         tint = Color.White
                     )
                 }
                 IconButton(onClick = { vm.nextSentence() }) {
-                    Icon(Icons.Default.SkipNext, contentDescription = "جملهٔ بعد", tint = palette.ink)
+                    Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.accessibility_next_sentence), tint = palette.ink)
                 }
                 IconButton(onClick = { vm.skipMs(10_000) }) {
-                    Icon(Icons.Default.Forward10, contentDescription = "۱۰ ثانیه جلو", tint = palette.ink)
+                    Icon(Icons.Default.Forward10, contentDescription = stringResource(R.string.accessibility_skip_forward), tint = palette.ink)
                 }
                 Box {
                     TextButton(onClick = { speedMenuExpanded = true }) {

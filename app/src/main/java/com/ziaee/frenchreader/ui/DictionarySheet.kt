@@ -18,12 +18,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
@@ -203,10 +205,10 @@ fun DictionarySheet(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(word, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
-                    Icon(Icons.Default.OpenInBrowser, contentDescription = "باز کردن در مرورگر")
+                    Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
                 }
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "بستن")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_close))
                 }
             }
 
@@ -215,7 +217,7 @@ fun DictionarySheet(
             OutlinedTextField(
                 value = meaning,
                 onValueChange = { meaning = it; saved = false },
-                label = { Text("معنی فارسی") },
+                label = { Text(stringResource(R.string.dictionary_meaning_field)) },
                 trailingIcon = {
                     if (autoTranslating) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -232,11 +234,11 @@ fun DictionarySheet(
                     AssistChip(
                         onClick = { listMenuExpanded = true },
                         leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        label = { Text(lists.find { it.id == selectedListId }?.name ?: "بدون دسته") }
+                        label = { Text(lists.find { it.id == selectedListId }?.name ?: stringResource(R.string.vocab_list_uncategorized)) }
                     )
                     DropdownMenu(expanded = listMenuExpanded, onDismissRequest = { listMenuExpanded = false }) {
                         DropdownMenuItem(
-                            text = { Text("بدون دسته") },
+                            text = { Text(stringResource(R.string.vocab_list_uncategorized)) },
                             onClick = { selectedListId = null; listMenuExpanded = false }
                         )
                         lists.forEach { l ->
@@ -247,7 +249,7 @@ fun DictionarySheet(
                         }
                         HorizontalDivider()
                         DropdownMenuItem(
-                            text = { Text("+ لیست جدید") },
+                            text = { Text("+ " + stringResource(R.string.vocab_list_new)) },
                             onClick = { listMenuExpanded = false; showNewListDialog = true }
                         )
                     }
@@ -263,7 +265,7 @@ fun DictionarySheet(
                 ) {
                     Icon(
                         if (saved) Icons.Default.Check else Icons.Default.Save,
-                        contentDescription = "ذخیره در لغات"
+                        contentDescription = stringResource(R.string.accessibility_save_vocabulary)
                     )
                 }
             }
@@ -371,7 +373,7 @@ fun DictionarySheet(
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(16.dp)) {
                             Text(
-                                "نمایش داخلی دیکشنری در دسترس نیست؛ از دکمهٔ کنار کلمه، بالا، برای باز کردن در مرورگر استفاده کنید.",
+                                stringResource(R.string.dictionary_webview_unavailable),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -385,12 +387,12 @@ fun DictionarySheet(
         var newListName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showNewListDialog = false },
-            title = { Text("لیست جدید") },
+            title = { Text(stringResource(R.string.vocab_list_new)) },
             text = {
                 OutlinedTextField(
                     value = newListName,
                     onValueChange = { newListName = it },
-                    label = { Text("نام لیست") },
+                    label = { Text(stringResource(R.string.vocab_list_name_field)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -399,10 +401,10 @@ fun DictionarySheet(
                 TextButton(onClick = {
                     vm.createList(newListName) { newId -> selectedListId = newId }
                     showNewListDialog = false
-                }) { Text("ساخت") }
+                }) { Text(stringResource(R.string.action_create)) }
             },
             dismissButton = {
-                TextButton(onClick = { showNewListDialog = false }) { Text("انصراف") }
+                TextButton(onClick = { showNewListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }

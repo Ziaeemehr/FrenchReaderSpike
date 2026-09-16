@@ -63,9 +63,8 @@ sealed class ContentSearchUiState {
  * Holds the "add/paste text" dialog's transient UI state (whether it's
  * open, and what prefilled title/body it should show) so a file pick or an
  * incoming share can open it the same way a bare tap on Add Text does.
- * Shared by Home and the (temporary) Library-predecessor TextsListScreen --
- * see the implementation plan's Task 6, "reuse and relocate current
- * search/add flows".
+ * Shared by Home and Library -- see the implementation plan's Task 6,
+ * "reuse and relocate current search/add flows".
  */
 @Stable
 class AddTextUiState {

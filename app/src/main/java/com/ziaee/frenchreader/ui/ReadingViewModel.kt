@@ -85,6 +85,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     fun load(textId: Long) {
         viewModelScope.launch {
             val doc = db.textDao().getById(textId) ?: return@launch
+            // Once per successful load, not on every playback tick -- feeds
+            // Home's Continue Reading and Library's "last read" sort.
+            db.textDao().markAccessed(textId, System.currentTimeMillis())
             val chunkTexts = TextChunker.chunk(doc.rawText)
             _state.value = ReadingUiState(
                 textDoc = doc,

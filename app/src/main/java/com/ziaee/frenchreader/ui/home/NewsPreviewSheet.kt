@@ -14,8 +14,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
@@ -45,9 +48,15 @@ fun NewsPreviewSheet(
             NewsCardImage(headline, modifier = Modifier.fillMaxWidth().height(180.dp))
             Spacer(Modifier.height(16.dp))
 
-            Text(headline.title, style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            Text(headline.snippet, style = MaterialTheme.typography.bodyMedium)
+            // French source content -- always LTR regardless of a Persian
+            // (RTL) interface, same as NewsCard and Reading-screen bodies.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Column {
+                    Text(headline.title, style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text(headline.snippet, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
             Spacer(Modifier.height(12.dp))
 
             Row {

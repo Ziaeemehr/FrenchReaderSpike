@@ -13,11 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
@@ -100,17 +102,17 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("لغات ذخیره‌شده") },
+                title = { Text(stringResource(R.string.vocab_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { meaningsVisible = !meaningsVisible }) {
                         Icon(
                             if (meaningsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "نمایش/پنهان‌کردن معنی"
+                            contentDescription = stringResource(R.string.accessibility_hide_meaning)
                         )
                     }
                 }
@@ -126,14 +128,14 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                     FilterChip(
                         selected = selectedScope == VOCAB_SCOPE_ALL,
                         onClick = { selectedScope = VOCAB_SCOPE_ALL },
-                        label = { Text("همه") }
+                        label = { Text(stringResource(R.string.vocab_list_all)) }
                     )
                 }
                 item {
                     FilterChip(
                         selected = selectedScope == VOCAB_SCOPE_UNFILED,
                         onClick = { selectedScope = VOCAB_SCOPE_UNFILED },
-                        label = { Text("بدون دسته") }
+                        label = { Text(stringResource(R.string.vocab_list_uncategorized)) }
                     )
                 }
                 items(lists, key = { it.id }) { list ->
@@ -149,7 +151,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                                 },
                                 modifier = Modifier.size(18.dp)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = "حذف لیست «${list.name}»")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_delete_list, list.name))
                             }
                         }
                     )
@@ -158,7 +160,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                     AssistChip(
                         onClick = { showNewListDialog = true },
                         leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        label = { Text("لیست جدید") }
+                        label = { Text(stringResource(R.string.vocab_list_new)) }
                     )
                 }
             }
@@ -178,7 +180,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                     Icon(Icons.Default.Style, contentDescription = null)
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        if (dueCount > 0) "مرور امروز ($dueCount کلمه آمادهٔ مرور)" else "چیزی برای مرور نیست",
+                        if (dueCount > 0) stringResource(R.string.vocab_due_today, dueCount) else stringResource(R.string.vocab_nothing_due),
                         modifier = Modifier.weight(1f)
                     )
                     if (dueCount > 0) Icon(Icons.Default.ChevronRight, contentDescription = null)
@@ -188,7 +190,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("جست‌وجو در لغات") },
+                label = { Text(stringResource(R.string.vocab_search_hint)) },
                 modifier = Modifier.fillMaxWidth().padding(12.dp),
                 singleLine = true
             )
@@ -196,8 +198,8 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         if (entries.isEmpty())
-                            "هنوز لغتی ذخیره نشده. در صفحهٔ مطالعه، روی کلمه‌ای نگه دارید تا دیکشنری باز شود."
-                        else "چیزی پیدا نشد."
+                            stringResource(R.string.vocab_empty_hint)
+                        else stringResource(R.string.vocab_search_no_results)
                     )
                 }
             } else {
@@ -233,12 +235,12 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
         var newListName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showNewListDialog = false },
-            title = { Text("لیست جدید") },
+            title = { Text(stringResource(R.string.vocab_list_new)) },
             text = {
                 OutlinedTextField(
                     value = newListName,
                     onValueChange = { newListName = it },
-                    label = { Text("نام لیست") },
+                    label = { Text(stringResource(R.string.vocab_list_name_field)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -247,10 +249,10 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                 TextButton(onClick = {
                     vm.createList(newListName) { newId -> selectedScope = newId }
                     showNewListDialog = false
-                }) { Text("ساخت") }
+                }) { Text(stringResource(R.string.action_create)) }
             },
             dismissButton = {
-                TextButton(onClick = { showNewListDialog = false }) { Text("انصراف") }
+                TextButton(onClick = { showNewListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -277,7 +279,7 @@ private fun VocabRow(
                 Text(entry.word, style = MaterialTheme.typography.titleMedium)
                 if (entry.learned) {
                     Spacer(Modifier.width(8.dp))
-                    AssistChip(onClick = onToggleLearned, label = { Text("یاد گرفتم") })
+                    AssistChip(onClick = onToggleLearned, label = { Text(stringResource(R.string.vocab_mark_known)) })
                 }
             }
             Text(
@@ -291,16 +293,16 @@ private fun VocabRow(
             }
             Spacer(Modifier.height(2.dp))
             Text(
-                "جعبه ${entry.leitnerBox}" + if (isDue) " • آمادهٔ مرور" else "",
+                stringResource(R.string.vocab_leitner_box, entry.leitnerBox) + if (isDue) stringResource(R.string.vocab_due_marker) else "",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         if (!entry.learned) {
-            TextButton(onClick = onToggleLearned) { Text("یاد گرفتم") }
+            TextButton(onClick = onToggleLearned) { Text(stringResource(R.string.vocab_mark_known)) }
         }
         IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Delete, contentDescription = "حذف")
+            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.accessibility_delete))
         }
     }
 }

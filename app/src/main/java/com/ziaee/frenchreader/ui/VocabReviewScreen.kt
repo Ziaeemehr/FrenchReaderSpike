@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.tts.TtsChunkRepository
@@ -152,10 +154,10 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("مرور لغات") },
+                title = { Text(stringResource(R.string.vocab_review_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
                     }
                 }
             )
@@ -173,13 +175,13 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(56.dp))
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        if (vm.reviewedCount > 0) "آفرین! ${vm.reviewedCount} کلمه مرور شد."
-                        else "چیزی برای مرور نیست.",
+                        if (vm.reviewedCount > 0) stringResource(R.string.vocab_review_done, vm.reviewedCount)
+                        else stringResource(R.string.vocab_nothing_due),
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center
                     )
                     Spacer(Modifier.height(20.dp))
-                    Button(onClick = onBack) { Text("بازگشت") }
+                    Button(onClick = onBack) { Text(stringResource(R.string.accessibility_back)) }
                 }
 
                 else -> Column(
@@ -227,7 +229,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                                         } else {
                                             Icon(
                                                 Icons.Default.VolumeUp,
-                                                contentDescription = "پخش صدای جمله",
+                                                contentDescription = stringResource(R.string.accessibility_play_sentence),
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }
@@ -236,7 +238,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                                 if (vm.sentenceAudioError) {
                                     Spacer(Modifier.height(4.dp))
                                     Text(
-                                        "دریافت صدا ممکن نشد.",
+                                        stringResource(R.string.error_audio_generation),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.error
                                     )
@@ -247,7 +249,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
 
                     if (!revealed) {
                         Button(onClick = { revealed = true }, modifier = Modifier.fillMaxWidth()) {
-                            Text("نمایش معنی")
+                            Text(stringResource(R.string.vocab_reveal_meaning))
                         }
                     } else {
                         Row(
@@ -255,17 +257,17 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             OutlinedButton(onClick = { vm.answer(false) }, modifier = Modifier.weight(1f)) {
-                                Text("بلد نبودم")
+                                Text(stringResource(R.string.vocab_answer_forgot))
                             }
                             Button(onClick = { vm.answer(true) }, modifier = Modifier.weight(1f)) {
-                                Text("بلد بودم")
+                                Text(stringResource(R.string.vocab_answer_knew))
                             }
                         }
                     }
 
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "جعبه فعلی: ${entry.leitnerBox}",
+                        stringResource(R.string.vocab_current_box, entry.leitnerBox),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
