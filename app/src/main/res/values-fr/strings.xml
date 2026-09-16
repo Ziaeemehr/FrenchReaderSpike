@@ -56,6 +56,14 @@
     <string name="preview_action_download_read">Télécharger et lire</string>
     <string name="preview_action_open_library">Ouvrir dans la bibliothèque</string>
     <string name="accessibility_article_image">Image de l’article</string>
+    <string name="library_sort_newest">Plus récent</string>
+    <string name="library_sort_title">Titre</string>
+    <string name="library_sort_last_read">Dernière lecture</string>
+    <string name="library_search_hint">Rechercher par titre ou source</string>
+    <string name="library_empty">Aucun texte ne correspond à votre recherche.</string>
+    <string name="library_delete_confirm_title">Supprimer ce texte ?</string>
+    <string name="library_delete_confirm_message">Cela supprime aussi son image enregistrée, le cas échéant. Action irréversible.</string>
+    <string name="accessibility_sort">Trier</string>
     <string name="error_generic">Un problème est survenu.</string>
     <string name="error_content_loading">Le contenu n’a pas pu être chargé.</string>
     <string name="error_translation_unavailable">La traduction n’est pas disponible.</string>

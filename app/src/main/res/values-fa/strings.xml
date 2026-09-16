@@ -56,6 +56,14 @@
     <string name="preview_action_download_read">دریافت و خواندن</string>
     <string name="preview_action_open_library">باز کردن در کتابخانه</string>
     <string name="accessibility_article_image">تصویر مقاله</string>
+    <string name="library_sort_newest">جدیدترین</string>
+    <string name="library_sort_title">عنوان</string>
+    <string name="library_sort_last_read">آخرین خوانش</string>
+    <string name="library_search_hint">جست‌وجو بر اساس عنوان یا منبع</string>
+    <string name="library_empty">متنی مطابق جست‌وجوی شما پیدا نشد.</string>
+    <string name="library_delete_confirm_title">این متن حذف شود؟</string>
+    <string name="library_delete_confirm_message">تصویر ذخیره‌شدهٔ آن نیز حذف می‌شود. این کار قابل بازگشت نیست.</string>
+    <string name="accessibility_sort">مرتب‌سازی</string>
     <string name="error_generic">مشکلی پیش آمد.</string>
     <string name="error_content_loading">محتوا بارگیری نشد.</string>
     <string name="error_translation_unavailable">ترجمه در دسترس نیست.</string>

@@ -56,6 +56,14 @@
     <string name="preview_action_download_read">Download and Read</string>
     <string name="preview_action_open_library">Open in Library</string>
     <string name="accessibility_article_image">Article image</string>
+    <string name="library_sort_newest">Newest</string>
+    <string name="library_sort_title">Title</string>
+    <string name="library_sort_last_read">Last read</string>
+    <string name="library_search_hint">Search by title or source</string>
+    <string name="library_empty">No texts match your search.</string>
+    <string name="library_delete_confirm_title">Delete this text?</string>
+    <string name="library_delete_confirm_message">This also removes its saved image, if any. This can\'t be undone.</string>
+    <string name="accessibility_sort">Sort</string>
     <string name="error_generic">Something went wrong.</string>
     <string name="error_content_loading">Content could not be loaded.</string>
     <string name="error_translation_unavailable">Translation is unavailable.</string>
