@@ -162,11 +162,28 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         updateChunk(index) { it.copy(status = ChunkStatus.LOADING, error = null) }
 
         val result = ttsRepo.getOrSynthesize(chunk.text, doc.voice, doc.ratePercent)
+
+        // A voice switch (or a fresh load()) can reset this text's chunks
+        // while this synthesis call is still in flight -- coroutine
+        // cancellation is cooperative and can't forcibly abort a
+        // network/native call that's already under way. If the voice this
+        // result was generated for is no longer the text's current voice,
+        // it belongs to a player timeline that no longer exists; inserting
+        // it now would silently corrupt the chunk<->player-item mapping
+        // (and desync the highlight from the audio) rather than fail
+        // loudly, so it's discarded instead.
+        if (_state.value.textDoc?.voice != doc.voice) return
+
         result.fold(
             onSuccess = { synth ->
+                // Record the chunk -> player-item mapping *before* touching
+                // the player. Adding the very first item to an emptied
+                // playlist (right after a voice switch) can fire
+                // onMediaItemTransition synchronously, and that listener
+                // looks up the chunk by this mapping -- if it ran before
+                // the mapping was set, the lookup would miss and the
+                // highlighted chunk would fall out of sync with the audio.
                 val itemIndex = player.mediaItemCount
-                player.addMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
-                if (player.playbackState == Player.STATE_IDLE) player.prepare()
                 updateChunk(index) {
                     it.copy(
                         status = ChunkStatus.READY,
@@ -174,6 +191,8 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                         playerItemIndex = itemIndex
                     )
                 }
+                player.addMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
+                if (player.playbackState == Player.STATE_IDLE) player.prepare()
             },
             onFailure = { e ->
                 updateChunk(index) {
@@ -223,6 +242,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     if (i < resumeIndex) c.copy(playerItemIndex = null)
                     else c.copy(status = ChunkStatus.PENDING, sentences = emptyList(), playerItemIndex = null, error = null)
                 },
+                currentChunkIndex = resumeIndex,
                 ready = false
             )
 
