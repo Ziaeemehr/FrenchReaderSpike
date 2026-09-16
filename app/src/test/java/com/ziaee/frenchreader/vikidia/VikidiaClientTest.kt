@@ -4,6 +4,55 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class VikidiaClientTest {
+    @Test
+    fun `converts MediaWiki wikitext headings to Markdown headings`() {
+        val json = """
+            {
+              "query": {
+                "pages": {
+                  "8826": {
+                    "pageid": 8826,
+                    "title": "Espace",
+                    "extract": "L'espace est l'étendue.\n\n\n== La conquête de l'espace ==\n\nLes humains ont été fascinés.\n\n\n== Notes ==\n\n\n== Voir aussi ==\nConquête de l'espace",
+                    "revisions": [ { "timestamp": "2026-03-30T20:04:50Z" } ]
+                  }
+                }
+              }
+            }
+        """.trimIndent()
+
+        val article = VikidiaClient.parseArticle(json, pageId = 8826)
+
+        requireNotNull(article)
+        assertEquals(
+            "L'espace est l'étendue.\n\n\n## La conquête de l'espace\n\nLes humains ont été fascinés.\n\n\n## Notes\n\n\n## Voir aussi\nConquête de l'espace",
+            article.text
+        )
+    }
+
+    @Test
+    fun `leaves plain text with no heading markup unchanged`() {
+        val json = """
+            {
+              "query": {
+                "pages": {
+                  "123": {
+                    "pageid": 123,
+                    "title": "Test",
+                    "extract": "Une phrase normale sans en-tête.",
+                    "revisions": []
+                  }
+                }
+              }
+            }
+        """.trimIndent()
+
+        val article = VikidiaClient.parseArticle(json, pageId = 123)
+
+        requireNotNull(article)
+        assertEquals("Une phrase normale sans en-tête.", article.text)
+    }
+
     // Trimmed real response shape from
     // https://fr.vikidia.org/w/api.php?action=query&list=search&srsearch=espace&srlimit=2&srprop=snippet|wordcount&format=json
     private val sampleSearchJson = """

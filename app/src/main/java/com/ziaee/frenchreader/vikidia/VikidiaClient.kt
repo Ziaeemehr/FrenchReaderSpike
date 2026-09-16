@@ -74,10 +74,26 @@ object VikidiaClient {
         val page = JSONObject(json).optJSONObject("query")?.optJSONObject("pages")
             ?.optJSONObject(pageId.toString()) ?: return null
         val title = page.optString("title", "")
-        val extract = page.optString("extract", "").trim()
+        val extract = convertWikiHeadings(page.optString("extract", "").trim())
         if (title.isBlank() || extract.isBlank()) return null
         val timestamp = page.optJSONArray("revisions")?.optJSONObject(0)?.optString("timestamp")
         return VikidiaArticle(title = title, text = extract, publishedAtMs = timestamp?.let(::parseIso8601))
+    }
+
+    /** Vikidia's `explaintext` extract keeps MediaWiki wikitext heading
+     * syntax (`== Titre ==`, `=== Sous-titre ===`) as literal text instead
+     * of stripping it, which TTS reads aloud verbatim. Converting it to the
+     * equivalent Markdown heading (same level, `N` `=` -> `N` `#`) routes it
+     * straight through this app's existing Markdown pipeline
+     * (MarkdownParser.kt's BlockType.HEADER), which already renders and
+     * reads headings correctly -- no other code needs to change. */
+    private fun convertWikiHeadings(text: String): String {
+        val headingLine = Regex("^(={2,6})\\s*(.+?)\\s*\\1$")
+        return text.lines().joinToString("\n") { line ->
+            headingLine.find(line.trim())?.let { m ->
+                "#".repeat(m.groupValues[1].length) + " " + m.groupValues[2]
+            } ?: line
+        }
     }
 
     private fun parseIso8601(timestamp: String): Long? = try {
