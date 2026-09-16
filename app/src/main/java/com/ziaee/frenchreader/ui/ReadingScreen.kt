@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -30,6 +33,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
 
@@ -57,6 +63,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val listState = rememberLazyListState()
     var autoScrollEnabled by remember { mutableStateOf(true) }
     var voiceMenuExpanded by remember { mutableStateOf(false) }
+    var showSourceInfoSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(textId) { vm.load(textId) }
     DisposableEffect(Unit) {
@@ -98,6 +105,11 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         }
                         IconButton(onClick = onOpenVocab) {
                             Icon(Icons.Default.MenuBook, contentDescription = "لغات ذخیره‌شده")
+                        }
+                        if (state.textDoc?.sourceUrl != null) {
+                            IconButton(onClick = { showSourceInfoSheet = true }) {
+                                Icon(Icons.Default.Info, contentDescription = "دربارهٔ این متن")
+                            }
                         }
                         Box {
                             IconButton(onClick = { voiceMenuExpanded = true }) {
@@ -202,6 +214,38 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             sentence = sentence,
             onDismiss = { dictionaryTarget = null }
         )
+    }
+
+    if (showSourceInfoSheet) {
+        state.textDoc?.let { doc ->
+            SourceInfoSheet(doc = doc, onDismiss = { showSourceInfoSheet = false })
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SourceInfoSheet(doc: com.ziaee.frenchreader.data.TextDocument, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(doc.sourceName ?: "منبع", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                doc.sourceUrl?.let { url ->
+                    IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
+                        Icon(Icons.Default.OpenInBrowser, contentDescription = "باز کردن منبع در مرورگر")
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            doc.author?.let { Text("نویسنده: $it") }
+            doc.license?.let { Text("مجوز: $it") }
+            doc.publishedAt?.let {
+                val dateLabel = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it))
+                Text("تاریخ انتشار: $dateLabel")
+            }
+        }
     }
 }
 
