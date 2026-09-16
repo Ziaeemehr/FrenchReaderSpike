@@ -25,16 +25,6 @@ data class NewsItem(
     val publishedAtMs: Long?
 )
 
-/** Transitional result type for [NewsFetcher.fetchLatest] -- the OLD
- * single-item, dedup-aware news flow that `TextsListScreen.kt`'s news
- * dropdown still calls. Deleted in Task 5 of the unified-content-search
- * plan once that dropdown is removed; do not add new callers of this. */
-sealed class NewsFetchResult {
-    data class NewItem(val item: NewsItem) : NewsFetchResult()
-    data object NoNewItem : NewsFetchResult()
-    data class Error(val message: String) : NewsFetchResult()
-}
-
 /**
  * Fetches up to [limit] items from an RSS feed, in feed order (newest
  * first, by RSS convention). Dependency-free: HttpURLConnection + Android's
@@ -43,20 +33,6 @@ sealed class NewsFetchResult {
 object NewsFetcher {
     suspend fun fetchItems(feedUrl: String, limit: Int = 25): List<NewsItem> = withContext(Dispatchers.IO) {
         parseItems(httpGet(feedUrl), limit)
-    }
-
-    /** Transitional: the old "today's latest, skip if already seen" flow,
-     * now built on top of [fetchItems] instead of its own parsing. See
-     * [NewsFetchResult]'s kdoc -- deleted in Task 5. */
-    suspend fun fetchLatest(source: NewsSource, lastGuid: String?): NewsFetchResult = withContext(Dispatchers.IO) {
-        try {
-            val item = fetchItems(source.feedUrl, limit = 1).firstOrNull()
-                ?: return@withContext NewsFetchResult.Error("فید خالی یا در قالب نامعتبر بود")
-            if (lastGuid != null && item.guid == lastGuid) NewsFetchResult.NoNewItem
-            else NewsFetchResult.NewItem(item)
-        } catch (e: Exception) {
-            NewsFetchResult.Error(e.message ?: e.toString())
-        }
     }
 
     private fun httpGet(urlString: String): String {
