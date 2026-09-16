@@ -92,3 +92,25 @@ data class VocabList(
     val name: String,
     val createdAtMs: Long = System.currentTimeMillis()
 )
+
+/** One row per vocab-review answer, feeding the Statistics screen's
+ * accuracy and streak calculations. Written once per [VocabEntry] answer,
+ * never updated or deleted. */
+@Entity(tableName = "review_log", indices = [Index("timestampMs")])
+data class ReviewLogEntry(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val entryId: Long,
+    val timestampMs: Long,
+    val knew: Boolean,
+    val boxBefore: Int,
+    val boxAfter: Int
+)
+
+/** One row per calendar day with any listening activity, accumulated from
+ * [ReadingViewModel][com.ziaee.frenchreader.ui.ReadingViewModel]'s position
+ * ticker. [date] is `LocalDate.toString()` (`yyyy-MM-dd`). */
+@Entity(tableName = "activity_log")
+data class ActivityLogEntry(
+    @PrimaryKey val date: String,
+    val listeningMs: Long
+)

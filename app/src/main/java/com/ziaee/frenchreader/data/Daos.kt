@@ -20,6 +20,12 @@ interface TextDao {
     @Query("SELECT * FROM texts WHERE id = :id")
     suspend fun getById(id: Long): TextDocument?
 
+    // One-shot snapshot for the Statistics screen -- same reasoning as
+    // VocabDao.getAllOnce(): a stable list to compute totals/completion
+    // from, not a live Flow that would recompute mid-calculation.
+    @Query("SELECT * FROM texts")
+    suspend fun getAllOnce(): List<TextDocument>
+
     @Query("SELECT * FROM texts WHERE externalKey = :externalKey LIMIT 1")
     suspend fun findByExternalKey(externalKey: String): TextDocument?
 
@@ -104,4 +110,51 @@ interface VocabListDao {
 
     @Delete
     suspend fun delete(list: VocabList)
+}
+
+@Dao
+interface ReviewLogDao {
+    @Insert
+    suspend fun insert(entry: ReviewLogEntry)
+
+    @Query("SELECT COUNT(*) FROM review_log WHERE timestampMs >= :sinceMs")
+    suspend fun countSince(sinceMs: Long): Int
+
+    @Query("SELECT COUNT(*) FROM review_log WHERE knew = 1")
+    suspend fun countKnew(): Int
+
+    @Query("SELECT COUNT(*) FROM review_log")
+    suspend fun countTotal(): Int
+
+    @Query("SELECT DISTINCT date(timestampMs / 1000, 'unixepoch', 'localtime') FROM review_log")
+    suspend fun distinctActiveDates(): List<String>
+}
+
+@Dao
+interface ActivityLogDao {
+    @Query("SELECT * FROM activity_log WHERE date = :date")
+    suspend fun getForDate(date: String): ActivityLogEntry?
+
+    @Insert
+    suspend fun insert(entry: ActivityLogEntry)
+
+    @Update
+    suspend fun update(entry: ActivityLogEntry)
+
+    // Read-modify-write instead of an SQL upsert -- see Global Constraints.
+    @Transaction
+    suspend fun addListening(date: String, deltaMs: Long) {
+        val existing = getForDate(date)
+        if (existing == null) {
+            insert(ActivityLogEntry(date, deltaMs))
+        } else {
+            update(existing.copy(listeningMs = existing.listeningMs + deltaMs))
+        }
+    }
+
+    @Query("SELECT * FROM activity_log WHERE date IN (:dates)")
+    suspend fun getForDates(dates: List<String>): List<ActivityLogEntry>
+
+    @Query("SELECT date FROM activity_log WHERE listeningMs > 0")
+    suspend fun activeDates(): List<String>
 }
