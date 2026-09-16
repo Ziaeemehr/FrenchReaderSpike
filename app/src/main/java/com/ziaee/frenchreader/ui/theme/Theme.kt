@@ -2,13 +2,19 @@ package com.ziaee.frenchreader.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
+import com.ziaee.frenchreader.R
 
 /** Which color scheme the whole app uses -- see ROADMAP.md section 7. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -26,8 +32,27 @@ internal fun resolveDarkTheme(mode: ThemeMode, systemInDarkTheme: Boolean): Bool
 fun FrenchReaderTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
     val darkTheme = resolveDarkTheme(themeMode, isSystemInDarkTheme())
     val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
-    MaterialTheme(colorScheme = colorScheme, content = content)
+    MaterialTheme(colorScheme = colorScheme, typography = interfaceTypography(), content = content)
 }
+
+val Vazirmatn = FontFamily(
+    Font(R.font.vazirmatn_regular, FontWeight.Normal),
+    Font(R.font.vazirmatn_medium, FontWeight.Medium)
+)
+
+@Composable
+private fun interfaceTypography() =
+    if (LocalConfiguration.current.locales[0].language == "fa") {
+        Typography().let { base ->
+            base.copy(
+                bodyLarge = base.bodyLarge.copy(fontFamily = Vazirmatn),
+                bodyMedium = base.bodyMedium.copy(fontFamily = Vazirmatn),
+                titleLarge = base.titleLarge.copy(fontFamily = Vazirmatn),
+                titleMedium = base.titleMedium.copy(fontFamily = Vazirmatn),
+                labelLarge = base.labelLarge.copy(fontFamily = Vazirmatn)
+            )
+        }
+    } else Typography()
 
 /** Which fixed color set the reading screen uses -- independent of
  * [ThemeMode], like a book-reader app's own reading theme. See
@@ -79,11 +104,11 @@ fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (bac
 
 /** How large the reading screen's text renders -- a multiplier applied to
  * every hardcoded sp value in ReadingScreen.kt. See ROADMAP.md section 7. */
-enum class FontScale(val multiplier: Float, val label: String) {
-    SMALL(0.85f, "کوچک"),
-    MEDIUM(1f, "متوسط"),
-    LARGE(1.15f, "بزرگ"),
-    XLARGE(1.3f, "خیلی‌بزرگ")
+enum class FontScale(val multiplier: Float) {
+    SMALL(0.85f),
+    MEDIUM(1f),
+    LARGE(1.15f),
+    XLARGE(1.3f)
 }
 
 /** Live, in-memory mirror of the three appearance settings -- read

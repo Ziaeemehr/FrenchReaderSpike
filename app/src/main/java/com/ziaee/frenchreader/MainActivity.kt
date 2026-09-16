@@ -5,8 +5,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -19,6 +19,8 @@ import androidx.navigation.navArgument
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.ziaee.frenchreader.data.AppearancePrefs
+import com.ziaee.frenchreader.data.LocalePrefs
+import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.ui.ReadingScreen
 import com.ziaee.frenchreader.ui.SettingsScreen
 import com.ziaee.frenchreader.ui.TextsListScreen
@@ -30,10 +32,12 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
 import com.ziaee.frenchreader.util.SharedTextHolder
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        applyAppLanguage(LocalePrefs.get(this))
 
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
