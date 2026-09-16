@@ -22,7 +22,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.NewsPrefs
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.news.NewsFetchResult
+import com.ziaee.frenchreader.news.NewsFetcher
+import com.ziaee.frenchreader.news.NewsSource
 import com.ziaee.frenchreader.util.SharedTextHolder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,10 +35,22 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+/** Result of the last "دریافت خبر امروز" tap, surfaced as a Snackbar (or a
+ * loading spinner while in flight) -- see [TextsListViewModel.fetchNews]. */
+sealed class NewsFetchUiState {
+    data object Idle : NewsFetchUiState()
+    data object Loading : NewsFetchUiState()
+    data class NoNewItem(val source: NewsSource) : NewsFetchUiState()
+    data class FetchError(val source: NewsSource, val message: String) : NewsFetchUiState()
+}
+
 class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val _texts = MutableStateFlow<List<TextDocument>>(emptyList())
     val texts: StateFlow<List<TextDocument>> = _texts.asStateFlow()
+
+    var newsFetchState by mutableStateOf<NewsFetchUiState>(NewsFetchUiState.Idle)
+        private set
 
     init {
         viewModelScope.launch {
@@ -54,6 +70,39 @@ class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     fun delete(doc: TextDocument) {
         viewModelScope.launch { db.textDao().delete(doc) }
     }
+
+    /**
+     * Fetches [source]'s latest RSS item and, if it's new (see
+     * [NewsPrefs]'s per-source guid tracking), creates a text from it and
+     * opens it via [onOpen] -- exactly like opening a text imported from
+     * Share/file. See ROADMAP.md section 1.
+     */
+    fun fetchNews(source: NewsSource, onOpen: (Long) -> Unit) {
+        val context = getApplication<Application>()
+        viewModelScope.launch {
+            newsFetchState = NewsFetchUiState.Loading
+            NewsPrefs.setLastSourceId(context, source.id)
+            val lastGuid = NewsPrefs.getLastImportedGuid(context, source.id)
+            when (val result = NewsFetcher.fetchLatest(source, lastGuid)) {
+                is NewsFetchResult.NewItem -> {
+                    val item = result.item
+                    val dateLabel = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                    val id = db.textDao().insert(
+                        TextDocument(title = "[$dateLabel] ${item.title}", rawText = item.body)
+                    )
+                    NewsPrefs.setLastImportedGuid(context, source.id, item.guid)
+                    newsFetchState = NewsFetchUiState.Idle
+                    onOpen(id)
+                }
+                NewsFetchResult.NoNewItem -> newsFetchState = NewsFetchUiState.NoNewItem(source)
+                is NewsFetchResult.Error -> newsFetchState = NewsFetchUiState.FetchError(source, result.message)
+            }
+        }
+    }
+
+    fun dismissNewsMessage() {
+        newsFetchState = NewsFetchUiState.Idle
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,6 +114,25 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
 
     var dialogPrefill by remember { mutableStateOf<Pair<String, String>?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var newsMenuExpanded by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Surfaces the outcome of "دریافت خبر امروز" as a one-off Snackbar; a
+    // successful fetch instead navigates straight to the new text (handled
+    // in the onClick below), so there's nothing to show for that case here.
+    LaunchedEffect(vm.newsFetchState) {
+        when (val s = vm.newsFetchState) {
+            is NewsFetchUiState.NoNewItem -> {
+                snackbarHostState.showSnackbar("خبر جدیدی از «${s.source.label}» منتشر نشده")
+                vm.dismissNewsMessage()
+            }
+            is NewsFetchUiState.FetchError -> {
+                snackbarHostState.showSnackbar("دریافت خبر از «${s.source.label}» ممکن نشد: ${s.message}")
+                vm.dismissNewsMessage()
+            }
+            else -> {}
+        }
+    }
 
     // A share/open-with intent arriving in MainActivity lands here and
     // pre-fills the add-text dialog with the shared title/body.
@@ -96,6 +164,32 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
             TopAppBar(
                 title = { Text("متن‌ها") },
                 actions = {
+                    Box {
+                        IconButton(
+                            onClick = { newsMenuExpanded = true },
+                            enabled = vm.newsFetchState !is NewsFetchUiState.Loading
+                        ) {
+                            if (vm.newsFetchState is NewsFetchUiState.Loading) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Newspaper, contentDescription = "دریافت خبر امروز")
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = newsMenuExpanded,
+                            onDismissRequest = { newsMenuExpanded = false }
+                        ) {
+                            NewsSource.entries.forEach { source ->
+                                DropdownMenuItem(
+                                    text = { Text(source.label) },
+                                    onClick = {
+                                        newsMenuExpanded = false
+                                        vm.fetchNews(source) { id -> onOpenText(id) }
+                                    }
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = { filePicker.launch(arrayOf("text/plain", "text/markdown", "text/*")) }) {
                         Icon(Icons.Default.FileOpen, contentDescription = "افزودن از فایل (TXT/MD)")
                     }
@@ -105,6 +199,7 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = { dialogPrefill = null; showAddDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "افزودن متن")
