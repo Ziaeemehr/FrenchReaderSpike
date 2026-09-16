@@ -223,14 +223,107 @@ data class ContentArticle(val title: String, val text: String, val sourceUrl: St
 
 ## ۷. تنظیمات و شخصی‌سازی ظاهر
 
-وضعیت: **ایده — طراحی نشده، بعد از تکمیل بخش‌های بالا در نظر گرفته بشه.**
+وضعیت: **طرح — آمادهٔ پیاده‌سازی.**
 
-یه صفحهٔ «تنظیمات» جدا که چند مورد شخصی‌سازی ظاهر رو در اختیار کاربر بذاره:
-- **تم روشن/تیره** (Light/Dark) — احتمالاً با پیروی از تنظیم سیستم به‌صورت پیش‌فرض، با امکان override دستی.
-- **اندازهٔ فونت متن خوانش** — چون همین الان `ReadingScreen.kt` مقادیر `fontSize`/`lineHeight` رو hardcode داره (۱۹sp برای پاراگراف، مقادیر متفاوت برای هدرها)، این باید به یه ضریب قابل‌تنظیم (کوچک/متوسط/بزرگ/خیلی‌بزرگ) تبدیل بشه.
-- **رنگ پس‌زمینهٔ صفحهٔ خوانش** — `ReadingPalette` همین الان یه شیء ثابت با رنگ‌های hardcode شده‌ست (پس‌زمینهٔ کاغذی گرم)؛ باید چند پالت جایگزین (مثلاً پس‌زمینهٔ سفید خالص، یا تیرهٔ کم‌کنتراست برای مطالعهٔ شبانه) قابل انتخاب بشه.
+یه صفحهٔ «تنظیمات» جدید که سه مورد شخصی‌سازی ظاهر رو در اختیار کاربر بذاره: تم روشن/تیرهٔ کل اپ، رنگ پس‌زمینهٔ صفحهٔ خوانش (مستقل از تم کل اپ)، و اندازهٔ فونت متن خوانش. تغییرات فوری روی صفحات باز اعمال می‌شن، بدون نیاز به ری‌استارت اپ.
 
-نیاز به یه مکانیزم ذخیرهٔ تنظیمات (شبیه `VocabPrefs`/`NewsPrefs` قبلی که با `SharedPreferences` کار می‌کردن) و یه `CompositionLocal` یا state سراسری برای پخش این تنظیمات به `ReadingScreen`/بقیهٔ صفحات داره. طراحی فنی دقیق و لیست کامل گزینه‌ها موکول به وقتی که این آیتم در اولویت قرار بگیره.
+### وضعیت فعلی کد (بررسی شد)
+
+- هیچ `Theme.kt`ای در پروژه وجود نداره؛ تنها theming موجود یه `MaterialTheme {}` خالی در `MainActivity.kt` هست (بدون آرگومان `colorScheme`)، که یعنی اپ همیشه روی `lightColorScheme()` پیش‌فرض قفله و به تنظیم روشن/تیرهٔ سیستم اصلاً واکنش نشون نمی‌ده.
+- `TextsListScreen.kt`، `VocabListScreen.kt`، `DictionarySheet.kt`، `VocabReviewScreen.kt` همگی از `MaterialTheme.colorScheme`/`MaterialTheme.typography` استفاده می‌کنن (هیچ رنگ hardcode‌شده‌ای ندارن) — پس با اضافه‌شدن یه `ColorScheme` تیره، خودکار هماهنگ می‌شن.
+- `ReadingScreen.kt` تنها استثناست: یه `ReadingPalette` ثابت (`Background`/`Ink`/`InkFaded`/`HighlightBg`/`HighlightInk`/`Divider`/`Accent`) با رنگ‌های hardcode (پس‌زمینهٔ کاغذی گرم) که در ~۲۵ جا استفاده شده.
+- اندازه‌های فونت هم در `ReadingScreen.kt` پخش‌ان: پاراگراف/آیتم‌لیست `19.sp`/۲۹–۳۱sp، ترجمه ۱۳–۱۴sp، و تابع‌های سطح‌محور `headerFontSize(level)`/`headerLineHeight(level)`.
+- الگوی ذخیرهٔ تنظیمات موجود (`VocabPrefs.kt`): یه `object` ساده با `SharedPreferences(name, MODE_PRIVATE)`، متدهای sync گرفتن/ست‌کردن با `Context` به‌عنوان پارامتر اول، بدون Flow/coroutine. مبنای `AppearancePrefs.kt` جدید همین الگوئه.
+- ناوبری: یه `NavHost` واحد در `MainActivity.kt` با روت‌های `texts`/`reading/{textId}`/`vocab`/`vocab_review/{scope}`؛ روت `settings` جدید همین‌جا اضافه می‌شه.
+- هیچ `CompositionLocal` سفارشی‌ای در پروژه نیست (فقط `LocalLayoutDirection` استاندارد برای LTR کردن متن فرانسوی استفاده شده).
+
+### طراحی فنی
+
+**۱. تم روشن/تیرهٔ کل اپ** — فایل جدید `ui/theme/Theme.kt`:
+
+```kotlin
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+@Composable
+fun FrenchReaderTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+    val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
+    MaterialTheme(colorScheme = colorScheme, content = content)
+}
+```
+
+جایگزین `MaterialTheme {}` فعلی در `MainActivity.kt` می‌شه (بدون dynamic color؛ `minSdk 26` پایین‌تر از حداقل API 31 لازم برای `dynamicColorScheme` هست و اضافه‌کردنش نیاز به guard جدا داره که فعلاً لازم نیست).
+
+**۲. رنگ پس‌زمینهٔ خوانش (مستقل از تم کل اپ)** — ۳ پالت ثابت، همون‌جا در `Theme.kt`:
+
+```kotlin
+enum class ReadingBackground { SEPIA, WHITE, DARK }
+
+data class ReadingPalette(
+    val background: Color, val ink: Color, val inkFaded: Color,
+    val highlightBg: Color, val highlightInk: Color,
+    val divider: Color, val accent: Color
+)
+
+fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (background) {
+    ReadingBackground.SEPIA -> ReadingPalette(
+        background = Color(0xFFFBF6EC), ink = Color(0xFF2E2A22), inkFaded = Color(0xFF6B6252),
+        highlightBg = Color(0xFFF6D97A), highlightInk = Color(0xFF2E2A22),
+        divider = Color(0xFFE6DDC8), accent = Color(0xFF8A6D3B)
+    ) // مقادیر دقیقاً همون ReadingPalette فعلی -- پیش‌فرض، بدون تغییر ظاهری برای کسی که تنظیمات رو دست نمی‌زنه
+    ReadingBackground.WHITE -> ReadingPalette(
+        background = Color(0xFFFFFFFF), ink = Color(0xFF1A1A1A), inkFaded = Color(0xFF5C5C5C),
+        highlightBg = Color(0xFFFFE082), highlightInk = Color(0xFF1A1A1A),
+        divider = Color(0xFFE0E0E0), accent = Color(0xFF3B6EA8)
+    )
+    ReadingBackground.DARK -> ReadingPalette(
+        background = Color(0xFF1A1A1A), ink = Color(0xFFE8E4DA), inkFaded = Color(0xFFA8A296),
+        highlightBg = Color(0xFF4A3F1E), highlightInk = Color(0xFFF6D97A),
+        divider = Color(0xFF3A3A3A), accent = Color(0xFFD8B978)
+    )
+}
+```
+
+`ReadingScreen.kt`'s `private object ReadingPalette` حذف می‌شه؛ همه‌جا که `ReadingPalette.X` صدا زده می‌شه به `palette.X` تبدیل می‌شه (`val palette = readingPaletteFor(...)` یک‌بار بالای composable). مستقل از تم کل اپ باقی می‌مونه — کاربر می‌تونه مثلاً تم اپ روشن باشه ولی پس‌زمینهٔ خوانش تیره انتخاب کنه.
+
+**۳. اندازهٔ فونت خوانش** — ۴ ضریب ثابت، همون‌جا:
+
+```kotlin
+enum class FontScale(val multiplier: Float, val label: String) {
+    SMALL(0.85f, "کوچک"), MEDIUM(1f, "متوسط"), LARGE(1.15f, "بزرگ"), XLARGE(1.3f, "خیلی‌بزرگ")
+}
+```
+
+هر `fontSize`/`lineHeight` هاردکد در `ReadingScreen.kt` (پاراگراف، آیتم‌لیست، ترجمه، `headerFontSize`/`headerLineHeight`) در `fontScale.multiplier` ضرب می‌شه.
+
+**۴. ذخیره‌سازی** — `data/AppearancePrefs.kt` جدید، دقیقاً با الگوی `VocabPrefs.kt`: سه جفت getter/setter (`getThemeMode`/`setThemeMode`, `getReadingBackground`/`setReadingBackground`, `getFontScale`/`setFontScale`)، هر کدوم یه `String` (نام enum) روی `SharedPreferences` ذخیره می‌کنن، پیش‌فرض‌ها `SYSTEM`/`SEPIA`/`MEDIUM`.
+
+**۵. پخش زنده‌ی تنظیمات بدون ری‌استارت** — چون `AppearancePrefs` sync و بدون Flow هست، یه state holder سبک در سطح اپ لازمه که هم `SettingsScreen` (موقع تغییر) و هم `MainActivity`/`ReadingScreen` (برای خوندن) بهش ارجاع بدن:
+
+```kotlin
+object AppearanceState {
+    var themeMode by mutableStateOf(ThemeMode.SYSTEM)
+    var readingBackground by mutableStateOf(ReadingBackground.SEPIA)
+    var fontScale by mutableStateOf(FontScale.MEDIUM)
+}
+```
+
+مقداردهی اولیه از `AppearancePrefs` در `MainActivity.onCreate`؛ `SettingsScreen` هم‌زمان `AppearancePrefs.setX(...)` (ماندگاری) و `AppearanceState.x = ...` (بازتاب فوری در UI) رو صدا می‌زنه. بدون DI/ViewModel اضافه -- منطبق با سبک ساده و بدون‌فریم‌ورک بقیهٔ پروژه.
+
+**۶. صفحهٔ تنظیمات و ناوبری** — `ui/SettingsScreen.kt` جدید (Scaffold+TopAppBar+Column، مثل بقیهٔ صفحات)، سه بخش رادیویی (تم/پس‌زمینه/فونت). روت `"settings"` به `AppNavHost` در `MainActivity.kt` اضافه می‌شه؛ یه آیکون تنظیمات جدید در نوار بالای `TextsListScreen.kt` (کنار آیکون‌های موجود) بازش می‌کنه.
+
+### فایل‌های تغییریافته/جدید
+
+- ایجاد: `ui/theme/Theme.kt` (`FrenchReaderTheme`, `ThemeMode`, `ReadingBackground`, `ReadingPalette` + `readingPaletteFor`, `FontScale`, `AppearanceState`)
+- ایجاد: `data/AppearancePrefs.kt`
+- ایجاد: `ui/SettingsScreen.kt`
+- تغییر: `MainActivity.kt` (تم جدید + روت `settings`)
+- تغییر: `ReadingScreen.kt` (حذف `ReadingPalette` قدیمی، استفاده از `palette`/`fontScale.multiplier` در همهٔ ~۲۵ + ~۱۰ جای قبلی)
+- تغییر: `TextsListScreen.kt` (آیکون ورود به تنظیمات)
 
 ---
 *این سند فقط یک برنامهٔ ثبت‌شده است.*
