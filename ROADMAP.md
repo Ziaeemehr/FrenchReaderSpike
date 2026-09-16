@@ -97,5 +97,58 @@
 - **ویجت صفحهٔ اصلی اندروید**: تعداد لغات آمادهٔ مرور امروز رو نشون بده و مستقیم به صفحهٔ مرور ببره (شبیه ویجت دولینگو). نیاز به `AppWidgetProvider` جدا و طراحی layout XML جدا — پیچیدگی متوسط، جدا از بقیهٔ اپ.
 - **خروجی Anki/CSV**: تبدیل جدول `vocab` به فایل `.csv` (ساده) یا فرمت `.apkg` اَنکی (نیاز به کتابخانهٔ genanki یا نوشتن فرمت SQLite خاص انکی — کمی پیچیده‌تر از CSV).
 
+## ۶. منابع بیشتر برای مطالعه (فراتر از خبر RSS)
+
+وضعیت: **طرح/برنامه — بخش Vikidia آماده برای پیاده‌سازی؛ بقیه هنوز طراحی نشده‌اند.**
+
+### پس‌زمینه: مشکل فعلی خبر RSS
+
+بعد از پیاده‌سازی بخش ۱، مشخص شد با فچ زنده هر دو فید مشکلی وجود داره: `<description>`/`<content:encoded>` هر دو منبع فقط یکی-دو جملهٔ خلاصه/تبلیغاتی می‌دن، نه متن کامل:
+- **France Info** (`titres.rss`): `<description>` یک یا دو جملهٔ خلاصه‌ست؛ فید اصلاً `content:encoded` نداره. متن کامل فقط در صفحهٔ خبر (لینک `<link>`) هست.
+- **RFI Facile**: `<description>` و `content:encoded` هر دو یک جملهٔ تبلیغاتی‌ان («... Retrouvez votre épisode avec la transcription synchronisée ... : https://rfi.my/...») که به صفحهٔ رونویسی لینک می‌دن، نه خود رونویسی.
+
+در نتیجه کاربر به‌جای مقاله فقط چند کلمه/جمله می‌بینه. **اصلاح این دو منبع در scope این بخش نیست** — به‌عنوان یک زیرپروژهٔ جدا (بعد از Vikidia) باقی می‌مونه؛ راه‌حلش گرفتن آیتم آخر از RSS برای *کشف* خبر جدید، و بعد fetch متن کامل از صفحهٔ `<link>` همون خبره.
+
+### تفکیک به زیرپروژه‌ها
+
+طبق بررسی منابع فرانسوی مناسب زبان‌آموز، شش منبع/زیرسیستم مستقل شناسایی شد که هرکدوم باید جدا طراحی و پیاده بشن:
+
+| زیرسیستم | وضعیت |
+|---|---|
+| **Vikidia** (مقالهٔ ساده، جست‌وجوپذیر) | **این سند — آمادهٔ پیاده‌سازی** |
+| اصلاح RFI/France Info (متن کامل به‌جای خلاصه) | طراحی نشده |
+| Wikisource (ادبیات، انتخاب فصل) | طراحی نشده |
+| Project Gutenberg OPDS (کتاب) | طراحی نشده |
+| The Conversation France (تحلیل، سطح بالاتر) | طراحی نشده |
+| Gallica (آرشیو تاریخی، OCR) | طراحی نشده |
+
+هر کدوم یک sub-spec/پیاده‌سازی جدا می‌گیرن. این سند فقط **Vikidia** رو کامل طراحی می‌کنه.
+
+### طراحی فنی: Vikidia
+
+**API:** بدون کلید/ثبت‌نام، MediaWiki API استاندارد روی `fr.vikidia.org`. مجوز محتوا: **CC BY-SA 3.0** (تأیید شده از `action=query&meta=siteinfo&siprop=rightsinfo`).
+
+- جست‌وجو: `GET /w/api.php?action=query&list=search&srsearch=<query>&srlimit=10&srprop=snippet|wordcount&format=json` — یک درخواست، همون‌جا عنوان + خلاصه (با تگ `<span class="searchmatch">`) + تعداد کلمه (به‌عنوان تخمین طول) رو می‌ده؛ نیازی به fetch جدا برای هر نتیجهٔ لیست نیست.
+- گرفتن مقالهٔ کامل: `GET /w/api.php?action=query&prop=extracts|revisions&explaintext=1&rvprop=timestamp&pageids=<id>&format=json` — متن plain-text تمیز (خود API ویکی‌تکست/HTML رو پاک می‌کنه، برخلاف RSS نیازی به strip دستی نیست) + تاریخ آخرین ویرایش.
+
+هر دو با همون الگوی `HttpURLConnection` GET بدون کتابخونهٔ اضافه که `NewsFetcher` استفاده می‌کنه (User-Agent، timeout ۱۵ ثانیه)، و پارس JSON با `org.json` استاندارد اندروید. کد در `VikidiaClient.kt` (پکیج جدید، مثلاً `com.ziaee.frenchreader.vikidia`). تابع `stripHtml` از `NewsFetcher.kt` به `util/HtmlUtil.kt` مشترک منتقل می‌شه تا هم `NewsFetcher` هم `VikidiaClient` (برای پاک کردن تگ `searchmatch` از خلاصه‌ها) ازش استفاده کنن.
+
+**مدل داده:** پنج فیلد nullable جدید به `TextDocument` (`Entities.kt`): `sourceUrl: String?`, `sourceName: String?`, `author: String?`, `license: String?`, `publishedAt: Long?` (epoch ms). یک `MIGRATION_3_4` دقیقاً به سبک `MIGRATION_2_3` موجود در `AppDatabase.kt` (پنج `ALTER TABLE texts ADD COLUMN ... TEXT`)، و `@Database(version = 4, ...)` + `.addMigrations(MIGRATION_2_3, MIGRATION_3_4)`.
+برای Vikidia: `sourceName = "Vikidia"`, `author = null` (ویکی مشارکتیه، بدون نویسندهٔ واحد)، `license = "CC BY-SA 3.0"`, `sourceUrl = "https://fr.vikidia.org/wiki/<عنوان URL-encode شده>"`, `publishedAt` از `revisions[0].timestamp` (ISO 8601 → epoch ms).
+متن‌های خبری فعلی (RSS) و متن‌های دستی/فایلی این فیلدها رو `null` می‌ذارن — بدون تغییر رفتار موجود.
+
+**UI (`TextsListScreen.kt`):** یک آیکون **جدید** («پیدا کردن مطلب»، مثلاً `Icons.Default.Search`) کنار آیکون فعلی خبر (`Newspaper`) در `TopAppBar` اضافه می‌شه؛ آیکون/Dropdown فعلی RFI/France Info دست‌نخورده می‌مونه، کاملاً جدا. با لمس، یک `ModalBottomSheet` باز می‌شه (هم‌سبک `DictionarySheet` موجود):
+1. بالای sheet: یک `OutlinedTextField` برای موضوع/کلیدواژه + دکمهٔ جست‌وجو (submit روی IME action یا دکمه، بدون live-search).
+2. پایین: لیست تا ۱۰ نتیجه (عنوان، خلاصه، تعداد کلمه به‌عنوان تخمین طول تقریبی).
+3. لمس یک نتیجه → `VikidiaClient.fetchArticle(pageId)` (با spinner روی همون آیتم) → ساخت `TextDocument` → باز شدن صفحهٔ مطالعه، دقیقاً مثل رفتار فعلی RFI/France Info در `TextsListViewModel.fetchNews`.
+
+فیلتر سطح/طول و انتخاب چندتایی (که در طراحی اولیهٔ کاربر مطرح شده بود) در این مرحله **در scope نیست** — تک‌انتخابی، بدون فیلتر سطح (تخمین سطح دشواری نیاز به منطق جدا داره، بخش ۵ رو ببینید).
+
+**نمایش منبع در صفحهٔ مطالعه (`ReadingScreen.kt`):** یک آیکون info کوچک به `TopAppBar` اضافه می‌شه، **فقط وقتی `sourceUrl != null`** (برای متن‌های فعلی نامرئی می‌مونه). لمسش یک `ModalBottomSheet` کوچیک باز می‌کنه: نام منبع، مجوز، تاریخ انتشار، دکمهٔ «باز کردن منبع در مرورگر» (`Intent.ACTION_VIEW`، هم‌سبک دکمهٔ مشابه در `DictionarySheet`).
+
+**خطاها:** جست‌وجوی ناموفق (بدون اینترنت/خطای API) → Snackbar با پیام خطا. بدون نتیجه → پیام متنی داخل sheet. دانلود مقالهٔ انتخابی ناموفق → Snackbar، ولی sheet باز می‌مونه تا کاربر نتیجهٔ دیگه‌ای امتحان کنه (sheet بسته نمی‌شه).
+
+**تست:** پروژه فعلاً تست خودکار نداره (نه برای `NewsFetcher` هم)، پس تأیید با اجرای واقعی روی دستگاه/شبیه‌ساز (چند جست‌وجوی موضوع، بررسی متن دریافتی و attribution نمایش‌داده‌شده).
+
 ---
 *این سند فقط یک برنامهٔ ثبت‌شده است.*
