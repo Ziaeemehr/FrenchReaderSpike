@@ -61,8 +61,17 @@ class Migration4To5Test {
                     )
                     db.execSQL(
                         "INSERT INTO texts (title, rawText, createdAtMs, lastChunkIndex, " +
-                            "lastPositionMs, voice, ratePercent, translationLang) VALUES " +
-                            "('Existing text', 'Existing body', 1, 0, 0, 'fr-FR-DeniseNeural', 0, 'fa')"
+                            "lastPositionMs, voice, ratePercent, translationLang, sourceUrl, " +
+                            "sourceName, author, license, publishedAt) VALUES " +
+                            "('Existing text', 'Existing body', 1, 2, 3, 'fr-FR-DeniseNeural', " +
+                            "4, 'fa', 'https://example.test/article', 'Example Source', " +
+                            "'Example Author', 'CC BY', 5)"
+                    )
+                    db.execSQL(
+                        "INSERT INTO vocab (word, sentence, textId, dictionaryUrl, meaning, " +
+                            "learned, createdAtMs, listId, leitnerBox, nextReviewAtMs, " +
+                            "lastReviewedAtMs) VALUES ('bonjour', 'Bonjour le monde.', 1, " +
+                            "'https://example.test/dictionary', 'hello', 0, 6, NULL, 2, 7, 8)"
                     )
                 }
 
@@ -87,11 +96,36 @@ class Migration4To5Test {
 
         MIGRATION_4_5.migrate(db)
 
-        db.query("SELECT imagePath, externalKey, lastAccessedAtMs FROM texts").use { cursor ->
+        db.query(
+            "SELECT title, rawText, createdAtMs, lastChunkIndex, lastPositionMs, voice, " +
+                "ratePercent, translationLang, sourceUrl, sourceName, author, license, " +
+                "publishedAt, imagePath, externalKey, lastAccessedAtMs FROM texts"
+        ).use { cursor ->
             assertTrue(cursor.moveToFirst())
-            assertTrue(cursor.isNull(0))
-            assertTrue(cursor.isNull(1))
-            assertEquals(0L, cursor.getLong(2))
+            assertEquals("Existing text", cursor.getString(0))
+            assertEquals("Existing body", cursor.getString(1))
+            assertEquals(1L, cursor.getLong(2))
+            assertEquals(2, cursor.getInt(3))
+            assertEquals(3L, cursor.getLong(4))
+            assertEquals("fr-FR-DeniseNeural", cursor.getString(5))
+            assertEquals(4, cursor.getInt(6))
+            assertEquals("fa", cursor.getString(7))
+            assertEquals("https://example.test/article", cursor.getString(8))
+            assertEquals("Example Source", cursor.getString(9))
+            assertEquals("Example Author", cursor.getString(10))
+            assertEquals("CC BY", cursor.getString(11))
+            assertEquals(5L, cursor.getLong(12))
+            assertTrue(cursor.isNull(13))
+            assertTrue(cursor.isNull(14))
+            assertEquals(0L, cursor.getLong(15))
+        }
+        db.query("SELECT word, sentence, textId, meaning, leitnerBox FROM vocab").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("bonjour", cursor.getString(0))
+            assertEquals("Bonjour le monde.", cursor.getString(1))
+            assertEquals(1L, cursor.getLong(2))
+            assertEquals("hello", cursor.getString(3))
+            assertEquals(2, cursor.getInt(4))
         }
         db.query("SELECT COUNT(*) FROM headlines").use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -103,5 +137,25 @@ class Migration4To5Test {
         val roomDatabase = Room.databaseBuilder(context, AppDatabase::class.java, databaseName).build()
         roomDatabase.openHelper.writableDatabase
         roomDatabase.close()
+    }
+
+    @Test
+    fun migrationCreatesRoomCompatibleExternalKeyIndex() {
+        val db = helper.writableDatabase
+
+        MIGRATION_4_5.migrate(db)
+
+        var foundExternalKeyIndex = false
+        db.query("PRAGMA index_list(`texts`)").use { cursor ->
+            val nameColumn = cursor.getColumnIndexOrThrow("name")
+            val partialColumn = cursor.getColumnIndexOrThrow("partial")
+            while (cursor.moveToNext()) {
+                if (cursor.getString(nameColumn) == "index_texts_externalKey") {
+                    foundExternalKeyIndex = true
+                    assertEquals(0, cursor.getInt(partialColumn))
+                }
+            }
+        }
+        assertTrue(foundExternalKeyIndex)
     }
 }

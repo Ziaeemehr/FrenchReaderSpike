@@ -52,7 +52,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL("ALTER TABLE texts ADD COLUMN lastAccessedAtMs INTEGER NOT NULL DEFAULT 0")
         db.execSQL(
             "CREATE UNIQUE INDEX IF NOT EXISTS `index_texts_externalKey` " +
-                "ON `texts` (`externalKey`) WHERE `externalKey` IS NOT NULL"
+                "ON `texts` (`externalKey`)"
         )
         db.execSQL(
             "CREATE TABLE IF NOT EXISTS `headlines` (" +
