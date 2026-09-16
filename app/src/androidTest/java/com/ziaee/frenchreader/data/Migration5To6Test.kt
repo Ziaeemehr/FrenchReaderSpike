@@ -131,7 +131,9 @@ class Migration5To6Test {
 
         db.version = 6
         helper.close()
-        val roomDatabase = Room.databaseBuilder(context, AppDatabase::class.java, databaseName).build()
+        val roomDatabase = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
         roomDatabase.openHelper.writableDatabase
         roomDatabase.close()
     }

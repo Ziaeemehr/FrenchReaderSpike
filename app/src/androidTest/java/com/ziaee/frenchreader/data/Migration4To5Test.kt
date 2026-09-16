@@ -134,12 +134,12 @@ class Migration4To5Test {
 
         db.version = 5
         helper.close()
-        // addMigrations(MIGRATION_5_6) lets Room carry this v5 database the rest of
+        // addMigrations(*ALL_MIGRATIONS) lets Room carry this v5 database the rest of
         // the way to the current schema version, same as the real AppDatabase.get()
         // does -- this smoke-check just confirms Room accepts the resulting schema,
         // it isn't re-testing MIGRATION_5_6 itself (that's Migration5To6Test's job).
         val roomDatabase = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(MIGRATION_5_6)
+            .addMigrations(*ALL_MIGRATIONS)
             .build()
         roomDatabase.openHelper.writableDatabase
         roomDatabase.close()

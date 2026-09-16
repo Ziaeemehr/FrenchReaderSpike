@@ -106,6 +106,8 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+val ALL_MIGRATIONS = arrayOf(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+
 @Database(
     entities = [
         TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class,
@@ -132,7 +134,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "french_reader.db"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(*ALL_MIGRATIONS)
                     // Safety net only -- covers a version jump with no
                     // matching migration (e.g. skipping straight from a
                     // much older schema); the normal v2->v3 path above

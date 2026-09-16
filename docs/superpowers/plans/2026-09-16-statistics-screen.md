@@ -832,14 +832,14 @@ Replace `persistPositionNow()`:
     }
 ```
 
-This reuses the two existing call sites of `persistPositionNow()` (the 3-second debounce in `schedulePositionSave()`, and the eager call in `onCleared()`) — no new lifecycle wiring needed, and the last few unflushed seconds of a session are always caught when the reading screen closes.
+This reuses the three existing call sites of `persistPositionNow()` (the 3-second debounce in `schedulePositionSave()`, the eager call in `onCleared()`, and `ReadingScreen.kt`'s `DisposableEffect(Unit) { onDispose { ... } }`). The `onDispose` call is the one that reliably flushes the last few unflushed seconds on ordinary back-navigation because it runs before `viewModelScope` is cancelled.
 
 - [ ] **Step 4: Manually verify**
 
 ```bash
 ./gradlew :app:installDebug
 ```
-Open a text, press play, let it run for roughly 15 seconds, then press back (triggers `onCleared()` → `persistPositionNow()`). Then:
+Open a text, press play, let it run for roughly 15 seconds, then press back (triggers `ReadingScreen.kt`'s `DisposableEffect` `onDispose` → `persistPositionNow()` before `viewModelScope` is cancelled). Then:
 ```bash
 adb shell run-as com.ziaee.frenchreader sqlite3 /data/data/com.ziaee.frenchreader/databases/french_reader.db "SELECT * FROM activity_log;"
 ```

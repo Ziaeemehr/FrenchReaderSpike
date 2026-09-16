@@ -192,11 +192,13 @@ private suspend fun persistPositionNow() {
 ```
 
 No separate pause/stop flush is needed: `persistPositionNow()` already
-has exactly two call sites — inside the debounce job, and eagerly in
-`onCleared()` (`ReadingViewModel.kt:361`) — so putting the flush inside
-`persistPositionNow()` itself means the last unflushed seconds of a
-session are always caught when the screen closes, with no new lifecycle
-wiring.
+has three call sites — inside the debounce job, eagerly in `onCleared()`
+(`ReadingViewModel.kt:361`), and in `ReadingScreen.kt`'s
+`DisposableEffect(Unit) { onDispose { ... } }`. Putting the flush inside
+`persistPositionNow()` itself means the last unflushed seconds of a session
+are caught when the screen closes; the `onDispose` call is the one that
+reliably flushes on ordinary back-navigation because it runs before
+`viewModelScope` is cancelled.
 
 ## Derived metrics (no extra storage)
 
