@@ -51,3 +51,6 @@ __pycache__/
 
 # Local Superpowers visual-companion sessions
 .superpowers/
+
+# Isolated Git worktrees used for feature implementation
+.worktrees/
