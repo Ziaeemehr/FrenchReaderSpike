@@ -20,6 +20,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.ReviewLogEntry
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import kotlinx.coroutines.launch
@@ -97,7 +98,18 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 lastReviewedAtMs = now
             )
         }
-        viewModelScope.launch { db.vocabDao().update(updated) }
+        viewModelScope.launch {
+            db.vocabDao().update(updated)
+            db.reviewLogDao().insert(
+                ReviewLogEntry(
+                    entryId = entry.id,
+                    timestampMs = now,
+                    knew = knew,
+                    boxBefore = entry.leitnerBox,
+                    boxAfter = updated.leitnerBox
+                )
+            )
+        }
         reviewedCount++
         current = queue.removeFirstOrNull()
     }
