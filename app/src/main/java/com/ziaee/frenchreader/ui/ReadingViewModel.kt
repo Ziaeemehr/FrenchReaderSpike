@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 enum class ChunkStatus { PENDING, LOADING, READY, ERROR }
 
@@ -64,6 +65,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private var translationJob: Job? = null
     private var positionTickerJob: Job? = null
     private var savePositionJob: Job? = null
+    private var pendingListeningMs = 0L
 
     init {
         player.addListener(object : Player.Listener {
@@ -333,6 +335,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             while (true) {
                 if (player.isPlaying) {
                     _state.value = _state.value.copy(currentPositionMs = player.currentPosition)
+                    pendingListeningMs += 150
                     schedulePositionSave()
                 }
                 delay(150)
@@ -352,8 +355,13 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         val doc = _state.value.textDoc ?: return
         val chunkIndex = _state.value.currentChunkIndex
         val positionMs = player.currentPosition
+        val listeningMs = pendingListeningMs
+        pendingListeningMs = 0
         viewModelScope.launch {
             db.textDao().savePosition(doc.id, chunkIndex, positionMs)
+            if (listeningMs > 0) {
+                db.activityLogDao().addListening(LocalDate.now().toString(), listeningMs)
+            }
         }
     }
 
