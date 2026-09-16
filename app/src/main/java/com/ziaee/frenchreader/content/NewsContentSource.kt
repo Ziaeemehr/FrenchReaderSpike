@@ -82,26 +82,22 @@ abstract class NewsContentSource(
 }
 
 /** RFI's "Journal en français facile" -- see ROADMAP.md section 6.
- * [extractArticleText] is a placeholder until Task 4 replaces it with real
- * jsoup-based extraction from `div.m-transcription__content`; for now it
- * returns null (fetchArticle fails cleanly) so this task compiles and its
- * own tests (which only exercise filterNewsItems) pass without jsoup. */
+ * Extracts the full transcript from `div.m-transcription__content` using jsoup. */
 object RfiFacileContentSource : NewsContentSource(
     id = "rfi_facile",
     label = "RFI – فرانسهٔ ساده",
     feedUrl = "https://apis.fle.rfi.fr/products/get_product/fle_getpodcast_by_nid_author_rfi" +
         "?token_application=applepodcast_fle&program.entrepriseId=WBMZ39-FLE-FR-20220627"
 ) {
-    override fun extractArticleText(html: String): String? = null
+    override fun extractArticleText(html: String): String? = ArticleExtractor.extractRfiFacileTranscript(html)
 }
 
 /** France Info's general headlines -- see ROADMAP.md section 6.
- * [extractArticleText] is a placeholder until Task 4; see [RfiFacileContentSource]'s
- * kdoc for why that's fine at this point in the plan. */
+ * Extracts full article text from `div.c-body`, excluding related-article embeds. */
 object FranceInfoContentSource : NewsContentSource(
     id = "france_info",
     label = "France Info",
     feedUrl = "https://www.francetvinfo.fr/titres.rss"
 ) {
-    override fun extractArticleText(html: String): String? = null
+    override fun extractArticleText(html: String): String? = ArticleExtractor.extractFranceInfoArticle(html)
 }
