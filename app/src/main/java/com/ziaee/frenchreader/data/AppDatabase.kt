@@ -28,9 +28,23 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+// v3 -> v4: adds source-attribution columns to `texts` for content imported
+// from an external source (Vikidia and beyond -- ROADMAP.md section 6). All
+// nullable, so existing rows (pasted texts, file imports, RSS news) just get
+// NULL and keep behaving exactly as before.
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE texts ADD COLUMN sourceUrl TEXT")
+        db.execSQL("ALTER TABLE texts ADD COLUMN sourceName TEXT")
+        db.execSQL("ALTER TABLE texts ADD COLUMN author TEXT")
+        db.execSQL("ALTER TABLE texts ADD COLUMN license TEXT")
+        db.execSQL("ALTER TABLE texts ADD COLUMN publishedAt INTEGER")
+    }
+}
+
 @Database(
     entities = [TextDocument::class, VocabEntry::class, VocabList::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -48,7 +62,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "french_reader.db"
                 )
-                    .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                     // Safety net only -- covers a version jump with no
                     // matching migration (e.g. skipping straight from a
                     // much older schema); the normal v2->v3 path above

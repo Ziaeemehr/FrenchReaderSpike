@@ -18,7 +18,15 @@ data class TextDocument(
     val lastPositionMs: Long = 0,
     val voice: String = "fr-FR-DeniseNeural",
     val ratePercent: Int = 0, // edge-tts rate, e.g. -15..+40, applied as "+N%"/"-N%"
-    val translationLang: String = "fa" // ISO code for the paragraph-translation target language
+    val translationLang: String = "fa", // ISO code for the paragraph-translation target language
+    // Attribution for texts imported from an external source (e.g. Vikidia,
+    // see ROADMAP.md section 6). All null for pasted/file-imported texts and
+    // for the existing RFI/France Info RSS import, which doesn't set these yet.
+    val sourceUrl: String? = null,
+    val sourceName: String? = null,
+    val author: String? = null,
+    val license: String? = null,
+    val publishedAt: Long? = null // epoch ms of the source's original publish/revision date
 )
 
 /**
