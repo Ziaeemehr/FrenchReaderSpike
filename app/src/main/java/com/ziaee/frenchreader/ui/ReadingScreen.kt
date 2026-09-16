@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -72,6 +74,40 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
         if (autoScrollEnabled && state.ready && state.chunks.isNotEmpty()) {
             listState.animateScrollToItem(state.currentChunkIndex)
         }
+    }
+
+    // A paragraph taller than one screen doesn't get followed by the effect
+    // above (it only fires on paragraph change) -- this continuously nudges
+    // the scroll forward as the read-aloud position within a long paragraph
+    // approaches the bottom of the visible area, so its tail is never being
+    // read while sitting off-screen. Only activates for paragraphs that
+    // don't already fit on screen; short paragraphs are untouched.
+    LaunchedEffect(autoScrollEnabled) {
+        if (!autoScrollEnabled) return@LaunchedEffect
+        snapshotFlow { state.currentPositionMs to state.currentChunkIndex }
+            .collect { (positionMs, chunkIndex) ->
+                if (!state.ready || state.chunks.isEmpty()) return@collect
+                val chunk = state.chunks.getOrNull(chunkIndex) ?: return@collect
+                val visibleInfo = listState.layoutInfo.visibleItemsInfo.find { it.index == chunkIndex } ?: return@collect
+                val viewportHeight =
+                    (listState.layoutInfo.viewportEndOffset - listState.layoutInfo.viewportStartOffset).toFloat()
+                if (viewportHeight <= 0f || visibleInfo.size <= viewportHeight) return@collect
+
+                val totalChars = chunk.sentences.sumOf { it.text.length + 1 }.coerceAtLeast(1)
+                val activeIdx = chunk.sentences.indexOfFirst {
+                    positionMs >= it.offsetMs && positionMs < it.offsetMs + it.durationMs
+                }
+                if (activeIdx < 0) return@collect
+                val charsBefore = chunk.sentences.take(activeIdx).sumOf { it.text.length + 1 }
+                val fraction = (charsBefore.toFloat() / totalChars).coerceIn(0f, 1f)
+                val activeTopPx = visibleInfo.offset + fraction * visibleInfo.size
+
+                val lowerThreshold = viewportHeight * 0.75f
+                if (activeTopPx > lowerThreshold) {
+                    val targetPx = viewportHeight * 0.35f
+                    listState.animateScrollBy(activeTopPx - targetPx)
+                }
+            }
     }
 
     Scaffold(
