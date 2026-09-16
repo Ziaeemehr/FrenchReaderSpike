@@ -1,11 +1,6 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Application
-import android.content.Context
-import android.net.Uri
-import android.provider.OpenableColumns
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,11 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.content.ArticleImportRepository
 import com.ziaee.frenchreader.content.ContentArticle
@@ -31,7 +27,11 @@ import com.ziaee.frenchreader.content.RfiFacileContentSource
 import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.images.ArticleImageStore
-import com.ziaee.frenchreader.util.SharedTextHolder
+import com.ziaee.frenchreader.ui.shared.AddTextHost
+import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
+import com.ziaee.frenchreader.ui.shared.FindArticleSheet
+import com.ziaee.frenchreader.ui.shared.rememberAddTextUiState
+import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,23 +41,16 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-/** State of the "پیدا کردن مطلب" search sheet -- see ROADMAP.md section 6.
- * [Importing] tracks which result (by [ContentResult.ref]) is being
- * downloaded so its row can show a spinner without blocking the rest of
- * the list. */
-sealed class ContentSearchUiState {
-    data object Idle : ContentSearchUiState()
-    data object Searching : ContentSearchUiState()
-    data class Results(val items: List<ContentResult>) : ContentSearchUiState()
-    data object NoResults : ContentSearchUiState()
-    data class Error(val message: String) : ContentSearchUiState()
-}
-
 /** Every registered content source -- see ROADMAP.md section 6. Adding a
  * future source (Wikisource, Gutenberg, ...) means implementing
  * ContentSource and adding it here; nothing else in this file changes. */
 private val CONTENT_SOURCES: List<ContentSource> = listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource)
 
+/**
+ * @deprecated Superseded by the Home dashboard and Library screens (see
+ * `ui/home` and the implementation plan's Task 7); kept only as a
+ * compatibility wrapper until final navigation switches over (Task 8).
+ */
 class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val importRepository = ArticleImportRepository(db.textDao(), CONTENT_SOURCES, ArticleImageStore(app))
@@ -179,10 +172,8 @@ class TextsListViewModel(app: Application) : AndroidViewModel(app) {
 fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenSettings: () -> Unit) {
     val vm: TextsListViewModel = viewModel()
     val texts by vm.texts.collectAsState()
-    val context = LocalContext.current
 
-    var dialogPrefill by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var showAddDialog by remember { mutableStateOf(false) }
+    val addTextState = rememberAddTextUiState()
     var showVikidiaSheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -200,30 +191,7 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenS
         }
     }
 
-    // A share/open-with intent arriving in MainActivity lands here and
-    // pre-fills the add-text dialog with the shared title/body.
-    val incomingShare by SharedTextHolder.pending.collectAsState()
-    LaunchedEffect(incomingShare) {
-        incomingShare?.let {
-            dialogPrefill = it.suggestedTitle to it.body
-            showAddDialog = true
-            SharedTextHolder.consume()
-        }
-    }
-
-    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        uri ?: return@rememberLauncherForActivityResult
-        val body = try {
-            context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
-        } catch (e: Exception) {
-            null
-        }
-        if (!body.isNullOrBlank()) {
-            val title = queryDisplayName(context, uri) ?: "فایل وارد شده"
-            dialogPrefill = title to body
-            showAddDialog = true
-        }
-    }
+    val openFilePicker = rememberFilePickerLauncher(addTextState)
 
     Scaffold(
         topBar = {
@@ -231,24 +199,24 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenS
                 title = { Text("متن‌ها") },
                 actions = {
                     IconButton(onClick = { showVikidiaSheet = true }) {
-                        Icon(Icons.Default.Search, contentDescription = "پیدا کردن مطلب")
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.content_search_title))
                     }
-                    IconButton(onClick = { filePicker.launch(arrayOf("text/plain", "text/markdown", "text/*")) }) {
-                        Icon(Icons.Default.FileOpen, contentDescription = "افزودن از فایل (TXT/MD)")
+                    IconButton(onClick = openFilePicker) {
+                        Icon(Icons.Default.FileOpen, contentDescription = stringResource(R.string.accessibility_import_file))
                     }
                     IconButton(onClick = onOpenVocab) {
-                        Icon(Icons.Default.MenuBook, contentDescription = "لغات ذخیره‌شده")
+                        Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "تنظیمات")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.accessibility_settings))
                     }
                 }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { dialogPrefill = null; showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "افزودن متن")
+            FloatingActionButton(onClick = { addTextState.openBlank() }) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.accessibility_add_text))
             }
         }
     ) { padding ->
@@ -259,7 +227,7 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenS
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("هنوز متنی اضافه نشده. با دکمهٔ + متن بچسبانید یا با دکمهٔ فایل بالا یک TXT/MD وارد کنید.")
+                Text(stringResource(R.string.home_recent_empty))
             }
         } else {
             LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -271,18 +239,8 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenS
         }
     }
 
-    if (showAddDialog) {
-        AddTextDialog(
-            initialTitle = dialogPrefill?.first.orEmpty(),
-            initialBody = dialogPrefill?.second.orEmpty(),
-            onDismiss = { showAddDialog = false; dialogPrefill = null },
-            onSave = { title, body ->
-                showAddDialog = false
-                dialogPrefill = null
-                vm.addText(title, body) { id -> onOpenText(id) }
-            }
-        )
-    }
+    AddTextHost(addTextState) { title, body -> vm.addText(title, body) { id -> onOpenText(id) } }
+
     if (showVikidiaSheet) {
         FindArticleSheet(
             searchState = vm.contentSearchState,
@@ -292,17 +250,6 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit, onOpenS
             onDismiss = { showVikidiaSheet = false; vm.resetContentSearch() }
         )
     }
-}
-
-private fun queryDisplayName(context: Context, uri: Uri): String? = try {
-    context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
-        if (c.moveToFirst()) {
-            val idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (idx >= 0) c.getString(idx)?.substringBeforeLast(".") else null
-        } else null
-    }
-} catch (e: Exception) {
-    null
 }
 
 @Composable
@@ -322,128 +269,7 @@ private fun TextRow(doc: TextDocument, onClick: () -> Unit, onDelete: () -> Unit
             Text(date, style = MaterialTheme.typography.labelSmall)
         }
         IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Delete, contentDescription = "حذف")
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddTextDialog(
-    initialTitle: String = "",
-    initialBody: String = "",
-    onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit
-) {
-    var title by remember(initialTitle) { mutableStateOf(initialTitle) }
-    var body by remember(initialBody) { mutableStateOf(initialBody) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (initialBody.isBlank()) "متن جدید (چسباندن متن)" else "بررسی متن وارد‌شده") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("عنوان") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = body,
-                    onValueChange = { body = it },
-                    label = { Text("متن فرانسوی (Markdown مجاز است)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { if (body.isNotBlank()) onSave(title, body) }) {
-                Text("ذخیره و باز کردن")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("انصراف") }
-        }
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FindArticleSheet(
-    searchState: ContentSearchUiState,
-    importingRef: String?,
-    onSearch: (String) -> Unit,
-    onSelect: (ContentResult) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var query by remember { mutableStateOf("") }
-
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-            Text("پیدا کردن مطلب", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(10.dp))
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text("موضوع را بنویسید") },
-                singleLine = true,
-                trailingIcon = {
-                    IconButton(onClick = { onSearch(query) }) {
-                        Icon(Icons.Default.Search, contentDescription = "جست‌وجو")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // Search failures surface as a Snackbar (handled by the caller,
-            // TextsListScreen), so there's no error branch to render here --
-            // by the time this recomposes, the state's already back to Idle.
-            when (searchState) {
-                ContentSearchUiState.Idle -> {}
-                ContentSearchUiState.Searching -> {
-                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                ContentSearchUiState.NoResults -> {
-                    Text("نتیجه‌ای برای «$query» پیدا نشد.")
-                }
-                is ContentSearchUiState.Error -> {}
-                is ContentSearchUiState.Results -> {
-                    LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                        items(searchState.items, key = { it.ref }) { result ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(enabled = importingRef == null) { onSelect(result) }
-                                    .padding(vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(result.title, style = MaterialTheme.typography.titleSmall)
-                                    Text(
-                                        result.snippet,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 2
-                                    )
-                                    Text("${result.sourceLabel} · ${result.lengthHint}", style = MaterialTheme.typography.labelSmall)
-                                }
-                                if (importingRef == result.ref) {
-                                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                                }
-                            }
-                            HorizontalDivider()
-                        }
-                    }
-                }
-            }
+            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.accessibility_delete))
         }
     }
 }
