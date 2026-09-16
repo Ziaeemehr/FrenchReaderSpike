@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.text.BlockType
+import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
@@ -55,6 +56,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
 
     val listState = rememberLazyListState()
     var autoScrollEnabled by remember { mutableStateOf(true) }
+    var voiceMenuExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(textId) { vm.load(textId) }
     DisposableEffect(Unit) {
@@ -96,6 +98,30 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         }
                         IconButton(onClick = onOpenVocab) {
                             Icon(Icons.Default.MenuBook, contentDescription = "لغات ذخیره‌شده")
+                        }
+                        Box {
+                            IconButton(onClick = { voiceMenuExpanded = true }) {
+                                Icon(Icons.Default.RecordVoiceOver, contentDescription = "انتخاب صدا")
+                            }
+                            DropdownMenu(
+                                expanded = voiceMenuExpanded,
+                                onDismissRequest = { voiceMenuExpanded = false }
+                            ) {
+                                AVAILABLE_VOICES.forEach { voice ->
+                                    DropdownMenuItem(
+                                        text = { Text(voice.label) },
+                                        leadingIcon = {
+                                            if (state.textDoc?.voice == voice.id) {
+                                                Icon(Icons.Default.Check, contentDescription = null)
+                                            }
+                                        },
+                                        onClick = {
+                                            voiceMenuExpanded = false
+                                            vm.changeVoice(voice.id)
+                                        }
+                                    )
+                                }
+                            }
                         }
                         IconButton(onClick = { autoScrollEnabled = !autoScrollEnabled }) {
                             Icon(

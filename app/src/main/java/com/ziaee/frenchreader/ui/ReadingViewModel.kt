@@ -183,6 +183,49 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    /**
+     * Switches this text's TTS voice and re-synthesizes from the current
+     * chunk onward (audio already generated for the old voice can't be
+     * reused -- it's a different recording). Persisted to the text's own
+     * `voice` column so it sticks next time this text is opened. Resumes
+     * playback position at the start of the current chunk rather than
+     * trying to map the old timestamp onto new audio, since sentence
+     * timings differ slightly between voices.
+     */
+    fun changeVoice(voice: String) {
+        val doc = _state.value.textDoc ?: return
+        if (doc.voice == voice) return
+        viewModelScope.launch {
+            val updatedDoc = doc.copy(voice = voice)
+            db.textDao().update(updatedDoc)
+
+            backgroundSynthesisJob?.cancel()
+            player.stop()
+            player.clearMediaItems()
+
+            val resumeIndex = _state.value.currentChunkIndex
+            _state.value = _state.value.copy(
+                textDoc = updatedDoc,
+                chunks = _state.value.chunks.map {
+                    it.copy(status = ChunkStatus.PENDING, sentences = emptyList(), playerItemIndex = null, error = null)
+                },
+                currentPositionMs = 0,
+                ready = false
+            )
+
+            for (i in 0..resumeIndex) {
+                synthesizeChunk(i)
+                if (_state.value.chunks.getOrNull(i)?.status == ChunkStatus.ERROR) break
+            }
+            val targetItemIndex = _state.value.chunks.getOrNull(resumeIndex)?.playerItemIndex
+            if (targetItemIndex != null) {
+                player.seekTo(targetItemIndex, 0)
+            }
+            _state.value = _state.value.copy(ready = true)
+            continueBackgroundSynthesis(resumeIndex + 1)
+        }
+    }
+
     fun retryChunk(index: Int) {
         viewModelScope.launch {
             synthesizeChunk(index)
