@@ -27,6 +27,9 @@ import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.NewsFetchResult
 import com.ziaee.frenchreader.news.NewsFetcher
 import com.ziaee.frenchreader.news.NewsSource
+import com.ziaee.frenchreader.vikidia.VikidiaArticle
+import com.ziaee.frenchreader.vikidia.VikidiaClient
+import com.ziaee.frenchreader.vikidia.VikidiaSearchResult
 import com.ziaee.frenchreader.util.SharedTextHolder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,12 +47,31 @@ sealed class NewsFetchUiState {
     data class FetchError(val source: NewsSource, val message: String) : NewsFetchUiState()
 }
 
+/** State of the "پیدا کردن مطلب" (Vikidia search) bottom sheet -- see
+ * ROADMAP.md section 6. [Importing] tracks which result is being
+ * downloaded so its row can show a spinner without blocking the rest of
+ * the list. */
+sealed class VikidiaSearchUiState {
+    data object Idle : VikidiaSearchUiState()
+    data object Searching : VikidiaSearchUiState()
+    data class Results(val items: List<VikidiaSearchResult>) : VikidiaSearchUiState()
+    data object NoResults : VikidiaSearchUiState()
+    data class Error(val message: String) : VikidiaSearchUiState()
+}
+
 class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val _texts = MutableStateFlow<List<TextDocument>>(emptyList())
     val texts: StateFlow<List<TextDocument>> = _texts.asStateFlow()
 
     var newsFetchState by mutableStateOf<NewsFetchUiState>(NewsFetchUiState.Idle)
+        private set
+
+    var vikidiaSearchState by mutableStateOf<VikidiaSearchUiState>(VikidiaSearchUiState.Idle)
+        private set
+    var vikidiaImportingPageId by mutableStateOf<Int?>(null)
+        private set
+    var vikidiaImportError by mutableStateOf<String?>(null)
         private set
 
     init {
@@ -103,6 +125,68 @@ class TextsListViewModel(app: Application) : AndroidViewModel(app) {
     fun dismissNewsMessage() {
         newsFetchState = NewsFetchUiState.Idle
     }
+
+    fun searchVikidia(query: String) {
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            vikidiaSearchState = VikidiaSearchUiState.Searching
+            vikidiaSearchState = try {
+                val results = VikidiaClient.search(query)
+                if (results.isEmpty()) VikidiaSearchUiState.NoResults else VikidiaSearchUiState.Results(results)
+            } catch (e: Exception) {
+                VikidiaSearchUiState.Error(e.message ?: e.toString())
+            }
+        }
+    }
+
+    fun resetVikidiaSearch() {
+        vikidiaSearchState = VikidiaSearchUiState.Idle
+        vikidiaImportError = null
+    }
+
+    /** Search failures go to a Snackbar (like [fetchNews]'s errors), not
+     * inline in the sheet -- called after the Snackbar has been shown. */
+    fun dismissVikidiaSearchError() {
+        if (vikidiaSearchState is VikidiaSearchUiState.Error) vikidiaSearchState = VikidiaSearchUiState.Idle
+    }
+
+    fun dismissVikidiaImportError() {
+        vikidiaImportError = null
+    }
+
+    /** Fetches [result]'s full article and, on success, creates a
+     * TextDocument with Vikidia's attribution fields and opens it via
+     * [onOpen] -- same "create then navigate" pattern as [fetchNews]. */
+    fun importVikidiaArticle(result: VikidiaSearchResult, onOpen: (Long) -> Unit) {
+        viewModelScope.launch {
+            vikidiaImportingPageId = result.pageId
+            vikidiaImportError = null
+            val article: VikidiaArticle? = try {
+                VikidiaClient.fetchArticle(result.pageId)
+            } catch (e: Exception) {
+                vikidiaImportError = e.message ?: e.toString()
+                null
+            }
+            vikidiaImportingPageId = null
+            if (article == null) {
+                if (vikidiaImportError == null) vikidiaImportError = "دریافت مقاله ممکن نشد"
+                return@launch
+            }
+            val id = db.textDao().insert(
+                TextDocument(
+                    title = article.title,
+                    rawText = article.text,
+                    sourceUrl = VikidiaClient.articleUrl(article.title),
+                    sourceName = "Vikidia",
+                    author = null,
+                    license = "CC BY-SA 3.0",
+                    publishedAt = article.publishedAtMs
+                )
+            )
+            resetVikidiaSearch()
+            onOpen(id)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,6 +199,7 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
     var dialogPrefill by remember { mutableStateOf<Pair<String, String>?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var newsMenuExpanded by remember { mutableStateOf(false) }
+    var showVikidiaSheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Surfaces the outcome of "دریافت خبر امروز" as a one-off Snackbar; a
@@ -131,6 +216,20 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
                 vm.dismissNewsMessage()
             }
             else -> {}
+        }
+    }
+
+    LaunchedEffect(vm.vikidiaSearchState) {
+        val s = vm.vikidiaSearchState
+        if (s is VikidiaSearchUiState.Error) {
+            snackbarHostState.showSnackbar("جست‌وجو در Vikidia ممکن نشد: ${s.message}")
+            vm.dismissVikidiaSearchError()
+        }
+    }
+    LaunchedEffect(vm.vikidiaImportError) {
+        vm.vikidiaImportError?.let { message ->
+            snackbarHostState.showSnackbar("دریافت مقاله ممکن نشد: $message")
+            vm.dismissVikidiaImportError()
         }
     }
 
@@ -164,6 +263,9 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
             TopAppBar(
                 title = { Text("متن‌ها") },
                 actions = {
+                    IconButton(onClick = { showVikidiaSheet = true }) {
+                        Icon(Icons.Default.Search, contentDescription = "پیدا کردن مطلب")
+                    }
                     Box {
                         IconButton(
                             onClick = { newsMenuExpanded = true },
@@ -235,6 +337,15 @@ fun TextsListScreen(onOpenText: (Long) -> Unit, onOpenVocab: () -> Unit) {
                 dialogPrefill = null
                 vm.addText(title, body) { id -> onOpenText(id) }
             }
+        )
+    }
+    if (showVikidiaSheet) {
+        FindArticleSheet(
+            searchState = vm.vikidiaSearchState,
+            importingPageId = vm.vikidiaImportingPageId,
+            onSearch = { vm.searchVikidia(it) },
+            onSelect = { result -> vm.importVikidiaArticle(result) { id -> onOpenText(id) } },
+            onDismiss = { showVikidiaSheet = false; vm.resetVikidiaSearch() }
         )
     }
 }
@@ -314,4 +425,81 @@ private fun AddTextDialog(
             TextButton(onClick = onDismiss) { Text("انصراف") }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FindArticleSheet(
+    searchState: VikidiaSearchUiState,
+    importingPageId: Int?,
+    onSearch: (String) -> Unit,
+    onSelect: (VikidiaSearchResult) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+            Text("پیدا کردن مطلب (Vikidia)", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(10.dp))
+
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text("موضوع را بنویسید") },
+                singleLine = true,
+                trailingIcon = {
+                    IconButton(onClick = { onSearch(query) }) {
+                        Icon(Icons.Default.Search, contentDescription = "جست‌وجو")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            // Search failures surface as a Snackbar (handled by the caller,
+            // TextsListScreen), so there's no error branch to render here --
+            // by the time this recomposes, the state's already back to Idle.
+            when (searchState) {
+                VikidiaSearchUiState.Idle -> {}
+                VikidiaSearchUiState.Searching -> {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                VikidiaSearchUiState.NoResults -> {
+                    Text("نتیجه‌ای برای «$query» پیدا نشد.")
+                }
+                is VikidiaSearchUiState.Error -> {}
+                is VikidiaSearchUiState.Results -> {
+                    LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                        items(searchState.items, key = { it.pageId }) { result ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = importingPageId == null) { onSelect(result) }
+                                    .padding(vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(result.title, style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        result.snippet,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 2
+                                    )
+                                    Text("~${result.wordCount} کلمه", style = MaterialTheme.typography.labelSmall)
+                                }
+                                if (importingPageId == result.pageId) {
+                                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                }
+                            }
+                            HorizontalDivider()
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
