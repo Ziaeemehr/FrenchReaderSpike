@@ -11,7 +11,8 @@ data class ContentResult(
     val title: String,
     val snippet: String,
     val lengthHint: String,
-    val ref: String
+    val ref: String,
+    val publishedAtMs: Long? = null
 )
 
 /** A fetched full article, ready to become a TextDocument -- see

@@ -5,6 +5,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class NewsContentSourceTest {
+    @Test
+    fun `upgrades cleartext http links to https before fetching`() {
+        assertEquals("https://francaisfacile.rfi.fr/x", httpsUrl("http://francaisfacile.rfi.fr/x"))
+    }
+
+    @Test
+    fun `leaves https links unchanged`() {
+        assertEquals("https://example.com/x", httpsUrl("https://example.com/x"))
+    }
+
     private val items = listOf(
         NewsItem(
             title = "Discours sur l'état de l'Union",

@@ -5,6 +5,8 @@ import com.ziaee.frenchreader.news.NewsItem
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** How many recent RSS items to pull before keyword-filtering -- RSS has no
  * server-side search, so this app fetches a window of recent items and
@@ -20,6 +22,13 @@ internal fun filterNewsItems(items: List<NewsItem>, query: String): List<NewsIte
     if (q.isBlank()) return items
     return items.filter { it.title.contains(q, ignoreCase = true) || it.snippet.contains(q, ignoreCase = true) }
 }
+
+/** Some RSS feeds (e.g. RFI Facile's per-item links) still advertise plain
+ * http:// even though the site itself serves https -- upgrade the scheme
+ * before fetching, since the app blocks cleartext traffic
+ * (see AndroidManifest.xml's android:usesCleartextTraffic="false"). */
+internal fun httpsUrl(urlString: String): String =
+    if (urlString.startsWith("http://")) "https://" + urlString.removePrefix("http://") else urlString
 
 /** Shared implementation for an RSS-backed news [ContentSource]: search
  * pulls a window of recent items and keyword-filters them (real search,
@@ -41,22 +50,24 @@ abstract class NewsContentSource(
                 title = item.title,
                 snippet = item.snippet,
                 lengthHint = "خبر",
-                ref = item.link
+                ref = item.link,
+                publishedAtMs = item.publishedAtMs
             )
         }
     }
 
-    override suspend fun fetchArticle(result: ContentResult): ContentArticle? {
-        val html = httpGetHtml(result.ref)
-        val text = extractArticleText(html) ?: return null
-        return ContentArticle(
+    override suspend fun fetchArticle(result: ContentResult): ContentArticle? = withContext(Dispatchers.IO) {
+        val url = httpsUrl(result.ref)
+        val html = httpGetHtml(url)
+        val text = extractArticleText(html) ?: return@withContext null
+        ContentArticle(
             title = result.title,
             text = text,
-            sourceUrl = result.ref,
+            sourceUrl = url,
             sourceName = label,
             author = null,
             license = null,
-            publishedAtMs = null
+            publishedAtMs = result.publishedAtMs
         )
     }
 
