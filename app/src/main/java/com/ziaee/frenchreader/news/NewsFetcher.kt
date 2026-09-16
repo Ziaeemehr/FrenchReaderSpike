@@ -97,7 +97,7 @@ object NewsFetcher {
                         descriptionDepth++
                     }
                     if (inItem && name == "media:content" && mediaContentUrl == null) {
-                        mediaContentUrl = parser.getAttributeValue(null, "url").asImageUrl()
+                        mediaContentUrl = parser.mediaContentImageUrl()
                     } else if (inItem && name == "media:thumbnail" && mediaThumbnailUrl == null) {
                         mediaThumbnailUrl = parser.getAttributeValue(null, "url").asImageUrl()
                     } else if (inItem && name == "enclosure" && enclosureImageUrl == null) {
@@ -162,7 +162,13 @@ object NewsFetcher {
     }
 
     private fun String?.asImageUrl(): String? {
-        val upgraded = this?.trim()?.takeIf { it.isNotBlank() }?.let(::httpsUrl) ?: return null
+        val raw = this?.trim()?.takeIf { it.isNotBlank() } ?: return null
+        val normalizedScheme = when {
+            raw.startsWith("http://", ignoreCase = true) -> "http://" + raw.substring(7)
+            raw.startsWith("https://", ignoreCase = true) -> "https://" + raw.substring(8)
+            else -> raw
+        }
+        val upgraded = httpsUrl(normalizedScheme)
         return try {
             val uri = URI(upgraded)
             upgraded.takeIf { uri.isAbsolute && uri.scheme.equals("https", ignoreCase = true) && !uri.host.isNullOrBlank() }
@@ -175,6 +181,16 @@ object NewsFetcher {
         this?.substringBefore('?')?.substringBefore('#')?.lowercase(Locale.US)?.matches(
             Regex(".*\\.(?:jpg|jpeg|png|gif|webp|avif|bmp|svg)$")
         ) == true
+
+    private fun XmlPullParser.mediaContentImageUrl(): String? {
+        val type = getAttributeValue(null, "type")?.trim()?.lowercase(Locale.US).orEmpty()
+        val medium = getAttributeValue(null, "medium")?.trim()?.lowercase(Locale.US).orEmpty()
+        val url = getAttributeValue(null, "url")
+        if (type.isNotBlank() && !type.startsWith("image/")) return null
+        if (medium.isNotBlank() && medium != "image") return null
+        if (!type.startsWith("image/") && medium != "image" && !url.isImageExtension()) return null
+        return url.asImageUrl()
+    }
 
     private fun String.firstImageUrl(): String? {
         val match = Regex("<img\\b[^>]*\\bsrc\\s*=\\s*(['\\\"])(.*?)\\1", setOf(RegexOption.IGNORE_CASE)).find(this)

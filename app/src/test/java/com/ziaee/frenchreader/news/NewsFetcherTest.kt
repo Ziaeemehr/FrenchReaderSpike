@@ -128,4 +128,51 @@ class NewsFetcherTest {
 
         assertNull(item.imageUrl)
     }
+
+    @Test
+    fun `ignores non-image media content in favor of thumbnail`() {
+        val xml = """
+            <rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item>
+            <title>Titre</title><description>Résumé.</description>
+            <media:content url="https://media.test/audio.mp3" type="audio/mpeg" />
+            <media:thumbnail url="https://img.test/thumb.jpg" />
+            <link>https://example.com/audio</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertEquals("https://img.test/thumb.jpg", item.imageUrl)
+    }
+
+    @Test
+    fun `ignores non-image media content in favor of image enclosure`() {
+        val xml = """
+            <rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item>
+            <title>Titre</title><description>Résumé.</description>
+            <media:content url="https://media.test/video.mp4" type="video/mp4" />
+            <enclosure url="https://img.test/enclosure.jpg" type="image/jpeg" />
+            <link>https://example.com/video</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertEquals("https://img.test/enclosure.jpg", item.imageUrl)
+    }
+
+    @Test
+    fun `upgrades uppercase http image schemes`() {
+        val xml = """
+            <rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item>
+            <title>Titre</title><description>Résumé.</description>
+            <media:content url="HTTP://IMG.TEST/uppercase.jpg" type="image/jpeg" />
+            <link>https://example.com/uppercase</link>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val item = NewsFetcher.parseItems(xml, limit = 25).single()
+
+        assertEquals("https://IMG.TEST/uppercase.jpg", item.imageUrl)
+    }
 }
