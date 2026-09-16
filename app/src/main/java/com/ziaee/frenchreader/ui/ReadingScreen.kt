@@ -133,7 +133,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                                 Icons.Default.SwapVert,
                                 contentDescription = "پیمایش خودکار صفحه همراه با صدا",
                                 tint = if (autoScrollEnabled) palette.accent
-                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                else palette.inkFaded
                             )
                         }
                         IconButton(onClick = { vm.toggleShowTranslations() }) {
@@ -141,12 +141,15 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                                 Icons.Default.Translate,
                                 contentDescription = "نمایش/عدم‌نمایش ترجمه",
                                 tint = if (state.showTranslations) palette.accent
-                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                else palette.inkFaded
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = palette.background
+                        containerColor = palette.background,
+                        titleContentColor = palette.ink,
+                        navigationIconContentColor = palette.ink,
+                        actionIconContentColor = palette.ink
                     )
                 )
                 if (state.chunks.isNotEmpty()) {

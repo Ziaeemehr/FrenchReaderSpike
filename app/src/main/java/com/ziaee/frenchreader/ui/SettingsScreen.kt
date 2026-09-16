@@ -3,7 +3,9 @@ package com.ziaee.frenchreader.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.ui.theme.AppearanceState
@@ -42,7 +45,13 @@ fun SettingsScreen(onBack: () -> Unit) {
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxWidth().padding(padding).padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+        ) {
             Text("تم", style = MaterialTheme.typography.titleMedium)
             SettingsRadioRow(
                 label = "پیروی از سیستم",
@@ -116,10 +125,10 @@ private fun SettingsRadioRow(label: String, selected: Boolean, onClick: () -> Un
         androidx.compose.foundation.layout.Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .selectable(selected = selected, onClick = onClick),
+                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            RadioButton(selected = selected, onClick = onClick)
+            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
             Text(label)
         }
     }

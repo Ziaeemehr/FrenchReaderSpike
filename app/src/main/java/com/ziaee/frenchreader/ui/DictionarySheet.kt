@@ -8,6 +8,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -36,6 +38,44 @@ import java.net.URLEncoder
 /** Primary dictionary source per the design doc: WordReference French->English. */
 private fun wordReferenceUrl(word: String): String =
     "https://www.wordreference.com/fren/" + URLEncoder.encode(word, "UTF-8")
+
+/** One free, no-API-key dictionary source shown as a switchable tab in the
+ * lookup panel below the WebView -- see ROADMAP.md. URL patterns verified
+ * against live pages during design; Reverso Context was considered and
+ * dropped because it's behind a Cloudflare bot challenge that blocked even
+ * full-browser-header requests. */
+private data class DictionaryProvider(val id: String, val label: String, val urlFor: (String) -> String)
+
+private val DICTIONARY_PROVIDERS = listOf(
+    DictionaryProvider("wordreference", "WordReference") { wordReferenceUrl(it) },
+    DictionaryProvider("larousse", "Larousse") {
+        "https://www.larousse.fr/dictionnaires/francais/" + URLEncoder.encode(it, "UTF-8")
+    },
+    DictionaryProvider("linguee", "Linguee") {
+        "https://www.linguee.com/french-english/search?source=auto&query=" + URLEncoder.encode(it, "UTF-8")
+    },
+    DictionaryProvider("wiktionary", "Wiktionary") {
+        "https://fr.wiktionary.org/wiki/" + URLEncoder.encode(it, "UTF-8")
+    }
+)
+
+/** Domains for ad networks confirmed to serve ads on Larousse (seen by
+ * name in that page's own HTML comments: "PUB PAVE (Moneytizer & Prisma)",
+ * "smartadserver"), plus a handful of other very common ad-tech domains
+ * that show up across many sites via programmatic/header-bidding setups.
+ * Requests to these are blocked outright in the dictionary WebView rather
+ * than just hiding the resulting content with CSS, which doesn't reliably
+ * catch ad-network-injected elements. */
+private val AD_BLOCK_HOSTS = setOf(
+    "smartadserver.com", "themoneytizer.com",
+    "doubleclick.net", "googlesyndication.com", "googleadservices.com",
+    "adnxs.com", "criteo.com", "criteo.net", "outbrain.com", "taboola.com",
+    "pubmatic.com", "rubiconproject.com", "casalemedia.com", "adform.net",
+    "amazon-adsystem.com", "adsafeprotected.com", "moatads.com", "scorecardresearch.com"
+)
+
+private fun isAdHost(host: String): Boolean =
+    AD_BLOCK_HOSTS.any { host == it || host.endsWith(".$it") }
 
 class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
@@ -88,13 +128,7 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
 
 /**
  * Bottom sheet opened by a long-press on a word in the reading screen (or by
- * tapping an entry in the saved-vocab list to review/edit it). Kept
- * compact: word + a small "open in browser" icon on the same line, an
- * auto-filled/editable Persian meaning, a list picker + a small save icon
- * on one row, and the WordReference page always shown below (no extra
- * toggle -- the sentence itself isn't repeated here since it's already
- * visible on the reading screen behind the sheet, or in the vocab-list row
- * that opened it).
+ * tapping an entry in the saved-vocab list to review/edit it).
  *
  * [initialMeaning]/[initialListId] let the saved-vocab list reopen this
  * same sheet for an existing entry, pre-filled with what was saved before
@@ -132,7 +166,8 @@ fun DictionarySheet(
     var webViewFailed by remember(word) { mutableStateOf(false) }
     var listMenuExpanded by remember { mutableStateOf(false) }
     var showNewListDialog by remember { mutableStateOf(false) }
-    val url = remember(word) { wordReferenceUrl(word) }
+    var selectedProvider by remember(word) { mutableStateOf(DICTIONARY_PROVIDERS.first()) }
+    val url = remember(word, selectedProvider) { selectedProvider.urlFor(word) }
 
     // Auto-fill the meaning field with a Persian translation of just the
     // word, using the same free translation service/cache as paragraph
@@ -169,6 +204,9 @@ fun DictionarySheet(
                 Text(word, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
                     Icon(Icons.Default.OpenInBrowser, contentDescription = "باز کردن در مرورگر")
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "بستن")
                 }
             }
 
@@ -234,6 +272,21 @@ fun DictionarySheet(
             HorizontalDivider()
             Spacer(Modifier.height(10.dp))
 
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DICTIONARY_PROVIDERS.forEach { provider ->
+                    FilterChip(
+                        selected = selectedProvider.id == provider.id,
+                        onClick = { selectedProvider = provider; webViewFailed = false },
+                        label = { Text(provider.label) }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
             Box(modifier = Modifier.fillMaxWidth().height(340.dp)) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
@@ -247,6 +300,34 @@ fun DictionarySheet(
                             settings.allowFileAccess = false
                             settings.allowContentAccess = false
                             webViewClient = object : WebViewClient() {
+                                override fun shouldInterceptRequest(
+                                    view: WebView,
+                                    request: WebResourceRequest
+                                ): WebResourceResponse? {
+                                    val host = request.url.host
+                                    if (host != null && isAdHost(host)) {
+                                        return WebResourceResponse("text/plain", "utf-8", null)
+                                    }
+                                    return super.shouldInterceptRequest(view, request)
+                                }
+                                override fun onPageFinished(view: WebView, url: String) {
+                                    // Some dictionary sites (confirmed: Larousse) show
+                                    // intrusive ads in known placeholder slots -- hide them
+                                    // once the page finishes loading. Class names verified
+                                    // against Larousse's real markup; harmless no-op on
+                                    // sites that don't use them (WordReference/Linguee/
+                                    // Wiktionary).
+                                    view.evaluateJavascript(
+                                        """
+                                        (function() {
+                                            var style = document.createElement('style');
+                                            style.innerHTML = '.pub-top, .pub-bottom, .pub-pave, .pub-gtm, .ads-core-placer { display: none !important; }';
+                                            document.head.appendChild(style);
+                                        })();
+                                        """.trimIndent(),
+                                        null
+                                    )
+                                }
                                 override fun onReceivedHttpError(
                                     view: WebView,
                                     request: WebResourceRequest,
@@ -263,8 +344,27 @@ fun DictionarySheet(
                                     if (request.isForMainFrame) webViewFailed = true
                                 }
                             }
+                            // WebView sits inside ModalBottomSheet's own drag-to-dismiss
+                            // gesture handling; without this, the sheet's outer touch
+                            // handling intercepts vertical drags before the WebView's own
+                            // page scrolling ever receives them, so the dictionary page
+                            // can only ever show its very top and never scroll.
+                            setOnTouchListener { view, event ->
+                                if (event.action == android.view.MotionEvent.ACTION_MOVE) {
+                                    view.parent.requestDisallowInterceptTouchEvent(true)
+                                }
+                                false
+                            }
                             loadUrl(url)
                         }
+                    },
+                    update = { webView ->
+                        // AndroidView's factory only runs once; without this,
+                        // switching dictionary-source chips would never
+                        // reload the WebView. Comparing against the WebView's
+                        // own current url avoids reloading on every unrelated
+                        // recomposition (e.g. typing in the meaning field).
+                        if (webView.url != url) webView.loadUrl(url)
                     }
                 )
                 if (webViewFailed) {
