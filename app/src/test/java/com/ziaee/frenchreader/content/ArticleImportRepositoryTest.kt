@@ -106,6 +106,8 @@ class ArticleImportRepositoryTest {
 
         override suspend fun getById(id: Long): TextDocument? = documents.find { it.id == id }
 
+        override suspend fun getAllOnce(): List<TextDocument> = documents.toList()
+
         override suspend fun findByExternalKey(externalKey: String): TextDocument? =
             documents.find { it.externalKey == externalKey }
 
