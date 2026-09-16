@@ -20,4 +20,9 @@ class HtmlUtilTest {
     fun `trims leading and trailing whitespace`() {
         assertEquals("texte", HtmlUtil.stripHtml("   texte   "))
     }
+
+    @Test
+    fun `removes stray space before punctuation left by tag removal`() {
+        assertEquals("l'espace. À ne pas confondre.", HtmlUtil.stripHtml("l'espace</span>. À ne pas confondre."))
+    }
 }
