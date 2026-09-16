@@ -214,6 +214,9 @@ fun DictionarySheet(
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_close))
                 }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "بستن")
+                }
             }
 
             Spacer(Modifier.height(6.dp))
