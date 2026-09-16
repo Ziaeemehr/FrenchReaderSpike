@@ -110,7 +110,7 @@ class TextsListViewModel(app: Application) : AndroidViewModel(app) {
                     val item = result.item
                     val dateLabel = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                     val id = db.textDao().insert(
-                        TextDocument(title = "[$dateLabel] ${item.title}", rawText = item.body)
+                        TextDocument(title = "[$dateLabel] ${item.title}", rawText = item.snippet)
                     )
                     NewsPrefs.setLastImportedGuid(context, source.id, item.guid)
                     newsFetchState = NewsFetchUiState.Idle

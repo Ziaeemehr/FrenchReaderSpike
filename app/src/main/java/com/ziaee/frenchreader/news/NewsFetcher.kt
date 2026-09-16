@@ -1,6 +1,6 @@
 package com.ziaee.frenchreader.news
 
-import android.util.Xml
+import org.xmlpull.v1.XmlPullParserFactory
 import com.ziaee.frenchreader.util.HtmlUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,18 +9,26 @@ import java.io.IOException
 import java.io.StringReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-/** One RSS `<item>`, reduced to what the app needs: a title, a plain-text
- * body (HTML stripped), a guid/link used for de-duplication, and an
- * optional image URL for a future "image with text" pass (ROADMAP.md
- * section 4) -- not downloaded yet, just carried through in case. */
+/** One RSS `<item>`: a title, a short plain-text snippet (HTML stripped --
+ * this is a teaser, NOT the full article; see ROADMAP.md section 6 on why
+ * RSS descriptions can't be treated as full text), the item's real webpage
+ * link (used to fetch the full article), a guid, and the parsed publish
+ * date if the feed provides one. */
 data class NewsItem(
     val title: String,
-    val body: String,
+    val snippet: String,
+    val link: String,
     val guid: String,
-    val imageUrl: String? = null
+    val publishedAtMs: Long?
 )
 
+/** Transitional result type for [NewsFetcher.fetchLatest] -- the OLD
+ * single-item, dedup-aware news flow that `TextsListScreen.kt`'s news
+ * dropdown still calls. Deleted in Task 5 of the unified-content-search
+ * plan once that dropdown is removed; do not add new callers of this. */
 sealed class NewsFetchResult {
     data class NewItem(val item: NewsItem) : NewsFetchResult()
     data object NoNewItem : NewsFetchResult()
@@ -28,19 +36,21 @@ sealed class NewsFetchResult {
 }
 
 /**
- * Fetches [source]'s RSS feed and returns its first (most recent) item,
- * unless that item's guid matches [lastGuid] -- meaning nothing new has
- * been published since the last fetch of this source.
- *
- * Deliberately dependency-free: a single GET via [HttpURLConnection] and
- * Android's built-in [Xml] pull parser, rather than pulling in OkHttp or a
- * dedicated RSS library for one request.
+ * Fetches up to [limit] items from an RSS feed, in feed order (newest
+ * first, by RSS convention). Dependency-free: HttpURLConnection + Android's
+ * built-in XmlPullParser, no OkHttp or RSS library.
  */
 object NewsFetcher {
+    suspend fun fetchItems(feedUrl: String, limit: Int = 25): List<NewsItem> = withContext(Dispatchers.IO) {
+        parseItems(httpGet(feedUrl), limit)
+    }
+
+    /** Transitional: the old "today's latest, skip if already seen" flow,
+     * now built on top of [fetchItems] instead of its own parsing. See
+     * [NewsFetchResult]'s kdoc -- deleted in Task 5. */
     suspend fun fetchLatest(source: NewsSource, lastGuid: String?): NewsFetchResult = withContext(Dispatchers.IO) {
         try {
-            val xml = httpGet(source.feedUrl)
-            val item = parseFirstItem(xml)
+            val item = fetchItems(source.feedUrl, limit = 1).firstOrNull()
                 ?: return@withContext NewsFetchResult.Error("فید خالی یا در قالب نامعتبر بود")
             if (lastGuid != null && item.guid == lastGuid) NewsFetchResult.NoNewItem
             else NewsFetchResult.NewItem(item)
@@ -65,40 +75,33 @@ object NewsFetcher {
         }
     }
 
-    /** Parses just the first `<item>` -- this app only ever wants "today's
-     * latest", so there's no reason to walk (or hold in memory) the rest of
-     * the feed. Namespace processing is left off so tags like
-     * `content:encoded` and `media:content` show up under their literal
-     * (prefixed) names, which is all this needs. */
-    private fun parseFirstItem(xml: String): NewsItem? {
-        val parser: XmlPullParser = Xml.newPullParser()
+    /** Namespace processing is left off so tags like `content:encoded` show
+     * up under their literal (prefixed) name, which is all this needs. */
+    internal fun parseItems(xml: String, limit: Int): List<NewsItem> {
+        val parser: XmlPullParser = XmlPullParserFactory.newInstance().newPullParser()
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
         parser.setInput(StringReader(xml))
 
+        val items = mutableListOf<NewsItem>()
         var inItem = false
         var title: String? = null
         var description: String? = null
         var contentEncoded: String? = null
         var link: String? = null
         var guid: String? = null
-        var imageUrl: String? = null
+        var pubDate: String? = null
         var currentTag: String? = null
 
         var event = parser.eventType
-        while (event != XmlPullParser.END_DOCUMENT) {
+        while (event != XmlPullParser.END_DOCUMENT && items.size < limit) {
             when (event) {
                 XmlPullParser.START_TAG -> {
                     val name = parser.name
                     currentTag = name
-                    when {
-                        name == "item" -> inItem = true
-                        inItem && (name == "enclosure" || name == "media:content") -> {
-                            val type = parser.getAttributeValue(null, "type")
-                            val url = parser.getAttributeValue(null, "url")
-                            if (imageUrl == null && url != null && (type == null || type.startsWith("image"))) {
-                                imageUrl = url
-                            }
-                        }
+                    if (name == "item") {
+                        inItem = true
+                        title = null; description = null; contentEncoded = null
+                        link = null; guid = null; pubDate = null
                     }
                 }
                 XmlPullParser.TEXT, XmlPullParser.CDSECT -> {
@@ -110,29 +113,40 @@ object NewsFetcher {
                             "content:encoded" -> contentEncoded = (contentEncoded ?: "") + text
                             "link" -> link = (link ?: "") + text
                             "guid" -> guid = (guid ?: "") + text
+                            "pubDate" -> pubDate = (pubDate ?: "") + text
                         }
                     }
                 }
                 XmlPullParser.END_TAG -> {
                     if (parser.name == "item" && inItem) {
-                        val rawBody = contentEncoded?.takeIf { it.isNotBlank() } ?: description.orEmpty()
+                        inItem = false
+                        val rawSnippet = contentEncoded?.takeIf { it.isNotBlank() } ?: description.orEmpty()
                         val cleanTitle = HtmlUtil.stripHtml(title.orEmpty())
-                        val cleanBody = HtmlUtil.stripHtml(rawBody)
-                        return if (cleanTitle.isNotBlank() && cleanBody.isNotBlank()) {
-                            NewsItem(
-                                title = cleanTitle,
-                                body = cleanBody,
-                                guid = (guid?.takeIf { it.isNotBlank() } ?: link ?: cleanTitle).trim(),
-                                imageUrl = imageUrl
+                        val cleanSnippet = HtmlUtil.stripHtml(rawSnippet)
+                        val itemLink = link?.trim().orEmpty()
+                        if (cleanTitle.isNotBlank() && cleanSnippet.isNotBlank() && itemLink.isNotBlank()) {
+                            items.add(
+                                NewsItem(
+                                    title = cleanTitle,
+                                    snippet = cleanSnippet,
+                                    link = itemLink,
+                                    guid = (guid?.takeIf { it.isNotBlank() } ?: itemLink).trim(),
+                                    publishedAtMs = pubDate?.let(::parseRfc822)
+                                )
                             )
-                        } else null
+                        }
                     }
                     currentTag = null
                 }
             }
             event = parser.next()
         }
-        return null
+        return items
     }
 
+    private fun parseRfc822(date: String): Long? = try {
+        SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).parse(date.trim())?.time
+    } catch (e: Exception) {
+        null
+    }
 }
