@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.ui.home
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.room.invalidationTrackerFlow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -17,18 +18,22 @@ import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.news.NewsRepository
 import com.ziaee.frenchreader.news.normalizeArticleUrl
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
+import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 /** Every source the Home topic-search field can query -- broader than the
  * two dashboard news sources used by the news dashboard above. */
@@ -55,22 +60,39 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val sourceErrors = MutableStateFlow<List<String>>(emptyList())
     private val importingKey = MutableStateFlow<String?>(null)
 
+    /** Re-derives the real, non-fabricated reading streak whenever a review
+     * or a listening session is logged -- driven by Room's own invalidation
+     * tracker rather than a timer, so it stays correct without polling. */
+    private val activeDates = db.invalidationTrackerFlow("review_log", "activity_log", emitInitialState = true)
+        .map {
+            loadActiveDates(
+                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
+                activityLogDates = { db.activityLogDao().activeDates() }
+            )
+        }
+
     val uiState: StateFlow<HomeUiState> = combine(
         newsRepository.observeHeadlines(),
-        db.textDao().observeRecent(),
+        db.textDao().observeAll(),
+        db.vocabDao().observeAll(),
         db.textDao().observeMostRecentlyAccessed(),
         isRefreshing,
         sourceErrors,
-        importingKey
+        importingKey,
+        activeDates
     ) { values ->
         @Suppress("UNCHECKED_CAST")
         composeHomeState(
             headlines = values[0] as List<HeadlineEntity>,
-            recentTexts = values[1] as List<TextDocument>,
-            continueReading = values[2] as TextDocument?,
-            isRefreshing = values[3] as Boolean,
-            sourceErrors = values[4] as List<String>,
-            importingKey = values[5] as String?
+            allTexts = values[1] as List<TextDocument>,
+            vocabEntries = values[2] as List<VocabEntry>,
+            continueReading = values[3] as TextDocument?,
+            isRefreshing = values[4] as Boolean,
+            sourceErrors = values[5] as List<String>,
+            importingKey = values[6] as String?,
+            activeDates = values[7] as Set<LocalDate>,
+            nowMs = System.currentTimeMillis(),
+            today = LocalDate.now()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 

@@ -59,6 +59,16 @@ internal fun computeStreak(activeDates: Set<LocalDate>, today: LocalDate): Int {
     return streak
 }
 
+/** Shared by Statistics and Home so both derive the exact same "any
+ * activity" date set from `review_log` + `activity_log` without duplicating
+ * the query/union/parsing logic. The two DAO calls are passed as suspend
+ * lambdas so this stays a plain unit-testable function. */
+internal suspend fun loadActiveDates(
+    reviewLogDates: suspend () -> List<String>,
+    activityLogDates: suspend () -> List<String>
+): Set<LocalDate> =
+    (reviewLogDates() + activityLogDates()).toSet().map { LocalDate.parse(it) }.toSet()
+
 internal fun composeStatisticsState(
     texts: List<TextDocument>,
     vocabEntries: List<VocabEntry>,

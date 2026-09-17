@@ -57,10 +57,10 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 DailyListening(day, activityRows[day.toString()]?.listeningMs ?: 0L)
             }
 
-            val activeDates = (db.reviewLogDao().distinctActiveDates() + db.activityLogDao().activeDates())
-                .toSet()
-                .map { LocalDate.parse(it) }
-                .toSet()
+            val activeDates = loadActiveDates(
+                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
+                activityLogDates = { db.activityLogDao().activeDates() }
+            )
 
             uiState = composeStatisticsState(
                 texts = texts,
