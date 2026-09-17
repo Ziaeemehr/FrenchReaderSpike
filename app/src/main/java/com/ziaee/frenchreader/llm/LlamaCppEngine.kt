@@ -2,12 +2,14 @@ package com.ziaee.frenchreader.llm
 
 import android.os.Build
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class LlamaCppEngine(
@@ -35,21 +37,31 @@ class LlamaCppEngine(
         }
     }
 
-    override suspend fun ensureLoaded(): Boolean = mutex.withLock {
-        if (handle != 0L) {
+    // withContext(Dispatchers.Default) below is load-bearing: nativeLoadModel/nativeGenerate
+    // are blocking JNI calls that can run for seconds (model load) to tens of seconds
+    // (generation). ensureLoaded()/generate() are suspend functions but that alone doesn't
+    // move blocking work off the caller's dispatcher -- callers here (AssistantViewModel) use
+    // viewModelScope.launch, which defaults to Dispatchers.Main.immediate. Without switching
+    // dispatchers, the native call runs ON the main thread and blocks it, which the platform
+    // treats as an unresponsive app: confirmed on-device, this produced a real ANR ("Input
+    // dispatching timed out ... Waited 10000ms for MotionEvent") that got the process killed.
+    override suspend fun ensureLoaded(): Boolean = withContext(Dispatchers.Default) {
+        mutex.withLock {
+            if (handle != 0L) {
+                resetIdleTimer()
+                return@withLock true
+            }
+            if (!isSupportedAbi()) return@withLock false
+
+            val modelFile = File(modelPathProvider())
+            if (!modelFile.exists() || !modelFile.canRead()) return@withLock false
+
+            val loaded = LlmNative.nativeLoadModel(modelFile.absolutePath, nCtx, nThreads)
+            if (loaded == 0L) return@withLock false
+            handle = loaded
             resetIdleTimer()
-            return@withLock true
+            true
         }
-        if (!isSupportedAbi()) return@withLock false
-
-        val modelFile = File(modelPathProvider())
-        if (!modelFile.exists() || !modelFile.canRead()) return@withLock false
-
-        val loaded = LlmNative.nativeLoadModel(modelFile.absolutePath, nCtx, nThreads)
-        if (loaded == 0L) return@withLock false
-        handle = loaded
-        resetIdleTimer()
-        true
     }
 
     override suspend fun generate(
@@ -57,30 +69,32 @@ class LlamaCppEngine(
         userPrompt: String,
         maxTokens: Int,
         grammar: String?,
-    ): LlmResult = mutex.withLock {
-        if (handle == 0L) {
-            val modelFile = File(modelPathProvider())
-            if (!isSupportedAbi() || !modelFile.exists() || !modelFile.canRead()) {
-                return@withLock LlmResult.Failure(LlmResult.FailureReason.NOT_DOWNLOADED)
+    ): LlmResult = withContext(Dispatchers.Default) {
+        mutex.withLock {
+            if (handle == 0L) {
+                val modelFile = File(modelPathProvider())
+                if (!isSupportedAbi() || !modelFile.exists() || !modelFile.canRead()) {
+                    return@withLock LlmResult.Failure(LlmResult.FailureReason.NOT_DOWNLOADED)
+                }
+                val loaded = LlmNative.nativeLoadModel(modelFile.absolutePath, nCtx, nThreads)
+                if (loaded == 0L) {
+                    return@withLock LlmResult.Failure(LlmResult.FailureReason.LOAD_FAILED)
+                }
+                handle = loaded
             }
-            val loaded = LlmNative.nativeLoadModel(modelFile.absolutePath, nCtx, nThreads)
-            if (loaded == 0L) {
-                return@withLock LlmResult.Failure(LlmResult.FailureReason.LOAD_FAILED)
+            resetIdleTimer()
+
+            val text = try {
+                LlmNative.nativeGenerate(handle, systemPrompt, userPrompt, maxTokens, grammar)
+            } catch (e: OutOfMemoryError) {
+                return@withLock LlmResult.Failure(LlmResult.FailureReason.OUT_OF_MEMORY)
             }
-            handle = loaded
-        }
-        resetIdleTimer()
 
-        val text = try {
-            LlmNative.nativeGenerate(handle, systemPrompt, userPrompt, maxTokens, grammar)
-        } catch (e: OutOfMemoryError) {
-            return@withLock LlmResult.Failure(LlmResult.FailureReason.OUT_OF_MEMORY)
-        }
-
-        if (text.isBlank()) {
-            LlmResult.Failure(LlmResult.FailureReason.GENERATION_FAILED)
-        } else {
-            LlmResult.Success(text)
+            if (text.isBlank()) {
+                LlmResult.Failure(LlmResult.FailureReason.GENERATION_FAILED)
+            } else {
+                LlmResult.Success(text)
+            }
         }
     }
 

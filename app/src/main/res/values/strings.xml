@@ -132,4 +132,15 @@
     <string name="statistics_texts_saved">Texts saved: %1$d</string>
     <string name="statistics_texts_completed">Texts completed: %1$d</string>
     <string name="statistics_words_saved">Words saved: %1$d</string>
+    <string name="assistant_title">AI reading assistant</string>
+    <string name="assistant_suggestion_label">AI suggestion</string>
+    <string name="assistant_action_summarize">Summarize</string>
+    <string name="assistant_action_grammar">Explain grammar</string>
+    <string name="assistant_action_simplify">Simplify</string>
+    <string name="assistant_action_vocab">Extract vocabulary</string>
+    <string name="assistant_icon_description">Ask AI assistant</string>
+    <string name="assistant_error_not_downloaded">Model not downloaded yet.</string>
+    <string name="assistant_error_load_failed">Could not load the AI model.</string>
+    <string name="assistant_error_out_of_memory">Not enough memory to run the AI model right now.</string>
+    <string name="assistant_error_generation_failed">The AI assistant couldn\'t produce a result. Try again.</string>
 </resources>

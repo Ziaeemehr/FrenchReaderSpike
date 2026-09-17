@@ -132,4 +132,15 @@
     <string name="statistics_texts_saved">Textes enregistrés : %1$d</string>
     <string name="statistics_texts_completed">Textes terminés : %1$d</string>
     <string name="statistics_words_saved">Mots enregistrés : %1$d</string>
+    <string name="assistant_title">Assistant IA de lecture</string>
+    <string name="assistant_suggestion_label">Suggestion IA</string>
+    <string name="assistant_action_summarize">Résumer</string>
+    <string name="assistant_action_grammar">Expliquer la grammaire</string>
+    <string name="assistant_action_simplify">Simplifier</string>
+    <string name="assistant_action_vocab">Extraire le vocabulaire</string>
+    <string name="assistant_icon_description">Demander à l\'assistant IA</string>
+    <string name="assistant_error_not_downloaded">Le modèle n\'est pas encore téléchargé.</string>
+    <string name="assistant_error_load_failed">Impossible de charger le modèle IA.</string>
+    <string name="assistant_error_out_of_memory">Pas assez de mémoire pour exécuter le modèle IA.</string>
+    <string name="assistant_error_generation_failed">L\'assistant IA n\'a pas pu produire de résultat. Réessaie.</string>
 </resources>

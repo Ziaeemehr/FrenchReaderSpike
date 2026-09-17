@@ -132,4 +132,15 @@
     <string name="statistics_texts_saved">متن‌های ذخیره‌شده: %1$d</string>
     <string name="statistics_texts_completed">متن‌های تکمیل‌شده: %1$d</string>
     <string name="statistics_words_saved">لغات ذخیره‌شده: %1$d</string>
+    <string name="assistant_title">دستیار هوش مصنوعی مطالعه</string>
+    <string name="assistant_suggestion_label">پیشنهاد هوش مصنوعی</string>
+    <string name="assistant_action_summarize">خلاصه‌سازی</string>
+    <string name="assistant_action_grammar">توضیح گرامر</string>
+    <string name="assistant_action_simplify">ساده‌سازی</string>
+    <string name="assistant_action_vocab">استخراج واژگان</string>
+    <string name="assistant_icon_description">پرسش از دستیار هوش مصنوعی</string>
+    <string name="assistant_error_not_downloaded">مدل هنوز دانلود نشده است.</string>
+    <string name="assistant_error_load_failed">بارگذاری مدل هوش مصنوعی ممکن نشد.</string>
+    <string name="assistant_error_out_of_memory">حافظه کافی برای اجرای مدل هوش مصنوعی وجود ندارد.</string>
+    <string name="assistant_error_generation_failed">دستیار هوش مصنوعی نتوانست پاسخی بسازد. دوباره تلاش کنید.</string>
 </resources>
