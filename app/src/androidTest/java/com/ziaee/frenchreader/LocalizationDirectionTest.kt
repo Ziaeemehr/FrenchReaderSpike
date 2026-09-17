@@ -93,7 +93,8 @@ class LocalizationDirectionTest {
                         onPullRefresh = {},
                         onOpenText = {},
                         onDownloadOrOpen = {},
-                        onDismissPreview = {}
+                        onDismissPreview = {},
+                        onStartReview = {}
                     )
                 }
             }

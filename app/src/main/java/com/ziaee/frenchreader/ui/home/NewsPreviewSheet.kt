@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -22,6 +19,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
+import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
+import com.ziaee.frenchreader.ui.components.MetadataBadge
+import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -52,21 +52,18 @@ fun NewsPreviewSheet(
             // (RTL) interface, same as NewsCard and Reading-screen bodies.
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 Column {
-                    Text(headline.title, style = MaterialTheme.typography.titleLarge)
+                    Text(headline.title, style = FrenchReaderDesign.editorialTypography.sectionTitle)
                     Spacer(Modifier.height(8.dp))
                     Text(headline.snippet, style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(FrenchReaderDesign.spacing.xSmall))
 
             Row {
-                Text(headline.sourceLabel, style = MaterialTheme.typography.labelMedium)
-                headline.publishedAtMs?.let { publishedAtMs ->
-                    Text(
-                        " · " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(publishedAtMs)),
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
+                val dateSuffix = headline.publishedAtMs?.let {
+                    " · " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it))
+                }.orEmpty()
+                MetadataBadge(text = headline.sourceLabel + dateSuffix)
             }
             Spacer(Modifier.height(16.dp))
 
@@ -79,18 +76,16 @@ fun NewsPreviewSheet(
                 Spacer(Modifier.height(8.dp))
             }
 
-            Button(onClick = onDownloadOrOpen, enabled = !isImporting, modifier = Modifier.fillMaxWidth()) {
-                if (isImporting) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(
-                        stringResource(
-                            if (isAlreadyDownloaded) R.string.preview_action_open_library
-                            else R.string.preview_action_download_read
-                        )
-                    )
-                }
-            }
+            EditorialPrimaryButton(
+                text = stringResource(
+                    if (isAlreadyDownloaded) R.string.preview_action_open_library
+                    else R.string.preview_action_download_read
+                ),
+                onClick = onDownloadOrOpen,
+                enabled = !isImporting,
+                loading = isImporting,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

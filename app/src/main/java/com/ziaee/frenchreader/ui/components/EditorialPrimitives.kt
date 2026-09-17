@@ -51,13 +51,22 @@ fun EditorialTopAppBar(
 ) {
     TopAppBar(
         title = {
-            Text(text = title, style = FrenchReaderDesign.editorialTypography.screenTitle)
+            Text(
+                text = title,
+                style = FrenchReaderDesign.editorialTypography.sectionTitle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         },
         modifier = modifier,
         navigationIcon = navigationIcon,
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
+            // Opaque and matched to the page background rather than truly
+            // transparent -- pull-to-refresh's idle indicator sits just
+            // above its own bounds by design and needs an opaque bar over
+            // it, or it bleeds through (see PullToRefreshContainer).
+            containerColor = MaterialTheme.colorScheme.background,
             scrolledContainerColor = MaterialTheme.colorScheme.surface
         ),
         windowInsets = TopAppBarDefaults.windowInsets
