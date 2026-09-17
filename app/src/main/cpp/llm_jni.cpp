@@ -1,7 +1,12 @@
 #include <jni.h>
 #include <android/log.h>
+#include <algorithm>
+#include <string>
+#include <vector>
 #include "llama.h"
 #include "chat.h"
+#include "common.h"
+#include "sampling.h"
 
 #define LOG_TAG "LlmJni"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
@@ -66,4 +71,86 @@ Java_com_ziaee_frenchreader_llm_LlmNative_nativeUnload(JNIEnv*, jobject, jlong h
     if (handle->ctx) llama_free(handle->ctx);
     if (handle->model) llama_model_free(handle->model);
     delete handle;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_ziaee_frenchreader_llm_LlmNative_nativeGenerate(
+        JNIEnv* env, jobject, jlong handlePtr,
+        jstring jSystemPrompt, jstring jUserPrompt, jint maxTokens, jstring jGrammar) {
+    auto* handle = reinterpret_cast<EngineHandle*>(handlePtr);
+    if (!handle || !handle->ctx || !handle->model) return env->NewStringUTF("");
+
+    const char* systemPromptChars = env->GetStringUTFChars(jSystemPrompt, nullptr);
+    const char* userPromptChars = env->GetStringUTFChars(jUserPrompt, nullptr);
+
+    common_chat_msg sys_msg; sys_msg.role = "system"; sys_msg.content = systemPromptChars;
+    common_chat_msg user_msg; user_msg.role = "user"; user_msg.content = userPromptChars;
+
+    common_chat_templates_inputs inputs;
+    inputs.messages = {sys_msg, user_msg};
+    inputs.add_generation_prompt = true;
+    inputs.enable_thinking = false;  // spike finding: must always be false for Qwen3
+    inputs.use_jinja = true;
+
+    env->ReleaseStringUTFChars(jSystemPrompt, systemPromptChars);
+    env->ReleaseStringUTFChars(jUserPrompt, userPromptChars);
+
+    common_chat_params chat_params = common_chat_templates_apply(handle->templates.get(), inputs);
+
+    llama_memory_clear(llama_get_memory(handle->ctx), false);
+
+    std::vector<llama_token> tokens = common_tokenize(handle->ctx, chat_params.prompt, true, true);
+    if (tokens.empty()) {
+        LOGE("nativeGenerate: tokenization produced no tokens");
+        return env->NewStringUTF("");
+    }
+
+    llama_batch batch = llama_batch_init(512, 0, 1);
+    for (size_t i = 0; i < tokens.size(); i += 512) {
+        common_batch_clear(batch);
+        size_t chunk = std::min((size_t) 512, tokens.size() - i);
+        for (size_t j = 0; j < chunk; j++) {
+            bool wantLogit = (i + j == tokens.size() - 1);
+            common_batch_add(batch, tokens[i + j], (llama_pos)(i + j), {0}, wantLogit);
+        }
+        if (llama_decode(handle->ctx, batch) != 0) {
+            LOGE("nativeGenerate: llama_decode failed during prompt processing");
+            llama_batch_free(batch);
+            return env->NewStringUTF("");
+        }
+    }
+
+    common_params_sampling sparams;
+    sparams.temp = 0.2f;
+    const char* grammarChars = nullptr;
+    if (jGrammar != nullptr) {
+        grammarChars = env->GetStringUTFChars(jGrammar, nullptr);
+        if (grammarChars[0] != '\0') {
+            sparams.grammar.type = COMMON_GRAMMAR_TYPE_USER;
+            sparams.grammar.grammar = grammarChars;
+        }
+    }
+    common_sampler* sampler = common_sampler_init(handle->model, sparams);
+    if (grammarChars) env->ReleaseStringUTFChars(jGrammar, grammarChars);
+
+    std::string result;
+    llama_pos pos = (llama_pos) tokens.size();
+    for (int i = 0; i < maxTokens; i++) {
+        llama_token new_token = common_sampler_sample(sampler, handle->ctx, -1);
+        common_sampler_accept(sampler, new_token, true);
+        if (llama_vocab_is_eog(llama_model_get_vocab(handle->model), new_token)) break;
+        result += common_token_to_piece(handle->ctx, new_token);
+
+        common_batch_clear(batch);
+        common_batch_add(batch, new_token, pos, {0}, true);
+        pos++;
+        if (llama_decode(handle->ctx, batch) != 0) {
+            LOGE("nativeGenerate: llama_decode failed during generation");
+            break;
+        }
+    }
+
+    common_sampler_free(sampler);
+    llama_batch_free(batch);
+    return env->NewStringUTF(result.c_str());
 }
