@@ -145,4 +145,28 @@
     <string name="assistant_error_generation_failed">The AI assistant couldn\'t produce a result. Try again.</string>
     <string name="assistant_action_accept">Accept</string>
     <string name="assistant_action_added">Added</string>
+
+    <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
+    <string name="home_brand_title">Lire en français</string>
+    <string name="home_search_hint">Search a topic, word, or article…</string>
+    <string name="home_summary_learned">%1$d learned</string>
+    <string name="home_summary_saved_words">%1$d saved words</string>
+    <string name="home_summary_saved_texts">%1$d texts</string>
+    <string name="home_summary_streak_days">%1$d-day streak</string>
+    <string name="home_section_daily_review">Today\'s Review</string>
+    <string name="home_review_due">%1$d words are ready</string>
+    <string name="home_review_due_support">A short review keeps your vocabulary active.</string>
+    <string name="home_review_start">Start</string>
+    <string name="home_review_complete">You\'re all caught up</string>
+    <string name="home_review_complete_support">No words are due right now.</string>
+    <string name="home_action_resume">Resume</string>
+    <string name="home_progress_percent">%1$d%% complete</string>
+    <string name="home_remaining_minutes">About %1$d min left</string>
+    <string name="home_reading_complete">Reading complete</string>
+    <string name="home_estimated_minutes">%1$d min read</string>
+    <string name="home_more_actions">More Home actions</string>
+    <string name="home_action_import_file">Import a file</string>
+    <string name="home_action_vocabulary">Saved vocabulary</string>
+    <string name="home_action_statistics">Learning statistics</string>
+    <string name="home_news_image_unavailable">Article image unavailable</string>
 </resources>

@@ -145,4 +145,28 @@
     <string name="assistant_error_generation_failed">دستیار هوش مصنوعی نتوانست پاسخی بسازد. دوباره تلاش کنید.</string>
     <string name="assistant_action_accept">پذیرفتن</string>
     <string name="assistant_action_added">افزوده شد</string>
+
+    <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
+    <string name="home_brand_title">Lire en français</string>
+    <string name="home_search_hint">جست‌وجوی موضوع، واژه یا مقاله…</string>
+    <string name="home_summary_learned">%1$d واژه آموخته</string>
+    <string name="home_summary_saved_words">%1$d واژه ذخیره</string>
+    <string name="home_summary_saved_texts">%1$d متن</string>
+    <string name="home_summary_streak_days">%1$d روز پیاپی</string>
+    <string name="home_section_daily_review">مرور امروز</string>
+    <string name="home_review_due">%1$d واژه آمادهٔ مرور است</string>
+    <string name="home_review_due_support">یک مرور کوتاه واژگان را فعال نگه می‌دارد.</string>
+    <string name="home_review_start">شروع</string>
+    <string name="home_review_complete">مرور امروز تمام شد</string>
+    <string name="home_review_complete_support">اکنون واژه‌ای برای مرور نیست.</string>
+    <string name="home_action_resume">ادامه</string>
+    <string name="home_progress_percent">%1$d٪ خوانده‌شده</string>
+    <string name="home_remaining_minutes">حدود %1$d دقیقه مانده</string>
+    <string name="home_reading_complete">مطالعه کامل شد</string>
+    <string name="home_estimated_minutes">مطالعهٔ %1$d دقیقه‌ای</string>
+    <string name="home_more_actions">گزینه‌های بیشتر خانه</string>
+    <string name="home_action_import_file">افزودن از فایل</string>
+    <string name="home_action_vocabulary">واژگان ذخیره‌شده</string>
+    <string name="home_action_statistics">آمار یادگیری</string>
+    <string name="home_news_image_unavailable">تصویر مقاله در دسترس نیست</string>
 </resources>

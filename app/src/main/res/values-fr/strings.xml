@@ -145,4 +145,28 @@
     <string name="assistant_error_generation_failed">L\'assistant IA n\'a pas pu produire de résultat. Réessaie.</string>
     <string name="assistant_action_accept">Accepter</string>
     <string name="assistant_action_added">Ajouté</string>
+
+    <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
+    <string name="home_brand_title">Lire en français</string>
+    <string name="home_search_hint">Rechercher un sujet, un mot ou un article…</string>
+    <string name="home_summary_learned">%1$d appris</string>
+    <string name="home_summary_saved_words">%1$d mots enregistrés</string>
+    <string name="home_summary_saved_texts">%1$d textes</string>
+    <string name="home_summary_streak_days">%1$d jours d\'affilée</string>
+    <string name="home_section_daily_review">Révision du jour</string>
+    <string name="home_review_due">%1$d mots sont prêts</string>
+    <string name="home_review_due_support">Une courte révision entretient votre vocabulaire.</string>
+    <string name="home_review_start">Commencer</string>
+    <string name="home_review_complete">Tout est à jour</string>
+    <string name="home_review_complete_support">Aucun mot n\'est à réviser pour le moment.</string>
+    <string name="home_action_resume">Reprendre</string>
+    <string name="home_progress_percent">%1$d %% terminé</string>
+    <string name="home_remaining_minutes">Environ %1$d min restantes</string>
+    <string name="home_reading_complete">Lecture terminée</string>
+    <string name="home_estimated_minutes">Lecture de %1$d min</string>
+    <string name="home_more_actions">Plus d\'actions d\'accueil</string>
+    <string name="home_action_import_file">Importer un fichier</string>
+    <string name="home_action_vocabulary">Vocabulaire enregistré</string>
+    <string name="home_action_statistics">Statistiques d\'apprentissage</string>
+    <string name="home_news_image_unavailable">Image de l\'article indisponible</string>
 </resources>
