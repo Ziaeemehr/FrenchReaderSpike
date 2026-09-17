@@ -84,6 +84,7 @@ class LocalizationDirectionTest {
                         onSearchClick = {},
                         onFilePickerClick = {},
                         onOpenVocab = {},
+                        onOpenStatistics = {},
                         onOpenSettings = {},
                         onOpenLibrary = {},
                         onAddTextClick = {},

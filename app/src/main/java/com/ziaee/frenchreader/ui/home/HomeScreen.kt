@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryBooks
@@ -67,6 +68,7 @@ fun HomeScreen(
     onOpenText: (Long) -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenVocab: () -> Unit,
+    onOpenStatistics: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val vm: HomeViewModel = viewModel()
@@ -102,6 +104,7 @@ fun HomeScreen(
         onSearchClick = { showFindArticleSheet = true },
         onFilePickerClick = openFilePicker,
         onOpenVocab = onOpenVocab,
+        onOpenStatistics = onOpenStatistics,
         onOpenSettings = onOpenSettings,
         onOpenLibrary = onOpenLibrary,
         onAddTextClick = { addTextState.openBlank() },
@@ -143,6 +146,7 @@ fun HomeContent(
     onSearchClick: () -> Unit,
     onFilePickerClick: () -> Unit,
     onOpenVocab: () -> Unit,
+    onOpenStatistics: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddTextClick: () -> Unit,
@@ -176,6 +180,9 @@ fun HomeContent(
                     }
                     IconButton(onClick = onOpenVocab) {
                         Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
+                    }
+                    IconButton(onClick = onOpenStatistics) {
+                        Icon(Icons.Default.BarChart, contentDescription = stringResource(R.string.accessibility_statistics))
                     }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.accessibility_settings))

@@ -29,6 +29,7 @@ import com.ziaee.frenchreader.ui.VocabListScreen
 import com.ziaee.frenchreader.ui.VocabReviewScreen
 import com.ziaee.frenchreader.ui.home.HomeScreen
 import com.ziaee.frenchreader.ui.library.LibraryScreen
+import com.ziaee.frenchreader.ui.statistics.StatisticsScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
@@ -147,6 +148,7 @@ private fun AppNavHost() {
                 onOpenText = { id -> navController.navigate("reading/$id") },
                 onOpenLibrary = { navigateToTab("library") },
                 onOpenVocab = { navController.navigate("vocab") },
+                onOpenStatistics = { navController.navigate("statistics") },
                 onOpenSettings = { navController.navigate("settings") }
             )
         }
@@ -182,6 +184,9 @@ private fun AppNavHost() {
         }
         composable("settings") {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable("statistics") {
+            StatisticsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

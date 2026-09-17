@@ -119,4 +119,17 @@
     <string name="accessibility_hide_meaning">Show or hide meaning</string>
     <string name="accessibility_play_sentence">Play sentence audio</string>
     <string name="accessibility_save_vocabulary">Save to vocabulary</string>
+    <string name="accessibility_statistics">Statistics</string>
+    <string name="statistics_title">Statistics</string>
+    <string name="statistics_streak_days">%1$d day streak</string>
+    <string name="statistics_weekly_chart_title">Listening time (last 7 days)</string>
+    <string name="statistics_vocab_section_title">Vocabulary review</string>
+    <string name="statistics_reviewed_today">Reviewed today: %1$d</string>
+    <string name="statistics_reviewed_week">Reviewed this week: %1$d</string>
+    <string name="statistics_accuracy_percent">Overall accuracy: %1$d%%</string>
+    <string name="statistics_leitner_chart_title">Leitner box distribution</string>
+    <string name="statistics_totals_title">Totals</string>
+    <string name="statistics_texts_saved">Texts saved: %1$d</string>
+    <string name="statistics_texts_completed">Texts completed: %1$d</string>
+    <string name="statistics_words_saved">Words saved: %1$d</string>
 </resources>

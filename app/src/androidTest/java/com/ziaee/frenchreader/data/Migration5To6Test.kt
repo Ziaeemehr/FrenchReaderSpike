@@ -7,19 +7,19 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class Migration4To5Test {
-    private val databaseName = "migration-4-5-test.db"
+class Migration5To6Test {
+    private val databaseName = "migration-5-6-test.db"
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
     private val helper = FrameworkSQLiteOpenHelperFactory().create(
         SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(databaseName)
-            .callback(object : SupportSQLiteOpenHelper.Callback(4) {
+            .callback(object : SupportSQLiteOpenHelper.Callback(5) {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     db.execSQL(
                         "CREATE TABLE `texts` (" +
@@ -36,7 +36,14 @@ class Migration4To5Test {
                             "`sourceName` TEXT, " +
                             "`author` TEXT, " +
                             "`license` TEXT, " +
-                            "`publishedAt` INTEGER)"
+                            "`publishedAt` INTEGER, " +
+                            "`imagePath` TEXT, " +
+                            "`externalKey` TEXT, " +
+                            "`lastAccessedAtMs` INTEGER NOT NULL DEFAULT 0)"
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS `index_texts_externalKey` " +
+                            "ON `texts` (`externalKey`)"
                     )
                     db.execSQL(
                         "CREATE TABLE `vocab` (" +
@@ -60,18 +67,31 @@ class Migration4To5Test {
                             "`createdAtMs` INTEGER NOT NULL)"
                     )
                     db.execSQL(
-                        "INSERT INTO texts (title, rawText, createdAtMs, lastChunkIndex, " +
-                            "lastPositionMs, voice, ratePercent, translationLang, sourceUrl, " +
-                            "sourceName, author, license, publishedAt) VALUES " +
-                            "('Existing text', 'Existing body', 1, 2, 3, 'fr-FR-DeniseNeural', " +
-                            "4, 'fa', 'https://example.test/article', 'Example Source', " +
-                            "'Example Author', 'CC BY', 5)"
+                        "CREATE TABLE `headlines` (" +
+                            "`sourceId` TEXT NOT NULL, " +
+                            "`sourceLabel` TEXT NOT NULL, " +
+                            "`externalId` TEXT NOT NULL, " +
+                            "`title` TEXT NOT NULL, " +
+                            "`snippet` TEXT NOT NULL, " +
+                            "`articleUrl` TEXT NOT NULL, " +
+                            "`imageUrl` TEXT, " +
+                            "`publishedAtMs` INTEGER, " +
+                            "`cachedAtMs` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`sourceId`, `externalId`))"
                     )
                     db.execSQL(
-                        "INSERT INTO vocab (word, sentence, textId, dictionaryUrl, meaning, " +
-                            "learned, createdAtMs, listId, leitnerBox, nextReviewAtMs, " +
-                            "lastReviewedAtMs) VALUES ('bonjour', 'Bonjour le monde.', 1, " +
-                            "'https://example.test/dictionary', 'hello', 0, 6, NULL, 2, 7, 8)"
+                        "CREATE INDEX IF NOT EXISTS `index_headlines_publishedAtMs` " +
+                            "ON `headlines` (`publishedAtMs`)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_headlines_articleUrl` " +
+                            "ON `headlines` (`articleUrl`)"
+                    )
+                    db.execSQL(
+                        "INSERT INTO texts (title, rawText, createdAtMs, lastChunkIndex, " +
+                            "lastPositionMs, voice, ratePercent, translationLang, lastAccessedAtMs) " +
+                            "VALUES ('Existing text', 'Existing body', 1, 2, 3, " +
+                            "'fr-FR-DeniseNeural', 4, 'fa', 0)"
                     )
                 }
 
@@ -91,53 +111,26 @@ class Migration4To5Test {
     }
 
     @Test
-    fun migratesExistingTextAndCreatesEmptyHeadlineCache() {
+    fun migrationCreatesEmptyReviewLogAndActivityLogTables() {
         val db = helper.writableDatabase
 
-        MIGRATION_4_5.migrate(db)
+        MIGRATION_5_6.migrate(db)
 
-        db.query(
-            "SELECT title, rawText, createdAtMs, lastChunkIndex, lastPositionMs, voice, " +
-                "ratePercent, translationLang, sourceUrl, sourceName, author, license, " +
-                "publishedAt, imagePath, externalKey, lastAccessedAtMs FROM texts"
-        ).use { cursor ->
+        db.query("SELECT title FROM texts").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("Existing text", cursor.getString(0))
-            assertEquals("Existing body", cursor.getString(1))
-            assertEquals(1L, cursor.getLong(2))
-            assertEquals(2, cursor.getInt(3))
-            assertEquals(3L, cursor.getLong(4))
-            assertEquals("fr-FR-DeniseNeural", cursor.getString(5))
-            assertEquals(4, cursor.getInt(6))
-            assertEquals("fa", cursor.getString(7))
-            assertEquals("https://example.test/article", cursor.getString(8))
-            assertEquals("Example Source", cursor.getString(9))
-            assertEquals("Example Author", cursor.getString(10))
-            assertEquals("CC BY", cursor.getString(11))
-            assertEquals(5L, cursor.getLong(12))
-            assertTrue(cursor.isNull(13))
-            assertTrue(cursor.isNull(14))
-            assertEquals(0L, cursor.getLong(15))
         }
-        db.query("SELECT word, sentence, textId, meaning, leitnerBox FROM vocab").use { cursor ->
+        db.query("SELECT COUNT(*) FROM review_log").use { cursor ->
             assertTrue(cursor.moveToFirst())
-            assertEquals("bonjour", cursor.getString(0))
-            assertEquals("Bonjour le monde.", cursor.getString(1))
-            assertEquals(1L, cursor.getLong(2))
-            assertEquals("hello", cursor.getString(3))
-            assertEquals(2, cursor.getInt(4))
+            assertEquals(0, cursor.getInt(0))
         }
-        db.query("SELECT COUNT(*) FROM headlines").use { cursor ->
+        db.query("SELECT COUNT(*) FROM activity_log").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
 
-        db.version = 5
+        db.version = 6
         helper.close()
-        // addMigrations(*ALL_MIGRATIONS) lets Room carry this v5 database the rest of
-        // the way to the current schema version, same as the real AppDatabase.get()
-        // does -- this smoke-check just confirms Room accepts the resulting schema,
-        // it isn't re-testing MIGRATION_5_6 itself (that's Migration5To6Test's job).
         val roomDatabase = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
             .addMigrations(*ALL_MIGRATIONS)
             .build()
@@ -146,22 +139,18 @@ class Migration4To5Test {
     }
 
     @Test
-    fun migrationCreatesRoomCompatibleExternalKeyIndex() {
+    fun migrationCreatesTimestampIndexOnReviewLog() {
         val db = helper.writableDatabase
 
-        MIGRATION_4_5.migrate(db)
+        MIGRATION_5_6.migrate(db)
 
-        var foundExternalKeyIndex = false
-        db.query("PRAGMA index_list(`texts`)").use { cursor ->
+        var foundIndex = false
+        db.query("PRAGMA index_list(`review_log`)").use { cursor ->
             val nameColumn = cursor.getColumnIndexOrThrow("name")
-            val partialColumn = cursor.getColumnIndexOrThrow("partial")
             while (cursor.moveToNext()) {
-                if (cursor.getString(nameColumn) == "index_texts_externalKey") {
-                    foundExternalKeyIndex = true
-                    assertEquals(0, cursor.getInt(partialColumn))
-                }
+                if (cursor.getString(nameColumn) == "index_review_log_timestampMs") foundIndex = true
             }
         }
-        assertTrue(foundExternalKeyIndex)
+        assertTrue(foundIndex)
     }
 }

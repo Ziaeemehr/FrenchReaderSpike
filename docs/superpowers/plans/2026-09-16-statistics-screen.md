@@ -122,6 +122,14 @@ class Migration5To6Test {
                             "PRIMARY KEY(`sourceId`, `externalId`))"
                     )
                     db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_headlines_publishedAtMs` " +
+                            "ON `headlines` (`publishedAtMs`)"
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_headlines_articleUrl` " +
+                            "ON `headlines` (`articleUrl`)"
+                    )
+                    db.execSQL(
                         "INSERT INTO texts (title, rawText, createdAtMs, lastChunkIndex, " +
                             "lastPositionMs, voice, ratePercent, translationLang, lastAccessedAtMs) " +
                             "VALUES ('Existing text', 'Existing body', 1, 2, 3, " +
@@ -190,7 +198,7 @@ class Migration5To6Test {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `./gradlew :app:connectedDebugAndroidTest --tests com.ziaee.frenchreader.data.Migration5To6Test` (needs a connected device/emulator)
+Run: `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.ziaee.frenchreader.data.Migration5To6Test` (needs a connected device/emulator)
 Expected: FAILS to compile — `MIGRATION_5_6` is unresolved (doesn't exist yet).
 
 - [ ] **Step 3: Add the new entities**
@@ -357,7 +365,7 @@ interface ActivityLogDao {
 
 - [ ] **Step 6: Run the migration test to verify it passes**
 
-Run: `./gradlew :app:connectedDebugAndroidTest --tests com.ziaee.frenchreader.data.Migration5To6Test`
+Run: `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.ziaee.frenchreader.data.Migration5To6Test`
 Expected: PASS (both test methods).
 
 - [ ] **Step 7: Write the DAO upsert test**
@@ -425,7 +433,7 @@ class ActivityLogDaoTest {
 
 `ActivityLogDao.addListening` was already implemented in Step 5, so this test is confirming that implementation rather than following a fail-first cycle.
 
-Run: `./gradlew :app:connectedDebugAndroidTest --tests com.ziaee.frenchreader.data.ActivityLogDaoTest`
+Run: `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.ziaee.frenchreader.data.ActivityLogDaoTest`
 Expected: PASS on all three test methods.
 
 - [ ] **Step 9: Commit**
@@ -824,14 +832,14 @@ Replace `persistPositionNow()`:
     }
 ```
 
-This reuses the two existing call sites of `persistPositionNow()` (the 3-second debounce in `schedulePositionSave()`, and the eager call in `onCleared()`) — no new lifecycle wiring needed, and the last few unflushed seconds of a session are always caught when the reading screen closes.
+This reuses the three existing call sites of `persistPositionNow()` (the 3-second debounce in `schedulePositionSave()`, the eager call in `onCleared()`, and `ReadingScreen.kt`'s `DisposableEffect(Unit) { onDispose { ... } }`). The `onDispose` call is the one that reliably flushes the last few unflushed seconds on ordinary back-navigation because it runs before `viewModelScope` is cancelled.
 
 - [ ] **Step 4: Manually verify**
 
 ```bash
 ./gradlew :app:installDebug
 ```
-Open a text, press play, let it run for roughly 15 seconds, then press back (triggers `onCleared()` → `persistPositionNow()`). Then:
+Open a text, press play, let it run for roughly 15 seconds, then press back (triggers `ReadingScreen.kt`'s `DisposableEffect` `onDispose` → `persistPositionNow()` before `viewModelScope` is cancelled). Then:
 ```bash
 adb shell run-as com.ziaee.frenchreader sqlite3 /data/data/com.ziaee.frenchreader/databases/french_reader.db "SELECT * FROM activity_log;"
 ```
