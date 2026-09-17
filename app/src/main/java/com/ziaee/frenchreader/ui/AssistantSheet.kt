@@ -107,9 +107,9 @@ internal class AssistantSession(
 }
 
 class AssistantViewModel(app: Application) : AndroidViewModel(app) {
-    private val engine: LocalLlmEngine = LlamaCppEngine(
-        modelPathProvider = { ModelDownloader.modelFile(getApplication()).absolutePath },
-    )
+    private val engine: LocalLlmEngine = LlamaCppEngine.getInstance {
+        ModelDownloader.modelFile(getApplication()).absolutePath
+    }
     private val session = AssistantSession(engine, viewModelScope)
 
     val textResult get() = session.textResult

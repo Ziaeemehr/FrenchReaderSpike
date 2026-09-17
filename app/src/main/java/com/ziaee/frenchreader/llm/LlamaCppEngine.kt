@@ -20,6 +20,16 @@ class LlamaCppEngine(
     private val idleUnloadDelayMs: Long = 120_000L,
 ) : LocalLlmEngine {
 
+    companion object {
+        @Volatile
+        private var instance: LlamaCppEngine? = null
+
+        fun getInstance(modelPathProvider: () -> String): LlamaCppEngine =
+            instance ?: synchronized(this) {
+                instance ?: LlamaCppEngine(modelPathProvider).also { instance = it }
+            }
+    }
+
     private val mutex = Mutex()
     private var handle: Long = 0L
 
