@@ -25,7 +25,7 @@ set(GGML_OPENCL OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/llama.cpp third_party/llama.cpp-build)
 
 add_library(llm_jni SHARED
-        sanity_check.cpp)
+        llm_jni.cpp)
 
 target_include_directories(llm_jni PRIVATE
         third_party/llama.cpp

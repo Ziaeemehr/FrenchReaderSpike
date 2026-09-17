@@ -6,4 +6,6 @@ internal object LlmNative {
     }
 
     external fun nativeSanityCheck(): Int
+    external fun nativeLoadModel(modelPath: String, nCtx: Int, nThreads: Int): Long
+    external fun nativeUnload(handle: Long)
 }
