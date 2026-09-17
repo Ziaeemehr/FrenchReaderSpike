@@ -143,4 +143,6 @@
     <string name="assistant_error_load_failed">Could not load the AI model.</string>
     <string name="assistant_error_out_of_memory">Not enough memory to run the AI model right now.</string>
     <string name="assistant_error_generation_failed">The AI assistant couldn\'t produce a result. Try again.</string>
+    <string name="assistant_action_accept">Accept</string>
+    <string name="assistant_action_added">Added</string>
 </resources>

@@ -15,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,15 +33,17 @@ import com.ziaee.frenchreader.llm.LlmResult
 import com.ziaee.frenchreader.llm.LocalLlmEngine
 import com.ziaee.frenchreader.llm.Prompts
 import com.ziaee.frenchreader.llm.VocabGrammar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-enum class AssistantAction { SUMMARIZE, GRAMMAR, SIMPLIFY, VOCAB }
+internal enum class AssistantAction { SUMMARIZE, GRAMMAR, SIMPLIFY, VOCAB }
 
-class AssistantViewModel(app: Application) : AndroidViewModel(app) {
-    private val engine: LocalLlmEngine = LlamaCppEngine(
-        modelPathProvider = { ModelDownloader.modelFile(getApplication()).absolutePath },
-    )
-
+/** Owns one visible assistant sheet session, including its sole in-flight request. */
+internal class AssistantSession(
+    private val engine: LocalLlmEngine,
+    private val scope: CoroutineScope,
+) {
     var textResult by mutableStateOf<String?>(null)
         private set
     var vocabResult by mutableStateOf<List<VocabGrammar.VocabItem>>(emptyList())
@@ -50,19 +53,20 @@ class AssistantViewModel(app: Application) : AndroidViewModel(app) {
     var errorReason by mutableStateOf<LlmResult.FailureReason?>(null)
         private set
 
-    // Belt-and-suspenders alongside LlamaCppEngine's own idle timer (spec §3.6): once the
-    // sheet's ViewModel is torn down (sheet dismissed and scope cleared), free the model
-    // immediately rather than waiting out the idle timer.
-    override fun onCleared() {
-        engine.unload()
-    }
+    private var activeJob: Job? = null
+    private var requestId = 0L
+    private var cleanedUp = false
 
     fun run(action: AssistantAction, sentence: String) {
+        if (loading) return
+
+        cleanedUp = false
+        val currentRequestId = ++requestId
         loading = true
         errorReason = null
         textResult = null
         vocabResult = emptyList()
-        viewModelScope.launch {
+        activeJob = scope.launch {
             val prompt = when (action) {
                 AssistantAction.SUMMARIZE -> Prompts.summarize(sentence)
                 AssistantAction.GRAMMAR -> Prompts.explainGrammar(sentence)
@@ -70,6 +74,8 @@ class AssistantViewModel(app: Application) : AndroidViewModel(app) {
                 AssistantAction.VOCAB -> Prompts.extractVocabulary(sentence)
             }
             val result = engine.generate(prompt.systemPrompt, prompt.userPrompt, prompt.maxTokens, prompt.grammar)
+            if (currentRequestId != requestId || cleanedUp) return@launch
+
             loading = false
             when (result) {
                 is LlmResult.Success -> {
@@ -83,6 +89,43 @@ class AssistantViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    fun cancelAndClear() {
+        if (cleanedUp) return
+
+        cleanedUp = true
+        requestId += 1
+        activeJob?.cancel()
+        activeJob = null
+        loading = false
+        errorReason = null
+        textResult = null
+        vocabResult = emptyList()
+        engine.unload()
+    }
+}
+
+class AssistantViewModel(app: Application) : AndroidViewModel(app) {
+    private val engine: LocalLlmEngine = LlamaCppEngine(
+        modelPathProvider = { ModelDownloader.modelFile(getApplication()).absolutePath },
+    )
+    private val session = AssistantSession(engine, viewModelScope)
+
+    val textResult get() = session.textResult
+    val vocabResult get() = session.vocabResult
+    val loading get() = session.loading
+    val errorReason get() = session.errorReason
+
+    // Belt-and-suspenders alongside LlamaCppEngine's own idle timer (spec §3.6): once the
+    // sheet's ViewModel is torn down (sheet dismissed and scope cleared), free the model
+    // immediately rather than waiting out the idle timer.
+    override fun onCleared() {
+        session.cancelAndClear()
+    }
+
+    internal fun run(action: AssistantAction, sentence: String) = session.run(action, sentence)
+
+    fun cancelAndClear() = session.cancelAndClear()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,26 +135,38 @@ fun AssistantSheet(sentence: String, textId: Long, onDismiss: () -> Unit) {
     val vm: AssistantViewModel = viewModel()
     var showSetup by remember { mutableStateOf(!LlmAssistantPrefs.isModelDownloaded(context)) }
 
+    // The ambient ViewModelStoreOwner outlives a ModalBottomSheet. Dispose each visible
+    // sheet session explicitly so reopening for another sentence cannot inherit its work.
+    DisposableEffect(vm, sentence, textId) {
+        onDispose { vm.cancelAndClear() }
+    }
+
     if (showSetup) {
         LlmModelSetupSheet(
             context = context,
-            onDismiss = onDismiss,
+            onDismiss = {
+                vm.cancelAndClear()
+                onDismiss()
+            },
             onDownloaded = { showSetup = false },
         )
         return
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = {
+        vm.cancelAndClear()
+        onDismiss()
+    }) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.assistant_title))
             Spacer(modifier = Modifier.height(8.dp))
             Row {
-                AssistChip(onClick = { vm.run(AssistantAction.SUMMARIZE, sentence) }, label = { Text(stringResource(R.string.assistant_action_summarize)) })
-                AssistChip(onClick = { vm.run(AssistantAction.GRAMMAR, sentence) }, label = { Text(stringResource(R.string.assistant_action_grammar)) })
+                AssistChip(onClick = { vm.run(AssistantAction.SUMMARIZE, sentence) }, enabled = !vm.loading, label = { Text(stringResource(R.string.assistant_action_summarize)) })
+                AssistChip(onClick = { vm.run(AssistantAction.GRAMMAR, sentence) }, enabled = !vm.loading, label = { Text(stringResource(R.string.assistant_action_grammar)) })
             }
             Row {
-                AssistChip(onClick = { vm.run(AssistantAction.SIMPLIFY, sentence) }, label = { Text(stringResource(R.string.assistant_action_simplify)) })
-                AssistChip(onClick = { vm.run(AssistantAction.VOCAB, sentence) }, label = { Text(stringResource(R.string.assistant_action_vocab)) })
+                AssistChip(onClick = { vm.run(AssistantAction.SIMPLIFY, sentence) }, enabled = !vm.loading, label = { Text(stringResource(R.string.assistant_action_simplify)) })
+                AssistChip(onClick = { vm.run(AssistantAction.VOCAB, sentence) }, enabled = !vm.loading, label = { Text(stringResource(R.string.assistant_action_vocab)) })
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -155,9 +210,9 @@ private fun VocabSuggestionRow(textId: Long, item: VocabGrammar.VocabItem) {
             Text(item.definitionSimple)
         }
         if (!accepted) {
-            Button(onClick = { accepted = true }) { Text("Accepter") }
+            Button(onClick = { accepted = true }) { Text(stringResource(R.string.assistant_action_accept)) }
         } else {
-            Text("Ajouté")
+            Text(stringResource(R.string.assistant_action_added))
         }
     }
 }

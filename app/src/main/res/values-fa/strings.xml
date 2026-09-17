@@ -143,4 +143,6 @@
     <string name="assistant_error_load_failed">بارگذاری مدل هوش مصنوعی ممکن نشد.</string>
     <string name="assistant_error_out_of_memory">حافظه کافی برای اجرای مدل هوش مصنوعی وجود ندارد.</string>
     <string name="assistant_error_generation_failed">دستیار هوش مصنوعی نتوانست پاسخی بسازد. دوباره تلاش کنید.</string>
+    <string name="assistant_action_accept">پذیرفتن</string>
+    <string name="assistant_action_added">افزوده شد</string>
 </resources>

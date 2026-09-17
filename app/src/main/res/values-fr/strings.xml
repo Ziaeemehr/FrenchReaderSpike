@@ -143,4 +143,6 @@
     <string name="assistant_error_load_failed">Impossible de charger le modèle IA.</string>
     <string name="assistant_error_out_of_memory">Pas assez de mémoire pour exécuter le modèle IA.</string>
     <string name="assistant_error_generation_failed">L\'assistant IA n\'a pas pu produire de résultat. Réessaie.</string>
+    <string name="assistant_action_accept">Accepter</string>
+    <string name="assistant_action_added">Ajouté</string>
 </resources>
