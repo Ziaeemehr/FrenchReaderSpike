@@ -9,7 +9,11 @@ data class LibraryUiState(
     val query: String = "",
     val sort: LibrarySort = LibrarySort.NEWEST,
     val documents: List<TextDocument> = emptyList()
-)
+) {
+    /** Distinguishes "the library has zero saved texts" from "the current
+     * search has zero matches" so the empty state can show the right copy. */
+    val isSearching: Boolean get() = query.isNotBlank()
+}
 
 /** Pure local filter + sort over every saved document -- no network
  * involved, so Library stays fully usable offline. [id] is the final

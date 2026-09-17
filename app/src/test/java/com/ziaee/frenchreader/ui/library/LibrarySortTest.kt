@@ -2,6 +2,8 @@ package com.ziaee.frenchreader.ui.library
 
 import com.ziaee.frenchreader.data.TextDocument
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LibrarySortTest {
@@ -30,5 +32,12 @@ class LibrarySortTest {
     @Test
     fun `sorts by most recently read, with never-read documents last`() {
         assertEquals(listOf(docC.id, docA.id, docB.id), projectLibrary(documents, "", LibrarySort.LAST_READ).map { it.id })
+    }
+
+    @Test
+    fun `isSearching reflects whether a query is active`() {
+        assertFalse(LibraryUiState(query = "").isSearching)
+        assertFalse(LibraryUiState(query = "   ").isSearching)
+        assertTrue(LibraryUiState(query = "zeb").isSearching)
     }
 }
