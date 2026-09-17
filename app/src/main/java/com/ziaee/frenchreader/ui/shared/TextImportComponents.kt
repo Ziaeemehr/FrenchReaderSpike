@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -40,8 +42,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.ContentResult
@@ -200,6 +207,10 @@ fun AddTextDialog(
     )
 }
 
+/** Test tag for [FindArticleSheet]'s query field, so UI tests can assert it
+ * grabs focus as soon as the sheet opens without a second tap. */
+const val FIND_ARTICLE_QUERY_FIELD_TEST_TAG = "find_article_query_field"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FindArticleSheet(
@@ -210,8 +221,25 @@ fun FindArticleSheet(
     onDismiss: () -> Unit
 ) {
     var query by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val isSearching = searchState is ContentSearchUiState.Searching
+
+    fun submit() {
+        if (query.isNotBlank() && !isSearching) onSearch(query)
+    }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
+        // The sheet's content is its own subcomposition (rendered in a
+        // separate window/Popup), so requesting focus has to happen once
+        // that subcomposition -- not FindArticleSheet's own -- is up, or
+        // the FocusRequester throws "not initialized" (it isn't attached
+        // to the field yet). Placing this LaunchedEffect here, alongside
+        // the field it targets, is what makes that ordering line up.
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Text(stringResource(R.string.content_search_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
@@ -221,12 +249,17 @@ fun FindArticleSheet(
                 onValueChange = { query = it },
                 label = { Text(stringResource(R.string.content_search_hint)) },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { submit() }),
                 trailingIcon = {
-                    IconButton(onClick = { onSearch(query) }) {
+                    IconButton(onClick = { submit() }) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.accessibility_search))
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .testTag(FIND_ARTICLE_QUERY_FIELD_TEST_TAG)
             )
 
             Spacer(Modifier.height(12.dp))
