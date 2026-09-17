@@ -60,7 +60,12 @@
     <string name="library_sort_title">Title</string>
     <string name="library_sort_last_read">Last read</string>
     <string name="library_search_hint">Search by title or source</string>
-    <string name="library_empty">No texts match your search.</string>
+    <string name="library_empty_title">No texts yet</string>
+    <string name="library_empty_body">Save an article or paste your own text to build your library.</string>
+    <string name="library_no_results">No texts match “%1$s”.</string>
+    <string name="library_row_more_actions">More actions for “%1$s”</string>
+    <string name="library_status_read">Read</string>
+    <string name="library_status_in_progress">In progress</string>
     <string name="library_delete_confirm_title">Delete this text?</string>
     <string name="library_delete_confirm_message">This also removes its saved image, if any. This can\'t be undone.</string>
     <string name="accessibility_sort">Sort</string>

@@ -60,7 +60,12 @@
     <string name="library_sort_title">Titre</string>
     <string name="library_sort_last_read">Dernière lecture</string>
     <string name="library_search_hint">Rechercher par titre ou source</string>
-    <string name="library_empty">Aucun texte ne correspond à votre recherche.</string>
+    <string name="library_empty_title">Aucun texte pour l\'instant</string>
+    <string name="library_empty_body">Enregistrez un article ou collez votre propre texte pour créer votre bibliothèque.</string>
+    <string name="library_no_results">Aucun texte ne correspond à « %1$s ».</string>
+    <string name="library_row_more_actions">Plus d\'actions pour « %1$s »</string>
+    <string name="library_status_read">Lu</string>
+    <string name="library_status_in_progress">En cours</string>
     <string name="library_delete_confirm_title">Supprimer ce texte ?</string>
     <string name="library_delete_confirm_message">Cela supprime aussi son image enregistrée, le cas échéant. Action irréversible.</string>
     <string name="accessibility_sort">Trier</string>

@@ -60,7 +60,12 @@
     <string name="library_sort_title">عنوان</string>
     <string name="library_sort_last_read">آخرین خوانش</string>
     <string name="library_search_hint">جست‌وجو بر اساس عنوان یا منبع</string>
-    <string name="library_empty">متنی مطابق جست‌وجوی شما پیدا نشد.</string>
+    <string name="library_empty_title">هنوز متنی نیست</string>
+    <string name="library_empty_body">یک مقاله ذخیره کنید یا متن خودتان را بچسبانید تا کتابخانه‌تان ساخته شود.</string>
+    <string name="library_no_results">متنی با «%1$s» مطابقت ندارد.</string>
+    <string name="library_row_more_actions">گزینه‌های بیشتر برای «%1$s»</string>
+    <string name="library_status_read">خوانده‌شده</string>
+    <string name="library_status_in_progress">در حال خواندن</string>
     <string name="library_delete_confirm_title">این متن حذف شود؟</string>
     <string name="library_delete_confirm_message">تصویر ذخیره‌شدهٔ آن نیز حذف می‌شود. این کار قابل بازگشت نیست.</string>
     <string name="accessibility_sort">مرتب‌سازی</string>
