@@ -71,3 +71,19 @@ alone:
 
 These become explicit requirements in the architectural design, not just prompts to tweak
 later.
+
+## Post-implementation verification (2026-09-17)
+
+The final focused device check could not be run from the implementation sandbox: ADB could
+not start its local smart-socket listener (`Operation not permitted`) or access the connected
+USB device. No on-device result is claimed for any action.
+
+| Action | Observation |
+|---|---|
+| Summarize | Not observed; blocked before device access. |
+| Explain grammar | Not observed; sentence-scoping was not re-verified on-device. |
+| Simplify to A2 | Not observed; output quality was not re-checked. |
+| Extract vocabulary | Not observed; generation and Accept-button persistence remain to be device-verified. |
+
+The pending minimal persistence check is one vocabulary extraction, one **Accepter** tap, then
+`adb shell run-as com.ziaee.frenchreader sqlite3 databases/french_reader.db "select * from vocab order by rowid desc limit 3"`.
