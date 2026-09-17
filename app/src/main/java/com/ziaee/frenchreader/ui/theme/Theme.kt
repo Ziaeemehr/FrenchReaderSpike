@@ -56,7 +56,9 @@ data class ReadingPalette(
     val highlightBg: Color,
     val highlightInk: Color,
     val divider: Color,
-    val accent: Color
+    val accent: Color,
+    val selectionBg: Color,
+    val selectionHandle: Color
 )
 
 fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (background) {
@@ -67,7 +69,9 @@ fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (bac
         highlightBg = Color(0xFFF6D97A),
         highlightInk = Color(0xFF2E2A22),
         divider = Color(0xFFE6DDC8),
-        accent = Color(0xFF8A6D3B)
+        accent = Color(0xFF8A6D3B),
+        selectionBg = Color(0xFF8A6D3B).copy(alpha = 0.28f),
+        selectionHandle = Color(0xFF8A6D3B)
     )
     ReadingBackground.WHITE -> ReadingPalette(
         background = Color(0xFFFFFFFF),
@@ -76,7 +80,9 @@ fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (bac
         highlightBg = Color(0xFFFFE082),
         highlightInk = Color(0xFF1A1A1A),
         divider = Color(0xFFE0E0E0),
-        accent = Color(0xFF3B6EA8)
+        accent = Color(0xFF3B6EA8),
+        selectionBg = Color(0xFF3B6EA8).copy(alpha = 0.28f),
+        selectionHandle = Color(0xFF3B6EA8)
     )
     ReadingBackground.DARK -> ReadingPalette(
         background = Color(0xFF1A1A1A),
@@ -85,7 +91,9 @@ fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (bac
         highlightBg = Color(0xFF4A3F1E),
         highlightInk = Color(0xFFF6D97A),
         divider = Color(0xFF3A3A3A),
-        accent = Color(0xFFD8B978)
+        accent = Color(0xFFD8B978),
+        selectionBg = Color(0xFFD8B978).copy(alpha = 0.28f),
+        selectionHandle = Color(0xFFD8B978)
     )
 }
 

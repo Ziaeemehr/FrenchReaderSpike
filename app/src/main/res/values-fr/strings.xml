@@ -150,6 +150,9 @@
     <string name="assistant_error_generation_failed">L\'assistant IA n\'a pas pu produire de résultat. Réessaie.</string>
     <string name="assistant_action_accept">Accepter</string>
     <string name="assistant_action_added">Ajouté</string>
+    <string name="selection_action_copy">Copier</string>
+    <string name="selection_action_listen">Écouter</string>
+    <string name="selection_action_define">Définir</string>
 
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>

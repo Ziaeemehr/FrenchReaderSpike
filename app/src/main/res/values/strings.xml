@@ -150,6 +150,9 @@
     <string name="assistant_error_generation_failed">The AI assistant couldn\'t produce a result. Try again.</string>
     <string name="assistant_action_accept">Accept</string>
     <string name="assistant_action_added">Added</string>
+    <string name="selection_action_copy">Copy</string>
+    <string name="selection_action_listen">Listen</string>
+    <string name="selection_action_define">Define</string>
 
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>

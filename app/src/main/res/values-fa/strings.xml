@@ -150,6 +150,9 @@
     <string name="assistant_error_generation_failed">دستیار هوش مصنوعی نتوانست پاسخی بسازد. دوباره تلاش کنید.</string>
     <string name="assistant_action_accept">پذیرفتن</string>
     <string name="assistant_action_added">افزوده شد</string>
+    <string name="selection_action_copy">کپی</string>
+    <string name="selection_action_listen">شنیدن</string>
+    <string name="selection_action_define">تعریف</string>
 
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>

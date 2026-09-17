@@ -57,6 +57,8 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val ttsRepo = TtsChunkRepository(app)
     private val translationRepo = TranslationRepository(app)
     val player: ExoPlayer = ExoPlayer.Builder(app).build()
+    private val selectionPlayer: ExoPlayer = ExoPlayer.Builder(app).build()
+    private var selectionPlaybackJob: Job? = null
 
     private val _state = MutableStateFlow(ReadingUiState())
     val state: StateFlow<ReadingUiState> = _state.asStateFlow()
@@ -280,6 +282,30 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         player.seekTo((player.currentPosition + deltaMs).coerceAtLeast(0))
     }
 
+    /** Plays [text] (an arbitrary multi-word selection, not necessarily a whole sentence)
+     * via a synthesis call independent of the paragraph/sentence playlist -- selections
+     * don't line up with the per-chunk audio already generated for playback, and using the
+     * main [player] for a one-off clip would corrupt its chunk<->player-item bookkeeping. */
+    fun playSelection(text: String) {
+        val doc = _state.value.textDoc ?: return
+        selectionPlaybackJob?.cancel()
+        selectionPlaybackJob = viewModelScope.launch {
+            selectionPlayer.stop()
+            selectionPlayer.clearMediaItems()
+            val result = ttsRepo.getOrSynthesize(text, doc.voice, doc.ratePercent)
+            result.onSuccess { synth ->
+                selectionPlayer.setMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
+                selectionPlayer.prepare()
+                selectionPlayer.play()
+            }
+        }
+    }
+
+    fun stopSelectionPlayback() {
+        selectionPlaybackJob?.cancel()
+        selectionPlayer.stop()
+    }
+
     fun setSpeed(speed: Float) {
         player.setPlaybackSpeed(speed)
         _state.value = _state.value.copy(speed = speed)
@@ -368,6 +394,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         persistPositionNow()
         player.release()
+        selectionPlayer.release()
         super.onCleared()
     }
 }

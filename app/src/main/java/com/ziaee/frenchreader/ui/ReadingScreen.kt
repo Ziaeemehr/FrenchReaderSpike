@@ -3,7 +3,7 @@ package com.ziaee.frenchreader.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -13,25 +13,30 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalTextToolbar
+import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Popup
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.text.BlockType
@@ -56,6 +61,16 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
 
     // word + the sentence it came from, while the dictionary sheet is open.
     var dictionaryTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
+    // Word/sentence a selection just resolved to -- shows a "Define" affordance next to
+    // the still-active selection handles; only opens the dictionary once the user taps it,
+    // so a long-press's initial single-word selection doesn't collapse itself before the
+    // user has a chance to drag a handle and extend it to a phrase.
+    var selectedWord by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var selectedPhrase by remember { mutableStateOf<String?>(null) }
+    var clearSelectionTick by remember { mutableIntStateOf(0) }
+    val selectionToolbarController = remember { SelectionToolbarController() }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
 
     val listState = rememberLazyListState()
     var autoScrollEnabled by remember { mutableStateOf(true) }
@@ -110,135 +125,142 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             }
     }
 
-    Scaffold(
-        containerColor = palette.background,
-        topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            state.textDoc?.title ?: stringResource(R.string.reading_loading_title),
-                            maxLines = 1
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
-                        }
-                    },
-                    actions = {
-                        if (state.chunks.isNotEmpty()) {
+    androidx.compose.runtime.CompositionLocalProvider(LocalTextToolbar provides selectionToolbarController) {
+        Scaffold(
+            containerColor = palette.background,
+            topBar = {
+                Column {
+                    TopAppBar(
+                        title = {
                             Text(
-                                "${state.currentChunkIndex + 1}/${state.chunks.size}",
-                                color = palette.inkFaded,
-                                modifier = Modifier.padding(end = 4.dp)
+                                state.textDoc?.title ?: stringResource(R.string.reading_loading_title),
+                                maxLines = 1
                             )
-                        }
-                        IconButton(onClick = onOpenVocab) {
-                            Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
-                        }
-                        if (state.textDoc?.sourceUrl != null) {
-                            IconButton(onClick = { showSourceInfoSheet = true }) {
-                                Icon(Icons.Default.Info, contentDescription = stringResource(R.string.accessibility_source_info))
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
                             }
-                        }
-                        Box {
-                            IconButton(onClick = { voiceMenuExpanded = true }) {
-                                Icon(Icons.Default.RecordVoiceOver, contentDescription = stringResource(R.string.accessibility_select_voice))
+                        },
+                        actions = {
+                            if (state.chunks.isNotEmpty()) {
+                                Text(
+                                    "${state.currentChunkIndex + 1}/${state.chunks.size}",
+                                    color = palette.inkFaded,
+                                    modifier = Modifier.padding(end = 4.dp)
+                                )
                             }
-                            DropdownMenu(
-                                expanded = voiceMenuExpanded,
-                                onDismissRequest = { voiceMenuExpanded = false }
-                            ) {
-                                AVAILABLE_VOICES.forEach { voice ->
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(voice.labelRes)) },
-                                        leadingIcon = {
-                                            if (state.textDoc?.voice == voice.id) {
-                                                Icon(Icons.Default.Check, contentDescription = null)
-                                            }
-                                        },
-                                        onClick = {
-                                            voiceMenuExpanded = false
-                                            vm.changeVoice(voice.id)
-                                        }
-                                    )
+                            IconButton(onClick = onOpenVocab) {
+                                Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
+                            }
+                            if (state.textDoc?.sourceUrl != null) {
+                                IconButton(onClick = { showSourceInfoSheet = true }) {
+                                    Icon(Icons.Default.Info, contentDescription = stringResource(R.string.accessibility_source_info))
                                 }
                             }
-                        }
-                        IconButton(onClick = { autoScrollEnabled = !autoScrollEnabled }) {
-                            Icon(
-                                Icons.Default.SwapVert,
-                                contentDescription = stringResource(R.string.accessibility_autoplay),
-                                tint = if (autoScrollEnabled) palette.accent
-                                else palette.inkFaded
-                            )
-                        }
-                        IconButton(onClick = { vm.toggleShowTranslations() }) {
-                            Icon(
-                                Icons.Default.Translate,
-                                contentDescription = stringResource(R.string.accessibility_toggle_translation),
-                                tint = if (state.showTranslations) palette.accent
-                                else palette.inkFaded
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = palette.background,
-                        titleContentColor = palette.ink,
-                        navigationIconContentColor = palette.ink,
-                        actionIconContentColor = palette.ink
+                            Box {
+                                IconButton(onClick = { voiceMenuExpanded = true }) {
+                                    Icon(Icons.Default.RecordVoiceOver, contentDescription = stringResource(R.string.accessibility_select_voice))
+                                }
+                                DropdownMenu(
+                                    expanded = voiceMenuExpanded,
+                                    onDismissRequest = { voiceMenuExpanded = false }
+                                ) {
+                                    AVAILABLE_VOICES.forEach { voice ->
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(voice.labelRes)) },
+                                            leadingIcon = {
+                                                if (state.textDoc?.voice == voice.id) {
+                                                    Icon(Icons.Default.Check, contentDescription = null)
+                                                }
+                                            },
+                                            onClick = {
+                                                voiceMenuExpanded = false
+                                                vm.changeVoice(voice.id)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            IconButton(onClick = { autoScrollEnabled = !autoScrollEnabled }) {
+                                Icon(
+                                    Icons.Default.SwapVert,
+                                    contentDescription = stringResource(R.string.accessibility_autoplay),
+                                    tint = if (autoScrollEnabled) palette.accent
+                                    else palette.inkFaded
+                                )
+                            }
+                            IconButton(onClick = { vm.toggleShowTranslations() }) {
+                                Icon(
+                                    Icons.Default.Translate,
+                                    contentDescription = stringResource(R.string.accessibility_toggle_translation),
+                                    tint = if (state.showTranslations) palette.accent
+                                    else palette.inkFaded
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = palette.background,
+                            titleContentColor = palette.ink,
+                            navigationIconContentColor = palette.ink,
+                            actionIconContentColor = palette.ink
+                        )
                     )
-                )
-                if (state.chunks.isNotEmpty()) {
-                    LinearProgressIndicator(
-                        progress = { (state.currentChunkIndex + 1).toFloat() / state.chunks.size },
-                        modifier = Modifier.fillMaxWidth().height(2.dp),
-                        color = palette.accent,
-                        trackColor = palette.divider
-                    )
-                }
-            }
-        },
-        bottomBar = { PlaybackControls(vm, state, palette) }
-    ) { padding ->
-        if (!state.ready) {
-            Box(
-                Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = palette.accent)
-            }
-            return@Scaffold
-        }
-
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            contentPadding = PaddingValues(vertical = 20.dp)
-        ) {
-            itemsIndexed(state.chunks) { chunkIndex, chunk ->
-                ChunkParagraph(
-                    chunk = chunk,
-                    isCurrentChunk = chunkIndex == state.currentChunkIndex,
-                    currentPositionMs = state.currentPositionMs,
-                    showTranslation = state.showTranslations,
-                    palette = palette,
-                    fontScale = fontScale,
-                    onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
-                    onRetry = { vm.retryChunk(chunkIndex) },
-                    onWordLookup = { word, sentenceText ->
-                        vm.player.pause()
-                        dictionaryTarget = word to sentenceText
+                    if (state.chunks.isNotEmpty()) {
+                        LinearProgressIndicator(
+                            progress = { (state.currentChunkIndex + 1).toFloat() / state.chunks.size },
+                            modifier = Modifier.fillMaxWidth().height(2.dp),
+                            color = palette.accent,
+                            trackColor = palette.divider
+                        )
                     }
-                )
-                val spacing = if (chunk.block.type == BlockType.LIST_ITEM &&
-                    state.chunks.getOrNull(chunkIndex + 1)?.block?.type == BlockType.LIST_ITEM
-                ) 6.dp else 28.dp
-                Spacer(Modifier.height(spacing))
+                }
+            },
+            bottomBar = { PlaybackControls(vm, state, palette) }
+        ) { padding ->
+            if (!state.ready) {
+                Box(
+                    Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = palette.accent)
+                }
+                return@Scaffold
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 24.dp),
+                contentPadding = PaddingValues(vertical = 20.dp)
+            ) {
+                itemsIndexed(state.chunks) { chunkIndex, chunk ->
+                    ChunkParagraph(
+                        chunk = chunk,
+                        isCurrentChunk = chunkIndex == state.currentChunkIndex,
+                        currentPositionMs = state.currentPositionMs,
+                        showTranslation = state.showTranslations,
+                        palette = palette,
+                        fontScale = fontScale,
+                        onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
+                        onRetry = { vm.retryChunk(chunkIndex) },
+                        onWordLookup = { word, sentenceText ->
+                            selectedWord = word to sentenceText
+                            selectedPhrase = null
+                        },
+                        onPhraseSelected = { phrase ->
+                            selectedPhrase = phrase
+                            selectedWord = null
+                        },
+                        clearSelectionSignal = clearSelectionTick
+                    )
+                    val spacing = if (chunk.block.type == BlockType.LIST_ITEM &&
+                        state.chunks.getOrNull(chunkIndex + 1)?.block?.type == BlockType.LIST_ITEM
+                    ) 6.dp else 28.dp
+                    Spacer(Modifier.height(spacing))
+                }
             }
         }
     }
@@ -250,6 +272,68 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             sentence = sentence,
             onDismiss = { dictionaryTarget = null }
         )
+    }
+
+    val toolbarRect = selectionToolbarController.rect
+    if (selectedPhrase != null && toolbarRect != null &&
+        selectionToolbarController.status == TextToolbarStatus.Shown
+    ) {
+        val phrase = selectedPhrase!!
+        Popup(
+            popupPositionProvider = SelectionRectPositionProvider(
+                rect = toolbarRect,
+                marginPx = with(density) { 8.dp.toPx() }
+            ),
+            onDismissRequest = {
+                vm.stopSelectionPlayback()
+                selectedPhrase = null
+                clearSelectionTick++
+            }
+        ) {
+            SelectionToolbarContent(
+                onCopy = {
+                    // Written directly instead of via the framework's own
+                    // onCopyRequested callback -- that callback copies whatever the
+                    // *raw* (un-snapped) selection currently is, which can differ
+                    // from `phrase` (already snapped to whole word boundaries by
+                    // classifySelection) and would silently overwrite it.
+                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(phrase))
+                    selectedPhrase = null
+                    clearSelectionTick++
+                },
+                onListen = {
+                    vm.player.pause()
+                    vm.playSelection(phrase)
+                    selectedPhrase = null
+                    clearSelectionTick++
+                }
+            )
+        }
+    }
+
+    if (selectedWord != null && toolbarRect != null &&
+        selectionToolbarController.status == TextToolbarStatus.Shown
+    ) {
+        val (word, sentence) = selectedWord!!
+        Popup(
+            popupPositionProvider = SelectionRectPositionProvider(
+                rect = toolbarRect,
+                marginPx = with(density) { 8.dp.toPx() }
+            ),
+            onDismissRequest = {
+                selectedWord = null
+                clearSelectionTick++
+            }
+        ) {
+            DefineToolbarContent(
+                onDefine = {
+                    vm.player.pause()
+                    dictionaryTarget = word to sentence
+                    selectedWord = null
+                    clearSelectionTick++
+                }
+            )
+        }
     }
 
     if (showSourceInfoSheet) {
@@ -295,7 +379,9 @@ private fun ChunkParagraph(
     fontScale: Float,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onRetry: () -> Unit,
-    onWordLookup: (word: String, sentence: String) -> Unit
+    onWordLookup: (word: String, sentence: String) -> Unit,
+    onPhraseSelected: (String) -> Unit,
+    clearSelectionSignal: Int
 ) {
     when (chunk.status) {
         ChunkStatus.READY -> {
@@ -314,7 +400,9 @@ private fun ChunkParagraph(
                             color = palette.ink,
                             palette = palette,
                             onSentenceClick = onSentenceClick,
-                            onWordLookup = onWordLookup
+                            onWordLookup = onWordLookup,
+                            onPhraseSelected = onPhraseSelected,
+                            clearSelectionSignal = clearSelectionSignal
                         )
                         BlockType.LIST_ITEM -> Row {
                             Text(
@@ -334,7 +422,9 @@ private fun ChunkParagraph(
                                     color = palette.ink,
                                     palette = palette,
                                     onSentenceClick = onSentenceClick,
-                                    onWordLookup = onWordLookup
+                                    onWordLookup = onWordLookup,
+                                    onPhraseSelected = onPhraseSelected,
+                                    clearSelectionSignal = clearSelectionSignal
                                 )
                             }
                         }
@@ -348,7 +438,9 @@ private fun ChunkParagraph(
                             color = palette.ink,
                             palette = palette,
                             onSentenceClick = onSentenceClick,
-                            onWordLookup = onWordLookup
+                            onWordLookup = onWordLookup,
+                            onPhraseSelected = onPhraseSelected,
+                            clearSelectionSignal = clearSelectionSignal
                         )
                     }
 
@@ -467,7 +559,9 @@ private fun SentenceFlowText(
     color: Color,
     palette: ReadingPalette,
     onSentenceClick: (SentenceBoundary) -> Unit,
-    onWordLookup: (word: String, sentence: String) -> Unit
+    onWordLookup: (word: String, sentence: String) -> Unit,
+    onPhraseSelected: (String) -> Unit,
+    clearSelectionSignal: Int
 ) {
     val ranges = remember(chunk.sentences) { mutableListOf<IntRange>() }
     val annotated = remember(chunk.sentences, chunk.block, isCurrentChunk, currentPositionMs, palette) {
@@ -509,62 +603,123 @@ private fun SentenceFlowText(
         }
     }
 
-    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var selection by remember(chunk.sentences, clearSelectionSignal) { mutableStateOf(TextRange.Zero) }
 
-    Text(
-        text = annotated,
-        style = TextStyle(
-            fontSize = fontSize,
-            lineHeight = lineHeight,
-            letterSpacing = 0.1.sp,
-            color = color,
-            fontWeight = fontWeight,
-            textAlign = TextAlign.Start
-        ),
-        onTextLayout = { textLayout = it },
-        modifier = Modifier.pointerInput(chunk.sentences) {
-            detectTapGestures(
-                onTap = { pos ->
-                    val layout = textLayout ?: return@detectTapGestures
-                    val offset = layout.getOffsetForPosition(pos)
-                    val idx = ranges.indexOfFirst { offset in it }
+    fun sentenceTextFor(offset: Int): String {
+        val idx = ranges.indexOfFirst { offset in it }
+        return if (idx >= 0) chunk.sentences[idx].text else annotated.text
+    }
+
+    androidx.compose.runtime.CompositionLocalProvider(
+        androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
+            androidx.compose.foundation.text.selection.TextSelectionColors(
+                handleColor = palette.selectionHandle,
+                backgroundColor = palette.selectionBg
+            )
+    ) {
+        BasicTextField(
+            value = TextFieldValue(annotatedString = annotated, selection = selection),
+            onValueChange = { newValue ->
+                if (newValue.selection.collapsed) {
+                    val idx = ranges.indexOfFirst { newValue.selection.start in it }
                     if (idx >= 0) onSentenceClick(chunk.sentences[idx])
-                },
-                onLongPress = { pos ->
-                    val layout = textLayout ?: return@detectTapGestures
-                    val offset = layout.getOffsetForPosition(pos)
-                    val full = annotated.text
-                    val word = extractWordAt(full, offset)
-                    if (word.isNotBlank()) {
-                        val sentIdx = ranges.indexOfFirst { offset in it }
-                        val sentenceText = if (sentIdx >= 0) chunk.sentences[sentIdx].text else full
-                        onWordLookup(word, sentenceText)
+                    selection = TextRange.Zero
+                } else {
+                    selection = newValue.selection
+                    when (val kind = classifySelection(annotated.text, newValue.selection)) {
+                        is SelectionKind.Word ->
+                            onWordLookup(kind.word, sentenceTextFor(newValue.selection.start))
+                        is SelectionKind.Phrase -> onPhraseSelected(kind.text)
+                        null -> selection = TextRange.Zero
                     }
                 }
-            )
-        }
-    )
+            },
+            readOnly = true,
+            textStyle = TextStyle(
+                fontSize = fontSize,
+                lineHeight = lineHeight,
+                letterSpacing = 0.1.sp,
+                color = color,
+                fontWeight = fontWeight,
+                textAlign = TextAlign.Start
+            ),
+            cursorBrush = SolidColor(Color.Transparent)
+        )
+    }
 }
 
-/** Extracts the word touching [offset] in [text] for the dictionary
- * long-press. Apostrophes are treated as boundaries (not word characters)
- * so tapping "l'appartement" isolates "appartement", not the elided
- * article with it -- WordReference wouldn't recognize the elided form. */
-private fun extractWordAt(text: String, offset: Int): String {
-    if (text.isEmpty()) return ""
-    fun isWordChar(c: Char) = c.isLetter() || c == '-'
+/** Word/selection boundary rules shared by the dictionary long-press lookup and the
+ * multi-word selection classifier below. Apostrophes are treated as boundaries (not word
+ * characters) so "l'appartement" isolates "appartement", not the elided article with it --
+ * WordReference wouldn't recognize the elided form. */
+private fun isWordChar(c: Char) = c.isLetter() || c == '-'
 
+/** Returns the [start, end) range of the word touching [offset] in [text], or null if
+ * [offset] doesn't touch a word character. */
+internal fun wordBoundsAt(text: String, offset: Int): IntRange? {
+    if (text.isEmpty()) return null
     var pos = offset.coerceIn(0, text.length)
     if ((pos >= text.length || !isWordChar(text[pos])) && pos > 0 && isWordChar(text[pos - 1])) {
         pos -= 1
     }
-    if (pos >= text.length || !isWordChar(text[pos])) return ""
+    if (pos >= text.length || !isWordChar(text[pos])) return null
 
     var start = pos
     var end = pos + 1
     while (start > 0 && isWordChar(text[start - 1])) start--
     while (end < text.length && isWordChar(text[end])) end++
-    return text.substring(start, end)
+    return start until end
+}
+
+/** Extracts the word touching [offset] in [text] for the dictionary long-press lookup. */
+internal fun extractWordAt(text: String, offset: Int): String {
+    val bounds = wordBoundsAt(text, offset) ?: return ""
+    return text.substring(bounds.first, bounds.last + 1)
+}
+
+/** What a (non-collapsed) text-field selection resolves to once snapped to word
+ * boundaries: exactly one word (dictionary lookup), or a multi-word phrase (selection
+ * toolbar). */
+internal sealed interface SelectionKind {
+    data class Word(val word: String) : SelectionKind
+    data class Phrase(val text: String) : SelectionKind
+}
+
+/** Classifies a raw text-field [selection] against [text]'s word boundaries. Both edges of
+ * the raw selection are snapped outward to the word they touch (so a drag that stops
+ * mid-word still selects that whole word), using the same rules as [wordBoundsAt] --
+ * independent of how the platform's own long-press/double-tap decided the initial
+ * selection. Returns null for a collapsed selection or one that touches no word
+ * characters at either edge.
+ *
+ * A snapped span containing no whitespace resolves to [SelectionKind.Word] using only the
+ * word touching the *end* of the selection -- this is what makes a raw selection spanning
+ * "l'appartement" (whether from an OS word-break that keeps the elision attached, or a
+ * short drag) resolve to "appartement", matching [extractWordAt]'s established behavior,
+ * instead of being treated as a two-word phrase. */
+internal fun classifySelection(text: String, selection: androidx.compose.ui.text.TextRange): SelectionKind? {
+    if (selection.collapsed) return null
+    val rawStart = selection.min.coerceIn(0, text.length)
+    val rawEnd = selection.max.coerceIn(0, text.length)
+    if (rawStart >= rawEnd) return null
+
+    val startBounds = wordBoundsAt(text, rawStart)
+    val endBounds = wordBoundsAt(text, rawEnd - 1)
+    if (startBounds == null && endBounds == null) return null
+
+    val start = startBounds?.first ?: rawStart
+    val end = (endBounds?.last ?: (rawEnd - 1)) + 1
+    if (start >= end) return null
+
+    val snapped = text.substring(start, end)
+    if (snapped.isBlank()) return null
+
+    return if (snapped.none { it.isWhitespace() }) {
+        val word = if (endBounds != null) text.substring(endBounds.first, endBounds.last + 1) else snapped
+        SelectionKind.Word(word)
+    } else {
+        SelectionKind.Phrase(snapped.trim())
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
