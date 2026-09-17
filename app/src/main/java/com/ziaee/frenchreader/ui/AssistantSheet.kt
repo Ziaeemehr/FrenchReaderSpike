@@ -5,9 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -159,7 +160,12 @@ fun AssistantSheet(sentence: String, textId: Long, onDismiss: () -> Unit) {
         vm.cancelAndClear()
         onDismiss()
     }) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(16.dp)
+        ) {
             Text(stringResource(R.string.assistant_title))
             Spacer(modifier = Modifier.height(8.dp))
             Row {
@@ -193,8 +199,8 @@ fun AssistantSheet(sentence: String, textId: Long, onDismiss: () -> Unit) {
 
             if (vm.vocabResult.isNotEmpty()) {
                 Text(stringResource(R.string.assistant_suggestion_label))
-                LazyColumn {
-                    items(vm.vocabResult) { item ->
+                Column {
+                    vm.vocabResult.forEach { item ->
                         VocabSuggestionRow(
                             textId = textId,
                             sentence = sentence,

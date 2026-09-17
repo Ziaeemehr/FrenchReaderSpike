@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -102,7 +105,12 @@ fun LlmModelSetupSheet(context: Context, onDismiss: () -> Unit, onDownloaded: ()
     val scope = rememberCoroutineScope()
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(16.dp)
+        ) {
             Text("Assistant IA hors ligne")
             Spacer(modifier = Modifier.height(8.dp))
             Text("Télécharge le modèle Qwen3 0.6B (461,79 Mio). Fonctionne entièrement hors ligne, rien n'est envoyé à un serveur.")
