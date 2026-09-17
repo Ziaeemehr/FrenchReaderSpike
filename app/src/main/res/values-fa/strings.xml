@@ -174,4 +174,12 @@
     <string name="home_action_vocabulary">واژگان ذخیره‌شده</string>
     <string name="home_action_statistics">آمار یادگیری</string>
     <string name="home_news_image_unavailable">تصویر مقاله در دسترس نیست</string>
+    <string name="voice_label_denise">دنیز – زن، فرانسه</string>
+    <string name="voice_label_henri">هانری – مرد، فرانسه (پیش‌فرض)</string>
+    <string name="voice_label_eloise">الوئیز – زن، فرانسه</string>
+    <string name="voice_label_sylvie">سیلوی – زن، کانادا</string>
+    <string name="voice_label_antoine">آنتوان – مرد، کانادا</string>
+    <string name="voice_label_charline">شارلین – زن، بلژیک</string>
+    <string name="voice_label_gerard">ژرار – مرد، بلژیک</string>
+    <string name="voice_label_ariane">آریان – زن، سوئیس</string>
 </resources>

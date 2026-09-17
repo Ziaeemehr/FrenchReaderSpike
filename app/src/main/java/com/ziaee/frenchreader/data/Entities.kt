@@ -20,7 +20,7 @@ data class TextDocument(
     val createdAtMs: Long = System.currentTimeMillis(),
     val lastChunkIndex: Int = 0,
     val lastPositionMs: Long = 0,
-    val voice: String = "fr-FR-DeniseNeural",
+    val voice: String = "fr-FR-HenriNeural",
     val ratePercent: Int = 0, // edge-tts rate, e.g. -15..+40, applied as "+N%"/"-N%"
     val translationLang: String = "fa", // ISO code for the paragraph-translation target language
     // Attribution for texts imported from an external source (e.g. Vikidia,

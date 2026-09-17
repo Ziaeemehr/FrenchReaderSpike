@@ -174,4 +174,12 @@
     <string name="home_action_vocabulary">Saved vocabulary</string>
     <string name="home_action_statistics">Learning statistics</string>
     <string name="home_news_image_unavailable">Article image unavailable</string>
+    <string name="voice_label_denise">Denise – Female, France</string>
+    <string name="voice_label_henri">Henri – Male, France (Default)</string>
+    <string name="voice_label_eloise">Eloise – Female, France</string>
+    <string name="voice_label_sylvie">Sylvie – Female, Canada</string>
+    <string name="voice_label_antoine">Antoine – Male, Canada</string>
+    <string name="voice_label_charline">Charline – Female, Belgium</string>
+    <string name="voice_label_gerard">Gerard – Male, Belgium</string>
+    <string name="voice_label_ariane">Ariane – Female, Switzerland</string>
 </resources>

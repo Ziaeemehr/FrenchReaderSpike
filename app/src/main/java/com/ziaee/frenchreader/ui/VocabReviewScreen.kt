@@ -143,7 +143,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun voiceFor(textId: Long): Pair<String, Int> {
         voiceCache[textId]?.let { return it }
         val doc = db.textDao().getById(textId)
-        val pair = (doc?.voice ?: "fr-FR-DeniseNeural") to (doc?.ratePercent ?: 0)
+        val pair = (doc?.voice ?: "fr-FR-HenriNeural") to (doc?.ratePercent ?: 0)
         voiceCache[textId] = pair
         return pair
     }

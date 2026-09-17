@@ -152,7 +152,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             ) {
                                 AVAILABLE_VOICES.forEach { voice ->
                                     DropdownMenuItem(
-                                        text = { Text(voice.label) },
+                                        text = { Text(stringResource(voice.labelRes)) },
                                         leadingIcon = {
                                             if (state.textDoc?.voice == voice.id) {
                                                 Icon(Icons.Default.Check, contentDescription = null)
