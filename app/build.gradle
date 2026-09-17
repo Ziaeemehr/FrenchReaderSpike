@@ -8,8 +8,6 @@ plugins {
 android {
     namespace 'com.ziaee.frenchreader'
     compileSdk 34
-    ndkVersion "30.0.16248370"
-
     defaultConfig {
         applicationId "com.ziaee.frenchreader"
         minSdk 26
@@ -45,12 +43,6 @@ android {
             }
         }
 
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++17"
-                arguments "-DANDROID_STL=c++_shared"
-            }
-        }
     }
 
     buildTypes {
@@ -78,13 +70,6 @@ android {
 
     composeOptions {
         kotlinCompilerExtensionVersion "1.5.14"
-    }
-
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
-        }
     }
 
     packaging {

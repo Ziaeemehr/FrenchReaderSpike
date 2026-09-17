@@ -168,7 +168,6 @@ fun DictionarySheet(
     var webViewFailed by remember(word) { mutableStateOf(false) }
     var listMenuExpanded by remember { mutableStateOf(false) }
     var showNewListDialog by remember { mutableStateOf(false) }
-    var showAssistant by remember { mutableStateOf(false) }
     var selectedProvider by remember(word) { mutableStateOf(DICTIONARY_PROVIDERS.first()) }
     val url = remember(word, selectedProvider) { selectedProvider.urlFor(word) }
 
@@ -207,9 +206,6 @@ fun DictionarySheet(
                 Text(word, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
                     Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
-                }
-                IconButton(onClick = { showAssistant = true }) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = stringResource(R.string.assistant_icon_description))
                 }
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_close))
@@ -411,9 +407,5 @@ fun DictionarySheet(
                 TextButton(onClick = { showNewListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
-    }
-
-    if (showAssistant) {
-        AssistantSheet(sentence = sentence, textId = textId, onDismiss = { showAssistant = false })
     }
 }
