@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewModelScope
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.LlmAssistantPrefs
+import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.llm.LlamaCppEngine
 import com.ziaee.frenchreader.llm.LlmResult
 import com.ziaee.frenchreader.llm.LocalLlmEngine
@@ -133,6 +134,7 @@ class AssistantViewModel(app: Application) : AndroidViewModel(app) {
 fun AssistantSheet(sentence: String, textId: Long, onDismiss: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val vm: AssistantViewModel = viewModel()
+    val dictionaryVm: DictionaryViewModel = viewModel()
     var showSetup by remember { mutableStateOf(!LlmAssistantPrefs.isModelDownloaded(context)) }
 
     // The ambient ViewModelStoreOwner outlives a ModalBottomSheet. Dispose each visible
@@ -193,7 +195,12 @@ fun AssistantSheet(sentence: String, textId: Long, onDismiss: () -> Unit) {
                 Text(stringResource(R.string.assistant_suggestion_label))
                 LazyColumn {
                     items(vm.vocabResult) { item ->
-                        VocabSuggestionRow(textId = textId, item = item)
+                        VocabSuggestionRow(
+                            textId = textId,
+                            sentence = sentence,
+                            item = item,
+                            dictionaryVm = dictionaryVm,
+                        )
                     }
                 }
             }
@@ -202,7 +209,13 @@ fun AssistantSheet(sentence: String, textId: Long, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun VocabSuggestionRow(textId: Long, item: VocabGrammar.VocabItem) {
+private fun VocabSuggestionRow(
+    textId: Long,
+    sentence: String,
+    item: VocabGrammar.VocabItem,
+    dictionaryVm: DictionaryViewModel,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var accepted by remember { mutableStateOf(false) }
     Row(modifier = Modifier.padding(vertical = 4.dp)) {
         Column {
@@ -210,7 +223,20 @@ private fun VocabSuggestionRow(textId: Long, item: VocabGrammar.VocabItem) {
             Text(item.definitionSimple)
         }
         if (!accepted) {
-            Button(onClick = { accepted = true }) { Text(stringResource(R.string.assistant_action_accept)) }
+            Button(
+                onClick = {
+                    dictionaryVm.save(
+                        textId = textId,
+                        word = item.mot,
+                        sentence = sentence,
+                        meaning = item.definitionSimple,
+                        listId = VocabPrefs.getLastListId(context),
+                        onDone = { accepted = true },
+                    )
+                },
+            ) {
+                Text(stringResource(R.string.assistant_action_accept))
+            }
         } else {
             Text(stringResource(R.string.assistant_action_added))
         }
