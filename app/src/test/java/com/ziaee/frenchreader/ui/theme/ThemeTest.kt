@@ -1,10 +1,33 @@
 package com.ziaee.frenchreader.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ThemeTest {
+    @Test
+    fun `light scheme uses editorial palette anchors`() {
+        assertEquals(Color(0xFFF7F1E7), FrenchReaderLightColorScheme.background)
+        assertEquals(Color(0xFF7A2432), FrenchReaderLightColorScheme.primary)
+        assertEquals(Color(0xFF2F6F6A), FrenchReaderLightColorScheme.secondary)
+        assertEquals(Color(0xFFA66A16), FrenchReaderLightColorScheme.tertiary)
+    }
+
+    @Test
+    fun `dark scheme is warm and not pure black`() {
+        assertEquals(Color(0xFF181513), FrenchReaderDarkColorScheme.background)
+        assertEquals(Color(0xFFE0A2AA), FrenchReaderDarkColorScheme.primary)
+    }
+
+    @Test
+    fun `Persian typography keeps Vazirmatn while French editorial text uses serif`() {
+        assertEquals(Vazirmatn, interfaceFontFamilyFor("fa"))
+        assertEquals(Vazirmatn, editorialFontFamilyFor("fa"))
+        assertEquals(FontFamily.SansSerif, interfaceFontFamilyFor("fr"))
+        assertEquals(FontFamily.Serif, editorialFontFamilyFor("fr"))
+    }
+
     @Test
     fun `SEPIA palette matches the original hardcoded ReadingPalette values`() {
         val palette = readingPaletteFor(ReadingBackground.SEPIA)
