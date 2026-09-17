@@ -528,3 +528,303 @@ The redesign is complete when:
 - The application builds successfully and relevant tests pass.
 
 Treat the supplied mockups as visual direction, not pixel-perfect specifications. Adapt the design intelligently to the existing technology, data, navigation, and platform conventions. If a proposed element requires unavailable data, omit or simplify it rather than inventing misleading information.
+
+
+
+## Text Selection, Speech, AI, and External App Integration
+
+The Reading screen currently supports these interactions:
+
+- A single tap on a sentence plays that sentence using text-to-speech.
+- A long press on a word opens the dictionary.
+- The dictionary provides access to a local-LLM reading assistant.
+
+Preserve these capabilities, but redesign and extend the interaction model so that users can select words, phrases, or complete sentences without conflicting with sentence playback.
+
+### Interaction Model
+
+Implement the following behavior consistently:
+
+#### Single tap
+
+A single tap on normal, unselected text should:
+
+- Identify the complete sentence containing the tapped position.
+- Apply a subtle temporary highlight to that sentence.
+- Play the sentence using the existing French text-to-speech system.
+- Tapping the same sentence again while it is playing may pause or stop playback, depending on the existing TTS architecture.
+- Moving to another sentence should stop the previous playback and play the newly selected sentence.
+- Provide a clear loading or playing indicator without substantially shifting the text layout.
+
+Do not trigger TTS when the user is:
+
+- Adjusting text-selection handles
+- Long-pressing text
+- Scrolling
+- Opening the contextual action menu
+- Interacting with a selected range
+
+Use appropriate gesture thresholds so scrolling is not accidentally interpreted as sentence playback.
+
+#### Long press and text selection
+
+A long press should enter native text-selection mode.
+
+Initially select the pressed word, then display standard selection handles so the user can expand the selection to:
+
+- Multiple words
+- A phrase
+- A full sentence
+- Multiple sentences when technically practical
+
+Selection handles must work with:
+
+- French accented characters
+- Apostrophes and contractions such as “l’histoire” and “qu’il”
+- Hyphenated expressions
+- Punctuation
+- Mixed French and Persian content
+- Different font sizes and line spacing
+- Text spanning multiple visual lines
+
+Prefer the platform’s native text-selection APIs rather than implementing custom drag handles from scratch.
+
+If the current reading component prevents multi-word selection, refactor only the rendering and gesture layer necessary to support native selectable text. Preserve article formatting, sentence boundaries, annotations, progress tracking, and saved-reading state.
+
+### Contextual Selection Toolbar
+
+When text is selected, show a contextual action toolbar using Android’s native selection Action Mode where possible.
+
+Prioritize these actions:
+
+1. Define
+2. Translate
+3. Ask AI
+4. Listen
+5. Save vocabulary
+6. Copy
+7. Share
+8. Search
+
+Keep the toolbar compact. If all actions do not fit, place secondary actions in the standard three-dot overflow menu.
+
+The available actions should adapt to the selection:
+
+#### One selected word
+
+Prioritize:
+
+- Define
+- Translate
+- Listen
+- Save vocabulary
+- Ask AI
+
+#### Multiple selected words or a phrase
+
+Prioritize:
+
+- Translate
+- Ask AI
+- Listen
+- Copy
+- Share
+
+#### One or more selected sentences
+
+Prioritize:
+
+- Ask AI
+- Listen
+- Translate
+- Summarize
+- Explain grammar
+- Copy
+- Share
+
+Do not open the dictionary immediately after the user expands the selection beyond one word. The dictionary should remain the primary destination for a single selected word, while phrase and sentence selections should use the contextual toolbar.
+
+### Dictionary Behavior
+
+For a single selected word, the Define action should open the existing dictionary bottom sheet.
+
+The selected word should remain visually highlighted while the bottom sheet is open.
+
+The dictionary must preserve:
+
+- Persian meaning
+- Pronunciation and TTS
+- Vocabulary category
+- Save/update state
+- External dictionary tabs
+- Existing WordReference, Larousse, Linguee, Reverso, or other integrations
+- Access to the local AI assistant
+
+Avoid stacking multiple full-height bottom sheets. If the AI assistant is opened from the dictionary, transition from the dictionary to the assistant or use one expandable sheet with clearly separated states.
+
+### Local AI Reading Assistant
+
+The application includes a local LLM. Redesign its limited interface into a useful contextual reading assistant.
+
+The assistant must receive the exact selected text along with only the minimum surrounding context necessary to answer accurately.
+
+Show the selected text at the top of the assistant in a compact quoted preview, with an option to expand long selections.
+
+Adapt suggested actions to the selection type.
+
+For a single word, offer actions such as:
+
+- Explain this word
+- Translate to Persian
+- Give pronunciation
+- Show the lemma
+- Identify the part of speech
+- Conjugate the verb
+- Give examples in context
+- Explain the difference from similar words
+
+For a phrase, offer:
+
+- Translate this phrase
+- Explain this expression
+- Explain the grammar
+- Simplify
+- Give similar expressions
+- Use it in another sentence
+
+For one or more sentences, offer:
+
+- Explain grammar
+- Translate to Persian
+- Simplify the French
+- Summarize
+- Extract vocabulary
+- Explain references and pronouns
+- Rewrite at A2, B1, or B2 level
+
+The interface should also include:
+
+- A free-form question field
+- Stop-generation control
+- Regenerate action
+- Copy response
+- Read response aloud when appropriate
+- Clear error and model-loading states
+- An indication that processing is local
+- An option to use the full article as context only when explicitly requested
+
+Do not disable all AI actions without explanation. If the model is loading or unavailable, show a clear status and recovery action.
+
+Do not automatically send article content to an online service. The local model should remain the default for AI actions unless the user explicitly chooses an external application.
+
+### External Application Actions
+
+Integrate selected text with Android’s standard text-processing and sharing mechanisms.
+
+When supported by the current Android version and UI framework:
+
+- Expose compatible installed applications through Android’s native text-processing mechanism, such as `ACTION_PROCESS_TEXT`.
+- Preserve the standard three-dot overflow behavior in the contextual selection toolbar.
+- Allow compatible applications to receive the currently selected text.
+- Use Android’s Sharesheet with `ACTION_SEND` as a fallback or for explicit Share actions.
+- Use `ACTION_WEB_SEARCH` or an appropriate browser intent for web search.
+- Populate these menus dynamically based on compatible applications installed on the device.
+- Do not hardcode applications such as ChatGPT, Perplexity, Grok, Google Translate, or a specific dictionary.
+- Do not display an application if it is not installed or cannot handle the intent.
+- Handle the case where no compatible application is available.
+- Catch intent-resolution and activity-launch errors gracefully.
+
+Where platform behavior permits, the standard overflow menu should be able to show actions from compatible installed applications, similar to Android text selection in other applications.
+
+If `ACTION_PROCESS_TEXT` cannot be integrated reliably with the existing reading component, provide an explicit “Open with…” action that uses the safest suitable native Android chooser. Document the limitation rather than implementing a fragile custom imitation.
+
+External applications should receive only the exact selected text unless the user explicitly chooses to share additional article context.
+
+### Selection Persistence
+
+Preserve the selected range while opening:
+
+- Dictionary
+- Translation
+- AI assistant
+- Share sheet
+- External text-processing application
+
+When the user returns to the Reading screen, restore the selection when technically reliable. Otherwise, return to the same reading position and clear the selection gracefully.
+
+Never lose the current article position because an external application was opened.
+
+### Visual Design
+
+The contextual toolbar, selection highlights, dictionary, and AI assistant must follow the new editorial-learning design system.
+
+Use:
+
+- Editorial red for primary contextual actions
+- Muted teal for AI or learning-related actions
+- Amber only for active playback or emphasis
+- Accessible selection colors in both light and dark reading modes
+- Clear icons with text labels where meaning may be ambiguous
+
+Do not use the same highlight color for:
+
+- Text selection
+- TTS sentence playback
+- Saved vocabulary
+- Search results
+
+Each state should be visually distinguishable without relying on color alone.
+
+### Accessibility
+
+Ensure that:
+
+- Selection actions have screen-reader labels.
+- TTS playback state is announced accessibly.
+- Selected text remains readable under the highlight.
+- Text-selection handles remain usable with large font sizes.
+- Contextual actions are reachable with keyboard and accessibility navigation where supported.
+- Haptic feedback follows platform conventions and can be disabled through system settings.
+- Long-press selection does not prevent TalkBack exploration.
+
+### Technical Investigation
+
+Before implementation, inspect how the Reading screen currently:
+
+- Splits text into sentences
+- Detects tapped words
+- Handles single-tap TTS
+- Opens the dictionary
+- Renders highlighted text
+- Sends context to the local LLM
+- Stores reading position
+- Implements selectable text
+- Handles Android intents
+
+Determine whether the UI uses classic Android Views, Jetpack Compose, Flutter, React Native, or another framework, and use the framework’s appropriate native-selection bridge.
+
+Do not replace the entire reading renderer unless native multi-range selection is impossible with the current implementation.
+
+### Tests and Acceptance Criteria
+
+Add or update tests covering:
+
+- Single tap plays the correct sentence.
+- Scrolling does not trigger TTS.
+- Long press selects the correct word.
+- Selection handles can expand the range across several words.
+- Apostrophes, accents, punctuation, and hyphenated terms are selected correctly.
+- A single selected word can open the dictionary.
+- A phrase can be sent to Translate or Ask AI.
+- A sentence can be played using TTS.
+- The local LLM receives the exact selected range.
+- AI actions adapt to word, phrase, and sentence selections.
+- Copy and Share receive the correct text.
+- Compatible Android text-processing applications appear dynamically.
+- Missing external applications do not cause a crash.
+- Returning from an external application preserves the article position.
+- Selection, playback, and saved-word highlights are visually distinct.
+- The interactions work in both light and dark reading modes.
+- Persian translations render with correct RTL direction.
+
+The feature is complete when users can naturally tap to hear a sentence, long-press to select a word, expand the selection to a phrase or sentence, use the local AI assistant on that exact selection, and optionally process or share the selected text through compatible Android applications.
