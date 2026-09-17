@@ -253,7 +253,7 @@ fun TodayNewsSection(
                         NewsCard(
                             headline,
                             onClick = { onSelect(headline) },
-                            modifier = Modifier.fillParentMaxWidth(0.86f)
+                            modifier = Modifier.fillParentMaxWidth(0.6f)
                         )
                     }
                 }
