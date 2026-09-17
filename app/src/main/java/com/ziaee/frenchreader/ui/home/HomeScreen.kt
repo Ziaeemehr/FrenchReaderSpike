@@ -1,36 +1,26 @@
 package com.ziaee.frenchreader.ui.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -42,18 +32,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
+import com.ziaee.frenchreader.ui.components.EditorialBottomBar
+import com.ziaee.frenchreader.ui.components.EditorialDestination
+import com.ziaee.frenchreader.ui.components.EditorialSearchEntry
+import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.shared.AddTextHost
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
 import com.ziaee.frenchreader.ui.shared.FindArticleSheet
 import com.ziaee.frenchreader.ui.shared.rememberAddTextUiState
 import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
+import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
+
+/** Lets instrumented tests scroll Home's content list to a node that's
+ * below the initially-composed viewport (LazyColumn only composes visible
+ * items) -- see [HomeScreenTest]. */
+internal const val HOME_LAZY_COLUMN_TEST_TAG = "home_lazy_column"
 
 /**
  * The app's landing screen: today's cached news, the most recently active
@@ -69,7 +69,8 @@ fun HomeScreen(
     onOpenLibrary: () -> Unit,
     onOpenVocab: () -> Unit,
     onOpenStatistics: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onStartReview: () -> Unit
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -113,7 +114,8 @@ fun HomeScreen(
         onPullRefresh = { vm.refresh(force = true) },
         onOpenText = onOpenText,
         onDownloadOrOpen = { vm.importSelected { id -> onOpenText(id) } },
-        onDismissPreview = { vm.dismissPreview() }
+        onDismissPreview = { vm.dismissPreview() },
+        onStartReview = onStartReview
     )
 
     AddTextHost(addTextState) { title, body ->
@@ -155,7 +157,8 @@ fun HomeContent(
     onPullRefresh: () -> Unit,
     onOpenText: (Long) -> Unit,
     onDownloadOrOpen: () -> Unit,
-    onDismissPreview: () -> Unit
+    onDismissPreview: () -> Unit,
+    onStartReview: () -> Unit
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -166,58 +169,72 @@ fun HomeContent(
     LaunchedEffect(state.isRefreshing) {
         if (!state.isRefreshing) pullToRefreshState.endRefresh()
     }
+    var moreMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.nav_home)) },
+            EditorialTopAppBar(
+                title = stringResource(R.string.home_brand_title),
                 actions = {
                     IconButton(onClick = onSearchClick) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.content_search_title))
                     }
-                    IconButton(onClick = onFilePickerClick) {
-                        Icon(Icons.Default.FileOpen, contentDescription = stringResource(R.string.accessibility_import_file))
-                    }
-                    IconButton(onClick = onOpenVocab) {
-                        Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
-                    }
-                    IconButton(onClick = onOpenStatistics) {
-                        Icon(Icons.Default.BarChart, contentDescription = stringResource(R.string.accessibility_statistics))
-                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.accessibility_settings))
+                    }
+                    IconButton(onClick = { moreMenuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.home_more_actions))
+                    }
+                    DropdownMenu(expanded = moreMenuExpanded, onDismissRequest = { moreMenuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.home_action_import_file)) },
+                            leadingIcon = { Icon(Icons.Default.FileOpen, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onFilePickerClick() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.home_action_vocabulary)) },
+                            leadingIcon = { Icon(Icons.Default.MenuBook, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onOpenVocab() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.home_action_statistics)) },
+                            leadingIcon = { Icon(Icons.Default.BarChart, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onOpenStatistics() }
+                        )
                     }
                 }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = {},
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_home)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onOpenLibrary,
-                    icon = { Icon(Icons.Default.LibraryBooks, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_library)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onAddTextClick,
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    label = { Text(stringResource(R.string.action_add_text)) }
-                )
-            }
+            EditorialBottomBar(
+                selectedDestination = EditorialDestination.HOME,
+                onHome = {},
+                onLibrary = onOpenLibrary,
+                onAddText = onAddTextClick
+            )
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(modifier = Modifier.fillMaxSize().testTag(HOME_LAZY_COLUMN_TEST_TAG)) {
                 item {
-                    SearchEntryPoint(onClick = onSearchClick)
+                    EditorialSearchEntry(
+                        text = stringResource(R.string.home_search_hint),
+                        onClick = onSearchClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
+                    LearningSummaryStrip(
+                        streakDays = state.streakDays,
+                        learnedWordCount = state.learnedWordCount,
+                        savedWordCount = state.savedWordCount,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
                 }
                 item {
                     TodayNewsSection(
@@ -226,6 +243,15 @@ fun HomeContent(
                         isEmptyError = state.isEmptyError,
                         onSelect = onSelectHeadline,
                         onRetry = onRetryNews
+                    )
+                }
+                item {
+                    DailyReviewCard(
+                        dueCount = state.dueReviewCount,
+                        onStart = onStartReview,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
                 }
                 state.continueReading?.let { doc ->
@@ -237,7 +263,8 @@ fun HomeContent(
                     RecentTextsSection(
                         documents = state.recentTexts,
                         onOpen = { onOpenText(it.id) },
-                        onSeeAll = onOpenLibrary
+                        onSeeAll = onOpenLibrary,
+                        onAddText = onAddTextClick
                     )
                 }
             }
@@ -254,23 +281,5 @@ fun HomeContent(
             onDownloadOrOpen = onDownloadOrOpen,
             onDismiss = onDismissPreview
         )
-    }
-}
-
-@Composable
-private fun SearchEntryPoint(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(12.dp))
-        Text(stringResource(R.string.content_search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -149,7 +149,8 @@ private fun AppNavHost() {
                 onOpenLibrary = { navigateToTab("library") },
                 onOpenVocab = { navController.navigate("vocab") },
                 onOpenStatistics = { navController.navigate("statistics") },
-                onOpenSettings = { navController.navigate("settings") }
+                onOpenSettings = { navController.navigate("settings") },
+                onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
             )
         }
         composable("library") {
