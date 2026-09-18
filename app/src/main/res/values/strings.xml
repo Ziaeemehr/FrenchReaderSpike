@@ -176,5 +176,17 @@
     <string name="voice_label_charline">Charline – Female, Belgium</string>
     <string name="voice_label_gerard">Gerard – Male, Belgium</string>
     <string name="voice_label_ariane">Ariane – Female, Switzerland</string>
+    <string name="backup_section_title">Cloud Backup</string>
+    <string name="backup_sign_in">Sign in with Google</string>
+    <string name="backup_sign_out">Sign out</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_restore">Restore</string>
     <string name="backup_never_backed_up">Never backed up</string>
+    <string name="backup_last_backup_label">Last backup: %1$s</string>
+    <string name="backup_restore_confirm_title">Restore from Google Drive?</string>
+    <string name="backup_restore_confirm_message">This replaces all data currently on this device with the backup from Google Drive. This can\'t be undone.</string>
+    <string name="backup_restore_not_found">No backup found for this account</string>
+    <string name="backup_success">Backup complete</string>
+    <string name="backup_failure">Backup failed</string>
+    <string name="backup_restore_failure">Restore failed</string>
 </resources>

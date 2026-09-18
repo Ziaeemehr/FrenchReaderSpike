@@ -1,5 +1,12 @@
 package com.ziaee.frenchreader.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.IntentSender
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -8,15 +15,24 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +40,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.backup.AuthorizationOutcome
+import com.ziaee.frenchreader.backup.BackupPrefs
+import com.ziaee.frenchreader.backup.DriveBackupClient
+import com.ziaee.frenchreader.backup.GoogleAuthManager
+import com.ziaee.frenchreader.backup.formatLastBackupLabel
+import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.AppLanguage
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
@@ -32,14 +54,21 @@ import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FontScale
 import com.ziaee.frenchreader.ui.theme.ReadingBackground
 import com.ziaee.frenchreader.ui.theme.ThemeMode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val appLanguage = LocalePrefs.get(context)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
@@ -137,6 +166,8 @@ fun SettingsScreen(onBack: () -> Unit) {
                     }
                 )
             }
+
+            CloudBackupSection(context, scope, snackbarHostState)
         }
     }
 }
@@ -168,4 +199,162 @@ private fun SettingsRadioRow(label: String, selected: Boolean, onClick: () -> Un
             Text(label)
         }
     }
+}
+
+@Composable
+private fun CloudBackupSection(
+    context: Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
+) {
+    val authManager = remember { GoogleAuthManager(context) }
+    var signedInEmail by remember { mutableStateOf(BackupPrefs.getSignedInEmail(context)) }
+    var lastBackupAtMs by remember { mutableStateOf(BackupPrefs.getLastBackupAtMs(context)) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+    var pendingAccessTokenAction by remember { mutableStateOf<((String) -> Unit)?>(null) }
+
+    fun showMessage(text: String) {
+        scope.launch { snackbarHostState.showSnackbar(text) }
+    }
+
+    val resolutionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        val data = result.data
+        if (result.resultCode == Activity.RESULT_OK && data != null) {
+            val token = authManager.extractAccessTokenFromResolutionResult(data)
+            pendingAccessTokenAction?.invoke(token)
+        } else {
+            showMessage(context.getString(R.string.backup_failure))
+        }
+        pendingAccessTokenAction = null
+    }
+
+    fun withDriveAccessToken(onToken: (String) -> Unit) {
+        scope.launch {
+            when (val outcome = authManager.requestDriveAuthorization()) {
+                is AuthorizationOutcome.Authorized -> onToken(outcome.accessToken)
+                is AuthorizationOutcome.NeedsResolution -> {
+                    pendingAccessTokenAction = onToken
+                    try {
+                        resolutionLauncher.launch(IntentSenderRequest.Builder(outcome.pendingIntent).build())
+                    } catch (e: IntentSender.SendIntentException) {
+                        showMessage(context.getString(R.string.backup_failure))
+                    }
+                }
+            }
+        }
+    }
+
+    Text(
+        stringResource(R.string.backup_section_title),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 20.dp)
+    )
+
+    if (signedInEmail == null) {
+        Button(onClick = {
+            scope.launch {
+                try {
+                    val account = authManager.signIn()
+                    BackupPrefs.setSignedInEmail(context, account.email)
+                    signedInEmail = account.email
+                } catch (e: Exception) {
+                    showMessage(context.getString(R.string.backup_failure))
+                }
+            }
+        }) {
+            Text(stringResource(R.string.backup_sign_in))
+        }
+    } else {
+        Text(signedInEmail!!)
+        Text(formatLastBackupLabel(context, lastBackupAtMs))
+
+        Button(onClick = {
+            withDriveAccessToken { token ->
+                scope.launch {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            val db = AppDatabase.get(context)
+                            AppDatabase.checkpointWal(db)
+                            val dbFile = context.getDatabasePath("french_reader.db")
+                            val existingId = DriveBackupClient.findBackupFileId(token)
+                            DriveBackupClient.uploadBackup(token, existingId, dbFile)
+                        }
+                        val now = System.currentTimeMillis()
+                        BackupPrefs.setLastBackupAtMs(context, now)
+                        lastBackupAtMs = now
+                        showMessage(context.getString(R.string.backup_success))
+                    } catch (e: Exception) {
+                        showMessage(context.getString(R.string.backup_failure))
+                    }
+                }
+            }
+        }) {
+            Text(stringResource(R.string.backup_now))
+        }
+
+        Button(onClick = { showRestoreConfirm = true }) {
+            Text(stringResource(R.string.backup_restore))
+        }
+
+        Button(onClick = {
+            scope.launch {
+                authManager.signOut()
+                BackupPrefs.setSignedInEmail(context, null)
+                signedInEmail = null
+            }
+        }) {
+            Text(stringResource(R.string.backup_sign_out))
+        }
+    }
+
+    if (showRestoreConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
+            text = { Text(stringResource(R.string.backup_restore_confirm_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showRestoreConfirm = false
+                    withDriveAccessToken { token ->
+                        scope.launch {
+                            try {
+                                val restored = withContext(Dispatchers.IO) {
+                                    val fileId = DriveBackupClient.findBackupFileId(token)
+                                        ?: return@withContext false
+                                    val bytes = DriveBackupClient.downloadBackup(token, fileId)
+                                    val dbFile = context.getDatabasePath("french_reader.db")
+                                    AppDatabase.closeForRestore()
+                                    File(dbFile.path + "-wal").delete()
+                                    File(dbFile.path + "-shm").delete()
+                                    dbFile.writeBytes(bytes)
+                                    true
+                                }
+                                if (!restored) {
+                                    showMessage(context.getString(R.string.backup_restore_not_found))
+                                    return@launch
+                                }
+                                restartApp(context)
+                            } catch (e: Exception) {
+                                showMessage(context.getString(R.string.backup_restore_failure))
+                            }
+                        }
+                    }
+                }) { Text(stringResource(R.string.backup_restore)) }
+            },
+            dismissButton = {
+                Button(onClick = { showRestoreConfirm = false }) {
+                    Text(stringResource(R.string.accessibility_back))
+                }
+            }
+        )
+    }
+}
+
+private fun restartApp(context: Context) {
+    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+    intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    context.startActivity(intent)
+    Runtime.getRuntime().exit(0)
 }

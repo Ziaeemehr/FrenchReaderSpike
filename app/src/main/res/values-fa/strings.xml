@@ -176,5 +176,17 @@
     <string name="voice_label_charline">شارلین – زن، بلژیک</string>
     <string name="voice_label_gerard">ژرار – مرد، بلژیک</string>
     <string name="voice_label_ariane">آریان – زن، سوئیس</string>
+    <string name="backup_section_title">پشتیبان‌گیری ابری</string>
+    <string name="backup_sign_in">ورود با گوگل</string>
+    <string name="backup_sign_out">خروج از حساب</string>
+    <string name="backup_now">پشتیبان‌گیری الان</string>
+    <string name="backup_restore">بازیابی</string>
     <string name="backup_never_backed_up">هنوز پشتیبان‌گیری نشده</string>
+    <string name="backup_last_backup_label">آخرین پشتیبان: %1$s</string>
+    <string name="backup_restore_confirm_title">بازیابی از Google Drive؟</string>
+    <string name="backup_restore_confirm_message">این کار همهٔ داده‌های فعلی روی این دستگاه رو با پشتیبان Google Drive جایگزین می‌کنه و قابل بازگشت نیست.</string>
+    <string name="backup_restore_not_found">پشتیبانی برای این حساب پیدا نشد</string>
+    <string name="backup_success">پشتیبان‌گیری انجام شد</string>
+    <string name="backup_failure">پشتیبان‌گیری ناموفق بود</string>
+    <string name="backup_restore_failure">بازیابی ناموفق بود</string>
 </resources>

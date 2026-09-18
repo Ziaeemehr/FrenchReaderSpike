@@ -176,5 +176,17 @@
     <string name="voice_label_charline">Charline – Femme, Belgique</string>
     <string name="voice_label_gerard">Gérard – Homme, Belgique</string>
     <string name="voice_label_ariane">Ariane – Femme, Suisse</string>
+    <string name="backup_section_title">Sauvegarde cloud</string>
+    <string name="backup_sign_in">Se connecter avec Google</string>
+    <string name="backup_sign_out">Se déconnecter</string>
+    <string name="backup_now">Sauvegarder maintenant</string>
+    <string name="backup_restore">Restaurer</string>
     <string name="backup_never_backed_up">Aucune sauvegarde</string>
+    <string name="backup_last_backup_label">Dernière sauvegarde : %1$s</string>
+    <string name="backup_restore_confirm_title">Restaurer depuis Google Drive ?</string>
+    <string name="backup_restore_confirm_message">Cela remplace toutes les données actuelles de cet appareil par la sauvegarde de Google Drive. Cette action est irréversible.</string>
+    <string name="backup_restore_not_found">Aucune sauvegarde trouvée pour ce compte</string>
+    <string name="backup_success">Sauvegarde terminée</string>
+    <string name="backup_failure">Échec de la sauvegarde</string>
+    <string name="backup_restore_failure">Échec de la restauration</string>
 </resources>
