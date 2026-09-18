@@ -27,4 +27,22 @@ class DriveBackupClientTest {
     fun `parseBackupFileId returns null when files list is empty`() {
         assertNull(parseBackupFileId("""{"files":[]}""", "frenchreader_backup.db"))
     }
+
+    @Test
+    fun `buildMultipartUploadBody produces correct multipart structure`() {
+        val body = buildMultipartUploadBody(
+            metadataJson = """{"name":"frenchreader_backup.db"}""",
+            fileBytes = "FAKE_DB_BYTES".toByteArray(Charsets.UTF_8),
+            boundary = "test-boundary"
+        )
+        val text = String(body, Charsets.UTF_8)
+
+        assertEquals(true, text.startsWith("--test-boundary\r\n"))
+        assertEquals(
+            true,
+            text.contains("Content-Type: application/json; charset=UTF-8\r\n\r\n{\"name\":\"frenchreader_backup.db\"}\r\n")
+        )
+        assertEquals(true, text.contains("Content-Type: application/octet-stream\r\n\r\nFAKE_DB_BYTES"))
+        assertEquals(true, text.endsWith("\r\n--test-boundary--\r\n"))
+    }
 }
