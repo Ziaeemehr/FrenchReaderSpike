@@ -142,5 +142,38 @@ abstract class AppDatabase : RoomDatabase() {
                     .fallbackToDestructiveMigration()
                     .build().also { INSTANCE = it }
             }
+
+        // PRAGMA wal_checkpoint returns a result row (busy, log, checkpointed), so it
+        // must go through query()/rawQuery() -- execSQL() rejects any statement that
+        // returns data. TRUNCATE (not FULL) is required to actually shrink the -wal
+        // file back to empty -- FULL only guarantees the data is checkpointed, not
+        // that the file shrinks. The first column (busy) can come back 1 -- meaning
+        // it only partially completed -- if Room's own internal reader connection
+        // happens to be mid-use at that exact moment; that's transient, so retry a
+        // few times rather than silently accepting a partial checkpoint (verified on
+        // a real device: ignoring `busy` here left committed rows missing from a
+        // plain copy of just the main .db file).
+        fun checkpointWal(db: AppDatabase) {
+            repeat(20) {
+                val busy = db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
+                    cursor.moveToFirst()
+                    cursor.getInt(0)
+                }
+                if (busy == 0) return
+                Thread.sleep(50)
+            }
+        }
+
+        /** Closes and forgets the singleton so the next [get] call reopens against
+         * whatever file is on disk at that point -- used right before a restore
+         * overwrites the database file, since swapping the file under a live
+         * Room instance is not safe. Callers must not use any existing DAO/db
+         * reference obtained before this call. */
+        fun closeForRestore() {
+            synchronized(this) {
+                INSTANCE?.close()
+                INSTANCE = null
+            }
+        }
     }
 }

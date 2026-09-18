@@ -88,7 +88,10 @@ New package `com.ziaee.frenchreader.backup`:
 ## 5. Backup data format
 
 Just the raw Room SQLite database file — no images, no audio (per decision above).
-Before upload, run `PRAGMA wal_checkpoint(FULL)` on the open database so the WAL
+Before upload, run `PRAGMA wal_checkpoint(TRUNCATE)` on the open database (via
+`query()`/`rawQuery()`, not `execSQL()` — the pragma returns a result row, and only
+`TRUNCATE` mode actually shrinks the `-wal` file afterward; `FULL` checkpoints the data
+but doesn't guarantee the file shrinks) so the WAL
 file is merged into the main `.db` file; this makes a plain copy of that one file a
 complete, consistent snapshot (no need to also ship `-wal`/`-shm` sidecar files).
 

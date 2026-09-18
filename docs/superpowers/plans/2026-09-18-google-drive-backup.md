@@ -398,11 +398,30 @@ git commit -m "Add Drive REST API network calls for backup upload/download"
 
 This needs a real SQLite/Room runtime, so it's an instrumented test (same as the existing `Migration4To5Test.kt`/`Migration5To6Test.kt` in this same directory) rather than a JVM one.
 
+**Real-device findings that shaped this task (recorded here since they overturned the
+original naive approach — see the commit history for the exact debugging sequence):**
+1. `PRAGMA wal_checkpoint(...)` returns a result row, so it must go through
+   `query()`/`rawQuery()` — `execSQL()` throws ("Queries can be performed using
+   SQLiteDatabase query or rawQuery methods only").
+2. `FULL` mode checkpoints the data but doesn't guarantee the `-wal` file shrinks;
+   `TRUNCATE` does.
+3. Even `TRUNCATE` can come back with `busy=1` (only partially completed) while
+   Room's own internal reader connection is momentarily active — verified on-device
+   that silently ignoring this left committed rows missing from a plain copy of just
+   the main `.db` file. This is transient and clears within milliseconds, so retry a
+   few times rather than treating one busy result as final.
+4. Closing the *last* connection to a WAL-mode database triggers SQLite's own
+   automatic checkpoint — which is exactly why a naive test that reads the file only
+   *after* `db.close()` can pass even with a completely broken `checkpointWal`. The
+   test below deliberately copies the file *before* closing the connection, matching
+   the real backup flow (which never closes the live db mid-backup).
+
 - [ ] **Step 1: Write the failing instrumented test**
 
 ```kotlin
 package com.ziaee.frenchreader.data
 
+import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -411,34 +430,44 @@ import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseBackupTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val dbFile: File get() = context.getDatabasePath("checkpoint_test.db")
-    private val walFile: File get() = File(dbFile.path + "-wal")
+    private val dbFile get() = context.getDatabasePath("checkpoint_test.db")
+    private val snapshotFile get() = context.getDatabasePath("checkpoint_test_snapshot.db")
 
     @After
     fun tearDown() {
         context.deleteDatabase("checkpoint_test.db")
+        snapshotFile.delete()
     }
 
+    // What actually matters for backup: reading only the main .db file's bytes
+    // (never -wal/-shm, since that's exactly what the real upload path does) right
+    // after checkpointWal -- while the live connection stays open, matching the real
+    // backup flow, which never closes the db mid-backup -- must be a complete, valid
+    // snapshot on its own. Checked via raw SQLiteDatabase (not Room) so a Room-level
+    // quirk on reopening a copied file can't hide or fake this result.
     @Test
-    fun checkpointWalMergesWalFileIntoMainDbFile() = runBlocking {
+    fun checkpointWalMakesTheMainDbFileACompleteSnapshotOnItsOwn() = runBlocking {
         val db = Room.databaseBuilder(context, AppDatabase::class.java, "checkpoint_test.db")
             .addMigrations(*ALL_MIGRATIONS)
             .fallbackToDestructiveMigration()
             .build()
-
         db.vocabListDao().insert(VocabList(name = "test-list"))
-        assertTrue("expected a -wal file to exist before checkpoint", walFile.exists())
 
         AppDatabase.checkpointWal(db)
-
-        val walSizeAfter = if (walFile.exists()) walFile.length() else 0L
-        assertTrue("expected the -wal file to be empty/gone after a full checkpoint", walSizeAfter == 0L)
+        dbFile.copyTo(snapshotFile, overwrite = true)
         db.close()
+
+        val rawDb = SQLiteDatabase.openDatabase(snapshotFile.path, null, SQLiteDatabase.OPEN_READONLY)
+        val cursor = rawDb.rawQuery("SELECT name FROM vocab_lists WHERE name = ?", arrayOf("test-list"))
+        val found = cursor.moveToFirst()
+        cursor.close()
+        rawDb.close()
+
+        assertTrue("expected the inserted list to be present in a snapshot copy of just the main .db file", found)
     }
 }
 ```
@@ -454,7 +483,14 @@ Add inside the existing `companion object` block in `AppDatabase.kt` (alongside 
 
 ```kotlin
         fun checkpointWal(db: AppDatabase) {
-            db.openHelper.writableDatabase.execSQL("PRAGMA wal_checkpoint(FULL)")
+            repeat(20) {
+                val busy = db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
+                    cursor.moveToFirst()
+                    cursor.getInt(0)
+                }
+                if (busy == 0) return
+                Thread.sleep(50)
+            }
         }
 
         /** Closes and forgets the singleton so the next [get] call reopens against
@@ -473,7 +509,7 @@ Add inside the existing `companion object` block in `AppDatabase.kt` (alongside 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.ziaee.frenchreader.data.AppDatabaseBackupTest`
-Expected: PASS
+Expected: PASS. Run it 3-4 times in a row to rule out flakiness from the busy-retry timing.
 
 - [ ] **Step 5: Run the full existing test suites to confirm no regression**
 
