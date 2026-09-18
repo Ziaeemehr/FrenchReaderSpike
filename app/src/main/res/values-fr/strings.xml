@@ -166,6 +166,7 @@
     <string name="home_action_import_file">Importer un fichier</string>
     <string name="home_action_vocabulary">Vocabulaire enregistré</string>
     <string name="home_action_statistics">Statistiques d\'apprentissage</string>
+    <string name="home_action_graded_readers">Lectures graduées (Fabulang)</string>
     <string name="home_news_image_unavailable">Image de l\'article indisponible</string>
     <string name="voice_label_denise">Denise – Femme, France</string>
     <string name="voice_label_henri">Henri – Homme, France (Par défaut)</string>
@@ -175,4 +176,5 @@
     <string name="voice_label_charline">Charline – Femme, Belgique</string>
     <string name="voice_label_gerard">Gérard – Homme, Belgique</string>
     <string name="voice_label_ariane">Ariane – Femme, Suisse</string>
+    <string name="backup_never_backed_up">Aucune sauvegarde</string>
 </resources>
