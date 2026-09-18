@@ -648,6 +648,8 @@ git commit -m "Add GoogleAuthManager wrapping Credential Manager sign-in and Dri
 
 No automated test — this is the end-to-end wiring, verified entirely on the real device per the manual checklist in Step 4.
 
+**Threading (found in review, applies to the code below):** `rememberCoroutineScope()` runs on the main thread, so every blocking call — `HttpURLConnection`, file reads/writes, and `checkpointWal`'s `Thread.sleep` retry — must sit inside `withContext(Dispatchers.IO)`, or it throws `NetworkOnMainThreadException` on every attempt.
+
 - [ ] **Step 1: Add new string resources to all three locale files**
 
 Add to `values/strings.xml` (English), right after the existing `reading_font_scale_title` block or any convenient spot near the end of the settings-related strings:
@@ -736,7 +738,9 @@ import com.ziaee.frenchreader.backup.DriveBackupClient
 import com.ziaee.frenchreader.backup.GoogleAuthManager
 import com.ziaee.frenchreader.backup.formatLastBackupLabel
 import com.ziaee.frenchreader.data.AppDatabase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 ```
 
@@ -829,11 +833,13 @@ private fun CloudBackupSection(
             withDriveAccessToken { token ->
                 scope.launch {
                     try {
-                        val db = AppDatabase.get(context)
-                        AppDatabase.checkpointWal(db)
-                        val dbFile = context.getDatabasePath("french_reader.db")
-                        val existingId = DriveBackupClient.findBackupFileId(token)
-                        DriveBackupClient.uploadBackup(token, existingId, dbFile)
+                        withContext(Dispatchers.IO) {
+                            val db = AppDatabase.get(context)
+                            AppDatabase.checkpointWal(db)
+                            val dbFile = context.getDatabasePath("french_reader.db")
+                            val existingId = DriveBackupClient.findBackupFileId(token)
+                            DriveBackupClient.uploadBackup(token, existingId, dbFile)
+                        }
                         val now = System.currentTimeMillis()
                         BackupPrefs.setLastBackupAtMs(context, now)
                         lastBackupAtMs = now
@@ -873,17 +879,21 @@ private fun CloudBackupSection(
                     withDriveAccessToken { token ->
                         scope.launch {
                             try {
-                                val fileId = DriveBackupClient.findBackupFileId(token)
-                                if (fileId == null) {
+                                val restored = withContext(Dispatchers.IO) {
+                                    val fileId = DriveBackupClient.findBackupFileId(token)
+                                        ?: return@withContext false
+                                    val bytes = DriveBackupClient.downloadBackup(token, fileId)
+                                    val dbFile = context.getDatabasePath("french_reader.db")
+                                    AppDatabase.closeForRestore()
+                                    File(dbFile.path + "-wal").delete()
+                                    File(dbFile.path + "-shm").delete()
+                                    dbFile.writeBytes(bytes)
+                                    true
+                                }
+                                if (!restored) {
                                     showMessage(context.getString(R.string.backup_restore_not_found))
                                     return@launch
                                 }
-                                val bytes = DriveBackupClient.downloadBackup(token, fileId)
-                                val dbFile = context.getDatabasePath("french_reader.db")
-                                AppDatabase.closeForRestore()
-                                File(dbFile.path + "-wal").delete()
-                                File(dbFile.path + "-shm").delete()
-                                dbFile.writeBytes(bytes)
                                 restartApp(context)
                             } catch (e: Exception) {
                                 showMessage(context.getString(R.string.backup_restore_failure))

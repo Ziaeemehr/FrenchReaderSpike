@@ -522,5 +522,28 @@ Qwen3 0.6B Q4_K_M روی llama.cpp پیاده‌سازی شد (خلاصه‌سا
 
 **رفع ابهام برچسب‌های تکراری:** روی دستگاه واقعی مشخص شد بعضی وقت‌ها دو اپ کاملاً متفاوت (مثلاً Bixby Interpreter سامسونگ و اپ واقعی Google Translate) هر دو خودشون رو دقیقاً با همون برچسب «Translate» معرفی می‌کنن — نه باگ در کد، بلکه خروجی واقعی و درست PackageManager. `ProcessTextApp` یک فیلد `appLabel` (نام خودِ اپ، جدا از برچسب اکشن) گرفت؛ `filterAndSortProcessTextApps` حالا هر برچسبی که بیش از یک بار تکرار شده باشه رو با نام اپ بین‌پرانتز مشخص می‌کنه (مثلاً «Translate (Bixby Interpreter)» / «Translate (Translate)»)، بدون تغییر بقیهٔ اپ‌ها.
 
+## ۱۱. ورود با گوگل و پشتیبان‌گیری/بازیابی در Google Drive
+
+وضعیت: **پیاده‌سازی شده و تست‌های خودکار سبزن؛ تأیید نهایی end-to-end روی گوشی (ورود واقعی، رضایت Drive، پشتیبان‌گیری و بازیابی) هنوز انجام نشده** — چون به صفحهٔ انتخاب حساب و رضایت‌نامهٔ تعاملی گوگل نیاز داره که از تست خودکار قابل اجرا نیست. سند طراحی: `docs/superpowers/specs/2026-09-18-google-drive-backup-design.md`، پلن: `docs/superpowers/plans/2026-09-18-google-drive-backup.md`.
+
+این بخش یک استثنای آگاهانه از اصل «کاملاً محلی و بدون حساب کاربری» (بخش ۹) هست و عمداً کوچیک نگه داشته شده: **فقط پشتیبان‌گیری/بازیابی دستی**، نه همگام‌سازی چنددستگاهی، نه پشتیبان خودکار/پس‌زمینه‌ای، و نه عکس‌ها (فقط دیتابیس Room).
+
+**طراحی:**
+- `backup/GoogleAuthManager.kt` دو API جدا رو پوشش می‌ده: Credential Manager فقط *هویت* (ایمیل) می‌ده، و Identity Authorization API توکن دسترسی با اسکوپ `drive.appdata` می‌ده.
+- `backup/DriveBackupClient.kt` مستقیم با Drive REST v3 و `HttpURLConnection` حرف می‌زنه (بدون کتابخونهٔ سنگین Drive، هم‌سبک `NewsFetcher`). همیشه **یک فایل ثابت** (`frenchreader_backup.db`) توی پوشهٔ مخفی `appDataFolder` ساخته یا در جا به‌روزرسانی می‌شه.
+- `backup/BackupPrefs.kt` ایمیل حساب و زمان آخرین پشتیبان رو نگه می‌داره؛ بخش «Cloud Backup» در `SettingsScreen.kt` ورود/خروج، «Back up now» و «Restore» (با هشدار) رو نشون می‌ده. بازیابی فایل دیتابیس رو جایگزین می‌کنه و اپ رو خودکار ری‌استارت می‌کنه (عوض‌کردن فایل SQLite زیر پای یک Room زنده امن نیست).
+
+**باگ‌های واقعی که با تست روی دستگاه/بازبینی پیدا و رفع شدن:**
+- `PRAGMA wal_checkpoint` باید با `query()` اجرا بشه نه `execSQL()` (نتیجه برمی‌گردونه)، حالت `TRUNCATE` لازمه (نه `FULL`)، و حتی `TRUNCATE` می‌تونه `busy=1` برگردونه (وقتی connection داخلی Room لحظه‌ای مشغوله) و فقط بخشی از کار رو انجام بده؛ نادیده‌گرفتنش باعث می‌شد ردیف‌های commit‌شده توی کپی فایل اصلی `.db` نباشن. با یک حلقهٔ retry رفع شد. تست عمداً فایل رو *قبل از* بستن connection کپی می‌کنه چون بستن خودش یک checkpoint ضمنی SQLite رو فعال می‌کنه و باگ رو پنهان می‌کرد.
+- کد پلن اولیه I/O شبکه و فایل رو روی اسکوپ اصلی Compose اجرا می‌کرد که `NetworkOnMainThreadException` می‌ده و هر پشتیبان/بازیابی رو fail می‌کرد؛ قبل از اولین اجرا با `Dispatchers.IO` اصلاح شد.
+
+**پیش‌نیاز خارج از کد (انجام شده توسط کاربر):** پروژهٔ Google Cloud با Drive API فعال، OAuth consent در حالت Testing با اسکوپ `drive.appdata`، یک OAuth client از نوع Android (package `com.ziaee.frenchreader` + SHA-1 دیباگ) و یک client از نوع Web که Client ID اون داخل کد استفاده می‌شه. Client secret هیچ‌جای اپ استفاده نمی‌شه.
+
+**محدودیت‌ها / کارهای باقی‌مونده:**
+- تأیید دستی روی گوشی طبق چک‌لیست Task 7 پلن.
+- برای بیلد release باید SHA-1 امضای release هم در Cloud Console ثبت بشه (فعلاً فقط SHA-1 دیباگ ثبت شده).
+- خروج از حساب فقط credential محلی رو پاک می‌کنه؛ مجوز Drive رو لغو نمی‌کنه (کاربر می‌تونه از تنظیمات حساب گوگل لغوش کنه).
+- تست‌ها: `BackupPrefsTest`، `DriveBackupClientTest` (JVM)، و `AppDatabaseBackupTest` (روی دستگاه). خود `GoogleAuthManager` و UI بدون تست خودکارن.
+
 ---
 *این سند فقط یک برنامهٔ ثبت‌شده است.*
