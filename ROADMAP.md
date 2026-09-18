@@ -493,5 +493,34 @@ Qwen3 0.6B Q4_K_M روی llama.cpp پیاده‌سازی شد (خلاصه‌سا
 
 معیار انتخاب نهایی فقط بیشترین token/s نیست؛ مدل/runtime منتخب باید بدون crash و فشار غیرقابل‌قبول حافظه، کیفیت فرانسوی قابل‌استفاده و زمان پاسخ مناسب برای درخواست‌های کوتاه داشته باشه. ادعاهای عملکردی مدل‌های دیگر (مثلاً مصرف باتری Gemma) به Qwen تعمیم داده نمی‌شن و مقدار RAM دستگاه هم به‌تنهایی تعیین نمی‌کنه CPU، GPU یا NPU قابل استفاده است؛ این موضوع به SoC، driver و پشتیبانی runtime وابسته است.
 
+## ۱۰. ارتباط با اپ‌های دیگر (Android ACTION_PROCESS_TEXT)
+
+وضعیت: **پیاده‌سازی و روی دستگاه واقعی تست شده (Galaxy S24 FE) — ۲۰۲۶-۰۹-۱۸.**
+
+هدف: همون منویی که در کروم/ChatGPT هنگام انتخاب متن می‌بینی (Ask ChatGPT، Anki Card، Reverso Context، ...) — که مکانیزم اندرویدش `ACTION_PROCESS_TEXT`ه، نه Share عمومی — در هر دو جهت به این اپ وصل بشه.
+
+**جهت ۱ (انتخاب داخل اپ → ارسال به اپ‌های دیگه):** `util/ProcessTextApps.kt` لیست اپ‌های نصب‌شدهٔ پاسخ‌گو به `ACTION_PROCESS_TEXT` رو از `PackageManager` می‌گیره (خود اپ رو از لیست فیلتر می‌کنه، بر اساس label مرتب می‌کنه) و با زدن هر کدوم متن انتخاب‌شده رو با `EXTRA_PROCESS_TEXT_READONLY=true` می‌فرسته. ظاهر/رفتار دقیقاً مثل toolbar انتخاب متن خودِ اندروید (کروم/ChatGPT) طراحی شده، نه یک شیت جدا: دکمهٔ سوم روی toolbar عبارت (`SelectionToolbarContent`) و toolbar کلمه (`DefineToolbarContent`) در `SelectionToolbar.kt` فقط آیکون سه‌نقطه‌ست (بدون متن، مثل «⋮» بومی)؛ زدنش محتوای همون popup شناور رو (در همون موقعیت toolbar، با `SelectionRectPositionProvider`) با لیست اپ‌ها (`ProcessTextAppsPopupContent`) عوض می‌کنه، با یه فلش برگشت پایینش برای بازگشت به toolbar اصلی بدون از دست دادن هایلایت انتخاب؛ لیست خالی → پیام «اپی پیدا نشد».
+
+**جهت ۲ (ثبت خودمون به‌عنوان مقصد در منوی سایر اپ‌ها):** یک `<activity-alias>` جدید در `AndroidManifest.xml` (`targetActivity=".MainActivity"`) با `intent-filter` روی `ACTION_PROCESS_TEXT` و label اختصاصی «افزودن به فرنچ‌ریدر» اضافه شد. `MainActivity.handleIncomingIntent` یک شاخهٔ جدید برای این action داره که متن رو دقیقاً از همون مسیر `SharedTextHolder`/`IncomingShare` که برای Share فعلی استفاده می‌شه عبور می‌ده — بدون مسیر import جدا.
+
+**تست:** منطق خالص فیلتر/مرتب‌سازی لیست اپ‌ها با یک تست JVM (`ProcessTextAppsTest.kt`) پوشش داده شده. جهت ۱ با `SelectionToolbarTest.kt` (دکمهٔ «بیشتر» روی هر دو toolbar، رفتار `ProcessTextAppsPopupContent` با لیست خالی/پر، و دکمهٔ برگشت، هم‌سبک `HomeScreenTest.kt`) پوشش داده شده. جهت ۲ با `ProcessTextIntentTest.kt` پوشش داده شده که `MainActivity` رو با یک intent مصنوعی `ACTION_PROCESS_TEXT` باز می‌کنه.
+
+**نکتهٔ دیباگ (پیدا و رفع شده روی دستگاه واقعی):** اولین نسخهٔ `ProcessTextIntentTest` مستقیماً `SharedTextHolder.pending.value` رو بعد از `ActivityScenario.launch` چک می‌کرد و همیشه fail می‌شد (نه به‌خاطر باگ در فیچر، بلکه چون `AddTextHost` روی Home همون مقدار رو در همون ترکیب اول (composition) با `LaunchedEffect` مصرف و `consume()` می‌کنه — دقیقاً قبل از این‌که `ActivityScenario.launch` که منتظر رسیدن به وضعیت RESUMED می‌مونه برگرده). تست اصلاح شد تا نتیجهٔ واقعی و قابل‌مشاهده برای کاربر رو بسنجه: باز شدن دیالوگ افزودن متن با همون متن انتخاب‌شده از پیش پر شده. یک نکتهٔ محیطی هم موقع تست پیدا شد: وقتی صفحهٔ گوشی قفله، اولین تست(های) هر اجرای instrumented با همون خطای عمومی «No compose hierarchies found» fail می‌شن (چون Activity واقعاً روی صفحه نمایش داده نمی‌شه) — ربطی به کد نداره، فقط صفحه باید باز/بیدار باشه.
+
+**باگ واقعی پیدا و رفع شده (بعد از تأیید اولیهٔ کاربر روی دستگاه):** با این‌که هر تست سبز بود، کاربر گزارش داد لیست «بیشتر» فقط ۲ تا اپ نشون می‌ده در حالی که گوشیش چندین اپ پاسخ‌گو به `ACTION_PROCESS_TEXT` داره (ChatGPT, Claude, Grok, Perplexity, Anki, ...). علتش **محدودیت package visibility اندروید ۱۱+** بود (این اپ `targetSdk 34`ه): بدون یک بلوک `<queries>` صریح در `AndroidManifest.xml`، `PackageManager.queryIntentActivities` برای یک intent implicit فقط تعداد کمی اپ رو می‌بینه، صرف‌نظر از این‌که واقعاً چند تا نصبه. رفع شد با اضافه‌کردن:
+```xml
+<queries>
+    <intent>
+        <action android:name="android.intent.action.PROCESS_TEXT" />
+        <data android:mimeType="text/plain" />
+    </intent>
+</queries>
+```
+یک تست instrumented جدید (`util/ProcessTextAppsInstrumentedTest.kt`) هم به‌عنوان نگهبان این رگرسیون اضافه شد: `queryProcessTextApps` واقعی (نه لیست فیک) رو صدا می‌زنه و مطمئن می‌شه بیش از ۲ تا اپ برمی‌گرده — تا اگه یه‌وقت این بلوک `<queries>` سهواً حذف شد، تست fail کنه.
+
+هر ۳۸ تست instrumented پروژه (شامل تست‌های این فیچر) با صفحهٔ باز روی گوشی واقعی سبز شدن.
+
+**رفع ابهام برچسب‌های تکراری:** روی دستگاه واقعی مشخص شد بعضی وقت‌ها دو اپ کاملاً متفاوت (مثلاً Bixby Interpreter سامسونگ و اپ واقعی Google Translate) هر دو خودشون رو دقیقاً با همون برچسب «Translate» معرفی می‌کنن — نه باگ در کد، بلکه خروجی واقعی و درست PackageManager. `ProcessTextApp` یک فیلد `appLabel` (نام خودِ اپ، جدا از برچسب اکشن) گرفت؛ `filterAndSortProcessTextApps` حالا هر برچسبی که بیش از یک بار تکرار شده باشه رو با نام اپ بین‌پرانتز مشخص می‌کنه (مثلاً «Translate (Bixby Interpreter)» / «Translate (Translate)»)، بدون تغییر بقیهٔ اپ‌ها.
+
 ---
 *این سند فقط یک برنامهٔ ثبت‌شده است.*

@@ -140,6 +140,9 @@
     <string name="selection_action_copy">Copier</string>
     <string name="selection_action_listen">Écouter</string>
     <string name="selection_action_define">Définir</string>
+    <string name="selection_action_more">Plus</string>
+    <string name="process_text_apps_empty">Aucune application trouvée</string>
+    <string name="process_text_add_label">Ajouter à French Reader</string>
 
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>

@@ -140,6 +140,9 @@
     <string name="selection_action_copy">کپی</string>
     <string name="selection_action_listen">شنیدن</string>
     <string name="selection_action_define">تعریف</string>
+    <string name="selection_action_more">بیشتر</string>
+    <string name="process_text_apps_empty">اپی پیدا نشد</string>
+    <string name="process_text_add_label">افزودن به فرنچ‌ریدر</string>
 
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>

@@ -46,6 +46,8 @@ import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.ReadingPalette
 import com.ziaee.frenchreader.ui.theme.readingPaletteFor
 import java.text.SimpleDateFormat
+import com.ziaee.frenchreader.util.launchProcessTextApp
+import com.ziaee.frenchreader.util.queryProcessTextApps
 import java.util.Date
 import java.util.Locale
 
@@ -68,6 +70,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     var selectedWord by remember { mutableStateOf<Pair<String, String>?>(null) }
     var selectedPhrase by remember { mutableStateOf<String?>(null) }
     var clearSelectionTick by remember { mutableIntStateOf(0) }
+    var processTextTarget by remember { mutableStateOf<String?>(null) }
     val selectionToolbarController = remember { SelectionToolbarController() }
     val density = androidx.compose.ui.platform.LocalDensity.current
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -287,27 +290,50 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             onDismissRequest = {
                 vm.stopSelectionPlayback()
                 selectedPhrase = null
+                processTextTarget = null
                 clearSelectionTick++
             }
         ) {
-            SelectionToolbarContent(
-                onCopy = {
-                    // Written directly instead of via the framework's own
-                    // onCopyRequested callback -- that callback copies whatever the
-                    // *raw* (un-snapped) selection currently is, which can differ
-                    // from `phrase` (already snapped to whole word boundaries by
-                    // classifySelection) and would silently overwrite it.
-                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(phrase))
-                    selectedPhrase = null
-                    clearSelectionTick++
-                },
-                onListen = {
-                    vm.player.pause()
-                    vm.playSelection(phrase)
-                    selectedPhrase = null
-                    clearSelectionTick++
-                }
-            )
+            // Swaps in place between the main actions and the ACTION_PROCESS_TEXT
+            // app list -- like Android's own selection toolbar, tapping the
+            // overflow (More) replaces this popup's content rather than opening a
+            // separate one, and Back restores the actions without losing the
+            // still-highlighted selection (clearSelectionTick isn't touched here).
+            if (processTextTarget != null) {
+                val text = processTextTarget!!
+                val context = LocalContext.current
+                val apps = remember(text) { queryProcessTextApps(context) }
+                ProcessTextAppsPopupContent(
+                    apps = apps,
+                    onAppSelected = { app ->
+                        launchProcessTextApp(context, app, text)
+                        selectedPhrase = null
+                        processTextTarget = null
+                        clearSelectionTick++
+                    },
+                    onBack = { processTextTarget = null }
+                )
+            } else {
+                SelectionToolbarContent(
+                    onCopy = {
+                        // Written directly instead of via the framework's own
+                        // onCopyRequested callback -- that callback copies whatever the
+                        // *raw* (un-snapped) selection currently is, which can differ
+                        // from `phrase` (already snapped to whole word boundaries by
+                        // classifySelection) and would silently overwrite it.
+                        clipboard.setText(androidx.compose.ui.text.AnnotatedString(phrase))
+                        selectedPhrase = null
+                        clearSelectionTick++
+                    },
+                    onListen = {
+                        vm.player.pause()
+                        vm.playSelection(phrase)
+                        selectedPhrase = null
+                        clearSelectionTick++
+                    },
+                    onMore = { processTextTarget = phrase }
+                )
+            }
         }
     }
 
@@ -322,17 +348,35 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             ),
             onDismissRequest = {
                 selectedWord = null
+                processTextTarget = null
                 clearSelectionTick++
             }
         ) {
-            DefineToolbarContent(
-                onDefine = {
-                    vm.player.pause()
-                    dictionaryTarget = word to sentence
-                    selectedWord = null
-                    clearSelectionTick++
-                }
-            )
+            if (processTextTarget != null) {
+                val text = processTextTarget!!
+                val context = LocalContext.current
+                val apps = remember(text) { queryProcessTextApps(context) }
+                ProcessTextAppsPopupContent(
+                    apps = apps,
+                    onAppSelected = { app ->
+                        launchProcessTextApp(context, app, text)
+                        selectedWord = null
+                        processTextTarget = null
+                        clearSelectionTick++
+                    },
+                    onBack = { processTextTarget = null }
+                )
+            } else {
+                DefineToolbarContent(
+                    onDefine = {
+                        vm.player.pause()
+                        dictionaryTarget = word to sentence
+                        selectedWord = null
+                        clearSelectionTick++
+                    },
+                    onMore = { processTextTarget = word }
+                )
+            }
         }
     }
 

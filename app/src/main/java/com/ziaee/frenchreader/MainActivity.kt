@@ -72,12 +72,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Accepts a shared text/plain snippet (ACTION_SEND with EXTRA_TEXT), a
-     * shared file (ACTION_SEND with EXTRA_STREAM), or a TXT/MD file opened
-     * directly with this app (ACTION_VIEW) -- per the design doc's "receive
-     * text/file from Share" requirement. Reading is UTF-8 only and best-
-     * effort: anything that fails to decode is silently ignored rather than
-     * crashing the share flow.
+     * Accepts a shared text/plain snippet (ACTION_SEND with EXTRA_TEXT), selected text
+     * (ACTION_PROCESS_TEXT), a shared file (ACTION_SEND with EXTRA_STREAM), or a TXT/MD
+     * file opened directly with this app (ACTION_VIEW) -- per the design doc's "receive
+     * text/file from Share" requirement. Reading is UTF-8 only and best-effort: anything
+     * that fails to decode is silently ignored rather than crashing the share flow.
      */
     private fun handleIncomingIntent(intent: Intent?) {
         intent ?: return
@@ -89,6 +88,12 @@ class MainActivity : AppCompatActivity() {
                 if (!body.isNullOrBlank()) {
                     val title = streamUri?.let { queryDisplayName(it) } ?: getString(R.string.text_untitled)
                     SharedTextHolder.post(IncomingShare(title, body))
+                }
+            }
+            Intent.ACTION_PROCESS_TEXT -> {
+                val text = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
+                if (!text.isNullOrBlank()) {
+                    SharedTextHolder.post(IncomingShare(getString(R.string.text_untitled), text))
                 }
             }
             Intent.ACTION_VIEW -> {
