@@ -11,6 +11,8 @@ private const val FILES_ENDPOINT = "https://www.googleapis.com/drive/v3/files"
 private const val UPLOAD_ENDPOINT = "https://www.googleapis.com/upload/drive/v3/files"
 
 object DriveBackupClient {
+    // The existing backup format uploads only the Room database. Files in
+    // text_images and text_bodies are intentionally outside that format.
     fun findBackupFileId(accessToken: String): String? {
         val url = "$FILES_ENDPOINT?spaces=appDataFolder&fields=files(id,name)"
         val json = httpGet(url, accessToken)

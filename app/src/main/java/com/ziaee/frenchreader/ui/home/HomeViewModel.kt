@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui.home
 
 import android.app.Application
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.room.invalidationTrackerFlow
 import androidx.compose.runtime.mutableStateOf
@@ -13,11 +14,16 @@ import com.ziaee.frenchreader.content.ContentArticle
 import com.ziaee.frenchreader.content.ContentResult
 import com.ziaee.frenchreader.content.ContentSource
 import com.ziaee.frenchreader.content.FranceInfoContentSource
+import com.ziaee.frenchreader.content.EpubImportRepository
+import com.ziaee.frenchreader.content.EpubImportResult
 import com.ziaee.frenchreader.content.RfiFacileContentSource
 import com.ziaee.frenchreader.content.VikidiaContentSource
+import com.ziaee.frenchreader.content.WikisourceContentSource
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.data.TextBodyStore
+import com.ziaee.frenchreader.data.insertTextDocument
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.news.NewsRepository
@@ -31,6 +37,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -38,15 +45,19 @@ import java.time.LocalDate
 /** Every source the Home topic-search field can query -- broader than the
  * two dashboard news sources used by the news dashboard above. */
 private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
-    listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource)
+    listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource, WikisourceContentSource)
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val bodyStore = TextBodyStore(app)
     private val newsRepository = NewsRepository(db.headlineDao())
+    private val epubImportRepository = EpubImportRepository(app, db)
     private val importRepository = ArticleImportRepository(
         db.textDao(),
         listOf(RfiFacileContentSource, FranceInfoContentSource),
-        ArticleImageStore(app)
+        ArticleImageStore(app),
+        bodyStore,
+        db.libraryOrganizerDao()
     )
 
     var contentSearchState by mutableStateOf<ContentSearchUiState>(ContentSearchUiState.Idle)
@@ -59,6 +70,22 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val isRefreshing = MutableStateFlow(false)
     private val sourceErrors = MutableStateFlow<List<String>>(emptyList())
     private val importingKey = MutableStateFlow<String?>(null)
+
+    private data class TextsWithBodies(
+        val documents: List<TextDocument>,
+        val bodies: Map<Long, String>
+    )
+
+    private val textsWithBodies = db.textDao().observeAll().mapLatest { documents ->
+        TextsWithBodies(
+            documents,
+            documents.take(MAX_RECENT_TEXTS).associate { it.id to bodyStore.read(it) }
+        )
+    }
+
+    private val continueWithBody = db.textDao().observeMostRecentlyAccessed().mapLatest { document ->
+        document to document?.let { bodyStore.read(it) }
+    }
 
     /** Re-derives the real, non-fabricated reading streak whenever a review
      * or a listening session is logged -- driven by Room's own invalidation
@@ -73,20 +100,25 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     val uiState: StateFlow<HomeUiState> = combine(
         newsRepository.observeHeadlines(),
-        db.textDao().observeAll(),
+        textsWithBodies,
         db.vocabDao().observeAll(),
-        db.textDao().observeMostRecentlyAccessed(),
+        continueWithBody,
         isRefreshing,
         sourceErrors,
         importingKey,
         activeDates
     ) { values ->
         @Suppress("UNCHECKED_CAST")
+        val texts = values[1] as TextsWithBodies
+        val continuing = values[3] as Pair<TextDocument?, String?>
         composeHomeState(
             headlines = values[0] as List<HeadlineEntity>,
-            allTexts = values[1] as List<TextDocument>,
+            allTexts = texts.documents,
             vocabEntries = values[2] as List<VocabEntry>,
-            continueReading = values[3] as TextDocument?,
+            continueReading = continuing.first,
+            bodyByTextId = texts.bodies + listOfNotNull(
+                continuing.first?.id?.let { id -> continuing.second?.let { id to it } }
+            ),
             isRefreshing = values[4] as Boolean,
             sourceErrors = values[5] as List<String>,
             importingKey = values[6] as String?,
@@ -173,8 +205,23 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
      * flow, unrelated to headline or topic-search imports. */
     fun pasteText(title: String, body: String, onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = db.textDao().insert(TextDocument(title = title, rawText = body))
+            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = ""), body)
             onDone(id)
+        }
+    }
+
+    fun importEpub(
+        uri: Uri,
+        onDone: (EpubImportResult) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                onDone(epubImportRepository.import(uri))
+            } catch (error: Exception) {
+                android.util.Log.w("EpubImport", "EPUB import failed", error)
+                onError(error.message.orEmpty())
+            }
         }
     }
 
@@ -242,16 +289,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 if (contentImportError == null) contentImportError = ""
                 return@launch
             }
-            val id = db.textDao().insert(
+            val id = insertTextDocument(
+                db.textDao(),
+                bodyStore,
                 TextDocument(
                     title = article.title,
-                    rawText = article.text,
+                    rawText = "",
                     sourceUrl = article.sourceUrl,
                     sourceName = article.sourceName,
                     author = article.author,
                     license = article.license,
                     publishedAt = article.publishedAtMs
-                )
+                ),
+                article.text
             )
             resetContentSearch()
             onOpen(id)

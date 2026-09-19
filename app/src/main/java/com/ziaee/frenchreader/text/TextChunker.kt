@@ -16,6 +16,7 @@ package com.ziaee.frenchreader.text
  *    standalone block -- one chunk per item -- so each item gets its own
  *    audio/highlight/translation exactly like a short paragraph would, and
  *    the reading screen can simply prefix it with a bullet.
+ *  - An EPUB image marker is always its own block.
  *  - Anything else accumulates into the current paragraph until a blank
  *    line, a heading, or a list item interrupts it.
  * A paragraph block that's still too long for one TTS/translation call is
@@ -25,6 +26,7 @@ object TextChunker {
     private const val MAX_CHUNK_CHARS = 1200
     private val HEADER_LINE = Regex("^#{1,6}\\s+.*$")
     private val LIST_LINE = Regex("^([-*+]|\\d+\\.)\\s+.*$")
+    private val EPUB_IMAGE_LINE = Regex("^!\\[[^]]*]\\(epubimg:[^)]+\\)$")
 
     fun chunk(rawText: String): List<String> {
         val lines = rawText.replace("\r\n", "\n").split("\n")
@@ -50,6 +52,10 @@ object TextChunker {
                     flush()
                     blocks.add(line)
                 }
+                EPUB_IMAGE_LINE.matches(line) -> {
+                    flush()
+                    blocks.add(line)
+                }
                 else -> current.add(line)
             }
         }
@@ -57,7 +63,7 @@ object TextChunker {
 
         val out = mutableListOf<String>()
         for (block in blocks) {
-            val isSpecial = HEADER_LINE.matches(block) || LIST_LINE.matches(block)
+            val isSpecial = HEADER_LINE.matches(block) || LIST_LINE.matches(block) || EPUB_IMAGE_LINE.matches(block)
             if (!isSpecial && block.length > MAX_CHUNK_CHARS) {
                 out.addAll(splitLongParagraph(block))
             } else {

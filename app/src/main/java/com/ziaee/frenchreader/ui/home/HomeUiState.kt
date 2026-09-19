@@ -4,6 +4,8 @@ import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.text.TextChunker
+import com.ziaee.frenchreader.text.BlockType
+import com.ziaee.frenchreader.text.MarkdownParser
 import com.ziaee.frenchreader.ui.statistics.computeStreak
 import java.time.LocalDate
 import kotlin.math.ceil
@@ -29,6 +31,7 @@ data class HomeUiState(
     val headlines: List<HeadlineEntity> = emptyList(),
     val recentTexts: List<TextDocument> = emptyList(),
     val continueReading: TextDocument? = null,
+    val bodyByTextId: Map<Long, String> = emptyMap(),
     val isRefreshing: Boolean = false,
     val sourceErrors: List<String> = emptyList(),
     val importingKey: String? = null,
@@ -52,6 +55,7 @@ internal fun composeHomeState(
     allTexts: List<TextDocument>,
     vocabEntries: List<VocabEntry>,
     continueReading: TextDocument?,
+    bodyByTextId: Map<Long, String> = emptyMap(),
     isRefreshing: Boolean,
     sourceErrors: List<String>,
     importingKey: String?,
@@ -62,6 +66,7 @@ internal fun composeHomeState(
     headlines = headlines,
     recentTexts = allTexts.take(MAX_RECENT_TEXTS),
     continueReading = continueReading,
+    bodyByTextId = bodyByTextId,
     isRefreshing = isRefreshing,
     sourceErrors = sourceErrors,
     importingKey = importingKey,
@@ -72,9 +77,7 @@ internal fun composeHomeState(
     streakDays = computeStreak(activeDates, today)
 )
 
-/** Locally derived reading-time/progress estimate for one [TextDocument] --
- * never stored, always recomputed from [TextDocument.rawText] and
- * [TextDocument.lastChunkIndex] so it can't drift out of sync. */
+/** Locally derived reading-time/progress estimate for one [TextDocument]. */
 data class HomeReadingMetrics(
     val progressFraction: Float,
     val progressPercent: Int,
@@ -89,19 +92,23 @@ internal fun estimatedReadingMinutes(rawText: String, wordsPerMinute: Int = 200)
     return ceil(wordCount.toDouble() / wordsPerMinute).toInt().coerceAtLeast(1)
 }
 
-internal fun homeReadingMetrics(doc: TextDocument, wordsPerMinute: Int = 200): HomeReadingMetrics {
-    val chunks = TextChunker.chunk(doc.rawText)
-    val totalMinutes = estimatedReadingMinutes(doc.rawText, wordsPerMinute)
-    if (chunks.isEmpty()) {
+internal fun homeReadingMetrics(doc: TextDocument, body: String, wordsPerMinute: Int = 200): HomeReadingMetrics {
+    val chunks = TextChunker.chunk(body)
+    val spokenChunkIndices = chunks.indices.filter {
+        MarkdownParser.parse(chunks[it]).type != BlockType.IMAGE
+    }
+    val totalMinutes = estimatedReadingMinutes(body, wordsPerMinute)
+    if (spokenChunkIndices.isEmpty()) {
         return HomeReadingMetrics(0f, 0, totalMinutes, totalMinutes)
     }
-    val currentChunk = doc.lastChunkIndex.coerceIn(0, chunks.size - 1)
-    val fraction = ((currentChunk + 1).toFloat() / chunks.size).coerceIn(0f, 1f)
-    val remainingChunks = (chunks.size - 1 - currentChunk).coerceAtLeast(0)
+    val currentChunk = doc.lastChunkIndex.coerceIn(0, chunks.lastIndex)
+    val reachedChunks = spokenChunkIndices.count { it <= currentChunk }
+    val fraction = (reachedChunks.toFloat() / spokenChunkIndices.size).coerceIn(0f, 1f)
+    val remainingChunks = (spokenChunkIndices.size - reachedChunks).coerceAtLeast(0)
     val remainingMinutes = if (remainingChunks == 0) {
         0
     } else {
-        ceil(totalMinutes.toDouble() * remainingChunks / chunks.size).toInt().coerceAtLeast(1)
+        ceil(totalMinutes.toDouble() * remainingChunks / spokenChunkIndices.size).toInt().coerceAtLeast(1)
     }
     return HomeReadingMetrics(
         progressFraction = fraction,

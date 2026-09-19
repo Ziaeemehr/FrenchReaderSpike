@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.OpenableColumns
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
@@ -29,6 +28,8 @@ import com.ziaee.frenchreader.ui.VocabListScreen
 import com.ziaee.frenchreader.ui.VocabReviewScreen
 import com.ziaee.frenchreader.ui.home.HomeScreen
 import com.ziaee.frenchreader.ui.library.LibraryScreen
+import com.ziaee.frenchreader.ui.shared.queryDisplayName
+import com.ziaee.frenchreader.resources.ResourcesScreen
 import com.ziaee.frenchreader.ui.statistics.StatisticsScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
@@ -84,9 +85,13 @@ class MainActivity : AppCompatActivity() {
             Intent.ACTION_SEND -> {
                 val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
                 val streamUri = getStreamExtra(intent)
-                val body = sharedText ?: streamUri?.let { readTextFromUri(it) }
+                if (streamUri != null && isEpub(intent, streamUri)) {
+                    SharedTextHolder.post(IncomingShare("", "", streamUri))
+                    return
+                }
+                val body = sharedText ?: streamUri?.let(::readTextFromUri)
                 if (!body.isNullOrBlank()) {
-                    val title = streamUri?.let { queryDisplayName(it) } ?: getString(R.string.text_untitled)
+                    val title = streamUri?.let { queryDisplayName(this, it) } ?: getString(R.string.text_untitled)
                     SharedTextHolder.post(IncomingShare(title, body))
                 }
             }
@@ -98,9 +103,13 @@ class MainActivity : AppCompatActivity() {
             }
             Intent.ACTION_VIEW -> {
                 intent.data?.let { uri ->
+                    if (isEpub(intent, uri)) {
+                        SharedTextHolder.post(IncomingShare("", "", uri))
+                        return
+                    }
                     val body = readTextFromUri(uri)
                     if (!body.isNullOrBlank()) {
-                        val title = queryDisplayName(uri) ?: getString(R.string.text_untitled)
+                        val title = queryDisplayName(this, uri) ?: getString(R.string.text_untitled)
                         SharedTextHolder.post(IncomingShare(title, body))
                     }
                 }
@@ -119,16 +128,9 @@ class MainActivity : AppCompatActivity() {
         null
     }
 
-    private fun queryDisplayName(uri: Uri): String? = try {
-        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
-            if (c.moveToFirst()) {
-                val idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (idx >= 0) c.getString(idx)?.substringBeforeLast(".") else null
-            } else null
-        }
-    } catch (e: Exception) {
-        null
-    }
+    private fun isEpub(intent: Intent, uri: Uri): Boolean =
+        intent.type == "application/epub+zip" ||
+            contentResolver.getType(uri) == "application/epub+zip"
 }
 
 @Composable
@@ -155,13 +157,22 @@ private fun AppNavHost() {
                 onOpenVocab = { navController.navigate("vocab") },
                 onOpenStatistics = { navController.navigate("statistics") },
                 onOpenSettings = { navController.navigate("settings") },
+                onOpenResources = { navigateToTab("resources") },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
             )
         }
         composable("library") {
             LibraryScreen(
                 onOpenText = { id -> navController.navigate("reading/$id") },
-                onOpenHome = { navigateToTab("home") }
+                onOpenHome = { navigateToTab("home") },
+                onOpenResources = { navigateToTab("resources") }
+            )
+        }
+        composable("resources") {
+            ResourcesScreen(
+                onOpenHome = { navigateToTab("home") },
+                onOpenLibrary = { navigateToTab("library") },
+                onAddText = { navigateToTab("home") }
             )
         }
         composable(

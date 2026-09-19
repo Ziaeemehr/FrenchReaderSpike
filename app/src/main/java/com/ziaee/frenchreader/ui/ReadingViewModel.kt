@@ -1,12 +1,16 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Application
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
@@ -16,11 +20,13 @@ import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 enum class ChunkStatus { PENDING, LOADING, READY, ERROR }
@@ -43,7 +49,7 @@ data class ChunkState(
 
 data class ReadingUiState(
     val textDoc: TextDocument? = null,
-    val chunks: List<ChunkState> = emptyList(),
+    val chunks: SnapshotStateList<ChunkState> = mutableStateListOf(),
     val currentChunkIndex: Int = 0,
     val currentPositionMs: Long = 0,
     val isPlaying: Boolean = false,
@@ -52,8 +58,60 @@ data class ReadingUiState(
     val showTranslations: Boolean = false
 )
 
+internal fun nextSpokenChunkIndex(chunks: List<ChunkState>, fromIndex: Int): Int? =
+    (fromIndex.coerceAtLeast(0) until chunks.size).firstOrNull {
+        chunks[it].block.type != BlockType.IMAGE
+    }
+
+internal fun previousSpokenChunkIndex(chunks: List<ChunkState>, fromIndex: Int): Int? =
+    (fromIndex.coerceAtMost(chunks.lastIndex) downTo 0).firstOrNull {
+        chunks[it].block.type != BlockType.IMAGE
+    }
+
+internal const val AUDIO_LOOKAHEAD = 3
+internal const val TRANSLATION_LOOKAHEAD = 5
+
+internal fun audioWindowIndices(
+    chunks: List<ChunkState>,
+    currentIndex: Int,
+    lookahead: Int = AUDIO_LOOKAHEAD
+): List<Int> {
+    if (chunks.isEmpty()) return emptyList()
+    val result = ArrayList<Int>(lookahead.coerceAtLeast(0) + 1)
+    var index = currentIndex.coerceIn(0, chunks.lastIndex)
+    while (result.size <= lookahead) {
+        val spoken = nextSpokenChunkIndex(chunks, index) ?: break
+        result += spoken
+        index = spoken + 1
+    }
+    return result
+}
+
+internal fun translationWindowIndices(
+    chunkCount: Int,
+    currentIndex: Int,
+    lookahead: Int = TRANSLATION_LOOKAHEAD
+): List<Int> {
+    if (chunkCount <= 0) return emptyList()
+    val start = currentIndex.coerceIn(0, chunkCount - 1)
+    val end = (start + lookahead.coerceAtLeast(0)).coerceAtMost(chunkCount - 1)
+    return (start..end).toList()
+}
+
+internal fun playerItemIndexMap(chunkIndices: List<Int>): Map<Int, Int> =
+    chunkIndices.withIndex().associate { (itemIndex, chunkIndex) -> chunkIndex to itemIndex }
+
+internal fun resetAudioForJump(chunks: List<ChunkState>): List<ChunkState> = chunks.map { chunk ->
+    if (chunk.block.type == BlockType.IMAGE) {
+        chunk.copy(status = ChunkStatus.READY, sentences = emptyList(), error = null, playerItemIndex = null)
+    } else {
+        chunk.copy(status = ChunkStatus.PENDING, sentences = emptyList(), error = null, playerItemIndex = null)
+    }
+}
+
 class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val bodyStore = TextBodyStore(app)
     private val ttsRepo = TtsChunkRepository(app)
     private val translationRepo = TranslationRepository(app)
     val player: ExoPlayer = ExoPlayer.Builder(app).build()
@@ -63,23 +121,31 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(ReadingUiState())
     val state: StateFlow<ReadingUiState> = _state.asStateFlow()
 
-    private var backgroundSynthesisJob: Job? = null
+    private var audioWindowJob: Job? = null
     private var translationJob: Job? = null
     private var positionTickerJob: Job? = null
     private var savePositionJob: Job? = null
     private var pendingListeningMs = 0L
+    private var playlistGeneration = 0L
+    private var translationGeneration = 0L
+    private val playerItemToChunk = mutableListOf<Int>()
+    private var requestedAudioEndIndex = -1
+    private var nextSynthesisIndex = 0
 
     init {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _state.value = _state.value.copy(isPlaying = isPlaying)
+                if (isPlaying) requestAudioWindow(_state.value.currentChunkIndex)
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                val idx = player.currentMediaItemIndex
-                val chunkIdx = _state.value.chunks.indexOfFirst { it.playerItemIndex == idx }
-                if (chunkIdx >= 0) {
+                if (mediaItem == null) return
+                val chunkIdx = playerItemToChunk.getOrNull(player.currentMediaItemIndex)
+                if (chunkIdx != null) {
                     _state.value = _state.value.copy(currentChunkIndex = chunkIdx)
+                    restartTranslationWindow(chunkIdx)
+                    if (player.playWhenReady) requestAudioWindow(chunkIdx)
                 }
             }
         })
@@ -92,33 +158,50 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             // Once per successful load, not on every playback tick -- feeds
             // Home's Continue Reading and Library's "last read" sort.
             db.textDao().markAccessed(textId, System.currentTimeMillis())
-            val chunkTexts = TextChunker.chunk(doc.rawText)
+            val chunks = withContext(Dispatchers.Default) {
+                TextChunker.chunk(bodyStore.read(doc)).map { text ->
+                    val block = MarkdownParser.parse(text)
+                    if (block.type == BlockType.IMAGE) {
+                        ChunkState(
+                            block = block,
+                            status = ChunkStatus.READY,
+                            translationStatus = ChunkStatus.READY
+                        )
+                    } else {
+                        ChunkState(block = block)
+                    }
+                }
+            }.toMutableStateList()
             _state.value = ReadingUiState(
                 textDoc = doc,
-                chunks = chunkTexts.map { ChunkState(block = MarkdownParser.parse(it)) },
-                currentChunkIndex = doc.lastChunkIndex.coerceIn(0, (chunkTexts.size - 1).coerceAtLeast(0)),
+                chunks = chunks,
+                currentChunkIndex = doc.lastChunkIndex.coerceIn(0, (chunks.size - 1).coerceAtLeast(0)),
                 currentPositionMs = doc.lastPositionMs,
                 speed = 1.0f,
                 ready = false
             )
             resumeFromSavedPosition(doc)
-            startTranslationLoop(doc.translationLang)
+            restartTranslationWindow(_state.value.currentChunkIndex)
         }
     }
 
-    private fun startTranslationLoop(targetLang: String) {
+    private fun restartTranslationWindow(currentIndex: Int) {
+        val targetLang = _state.value.textDoc?.translationLang ?: return
+        val generation = ++translationGeneration
         translationJob?.cancel()
         translationJob = viewModelScope.launch {
-            for (i in _state.value.chunks.indices) {
+            for (i in translationWindowIndices(_state.value.chunks.size, currentIndex)) {
                 val chunk = _state.value.chunks.getOrNull(i) ?: continue
-                if (chunk.block.type == BlockType.HEADER) {
-                    // Headings read fine on their own; translating a title
-                    // in isolation is rarely useful and just wastes a call.
+                if (chunk.block.type == BlockType.HEADER || chunk.block.type == BlockType.IMAGE) {
+                    // Headings read fine on their own, while images have no
+                    // text. Neither needs a translation request.
                     updateChunk(i) { it.copy(translationStatus = ChunkStatus.READY, translation = null) }
                     continue
                 }
+                if (chunk.translationStatus == ChunkStatus.READY) continue
                 updateChunk(i) { it.copy(translationStatus = ChunkStatus.LOADING) }
                 val result = translationRepo.getOrTranslate(chunk.text, targetLang)
+                if (generation != translationGeneration) return@launch
                 result.fold(
                     onSuccess = { translated ->
                         updateChunk(i) { it.copy(translation = translated, translationStatus = ChunkStatus.READY) }
@@ -136,34 +219,65 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun resumeFromSavedPosition(doc: TextDocument) {
-        val targetIndex = doc.lastChunkIndex.coerceIn(0, (_state.value.chunks.size - 1).coerceAtLeast(0))
-        // Synthesize sequentially up to (and including) the resume target so
-        // the player timeline has the right items in the right order.
-        for (i in 0..targetIndex) {
-            synthesizeChunk(i)
-            if (_state.value.chunks.getOrNull(i)?.status == ChunkStatus.ERROR) break
-        }
+        val chunks = _state.value.chunks
+        val savedIndex = doc.lastChunkIndex.coerceIn(0, (chunks.size - 1).coerceAtLeast(0))
+        val targetIndex = nextSpokenChunkIndex(chunks, savedIndex)
+            ?: previousSpokenChunkIndex(chunks, savedIndex)
+            ?: savedIndex
+        val resumePositionMs = if (targetIndex == savedIndex) doc.lastPositionMs else 0L
+        _state.value = _state.value.copy(
+            currentChunkIndex = targetIndex,
+            currentPositionMs = resumePositionMs
+        )
+        rebuildPlaylist(targetIndex, resetChunks = false)
+        synthesizeChunk(targetIndex, playlistGeneration)
         val targetItemIndex = _state.value.chunks.getOrNull(targetIndex)?.playerItemIndex
         if (targetItemIndex != null) {
-            player.seekTo(targetItemIndex, doc.lastPositionMs)
+            player.seekTo(targetItemIndex, resumePositionMs)
         }
         _state.value = _state.value.copy(ready = true)
-        continueBackgroundSynthesis(targetIndex + 1)
+        requestAudioWindow(targetIndex)
     }
 
-    private fun continueBackgroundSynthesis(fromIndex: Int) {
-        backgroundSynthesisJob?.cancel()
-        backgroundSynthesisJob = viewModelScope.launch {
-            for (i in fromIndex until _state.value.chunks.size) {
-                synthesizeChunk(i)
-                if (_state.value.chunks.getOrNull(i)?.status == ChunkStatus.ERROR) break
+    private fun requestAudioWindow(currentIndex: Int) {
+        val desired = audioWindowIndices(_state.value.chunks, currentIndex)
+        val desiredEnd = desired.lastOrNull() ?: return
+        if (desiredEnd > requestedAudioEndIndex) requestedAudioEndIndex = desiredEnd
+        if (audioWindowJob?.isActive == true) return
+        val generation = playlistGeneration
+        audioWindowJob = viewModelScope.launch {
+            while (generation == playlistGeneration) {
+                val next = nextSpokenChunkIndex(_state.value.chunks, nextSynthesisIndex) ?: break
+                if (next > requestedAudioEndIndex) break
+                val chunk = _state.value.chunks[next]
+                if (chunk.playerItemIndex != null || chunk.status == ChunkStatus.READY) {
+                    nextSynthesisIndex = next + 1
+                    continue
+                }
+                if (chunk.status == ChunkStatus.LOADING) break
+                synthesizeChunk(next, generation)
+                if (_state.value.chunks.getOrNull(next)?.status == ChunkStatus.ERROR) break
+                nextSynthesisIndex = next + 1
             }
         }
     }
 
-    private suspend fun synthesizeChunk(index: Int) {
+    private suspend fun synthesizeChunk(index: Int, generation: Long = playlistGeneration) {
         val doc = _state.value.textDoc ?: return
         val chunk = _state.value.chunks.getOrNull(index) ?: return
+        if (chunk.block.type == BlockType.IMAGE) {
+            updateChunk(index) {
+                it.copy(
+                    status = ChunkStatus.READY,
+                    sentences = emptyList(),
+                    error = null,
+                    playerItemIndex = null,
+                    translationStatus = ChunkStatus.READY,
+                    translation = null
+                )
+            }
+            return
+        }
         if (chunk.status == ChunkStatus.READY || chunk.status == ChunkStatus.LOADING) return
 
         updateChunk(index) { it.copy(status = ChunkStatus.LOADING, error = null) }
@@ -179,7 +293,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         // it now would silently corrupt the chunk<->player-item mapping
         // (and desync the highlight from the audio) rather than fail
         // loudly, so it's discarded instead.
-        if (_state.value.textDoc?.voice != doc.voice) return
+        if (_state.value.textDoc?.voice != doc.voice || generation != playlistGeneration) return
 
         result.fold(
             onSuccess = { synth ->
@@ -198,8 +312,15 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                         playerItemIndex = itemIndex
                     )
                 }
+                val wasWaitingAtEnd = player.playWhenReady && player.playbackState == Player.STATE_ENDED
+                playerItemToChunk += index
                 player.addMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
                 if (player.playbackState == Player.STATE_IDLE) player.prepare()
+                if (wasWaitingAtEnd) {
+                    player.seekTo(itemIndex, 0L)
+                    player.prepare()
+                    player.play()
+                }
             },
             onFailure = { e ->
                 updateChunk(index) {
@@ -207,6 +328,20 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
         )
+    }
+
+    private fun rebuildPlaylist(startIndex: Int, resetChunks: Boolean = true) {
+        playlistGeneration++
+        audioWindowJob?.cancel()
+        player.stop()
+        playerItemToChunk.clear()
+        player.clearMediaItems()
+        requestedAudioEndIndex = startIndex - 1
+        nextSynthesisIndex = startIndex
+        if (resetChunks) {
+            val reset = resetAudioForJump(_state.value.chunks)
+            for (i in reset.indices) _state.value.chunks[i] = reset[i]
+        }
     }
 
     /**
@@ -234,44 +369,75 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             val updatedDoc = doc.copy(voice = voice)
             db.textDao().update(updatedDoc)
 
-            val resumeIndex = _state.value.currentChunkIndex
+            val chunks = _state.value.chunks
+            val currentIndex = _state.value.currentChunkIndex
+            val resumeIndex = nextSpokenChunkIndex(chunks, currentIndex)
+                ?: previousSpokenChunkIndex(chunks, currentIndex)
+                ?: currentIndex
             val resumeSentenceIdx = (_state.value.chunks.getOrNull(resumeIndex)?.sentences
                 ?.indexOfLast { _state.value.currentPositionMs >= it.offsetMs } ?: -1)
                 .coerceAtLeast(0)
 
-            backgroundSynthesisJob?.cancel()
-            player.stop()
-            player.clearMediaItems()
-
             _state.value = _state.value.copy(
                 textDoc = updatedDoc,
-                chunks = _state.value.chunks.mapIndexed { i, c ->
-                    if (i < resumeIndex) c.copy(playerItemIndex = null)
-                    else c.copy(status = ChunkStatus.PENDING, sentences = emptyList(), playerItemIndex = null, error = null)
-                },
                 currentChunkIndex = resumeIndex,
                 ready = false
             )
 
+            rebuildPlaylist(resumeIndex)
             synthesizeChunk(resumeIndex)
             val resumed = _state.value.chunks.getOrNull(resumeIndex)
-            if (resumed?.status == ChunkStatus.READY) {
+            val resumedItemIndex = resumed?.playerItemIndex
+            if (resumed?.status == ChunkStatus.READY && resumedItemIndex != null) {
                 val seekMs = resumed.sentences.getOrNull(resumeSentenceIdx)?.offsetMs?.toLong() ?: 0L
-                player.seekTo(resumed.playerItemIndex ?: 0, seekMs)
+                player.seekTo(resumedItemIndex, seekMs)
                 _state.value = _state.value.copy(currentPositionMs = seekMs)
             }
             _state.value = _state.value.copy(ready = true)
-            continueBackgroundSynthesis(resumeIndex + 1)
+            requestAudioWindow(resumeIndex)
         }
     }
 
     fun retryChunk(index: Int) {
         viewModelScope.launch {
+            updateChunk(index) { it.copy(status = ChunkStatus.PENDING, error = null) }
             synthesizeChunk(index)
             if (_state.value.chunks.getOrNull(index)?.status == ChunkStatus.READY) {
-                continueBackgroundSynthesis(index + 1)
+                requestAudioWindow(_state.value.currentChunkIndex)
             }
         }
+    }
+
+    fun jumpToChunk(index: Int) {
+        val chunks = _state.value.chunks
+        if (chunks.isEmpty()) return
+        val target = nextSpokenChunkIndex(chunks, index.coerceIn(0, chunks.lastIndex))
+            ?: previousSpokenChunkIndex(chunks, index.coerceIn(0, chunks.lastIndex))
+            ?: return
+        val keepPlaying = player.isPlaying || player.playWhenReady
+        viewModelScope.launch { jumpToChunkInternal(target, keepPlaying, seekToLastSentence = false) }
+    }
+
+    private suspend fun jumpToChunkInternal(
+        target: Int,
+        keepPlaying: Boolean,
+        seekToLastSentence: Boolean
+    ) {
+        rebuildPlaylist(target)
+        _state.value = _state.value.copy(currentChunkIndex = target, currentPositionMs = 0L)
+        restartTranslationWindow(target)
+        synthesizeChunk(target)
+        val chunk = _state.value.chunks.getOrNull(target)
+        val itemIndex = chunk?.playerItemIndex
+        if (itemIndex != null) {
+            val position = if (seekToLastSentence) {
+                chunk.sentences.lastOrNull()?.offsetMs?.toLong() ?: 0L
+            } else 0L
+            player.seekTo(itemIndex, position)
+            _state.value = _state.value.copy(currentPositionMs = position)
+            if (keepPlaying) player.play()
+        }
+        requestAudioWindow(target)
     }
 
     fun togglePlayPause() {
@@ -312,7 +478,11 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun seekToSentence(chunkIndex: Int, sentence: SentenceBoundary) {
-        val itemIndex = _state.value.chunks.getOrNull(chunkIndex)?.playerItemIndex ?: return
+        val itemIndex = _state.value.chunks.getOrNull(chunkIndex)?.playerItemIndex
+        if (itemIndex == null) {
+            jumpToChunk(chunkIndex)
+            return
+        }
         player.seekTo(itemIndex, sentence.offsetMs.toLong())
         player.play()
     }
@@ -323,8 +493,13 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             val chunk = _state.value.chunks[active.chunkIdx]
             seekToSentence(active.chunkIdx, chunk.sentences[active.sentenceIdx - 1])
         } else if (active.chunkIdx > 0) {
-            val prevChunk = _state.value.chunks[active.chunkIdx - 1]
-            prevChunk.sentences.lastOrNull()?.let { seekToSentence(active.chunkIdx - 1, it) }
+            val prevIndex = previousSpokenChunkIndex(_state.value.chunks, active.chunkIdx - 1) ?: return
+            val prevChunk = _state.value.chunks[prevIndex]
+            if (prevChunk.playerItemIndex == null) {
+                viewModelScope.launch { jumpToChunkInternal(prevIndex, keepPlaying = true, seekToLastSentence = true) }
+            } else {
+                prevChunk.sentences.lastOrNull()?.let { seekToSentence(prevIndex, it) }
+            }
         }
     }
 
@@ -334,8 +509,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         if (active.sentenceIdx < chunk.sentences.size - 1) {
             seekToSentence(active.chunkIdx, chunk.sentences[active.sentenceIdx + 1])
         } else if (active.chunkIdx < _state.value.chunks.size - 1) {
-            val nextChunk = _state.value.chunks[active.chunkIdx + 1]
-            nextChunk.sentences.firstOrNull()?.let { seekToSentence(active.chunkIdx + 1, it) }
+            val nextIndex = nextSpokenChunkIndex(_state.value.chunks, active.chunkIdx + 1) ?: return
+            val nextChunk = _state.value.chunks[nextIndex]
+            nextChunk.sentences.firstOrNull()?.let { seekToSentence(nextIndex, it) }
         }
     }
 
@@ -350,10 +526,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun updateChunk(index: Int, transform: (ChunkState) -> ChunkState) {
-        val list = _state.value.chunks.toMutableList()
-        if (index !in list.indices) return
-        list[index] = transform(list[index])
-        _state.value = _state.value.copy(chunks = list)
+        val chunks = _state.value.chunks
+        if (index !in chunks.indices) return
+        chunks[index] = transform(chunks[index])
     }
 
     private fun startPositionTicker() {

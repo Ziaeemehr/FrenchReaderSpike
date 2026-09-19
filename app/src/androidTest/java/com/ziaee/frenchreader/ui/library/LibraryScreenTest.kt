@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.ziaee.frenchreader.R
@@ -61,7 +62,9 @@ class LibraryScreenTest {
     @Test
     fun populatedStateShowsSearchSortAndDocuments() {
         val document = doc(1L, "Mon article", completed = true)
-        setLibraryContent(LibraryUiState(documents = listOf(document)))
+        setLibraryContent(
+            LibraryUiState(documents = listOf(document), completionByTextId = mapOf(document.id to true))
+        )
 
         composeRule.onNodeWithText(string(R.string.library_search_hint)).assertExists()
         composeRule.onNodeWithText(document.title).assertExists()
@@ -114,5 +117,31 @@ class LibraryScreenTest {
         composeRule.onNode(hasText(string(R.string.nav_library)) and hasClickAction()).assertIsSelected()
         composeRule.onNodeWithText(string(R.string.nav_home)).performClick()
         assertEquals(1, homeClicks)
+    }
+
+    @Test
+    fun selectionModeShowsContextActionsAndTogglesRow() {
+        val first = doc(1L, "Premier", completed = false)
+        val second = doc(2L, "Deuxième", completed = false)
+        var toggledId: Long? = null
+        composeRule.setContent {
+            FrenchReaderTheme(ThemeMode.LIGHT) {
+                LibraryContent(
+                    state = LibraryUiState(documents = listOf(first, second), selectedIds = setOf(first.id)),
+                    onQueryChange = {}, onSortSelect = {}, onOpen = {}, onDelete = {},
+                    onAddText = {}, onFilePickerClick = {}, onOpenHome = {},
+                    onToggleSelection = { toggledId = it }
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("selectionBar").assertExists()
+        composeRule.onNodeWithTag("selectionCount").assertExists()
+        composeRule.onNodeWithTag("selectAll").assertExists()
+        composeRule.onNodeWithTag("bulkDelete").assertExists()
+        composeRule.onNodeWithTag("bulkMove").assertExists()
+        composeRule.onNodeWithTag("bulkTags").assertExists()
+        composeRule.onNodeWithTag("libraryRow_2").performClick()
+        assertEquals(second.id, toggledId)
     }
 }

@@ -29,12 +29,12 @@ class ThemeTest {
     }
 
     @Test
-    fun `SEPIA palette matches the original hardcoded ReadingPalette values`() {
+    fun `SEPIA palette keeps its paper colours and uses the softer highlight`() {
         val palette = readingPaletteFor(ReadingBackground.SEPIA)
         assertEquals(Color(0xFFFBF6EC), palette.background)
         assertEquals(Color(0xFF2E2A22), palette.ink)
         assertEquals(Color(0xFF6B6252), palette.inkFaded)
-        assertEquals(Color(0xFFF6D97A), palette.highlightBg)
+        assertEquals(Color(0xFFF2D995).copy(alpha = 0.72f), palette.highlightBg)
         assertEquals(Color(0xFF2E2A22), palette.highlightInk)
         assertEquals(Color(0xFFE6DDC8), palette.divider)
         assertEquals(Color(0xFF8A6D3B), palette.accent)

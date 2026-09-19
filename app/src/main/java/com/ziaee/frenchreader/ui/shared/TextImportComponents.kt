@@ -108,11 +108,16 @@ fun rememberAddTextUiState(): AddTextUiState = remember { AddTextUiState() }
  * [onSave] persists the text and is called with the dialog already dismissed.
  */
 @Composable
-fun AddTextHost(state: AddTextUiState, onSave: (title: String, body: String) -> Unit) {
+fun AddTextHost(
+    state: AddTextUiState,
+    onEpub: (Uri) -> Unit = {},
+    onSave: (title: String, body: String) -> Unit
+) {
     val incomingShare by SharedTextHolder.pending.collectAsState()
     LaunchedEffect(incomingShare) {
         incomingShare?.let {
-            state.openWithPrefill(it.suggestedTitle, it.body)
+            if (it.epubUri != null) onEpub(it.epubUri)
+            else state.openWithPrefill(it.suggestedTitle, it.body)
             SharedTextHolder.consume()
         }
     }
@@ -134,11 +139,21 @@ fun AddTextHost(state: AddTextUiState, onSave: (title: String, body: String) -> 
  * TXT/MD document and, on success, opens [state]'s dialog prefilled with
  * the file's contents and display name. */
 @Composable
-fun rememberFilePickerLauncher(state: AddTextUiState): () -> Unit {
+fun rememberFilePickerLauncher(
+    state: AddTextUiState,
+    onEpub: (Uri) -> Unit = {}
+): () -> Unit {
     val context = LocalContext.current
     val defaultTitle = stringResource(R.string.text_untitled)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri ?: return@rememberLauncherForActivityResult
+        val displayName = queryDisplayName(context, uri, stripExtension = false)
+        val isEpub = context.contentResolver.getType(uri) == "application/epub+zip" ||
+            displayName?.endsWith(".epub", ignoreCase = true) == true
+        if (isEpub) {
+            onEpub(uri)
+            return@rememberLauncherForActivityResult
+        }
         val body = try {
             context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
         } catch (e: Exception) {
@@ -149,14 +164,16 @@ fun rememberFilePickerLauncher(state: AddTextUiState): () -> Unit {
             state.openWithPrefill(title, body)
         }
     }
-    return { launcher.launch(arrayOf("text/plain", "text/markdown", "text/*")) }
+    return { launcher.launch(arrayOf("text/plain", "text/markdown", "text/*", "application/epub+zip")) }
 }
 
-fun queryDisplayName(context: Context, uri: Uri): String? = try {
+fun queryDisplayName(context: Context, uri: Uri, stripExtension: Boolean = true): String? = try {
     context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
         if (c.moveToFirst()) {
             val idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (idx >= 0) c.getString(idx)?.substringBeforeLast(".") else null
+            if (idx >= 0) c.getString(idx)?.let { name ->
+                if (stripExtension) name.substringBeforeLast(".") else name
+            } else null
         } else null
     }
 } catch (e: Exception) {
@@ -168,6 +185,9 @@ fun queryDisplayName(context: Context, uri: Uri): String? = try {
 fun AddTextDialog(
     initialTitle: String = "",
     initialBody: String = "",
+    bodyEditable: Boolean = true,
+    dialogTitle: String? = null,
+    confirmLabel: String? = null,
     onDismiss: () -> Unit,
     onSave: (String, String) -> Unit
 ) {
@@ -176,7 +196,12 @@ fun AddTextDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(if (initialBody.isBlank()) R.string.add_text_title_new else R.string.add_text_title_review)) },
+        title = {
+            Text(
+                dialogTitle
+                    ?: stringResource(if (initialBody.isBlank()) R.string.add_text_title_new else R.string.add_text_title_review)
+            )
+        },
         text = {
             Column {
                 OutlinedTextField(
@@ -185,20 +210,22 @@ fun AddTextDialog(
                     label = { Text(stringResource(R.string.add_text_field_title)) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = body,
-                    onValueChange = { body = it },
-                    label = { Text(stringResource(R.string.add_text_field_body)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                )
+                if (bodyEditable) {
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = body,
+                        onValueChange = { body = it },
+                        label = { Text(stringResource(R.string.add_text_field_body)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { if (body.isNotBlank()) onSave(title, body) }) {
-                Text(stringResource(R.string.add_text_save_open))
+            TextButton(onClick = { if (!bodyEditable || body.isNotBlank()) onSave(title, body) }) {
+                Text(confirmLabel ?: stringResource(R.string.add_text_save_open))
             }
         },
         dismissButton = {

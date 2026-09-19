@@ -139,7 +139,7 @@ class HomeStateTest {
     @Test
     fun `reading metrics clamp progress and round nonempty reading time up`() {
         val doc = TextDocument(title = "Long", rawText = List(401) { "mot" }.joinToString(" "))
-        val metrics = homeReadingMetrics(doc)
+        val metrics = homeReadingMetrics(doc, doc.rawText)
         assertEquals(3, metrics.estimatedTotalMinutes)
         assertTrue(metrics.progressFraction in 0f..1f)
     }
@@ -147,7 +147,7 @@ class HomeStateTest {
     @Test
     fun `empty text has zero estimated reading time`() {
         val doc = TextDocument(title = "Empty", rawText = "")
-        val metrics = homeReadingMetrics(doc)
+        val metrics = homeReadingMetrics(doc, doc.rawText)
         assertEquals(0, metrics.estimatedTotalMinutes)
         assertEquals(0, metrics.estimatedRemainingMinutes)
     }
@@ -157,7 +157,7 @@ class HomeStateTest {
         val doc = TextDocument(title = "Done", rawText = List(1200) { "mot" }.joinToString(" "), lastChunkIndex = 0)
         val chunks = com.ziaee.frenchreader.text.TextChunker.chunk(doc.rawText)
         val atLastChunk = doc.copy(lastChunkIndex = chunks.size - 1)
-        val metrics = homeReadingMetrics(atLastChunk)
+        val metrics = homeReadingMetrics(atLastChunk, atLastChunk.rawText)
         assertEquals(100, metrics.progressPercent)
         assertEquals(0, metrics.estimatedRemainingMinutes)
     }
@@ -165,9 +165,20 @@ class HomeStateTest {
     @Test
     fun `an out-of-range chunk index is clamped rather than crashing`() {
         val doc = TextDocument(title = "Weird", rawText = List(300) { "mot" }.joinToString(" "), lastChunkIndex = 999)
-        val metrics = homeReadingMetrics(doc)
+        val metrics = homeReadingMetrics(doc, doc.rawText)
         assertTrue(metrics.progressFraction in 0f..1f)
         assertEquals(100, metrics.progressPercent)
+    }
+
+    @Test
+    fun `images do not dilute reading progress`() {
+        val doc = TextDocument(
+            title = "Illustrated",
+            rawText = "Texte.\n\n![Image](epubimg:abc123/0_0.jpg)",
+            lastChunkIndex = 0
+        )
+
+        assertEquals(100, homeReadingMetrics(doc, doc.rawText).progressPercent)
     }
 
     private fun headline(externalId: String = "guid-1") = HeadlineEntity(

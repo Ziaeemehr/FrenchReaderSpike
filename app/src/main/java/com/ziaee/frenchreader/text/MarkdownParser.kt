@@ -5,7 +5,7 @@ package com.ziaee.frenchreader.text
  * guarantees a HEADER or LIST_ITEM block is exactly one source line, and a
  * PARAGRAPH block is one or more wrapped lines -- see TextChunker's kdoc.
  */
-enum class BlockType { HEADER, LIST_ITEM, PARAGRAPH }
+enum class BlockType { HEADER, LIST_ITEM, PARAGRAPH, IMAGE }
 
 /**
  * A bold/italic run, measured as a [start, end) character range against the
@@ -20,7 +20,9 @@ data class ParsedBlock(
     val headerLevel: Int = 0,
     val listOrdered: Boolean = false,
     val plainText: String,
-    val emphasisSpans: List<EmphasisSpan> = emptyList()
+    val emphasisSpans: List<EmphasisSpan> = emptyList(),
+    val imageRef: String? = null,
+    val imageAlt: String = ""
 )
 
 /**
@@ -37,16 +39,27 @@ data class ParsedBlock(
  * list items, bold ("**x**" or "__x__"), italic ("*x*" or "_x_"), and
  * [text](url) links (kept as their visible text; the URL is dropped, never
  * auto-fetched).
- * Images (`![alt](url)`) are dropped entirely, matching the design doc's
- * "no auto-loaded images". Anything else (tables, code fences, footnotes)
- * just falls through to plain paragraph text.
+ * Standalone EPUB image markers become image blocks. All other images are
+ * dropped entirely, so remote images are never auto-loaded. Anything else
+ * (tables, code fences, footnotes) just falls through to plain paragraph
+ * text.
  */
 object MarkdownParser {
     private val HEADER = Regex("^(#{1,6})\\s+(.*)$")
     private val LIST_ITEM = Regex("^([-*+]|\\d+\\.)\\s+(.*)$")
+    private val EPUB_IMAGE = Regex("^!\\[([^]]*)]\\(epubimg:([^)]+)\\)$")
 
     fun parse(rawBlock: String): ParsedBlock {
         val trimmed = rawBlock.trim()
+
+        EPUB_IMAGE.matchEntire(trimmed)?.let { match ->
+            return ParsedBlock(
+                type = BlockType.IMAGE,
+                plainText = "",
+                imageRef = match.groupValues[2],
+                imageAlt = match.groupValues[1]
+            )
+        }
 
         HEADER.find(trimmed)?.let { m ->
             val level = m.groupValues[1].length

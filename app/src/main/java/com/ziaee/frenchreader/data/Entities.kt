@@ -1,8 +1,10 @@
 package com.ziaee.frenchreader.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.ziaee.frenchreader.resources.ResourceCategory
 
 /**
  * A text the user has imported (pasted, for phase 1 -- file import comes in
@@ -33,7 +35,37 @@ data class TextDocument(
     val publishedAt: Long? = null, // epoch ms of the source's original publish/revision date
     val imagePath: String? = null,
     val externalKey: String? = null,
-    val lastAccessedAtMs: Long = 0
+    val lastAccessedAtMs: Long = 0,
+    val folderId: Long? = null,
+    val bodyPath: String? = null
+)
+
+@Entity(tableName = "library_folders")
+data class LibraryFolder(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val createdAtMs: Long = System.currentTimeMillis(),
+    val parentId: Long? = null
+)
+
+@Entity(
+    tableName = "library_tags",
+    indices = [Index(value = ["name"], unique = true)]
+)
+data class LibraryTag(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val createdAtMs: Long = System.currentTimeMillis()
+)
+
+@Entity(
+    tableName = "text_tags",
+    primaryKeys = ["textId", "tagId"],
+    indices = [Index("tagId")]
+)
+data class TextTagCrossRef(
+    val textId: Long,
+    val tagId: Long
 )
 
 @Entity(
@@ -113,4 +145,18 @@ data class ReviewLogEntry(
 data class ActivityLogEntry(
     @PrimaryKey val date: String,
     val listeningMs: Long
+)
+
+/** A user-managed web bookmark shown on the Resources screen. */
+@Entity(
+    tableName = "resources",
+    indices = [Index(value = ["url"], unique = true)]
+)
+data class ResourceLink(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val url: String,
+    val imageUrl: String? = null,
+    val createdAtMs: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "other") val category: String = ResourceCategory.OTHER.key
 )

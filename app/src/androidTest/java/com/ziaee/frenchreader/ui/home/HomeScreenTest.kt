@@ -58,6 +58,7 @@ class HomeScreenTest {
         onOpenStatistics: () -> Unit = {},
         onOpenLibrary: () -> Unit = {},
         onAddTextClick: () -> Unit = {},
+        onOpenGradedReaders: () -> Unit = {},
         onSearchClick: () -> Unit = {},
         onStartReview: () -> Unit = {}
     ) {
@@ -77,6 +78,7 @@ class HomeScreenTest {
                     onOpenSettings = {},
                     onOpenLibrary = onOpenLibrary,
                     onAddTextClick = onAddTextClick,
+                    onOpenGradedReaders = onOpenGradedReaders,
                     onSelectHeadline = onSelectHeadline,
                     onRetryNews = {},
                     onPullRefresh = {},
@@ -133,6 +135,7 @@ class HomeScreenTest {
                     onOpenSettings = {},
                     onOpenLibrary = {},
                     onAddTextClick = {},
+                    onOpenGradedReaders = {},
                     onSelectHeadline = { selected = it },
                     onRetryNews = {},
                     onPullRefresh = {},
@@ -155,6 +158,7 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertDoesNotExist()
 
         composeTestRule.onNode(
             androidx.compose.ui.test.hasContentDescription(string(R.string.home_more_actions))
@@ -163,6 +167,20 @@ class HomeScreenTest {
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertExists()
+    }
+
+    @Test
+    fun gradedReadersMenuItemInvokesCallback() {
+        var clicks = 0
+        setHomeContent(HomeUiState(), onOpenGradedReaders = { clicks++ })
+
+        composeTestRule.onNode(
+            androidx.compose.ui.test.hasContentDescription(string(R.string.home_more_actions))
+        ).performClick()
+        composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).performClick()
+
+        assertEquals(1, clicks)
     }
 
     @Test

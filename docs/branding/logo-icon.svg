@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="56" y1="0" x2="344" y2="0">
+      <stop offset="0" stop-color="#2F6F6A"/><stop offset="1" stop-color="#7A2432"/>
+    </linearGradient>
+    <linearGradient id="gm" gradientUnits="userSpaceOnUse" x1="344" y1="0" x2="56" y2="0">
+      <stop offset="0" stop-color="#2F6F6A"/><stop offset="1" stop-color="#7A2432"/>
+    </linearGradient>
+    <linearGradient id="gt" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="68" y2="0">
+      <stop offset="0" stop-color="#2F6F6A"/><stop offset="1" stop-color="#7A2432"/>
+    </linearGradient>
+    <linearGradient id="fadeg" gradientUnits="userSpaceOnUse" x1="0" y1="300" x2="0" y2="400">
+      <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/>
+    </linearGradient>
+    <mask id="fade" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400">
+      <rect width="400" height="400" fill="url(#fadeg)"/>
+    </mask>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="url(#g)">
+      <path stroke-width="5" d="M200 46C185 38 165 36 150 40V14C165 10 185 12 200 20C215 12 235 10 250 14V40C235 36 215 38 200 46ZM200 20V46"/>
+      <path stroke-width="7" d="M132 70H268A22 22 0 0 1 290 92V278A22 22 0 0 1 268 300H132A22 22 0 0 1 110 278V92A22 22 0 0 1 132 70Z"/>
+      <path stroke-width="4" d="M132 86H268A8 8 0 0 1 276 94V254A8 8 0 0 1 268 262H132A8 8 0 0 1 124 254V94A8 8 0 0 1 132 86Z"/>
+      <path stroke-width="5" d="M184 281H216"/>
+    </g>
+    <g transform="translate(200 100) scale(3.4) translate(-54 -30.5)">
+      <path stroke="url(#gt)" stroke-width="1.9" d="M54 30.5V36M53 36C53 41 52.2 44 50.7 47M55 36C55 41 55.8 44 57.3 47M49.6 47H58.4M50.7 47C49.7 52 48.7 56 47.6 60M57.3 47C58.3 52 59.3 56 60.4 60M50.7 47L60.4 60M57.3 47L47.6 60M45.8 60H62.2M47.6 60C46.6 66 44 70.5 41.2 73.5M60.4 60C61.4 66 64 70.5 66.8 73.5M50 60C49.5 65 48.4 69.5 47.2 73.5M58 60C58.5 65 59.6 69.5 60.8 73.5M47.2 73.5C47.2 65.5 60.8 65.5 60.8 73.5M40.2 73.5H47.2M60.8 73.5H67.8"/>
+    </g>
+    <g stroke="url(#g)" stroke-width="6" mask="url(#fade)">
+      <path d="M112 212C84 224 66 258 60 306C57 336 64 366 78 396"/>
+      <path d="M132 302C122 330 118 360 124 396"/>
+      <path d="M110 190C100 189 94 197 97 206"/>
+      <path d="M110 212C99 212 93 221 96 230"/>
+      <path d="M108 300C128 302 150 282 152 266C153 254 140 248 130 256C122 263 112 274 108 284"/>
+    </g>
+    <g stroke="url(#gm)" stroke-width="6" mask="url(#fade)" transform="translate(400 0) scale(-1 1)">
+      <path d="M112 212C84 224 66 258 60 306C57 336 64 366 78 396"/>
+      <path d="M132 302C122 330 118 360 124 396"/>
+      <path d="M110 190C100 189 94 197 97 206"/>
+      <path d="M110 212C99 212 93 221 96 230"/>
+      <path d="M108 300C128 302 150 282 152 266C153 254 140 248 130 256C122 263 112 274 108 284"/>
+    </g>
+  </g>
+</svg>

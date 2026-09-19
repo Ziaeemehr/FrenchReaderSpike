@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.TextBodyStore
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
@@ -29,6 +30,7 @@ import java.util.Locale
 
 class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val bodyStore = TextBodyStore(app)
 
     var uiState by mutableStateOf(StatisticsUiState())
         private set
@@ -43,6 +45,7 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val today = LocalDate.now()
             val texts = db.textDao().getAllOnce()
+            val bodyByTextId = texts.associate { it.id to bodyStore.read(it) }
             val vocabEntries = db.vocabDao().getAllOnce()
 
             val reviewedToday = db.reviewLogDao().countSince(today.startOfDayMs())
@@ -64,6 +67,7 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
 
             uiState = composeStatisticsState(
                 texts = texts,
+                bodyByTextId = bodyByTextId,
                 vocabEntries = vocabEntries,
                 reviewedToday = reviewedToday,
                 reviewedThisWeek = reviewedThisWeek,

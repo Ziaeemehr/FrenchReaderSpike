@@ -16,7 +16,7 @@ class StatisticsUiStateTest {
             rawText = "Paragraphe un.\n\nParagraphe deux.\n\nParagraphe trois.",
             lastChunkIndex = 2
         )
-        assertEquals(true, isTextCompleted(doc))
+        assertEquals(true, isTextCompleted(doc, doc.rawText))
     }
 
     @Test
@@ -27,7 +27,18 @@ class StatisticsUiStateTest {
             rawText = "Paragraphe un.\n\nParagraphe deux.\n\nParagraphe trois.",
             lastChunkIndex = 0
         )
-        assertEquals(false, isTextCompleted(doc))
+        assertEquals(false, isTextCompleted(doc, doc.rawText))
+    }
+
+    @Test
+    fun `trailing image does not prevent text completion`() {
+        val doc = TextDocument(
+            title = "t",
+            rawText = "Dernier paragraphe.\n\n![Fin](epubimg:abc123/0_0.jpg)",
+            lastChunkIndex = 0
+        )
+
+        assertEquals(true, isTextCompleted(doc, doc.rawText))
     }
 
     @Test
@@ -92,6 +103,7 @@ class StatisticsUiStateTest {
 
         val state = composeStatisticsState(
             texts = texts,
+            bodyByTextId = texts.associate { it.id to it.rawText },
             vocabEntries = vocab,
             reviewedToday = 4,
             reviewedThisWeek = 10,

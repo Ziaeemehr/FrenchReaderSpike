@@ -1,5 +1,6 @@
 package com.ziaee.frenchreader.util
 
+import android.net.Uri
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -10,7 +11,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * if the process is killed before a screen consumes it, the share is lost,
  * which matches how most Android share targets behave anyway.
  */
-data class IncomingShare(val suggestedTitle: String, val body: String)
+data class IncomingShare(
+    val suggestedTitle: String,
+    val body: String,
+    val epubUri: Uri? = null
+)
 
 object SharedTextHolder {
     val pending = MutableStateFlow<IncomingShare?>(null)

@@ -27,6 +27,9 @@ interface ArticleImageStorage {
      * to decode -- a missing image is never fatal to an import. */
     suspend fun downloadAndStore(documentId: Long, imageUrl: String): String?
 
+    /** Decodes, scales, and stores image bytes at an owned relative path. */
+    suspend fun storeBytes(relativePath: String, bytes: ByteArray): String?
+
     /** Deletes an image at a relative path this store previously returned.
      * Refuses (returns false) any path outside its own images directory. */
     suspend fun delete(relativePath: String): Boolean
@@ -35,34 +38,39 @@ interface ArticleImageStorage {
 class ArticleImageStore(private val context: Context) : ArticleImageStorage {
 
     override suspend fun downloadAndStore(documentId: Long, imageUrl: String): String? = withContext(Dispatchers.IO) {
-        val dir = imagesDir()
-        val file = File(dir, "$documentId.jpg")
         try {
             val bytes = downloadBounded(imageUrl) ?: return@withContext null
+            storeBytes("$IMAGES_DIR_NAME/$documentId.jpg", bytes)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
+    override suspend fun storeBytes(relativePath: String, bytes: ByteArray): String? = withContext(Dispatchers.IO) {
+        var file: File? = null
+        try {
+            val ownedFile = resolveOwned(relativePath) ?: return@withContext null
+            file = ownedFile
+            if (bytes.size > MAX_IMAGE_BYTES) return@withContext null
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
-
             val (targetWidth, targetHeight) = scaledDimensions(bounds.outWidth, bounds.outHeight, MAX_IMAGE_WIDTH)
-            val decodeOptions = BitmapFactory.Options().apply {
-                inSampleSize = sampleSizeFor(bounds.outWidth, targetWidth)
-            }
-            val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions) ?: return@withContext null
+            val options = BitmapFactory.Options().apply { inSampleSize = sampleSizeFor(bounds.outWidth, targetWidth) }
+            val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return@withContext null
             val scaled = if (decoded.width != targetWidth || decoded.height != targetHeight) {
                 Bitmap.createScaledBitmap(decoded, targetWidth, targetHeight, true)
-            } else {
-                decoded
-            }
-
-            dir.mkdirs()
-            FileOutputStream(file).use { out -> scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out) }
+            } else decoded
+            ownedFile.parentFile?.mkdirs()
+            val written = FileOutputStream(ownedFile).use { scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
             if (scaled !== decoded) decoded.recycle()
             scaled.recycle()
-
-            "$IMAGES_DIR_NAME/${file.name}"
+            if (!written) {
+                ownedFile.delete()
+                null
+            } else relativePath
         } catch (e: Exception) {
-            file.delete()
+            file?.delete()
             null
         }
     }
@@ -76,7 +84,7 @@ class ArticleImageStore(private val context: Context) : ArticleImageStorage {
     private fun resolveOwned(relativePath: String): File? {
         val dir = imagesDir().canonicalFile
         val file = File(context.filesDir, relativePath).canonicalFile
-        return file.takeIf { it.parentFile == dir }
+        return file.takeIf { it.path.startsWith(dir.path + File.separator) }
     }
 
     private fun imagesDir(): File = File(context.filesDir, IMAGES_DIR_NAME)

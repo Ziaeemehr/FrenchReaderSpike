@@ -46,6 +46,7 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 fun EditorialTopAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {}
 ) {
@@ -55,7 +56,8 @@ fun EditorialTopAppBar(
                 text = title,
                 style = FrenchReaderDesign.editorialTypography.sectionTitle,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = titleModifier
             )
         },
         modifier = modifier,

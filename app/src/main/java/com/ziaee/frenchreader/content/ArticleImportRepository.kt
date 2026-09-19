@@ -1,8 +1,11 @@
 package com.ziaee.frenchreader.content
 
 import com.ziaee.frenchreader.data.HeadlineEntity
+import com.ziaee.frenchreader.data.LibraryOrganizerDao
 import com.ziaee.frenchreader.data.TextDao
+import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.data.insertTextDocument
 import com.ziaee.frenchreader.images.ArticleImageStorage
 import com.ziaee.frenchreader.news.normalizeArticleUrl
 
@@ -21,7 +24,9 @@ sealed class ArticleImportResult {
 class ArticleImportRepository(
     private val textDao: TextDao,
     private val sources: List<ContentSource>,
-    private val imageStore: ArticleImageStorage
+    private val imageStore: ArticleImageStorage,
+    private val bodyStore: TextBodyStorage,
+    private val libraryOrganizerDao: LibraryOrganizerDao? = null
 ) {
     /** Returns null if no registered source matches the headline or the
      * source fails to fetch the full article; the headline preview stays
@@ -35,17 +40,20 @@ class ArticleImportRepository(
         val source = sources.find { it.id == headline.sourceId } ?: return null
         val article = source.fetchArticle(headline.toContentResult()) ?: return null
 
-        val id = textDao.insert(
+        val id = insertTextDocument(
+            textDao,
+            bodyStore,
             TextDocument(
                 title = article.title,
-                rawText = article.text,
+                rawText = "",
                 sourceUrl = article.sourceUrl,
                 sourceName = article.sourceName,
                 author = article.author,
                 license = article.license,
                 publishedAt = article.publishedAtMs,
                 externalKey = externalKey
-            )
+            ),
+            article.text
         )
 
         persistImage(id, headline.imageUrl)
@@ -62,17 +70,31 @@ class ArticleImportRepository(
             textDao.updateImagePath(documentId, imagePath)
         } catch (e: Exception) {
             imageStore.delete(imagePath)
-            textDao.getById(documentId)?.let { textDao.delete(it) }
+            textDao.getById(documentId)?.let {
+                libraryOrganizerDao?.deleteRefsForText(documentId)
+                textDao.delete(it)
+                bodyStore.delete(it)
+            }
         }
     }
 
     /** Deletes a document and, if present, its owned image file -- the one
      * path Home/Library should use so an image is never left behind. */
     suspend fun deleteWithImage(doc: TextDocument) {
-        doc.imagePath?.let { imageStore.delete(it) }
+        val body = bodyStore.read(doc)
+        epubImageRegex.findAll(body).map { it.groupValues[1] }.distinct().forEach { reference ->
+            imageStore.delete("text_images/epub_$reference")
+        }
+        doc.imagePath?.let { path ->
+            if (textDao.countOtherTextsWithImagePath(path, doc.id) == 0) imageStore.delete(path)
+        }
+        libraryOrganizerDao?.deleteRefsForText(doc.id)
         textDao.delete(doc)
+        bodyStore.delete(doc)
     }
 }
+
+private val epubImageRegex = Regex("!\\[[^\\]]*]\\(epubimg:([^)]+)\\)")
 
 private fun HeadlineEntity.toContentResult() = ContentResult(
     sourceId = sourceId,

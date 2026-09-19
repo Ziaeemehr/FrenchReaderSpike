@@ -68,4 +68,42 @@ class ArticleExtractorTest {
     fun `returns null for RFI Facile when transcription content is missing`() {
         assertNull(ArticleExtractor.extractRfiFacileTranscript("<html><body><p>no transcript here</p></body></html>"))
     }
+
+    // Trimmed but structurally real shape of a fr.wikisource.org
+    // action=parse response body for a proofread short story: a
+    // ws-noexport "other editions" notice, a headertemplate block, inline
+    // scan pagenum markers mid-paragraph, and a leftover edition-list
+    // table, none of which should survive extraction.
+    private val wikisourceHtml = """
+        <div class="mw-parser-output">
+        <p><small class="ws-noexport">Pour les autres éditions de ce texte, voir <a href="/wiki/Boule_de_suif">Boule de suif</a>.</small></p>
+        <div id="headertemplate" class="ws-noexport">
+          <div class="headertemplate">
+            <div class="headertemplate-author">Guy de Maupassant</div>
+            <div class="headertemplate-title">Boule de suif</div>
+          </div>
+        </div>
+        <h2>I</h2>
+        <p>Pendant plusieurs jours de suite<span class="pagenum ws-pagenum" id="p7">7</span> des lambeaux d'armée déroutée traversaient la ville.</p>
+        <p>Ce n'étaient point des troupes organisées, mais des hordes non rassemblées.</p>
+        <table><tr><td><a href="/wiki/Boule_de_suif_(1)">Édition 1902</a></td></tr></table>
+        </div>
+    """.trimIndent()
+
+    @Test
+    fun `extracts Wikisource story text, converts headings and strips scan chrome`() {
+        val text = ArticleExtractor.extractWikisourceArticle(wikisourceHtml)
+
+        assertEquals(
+            "## I\n\n" +
+                "Pendant plusieurs jours de suite des lambeaux d'armée déroutée traversaient la ville.\n\n" +
+                "Ce n'étaient point des troupes organisées, mais des hordes non rassemblées.",
+            text
+        )
+    }
+
+    @Test
+    fun `returns null for Wikisource when the article has no paragraphs or headings`() {
+        assertNull(ArticleExtractor.extractWikisourceArticle("<div class=\"mw-parser-output\"><table><tr><td>x</td></tr></table></div>"))
+    }
 }

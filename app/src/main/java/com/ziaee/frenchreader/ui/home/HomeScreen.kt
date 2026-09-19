@@ -1,11 +1,14 @@
 package com.ziaee.frenchreader.ui.home
 
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.MenuBook
@@ -34,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -55,6 +59,9 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
  * items) -- see [HomeScreenTest]. */
 internal const val HOME_LAZY_COLUMN_TEST_TAG = "home_lazy_column"
 
+/** Fabulang's graded-reader catalog -- opened in the phone's own browser
+ * (see the design doc's decision to link out rather than scrape/import:
+ * Fabulang's stories aren't openly licensed like Wikisource/Vikidia's). */
 /**
  * The app's landing screen: today's cached news, the most recently active
  * document, and a handful of recently added texts -- see the design doc's
@@ -70,17 +77,39 @@ fun HomeScreen(
     onOpenVocab: () -> Unit,
     onOpenStatistics: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenResources: () -> Unit,
     onStartReview: () -> Unit
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
 
     val addTextState = rememberAddTextUiState()
+    val context = LocalContext.current
     var showFindArticleSheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val openFilePicker = rememberFilePickerLauncher(addTextState)
     val genericErrorMessage = stringResource(R.string.error_generic)
     val untitledFallback = stringResource(R.string.text_untitled)
+    val epubImportStarted = stringResource(R.string.epub_import_started)
+    val epubImportDone = stringResource(R.string.epub_import_done)
+    val epubImportAlready = stringResource(R.string.epub_import_already)
+    val epubImportFailed = stringResource(R.string.epub_import_failed)
+    val importEpub: (Uri) -> Unit = { uri ->
+        Toast.makeText(context, epubImportStarted, Toast.LENGTH_SHORT).show()
+        vm.importEpub(
+            uri,
+            onDone = { result ->
+                val message = if (result.importedCount == 0) {
+                    epubImportAlready.format(result.bookTitle)
+                } else {
+                    epubImportDone.format(result.importedCount, result.bookTitle)
+                }
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                result.firstTextId?.let(onOpenText)
+            },
+            onError = { Toast.makeText(context, epubImportFailed, Toast.LENGTH_LONG).show() }
+        )
+    }
+    val openFilePicker = rememberFilePickerLauncher(addTextState, onEpub = importEpub)
 
     LaunchedEffect(vm.contentSearchState) {
         if (vm.contentSearchState is ContentSearchUiState.Error) {
@@ -109,6 +138,7 @@ fun HomeScreen(
         onOpenSettings = onOpenSettings,
         onOpenLibrary = onOpenLibrary,
         onAddTextClick = { addTextState.openBlank() },
+        onOpenGradedReaders = onOpenResources,
         onSelectHeadline = { vm.selectHeadline(it) },
         onRetryNews = { vm.refresh(force = true) },
         onPullRefresh = { vm.refresh(force = true) },
@@ -118,7 +148,7 @@ fun HomeScreen(
         onStartReview = onStartReview
     )
 
-    AddTextHost(addTextState) { title, body ->
+    AddTextHost(addTextState, onEpub = importEpub) { title, body ->
         vm.pasteText(title.ifBlank { untitledFallback }, body) { id -> onOpenText(id) }
     }
 
@@ -152,6 +182,7 @@ fun HomeContent(
     onOpenSettings: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddTextClick: () -> Unit,
+    onOpenGradedReaders: () -> Unit,
     onSelectHeadline: (HeadlineEntity) -> Unit,
     onRetryNews: () -> Unit,
     onPullRefresh: () -> Unit,
@@ -201,6 +232,11 @@ fun HomeContent(
                             leadingIcon = { Icon(Icons.Default.BarChart, contentDescription = null) },
                             onClick = { moreMenuExpanded = false; onOpenStatistics() }
                         )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.home_action_graded_readers)) },
+                            leadingIcon = { Icon(Icons.Default.AutoStories, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onOpenGradedReaders() }
+                        )
                     }
                 }
             )
@@ -211,7 +247,8 @@ fun HomeContent(
                 selectedDestination = EditorialDestination.HOME,
                 onHome = {},
                 onLibrary = onOpenLibrary,
-                onAddText = onAddTextClick
+                onAddText = onAddTextClick,
+                onResources = onOpenGradedReaders
             )
         }
     ) { padding ->
@@ -256,12 +293,17 @@ fun HomeContent(
                 }
                 state.continueReading?.let { doc ->
                     item {
-                        ContinueReadingCard(doc = doc, onClick = { onOpenText(doc.id) })
+                        ContinueReadingCard(
+                            doc = doc,
+                            body = state.bodyByTextId[doc.id].orEmpty(),
+                            onClick = { onOpenText(doc.id) }
+                        )
                     }
                 }
                 item {
                     RecentTextsSection(
                         documents = state.recentTexts,
+                        bodyByTextId = state.bodyByTextId,
                         onOpen = { onOpenText(it.id) },
                         onSeeAll = onOpenLibrary,
                         onAddText = onAddTextClick

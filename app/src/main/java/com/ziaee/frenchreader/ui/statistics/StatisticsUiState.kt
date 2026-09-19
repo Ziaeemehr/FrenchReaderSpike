@@ -3,6 +3,8 @@ package com.ziaee.frenchreader.ui.statistics
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.text.TextChunker
+import com.ziaee.frenchreader.text.BlockType
+import com.ziaee.frenchreader.text.MarkdownParser
 import java.time.LocalDate
 
 internal const val LEITNER_BOX_COUNT = 5
@@ -24,12 +26,11 @@ data class StatisticsUiState(
 )
 
 /** A text is "completed" once its saved reading position has reached the
- * last chunk at least once. Recomputed from [TextChunker] (pure, cheap)
- * rather than a stored column, so it can never drift out of sync with
- * [TextDocument.rawText]. */
-internal fun isTextCompleted(doc: TextDocument): Boolean {
-    val chunkCount = TextChunker.chunk(doc.rawText).size
-    return chunkCount > 0 && doc.lastChunkIndex >= chunkCount - 1
+ * last chunk at least once. */
+internal fun isTextCompleted(doc: TextDocument, body: String): Boolean {
+    val chunks = TextChunker.chunk(body)
+    val lastSpokenIndex = chunks.indexOfLast { MarkdownParser.parse(it).type != BlockType.IMAGE }
+    return lastSpokenIndex >= 0 && doc.lastChunkIndex >= lastSpokenIndex
 }
 
 internal fun leitnerBoxCounts(entries: List<VocabEntry>): Map<Int, Int> {
@@ -71,6 +72,7 @@ internal suspend fun loadActiveDates(
 
 internal fun composeStatisticsState(
     texts: List<TextDocument>,
+    bodyByTextId: Map<Long, String> = emptyMap(),
     vocabEntries: List<VocabEntry>,
     reviewedToday: Int,
     reviewedThisWeek: Int,
@@ -87,6 +89,6 @@ internal fun composeStatisticsState(
     accuracyPercent = computeAccuracyPercent(knewCount, totalReviewCount),
     leitnerBoxCounts = leitnerBoxCounts(vocabEntries),
     textsSaved = texts.size,
-    textsCompleted = texts.count { isTextCompleted(it) },
+    textsCompleted = texts.count { isTextCompleted(it, bodyByTextId[it.id].orEmpty()) },
     wordsSaved = vocabEntries.size
 )

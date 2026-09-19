@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material3.Icon
@@ -22,7 +23,7 @@ import com.ziaee.frenchreader.R
  * this primitive is wired into Home only in this phase (see the
  * implementation plan's Task 5).
  */
-enum class EditorialDestination { HOME, LIBRARY }
+enum class EditorialDestination { HOME, LIBRARY, RESOURCES }
 
 /**
  * Ordinary Material selection semantics (selected/Role.Tab), but with the
@@ -36,6 +37,7 @@ fun EditorialBottomBar(
     onHome: () -> Unit,
     onLibrary: () -> Unit,
     onAddText: () -> Unit,
+    onResources: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     NavigationBar(modifier = modifier) {
@@ -58,6 +60,13 @@ fun EditorialBottomBar(
             onClick = onAddText,
             icon = { Icon(Icons.Default.Add, contentDescription = null) },
             label = { Text(stringResource(R.string.action_add_text)) },
+            colors = editorialNavigationItemColors()
+        )
+        NavigationBarItem(
+            selected = selectedDestination == EditorialDestination.RESOURCES,
+            onClick = onResources,
+            icon = { Icon(Icons.Default.Bookmark, contentDescription = null) },
+            label = { Text(stringResource(R.string.nav_resources)) },
             colors = editorialNavigationItemColors()
         )
     }

@@ -3,6 +3,10 @@ package com.ziaee.frenchreader.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,13 +23,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalTextToolbar
 import androidx.compose.ui.platform.TextToolbarStatus
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
@@ -37,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Popup
+import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.text.BlockType
@@ -45,13 +58,17 @@ import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.ReadingPalette
 import com.ziaee.frenchreader.ui.theme.readingPaletteFor
+import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import java.text.SimpleDateFormat
 import com.ziaee.frenchreader.util.launchProcessTextApp
 import com.ziaee.frenchreader.util.queryProcessTextApps
 import java.util.Date
 import java.util.Locale
+import java.io.File
+import kotlinx.coroutines.launch
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
+private val EPUB_IMAGE_REF = Regex("^[0-9a-f]+/[0-9]+_[0-9]+\\.jpg$")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +77,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val state by vm.state.collectAsState()
     val palette = readingPaletteFor(AppearanceState.readingBackground)
     val fontScale = AppearanceState.fontScale.multiplier
+    val vocabularyDescription = stringResource(R.string.accessibility_vocabulary)
+    val voiceDescription = stringResource(R.string.accessibility_select_voice)
+    val autoScrollDescription = stringResource(R.string.accessibility_autoplay)
+    val sourceInfoDescription = stringResource(R.string.accessibility_source_info)
 
     // word + the sentence it came from, while the dictionary sheet is open.
     var dictionaryTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -78,7 +99,23 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val listState = rememberLazyListState()
     var autoScrollEnabled by remember { mutableStateOf(true) }
     var voiceMenuExpanded by remember { mutableStateOf(false) }
+    var moreMenuExpanded by remember { mutableStateOf(false) }
     var showSourceInfoSheet by remember { mutableStateOf(false) }
+    var showContentsSheet by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val headings = remember(state.chunks) {
+        state.chunks.mapIndexedNotNull { index, chunk ->
+            chunk.takeIf { it.block.type == BlockType.HEADER && it.block.headerLevel in 1..2 }
+                ?.let { index to it }
+        }
+    }
+    val spokenChunkIndices = remember(state.chunks) {
+        state.chunks.indices.filter { state.chunks[it].block.type != BlockType.IMAGE }
+    }
+    val spokenProgress = remember(spokenChunkIndices, state.currentChunkIndex) {
+        val reached = spokenChunkIndices.count { it <= state.currentChunkIndex }
+        reached to spokenChunkIndices.size
+    }
 
     LaunchedEffect(textId) { vm.load(textId) }
     DisposableEffect(Unit) {
@@ -135,10 +172,26 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 Column {
                     TopAppBar(
                         title = {
-                            Text(
-                                state.textDoc?.title ?: stringResource(R.string.reading_loading_title),
-                                maxLines = 1
-                            )
+                            Column(Modifier.fillMaxWidth()) {
+                                Text(
+                                    state.textDoc?.title ?: stringResource(R.string.reading_loading_title),
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (spokenProgress.second > 0) {
+                                    Text(
+                                        stringResource(
+                                            R.string.reading_position,
+                                            spokenProgress.first.coerceAtLeast(1),
+                                            spokenProgress.second
+                                        ),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = palette.inkFaded
+                                    )
+                                }
+                            }
                         },
                         navigationIcon = {
                             IconButton(onClick = onBack) {
@@ -146,24 +199,61 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             }
                         },
                         actions = {
-                            if (state.chunks.isNotEmpty()) {
-                                Text(
-                                    "${state.currentChunkIndex + 1}/${state.chunks.size}",
-                                    color = palette.inkFaded,
-                                    modifier = Modifier.padding(end = 4.dp)
-                                )
-                            }
-                            IconButton(onClick = onOpenVocab) {
-                                Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.accessibility_vocabulary))
-                            }
-                            if (state.textDoc?.sourceUrl != null) {
-                                IconButton(onClick = { showSourceInfoSheet = true }) {
-                                    Icon(Icons.Default.Info, contentDescription = stringResource(R.string.accessibility_source_info))
+                            if (headings.size >= 2) {
+                                IconButton(onClick = { showContentsSheet = true }) {
+                                    Icon(
+                                        Icons.Default.Toc,
+                                        contentDescription = stringResource(R.string.reading_contents)
+                                    )
                                 }
                             }
+                            IconButton(onClick = { vm.toggleShowTranslations() }) {
+                                Icon(
+                                    Icons.Default.Translate,
+                                    contentDescription = stringResource(R.string.accessibility_toggle_translation),
+                                    tint = if (state.showTranslations) palette.accent else palette.inkFaded
+                                )
+                            }
                             Box {
-                                IconButton(onClick = { voiceMenuExpanded = true }) {
-                                    Icon(Icons.Default.RecordVoiceOver, contentDescription = stringResource(R.string.accessibility_select_voice))
+                                IconButton(onClick = { moreMenuExpanded = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.reading_more_actions))
+                                }
+                                DropdownMenu(
+                                    expanded = moreMenuExpanded,
+                                    onDismissRequest = { moreMenuExpanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.accessibility_vocabulary)) },
+                                        leadingIcon = { Icon(Icons.Default.MenuBook, contentDescription = null) },
+                                        modifier = Modifier.semantics { contentDescription = vocabularyDescription },
+                                        onClick = { moreMenuExpanded = false; onOpenVocab() }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.accessibility_select_voice)) },
+                                        leadingIcon = { Icon(Icons.Default.RecordVoiceOver, contentDescription = null) },
+                                        modifier = Modifier.semantics { contentDescription = voiceDescription },
+                                        onClick = { moreMenuExpanded = false; voiceMenuExpanded = true }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.accessibility_autoplay)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                if (autoScrollEnabled) Icons.Default.Check else Icons.Default.SwapVert,
+                                                contentDescription = null,
+                                                tint = if (autoScrollEnabled) palette.accent else LocalContentColor.current
+                                            )
+                                        },
+                                        modifier = Modifier.semantics { contentDescription = autoScrollDescription },
+                                        onClick = { moreMenuExpanded = false; autoScrollEnabled = !autoScrollEnabled }
+                                    )
+                                    if (state.textDoc?.sourceUrl != null) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.accessibility_source_info)) },
+                                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
+                                            modifier = Modifier.semantics { contentDescription = sourceInfoDescription },
+                                            onClick = { moreMenuExpanded = false; showSourceInfoSheet = true }
+                                        )
+                                    }
                                 }
                                 DropdownMenu(
                                     expanded = voiceMenuExpanded,
@@ -172,34 +262,11 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                                     AVAILABLE_VOICES.forEach { voice ->
                                         DropdownMenuItem(
                                             text = { Text(stringResource(voice.labelRes)) },
-                                            leadingIcon = {
-                                                if (state.textDoc?.voice == voice.id) {
-                                                    Icon(Icons.Default.Check, contentDescription = null)
-                                                }
-                                            },
-                                            onClick = {
-                                                voiceMenuExpanded = false
-                                                vm.changeVoice(voice.id)
-                                            }
+                                            leadingIcon = { if (state.textDoc?.voice == voice.id) Icon(Icons.Default.Check, null) },
+                                            onClick = { voiceMenuExpanded = false; vm.changeVoice(voice.id) }
                                         )
                                     }
                                 }
-                            }
-                            IconButton(onClick = { autoScrollEnabled = !autoScrollEnabled }) {
-                                Icon(
-                                    Icons.Default.SwapVert,
-                                    contentDescription = stringResource(R.string.accessibility_autoplay),
-                                    tint = if (autoScrollEnabled) palette.accent
-                                    else palette.inkFaded
-                                )
-                            }
-                            IconButton(onClick = { vm.toggleShowTranslations() }) {
-                                Icon(
-                                    Icons.Default.Translate,
-                                    contentDescription = stringResource(R.string.accessibility_toggle_translation),
-                                    tint = if (state.showTranslations) palette.accent
-                                    else palette.inkFaded
-                                )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -209,13 +276,15 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             actionIconContentColor = palette.ink
                         )
                     )
-                    if (state.chunks.isNotEmpty()) {
-                        LinearProgressIndicator(
-                            progress = { (state.currentChunkIndex + 1).toFloat() / state.chunks.size },
-                            modifier = Modifier.fillMaxWidth().height(2.dp),
-                            color = palette.accent,
-                            trackColor = palette.divider
-                        )
+                    if (spokenProgress.second > 0) {
+                        Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp)) {
+                            LinearProgressIndicator(
+                                progress = { spokenProgress.first.toFloat() / spokenProgress.second },
+                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                                color = palette.accent,
+                                trackColor = palette.divider
+                            )
+                        }
                     }
                 }
             },
@@ -231,23 +300,26 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 return@Scaffold
             }
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 24.dp),
-                contentPadding = PaddingValues(vertical = 20.dp)
-            ) {
-                itemsIndexed(state.chunks) { chunkIndex, chunk ->
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .widthIn(max = FrenchReaderDesign.sizes.readerMeasure)
+                        .fillMaxWidth()
+                        .padding(horizontal = FrenchReaderDesign.spacing.medium),
+                    contentPadding = PaddingValues(vertical = 20.dp)
+                ) {
+                itemsIndexed(state.chunks, key = { index, _ -> index }) { chunkIndex, chunk ->
                     ChunkParagraph(
                         chunk = chunk,
                         isCurrentChunk = chunkIndex == state.currentChunkIndex,
-                        currentPositionMs = state.currentPositionMs,
+                        currentPositionMs = if (chunkIndex == state.currentChunkIndex) state.currentPositionMs else 0L,
                         showTranslation = state.showTranslations,
                         palette = palette,
                         fontScale = fontScale,
                         onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
+                        onPendingClick = { vm.jumpToChunk(chunkIndex) },
                         onRetry = { vm.retryChunk(chunkIndex) },
                         onWordLookup = { word, sentenceText ->
                             selectedWord = word to sentenceText
@@ -259,11 +331,16 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         },
                         clearSelectionSignal = clearSelectionTick
                     )
-                    val spacing = if (chunk.block.type == BlockType.LIST_ITEM &&
-                        state.chunks.getOrNull(chunkIndex + 1)?.block?.type == BlockType.LIST_ITEM
-                    ) 6.dp else 28.dp
+                    val spacing = when {
+                        chunk.block.type == BlockType.IMAGE -> FrenchReaderDesign.spacing.small
+                        chunk.block.type == BlockType.LIST_ITEM &&
+                            state.chunks.getOrNull(chunkIndex + 1)?.block?.type == BlockType.LIST_ITEM -> 6.dp
+                        chunk.block.type == BlockType.HEADER -> FrenchReaderDesign.spacing.large
+                        else -> FrenchReaderDesign.spacing.medium
+                    }
                     Spacer(Modifier.height(spacing))
                 }
+            }
             }
         }
     }
@@ -382,32 +459,103 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
 
     if (showSourceInfoSheet) {
         state.textDoc?.let { doc ->
-            SourceInfoSheet(doc = doc, onDismiss = { showSourceInfoSheet = false })
+            SourceInfoSheet(doc = doc, palette = palette, onDismiss = { showSourceInfoSheet = false })
+        }
+    }
+
+    if (showContentsSheet) {
+        ContentsSheet(
+            headings = headings,
+            currentChunkIndex = state.currentChunkIndex,
+            totalChunks = state.chunks.size,
+            palette = palette,
+            onSelect = { index ->
+                vm.jumpToChunk(index)
+                showContentsSheet = false
+                scope.launch { listState.scrollToItem(index) }
+            },
+            onDismiss = { showContentsSheet = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ContentsSheet(
+    headings: List<Pair<Int, ChunkState>>,
+    currentChunkIndex: Int,
+    totalChunks: Int,
+    palette: ReadingPalette,
+    onSelect: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val currentHeadingIndex = headings.indexOfLast { it.first <= currentChunkIndex }
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = palette.background, contentColor = palette.ink) {
+        Text(
+            stringResource(R.string.reading_contents),
+            style = FrenchReaderDesign.editorialTypography.sectionTitle,
+            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.medium, vertical = FrenchReaderDesign.spacing.xSmall)
+        )
+        LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
+            itemsIndexed(headings, key = { _, entry -> entry.first }) { headingIndex, (index, chunk) ->
+                val isCurrent = headingIndex == currentHeadingIndex
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(if (isCurrent) palette.accent.copy(alpha = 0.14f) else Color.Transparent)
+                        .clickable { onSelect(index) }
+                        .padding(
+                            start = if (chunk.block.headerLevel == 2) FrenchReaderDesign.spacing.large else FrenchReaderDesign.spacing.medium,
+                            end = FrenchReaderDesign.spacing.medium,
+                            top = 12.dp,
+                            bottom = 12.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(chunk.text, fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium)
+                        Text(
+                            stringResource(R.string.reading_position, index + 1, totalChunks),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = palette.inkFaded
+                        )
+                    }
+                }
+                if (headingIndex != headings.lastIndex) HorizontalDivider(color = palette.divider)
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SourceInfoSheet(doc: com.ziaee.frenchreader.data.TextDocument, onDismiss: () -> Unit) {
+private fun SourceInfoSheet(
+    doc: com.ziaee.frenchreader.data.TextDocument,
+    palette: ReadingPalette,
+    onDismiss: () -> Unit
+) {
     val context = LocalContext.current
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = palette.background, contentColor = palette.ink) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = FrenchReaderDesign.spacing.medium).padding(bottom = FrenchReaderDesign.spacing.large)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(doc.sourceName ?: stringResource(R.string.source_default_label), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                Text(
+                    doc.sourceName ?: stringResource(R.string.source_default_label),
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle,
+                    modifier = Modifier.weight(1f)
+                )
                 doc.sourceUrl?.let { url ->
                     IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
                         Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
                     }
                 }
             }
-            Spacer(Modifier.height(6.dp))
-            doc.author?.let { Text(stringResource(R.string.source_author_label, it)) }
-            doc.license?.let { Text(stringResource(R.string.source_license_label, it)) }
+            HorizontalDivider(Modifier.padding(vertical = FrenchReaderDesign.spacing.small), color = palette.divider)
+            doc.author?.let { Text(stringResource(R.string.source_author_label, it), style = MaterialTheme.typography.bodyLarge) }
+            doc.license?.let { Text(stringResource(R.string.source_license_label, it), style = MaterialTheme.typography.bodyLarge) }
             doc.publishedAt?.let {
                 val dateLabel = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it))
-                Text(stringResource(R.string.source_published_label, dateLabel))
+                Text(stringResource(R.string.source_published_label, dateLabel), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
@@ -422,11 +570,17 @@ private fun ChunkParagraph(
     palette: ReadingPalette,
     fontScale: Float,
     onSentenceClick: (SentenceBoundary) -> Unit,
+    onPendingClick: () -> Unit,
     onRetry: () -> Unit,
     onWordLookup: (word: String, sentence: String) -> Unit,
     onPhraseSelected: (String) -> Unit,
     clearSelectionSignal: Int
 ) {
+    if (chunk.block.type == BlockType.IMAGE) {
+        EpubImage(block = chunk.block, palette = palette, fontScale = fontScale)
+        return
+    }
+
     when (chunk.status) {
         ChunkStatus.READY -> {
             // The French text must always read left-to-right regardless of
@@ -434,20 +588,29 @@ private fun ChunkParagraph(
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 Column {
                     when (chunk.block.type) {
-                        BlockType.HEADER -> SentenceFlowText(
-                            chunk = chunk,
-                            isCurrentChunk = isCurrentChunk,
-                            currentPositionMs = currentPositionMs,
-                            fontSize = headerFontSize(chunk.block.headerLevel, fontScale),
-                            lineHeight = headerLineHeight(chunk.block.headerLevel, fontScale),
-                            fontWeight = FontWeight.Bold,
-                            color = palette.ink,
-                            palette = palette,
-                            onSentenceClick = onSentenceClick,
-                            onWordLookup = onWordLookup,
-                            onPhraseSelected = onPhraseSelected,
-                            clearSelectionSignal = clearSelectionSignal
-                        )
+                        BlockType.HEADER -> Column {
+                            Spacer(Modifier.height(if (chunk.block.headerLevel == 1) 12.dp else 4.dp))
+                            SentenceFlowText(
+                                chunk = chunk,
+                                isCurrentChunk = isCurrentChunk,
+                                currentPositionMs = currentPositionMs,
+                                fontSize = headerFontSize(chunk.block.headerLevel, fontScale),
+                                lineHeight = headerLineHeight(chunk.block.headerLevel, fontScale),
+                                fontWeight = FontWeight.SemiBold,
+                                color = palette.ink,
+                                palette = palette,
+                                onSentenceClick = onSentenceClick,
+                                onWordLookup = onWordLookup,
+                                onPhraseSelected = onPhraseSelected,
+                                clearSelectionSignal = clearSelectionSignal
+                            )
+                            if (chunk.block.headerLevel == 1) {
+                                Box(
+                                    Modifier.padding(top = 12.dp).width(48.dp).height(2.dp)
+                                        .clip(RoundedCornerShape(1.dp)).background(palette.accent)
+                                )
+                            }
+                        }
                         BlockType.LIST_ITEM -> Row {
                             Text(
                                 "•  ",
@@ -486,6 +649,7 @@ private fun ChunkParagraph(
                             onPhraseSelected = onPhraseSelected,
                             clearSelectionSignal = clearSelectionSignal
                         )
+                        BlockType.IMAGE -> Unit
                     }
 
                     if (showTranslation && chunk.block.type != BlockType.HEADER) {
@@ -549,16 +713,53 @@ private fun ChunkParagraph(
                     chunk.text,
                     fontSize = (19f * fontScale).sp,
                     lineHeight = (31f * fontScale).sp,
-                    color = palette.inkFaded
+                    color = palette.inkFaded,
+                    modifier = Modifier.clickable(onClick = onPendingClick)
                 )
             }
         }
     }
 }
 
+@Composable
+private fun EpubImage(
+    block: com.ziaee.frenchreader.text.ParsedBlock,
+    palette: ReadingPalette,
+    fontScale: Float
+) {
+    val context = LocalContext.current
+    val ref = block.imageRef?.takeIf(EPUB_IMAGE_REF::matches) ?: return
+    val file = remember(context.filesDir, ref) {
+        File(context.filesDir, "text_images/epub_$ref").takeIf { it.isFile }
+    } ?: return
+
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = FrenchReaderDesign.spacing.xSmall),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = file,
+            contentDescription = block.imageAlt.takeIf { it.isNotBlank() },
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
+                .border(1.dp, palette.divider, MaterialTheme.shapes.medium)
+        )
+        block.imageAlt.takeIf { it.isNotBlank() }?.let { alt ->
+            Text(
+                alt,
+                modifier = Modifier.padding(top = FrenchReaderDesign.spacing.xSmall),
+                fontSize = (13f * fontScale).sp,
+                lineHeight = (19f * fontScale).sp,
+                color = palette.inkFaded,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 private fun headerFontSize(level: Int, fontScale: Float): TextUnit = (when (level) {
-    1 -> 26f
-    2 -> 24f
+    1 -> 30f
+    2 -> 25f
     3 -> 22f
     4 -> 20f
     5 -> 19f
@@ -566,8 +767,8 @@ private fun headerFontSize(level: Int, fontScale: Float): TextUnit = (when (leve
 } * fontScale).sp
 
 private fun headerLineHeight(level: Int, fontScale: Float): TextUnit = (when (level) {
-    1 -> 34f
-    2 -> 31f
+    1 -> 39f
+    2 -> 33f
     3 -> 29f
     4 -> 27f
     5 -> 26f
@@ -608,6 +809,18 @@ private fun SentenceFlowText(
     clearSelectionSignal: Int
 ) {
     val ranges = remember(chunk.sentences) { mutableListOf<IntRange>() }
+    val activeRange = remember(chunk.sentences, isCurrentChunk, currentPositionMs) {
+        if (!isCurrentChunk) null else {
+            val activeIndex = chunk.sentences.indexOfFirst { sentence ->
+                currentPositionMs >= sentence.offsetMs &&
+                    currentPositionMs < sentence.offsetMs + sentence.durationMs
+            }
+            if (activeIndex < 0) null else {
+                val start = chunk.sentences.take(activeIndex).sumOf { it.text.length + 1 }
+                start until (start + chunk.sentences[activeIndex].text.length)
+            }
+        }
+    }
     val annotated = remember(chunk.sentences, chunk.block, isCurrentChunk, currentPositionMs, palette) {
         buildAnnotatedString {
             ranges.clear()
@@ -621,7 +834,7 @@ private fun SentenceFlowText(
                     currentPositionMs < s.offsetMs + s.durationMs
                 if (isActive) {
                     addStyle(
-                        SpanStyle(background = palette.highlightBg, color = palette.highlightInk),
+                        SpanStyle(color = palette.highlightInk, fontWeight = FontWeight.Medium),
                         start, end
                     )
                 }
@@ -648,6 +861,8 @@ private fun SentenceFlowText(
     }
 
     var selection by remember(chunk.sentences, clearSelectionSignal) { mutableStateOf(TextRange.Zero) }
+    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val headingFontFamily = FrenchReaderDesign.editorialTypography.articleHeadline.fontFamily
 
     fun sentenceTextFor(offset: Int): String {
         val idx = ranges.indexOfFirst { offset in it }
@@ -679,12 +894,34 @@ private fun SentenceFlowText(
                 }
             },
             readOnly = true,
+            modifier = Modifier.drawBehind {
+                val layout = textLayout ?: return@drawBehind
+                val range = activeRange ?: return@drawBehind
+                if (range.isEmpty()) return@drawBehind
+                val firstLine = layout.getLineForOffset(range.first)
+                val lastLine = layout.getLineForOffset(range.last)
+                for (line in firstLine..lastLine) {
+                    val lineStart = maxOf(range.first, layout.getLineStart(line))
+                    val lineEnd = minOf(range.last + 1, layout.getLineEnd(line, visibleEnd = true))
+                    if (lineStart >= lineEnd) continue
+                    val left = layout.getHorizontalPosition(lineStart, usePrimaryDirection = true)
+                    val right = layout.getHorizontalPosition(lineEnd, usePrimaryDirection = true)
+                    drawRoundRect(
+                        color = palette.highlightBg,
+                        topLeft = Offset(minOf(left, right) - 3.dp.toPx(), layout.getLineTop(line) + 1.dp.toPx()),
+                        size = Size(kotlin.math.abs(right - left) + 6.dp.toPx(), layout.getLineBottom(line) - layout.getLineTop(line) - 2.dp.toPx()),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+                    )
+                }
+            },
+            onTextLayout = { textLayout = it },
             textStyle = TextStyle(
                 fontSize = fontSize,
                 lineHeight = lineHeight,
                 letterSpacing = 0.1.sp,
                 color = color,
                 fontWeight = fontWeight,
+                fontFamily = if (fontWeight != null) headingFontFamily else null,
                 textAlign = TextAlign.Start
             ),
             cursorBrush = SolidColor(Color.Transparent)
@@ -770,43 +1007,70 @@ internal fun classifySelection(text: String, selection: androidx.compose.ui.text
 @Composable
 private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palette: ReadingPalette) {
     var speedMenuExpanded by remember { mutableStateOf(false) }
+    val isSynthesizing = state.chunks.getOrNull(state.currentChunkIndex)?.status == ChunkStatus.LOADING
 
-    Surface(color = palette.background, tonalElevation = 4.dp, shadowElevation = 8.dp) {
-        Column(modifier = Modifier.padding(top = 6.dp, bottom = 14.dp)) {
-            HorizontalDivider(color = palette.divider)
+    Surface(
+        color = palette.background,
+        tonalElevation = FrenchReaderDesign.elevations.raised,
+        shadowElevation = FrenchReaderDesign.elevations.overlay,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(modifier = Modifier.padding(top = FrenchReaderDesign.spacing.xSmall, bottom = FrenchReaderDesign.spacing.small)) {
+            Box(
+                Modifier.align(Alignment.CenterHorizontally).width(36.dp).height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)).background(palette.divider)
+            )
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = FrenchReaderDesign.spacing.xSmall, start = 4.dp, end = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { vm.skipMs(-10_000) }) {
-                    Icon(Icons.Default.Replay10, contentDescription = stringResource(R.string.accessibility_skip_back), tint = palette.ink)
-                }
                 IconButton(onClick = { vm.previousSentence() }) {
                     Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.accessibility_previous_sentence), tint = palette.ink)
                 }
-                FilledIconButton(
-                    onClick = { vm.togglePlayPause() },
-                    modifier = Modifier.size(58.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = palette.accent)
-                ) {
-                    Icon(
-                        if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = stringResource(R.string.accessibility_play_pause),
-                        modifier = Modifier.size(30.dp),
-                        tint = Color.White
-                    )
+                IconButton(onClick = { vm.skipMs(-10_000) }) {
+                    Icon(Icons.Default.Replay10, contentDescription = stringResource(R.string.accessibility_skip_back), tint = palette.ink)
                 }
-                IconButton(onClick = { vm.nextSentence() }) {
-                    Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.accessibility_next_sentence), tint = palette.ink)
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(FrenchReaderDesign.sizes.playerPrimaryControl + 4.dp)) {
+                    FilledIconButton(
+                        onClick = { vm.togglePlayPause() },
+                        modifier = Modifier.size(FrenchReaderDesign.sizes.playerPrimaryControl),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = palette.accent,
+                            disabledContainerColor = palette.accent.copy(alpha = 0.45f)
+                        )
+                    ) {
+                        androidx.compose.animation.Crossfade(targetState = state.isPlaying, label = "playPause") { playing ->
+                            Icon(
+                                if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = stringResource(R.string.accessibility_play_pause),
+                                modifier = Modifier.size(32.dp),
+                                tint = Color.White
+                            )
+                        }
+                    }
+                    if (isSynthesizing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.fillMaxSize(),
+                            color = palette.highlightInk,
+                            trackColor = palette.accent.copy(alpha = 0.28f),
+                            strokeWidth = 2.dp
+                        )
+                    }
                 }
                 IconButton(onClick = { vm.skipMs(10_000) }) {
                     Icon(Icons.Default.Forward10, contentDescription = stringResource(R.string.accessibility_skip_forward), tint = palette.ink)
                 }
+                IconButton(onClick = { vm.nextSentence() }) {
+                    Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.accessibility_next_sentence), tint = palette.ink)
+                }
                 Box {
-                    TextButton(onClick = { speedMenuExpanded = true }) {
-                        Text("${state.speed}x", color = palette.accent, fontWeight = FontWeight.Medium)
-                    }
+                    AssistChip(
+                        onClick = { speedMenuExpanded = true },
+                        label = { Text("${state.speed}x", fontWeight = FontWeight.SemiBold) },
+                        colors = AssistChipDefaults.assistChipColors(labelColor = palette.accent),
+                        border = AssistChipDefaults.assistChipBorder(enabled = true, borderColor = palette.divider)
+                    )
                     DropdownMenu(expanded = speedMenuExpanded, onDismissRequest = { speedMenuExpanded = false }) {
                         SPEED_OPTIONS.forEach { s ->
                             DropdownMenuItem(text = { Text("${s}x") }, onClick = {

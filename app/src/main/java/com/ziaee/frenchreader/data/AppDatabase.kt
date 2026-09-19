@@ -6,6 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.ziaee.frenchreader.resources.DEFAULT_RESOURCES
+import com.ziaee.frenchreader.resources.ResourceCategory
 
 // v2 -> v3: adds multi-list support (vocab_lists table + vocab.listId) and
 // the Leitner spaced-repetition fields on vocab. Written as a real
@@ -106,14 +108,104 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `resources` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`title` TEXT NOT NULL, " +
+                "`url` TEXT NOT NULL, " +
+                "`imageUrl` TEXT, " +
+                "`createdAtMs` INTEGER NOT NULL)"
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_resources_url` ON `resources` (`url`)")
+        db.execSQL(
+            "INSERT OR IGNORE INTO resources (title, url, imageUrl, createdAtMs) " +
+                "VALUES ('Fabulang', 'https://www.fabulang.com/en/fr/', NULL, 0)"
+        )
+    }
+}
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `library_folders` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL, " +
+                "`createdAtMs` INTEGER NOT NULL)"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `library_tags` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL, " +
+                "`createdAtMs` INTEGER NOT NULL)"
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_library_tags_name` " +
+                "ON `library_tags` (`name`)"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `text_tags` (" +
+                "`textId` INTEGER NOT NULL, " +
+                "`tagId` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`textId`, `tagId`))"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_text_tags_tagId` " +
+                "ON `text_tags` (`tagId`)"
+        )
+        db.execSQL("ALTER TABLE texts ADD COLUMN folderId INTEGER")
+    }
+}
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE library_folders ADD COLUMN parentId INTEGER")
+    }
+}
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE resources ADD COLUMN category TEXT NOT NULL DEFAULT 'other'")
+        db.execSQL("UPDATE resources SET category = 'video' WHERE url LIKE '%tv5monde.com%'")
+        db.execSQL(
+            "UPDATE resources SET category = 'reading' WHERE " +
+                "url LIKE '%lingua.com%' OR " +
+                "url LIKE '%lawlessfrench.com%' OR " +
+                "url LIKE '%fluencydrop.com%' OR " +
+                "url LIKE '%fabulang.com%'"
+        )
+        db.execSQL("UPDATE resources SET category = 'books' WHERE url LIKE '%gutenberg.org%'")
+        DEFAULT_RESOURCES
+            .filter { it.category == ResourceCategory.PODCASTS }
+            .forEach { resource ->
+                db.execSQL(
+                    "INSERT OR IGNORE INTO resources " +
+                        "(title, url, imageUrl, createdAtMs, category) VALUES (?, ?, NULL, ?, ?)",
+                    arrayOf(resource.title, resource.url, resource.createdAtMs, resource.category.key)
+                )
+            }
+    }
+}
+
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE texts ADD COLUMN bodyPath TEXT")
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(
+    MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
+    MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11
+)
 
 @Database(
     entities = [
         TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class,
-        ReviewLogEntry::class, ActivityLogEntry::class
+        ReviewLogEntry::class, ActivityLogEntry::class, ResourceLink::class,
+        LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class
     ],
-    version = 6,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -123,6 +215,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun vocabListDao(): VocabListDao
     abstract fun reviewLogDao(): ReviewLogDao
     abstract fun activityLogDao(): ActivityLogDao
+    abstract fun resourceDao(): ResourceDao
+    abstract fun libraryOrganizerDao(): LibraryOrganizerDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

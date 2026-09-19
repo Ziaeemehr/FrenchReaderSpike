@@ -46,6 +46,99 @@ interface TextDao {
 
     @Query("UPDATE texts SET imagePath = :imagePath WHERE id = :id")
     suspend fun updateImagePath(id: Long, imagePath: String)
+
+    @Query("SELECT COUNT(*) FROM texts WHERE imagePath = :path AND id != :id")
+    suspend fun countOtherTextsWithImagePath(path: String, id: Long): Int
+
+    @Query("UPDATE texts SET folderId = :folderId WHERE id = :id")
+    suspend fun setFolder(id: Long, folderId: Long?)
+
+    @Query("UPDATE texts SET folderId = :folderId WHERE id IN (:ids)")
+    suspend fun setFolders(ids: List<Long>, folderId: Long?)
+}
+
+@Dao
+interface LibraryOrganizerDao {
+    @Query("SELECT * FROM library_folders ORDER BY name COLLATE NOCASE")
+    fun observeFolders(): Flow<List<LibraryFolder>>
+
+    @Query("SELECT * FROM library_tags ORDER BY name COLLATE NOCASE")
+    fun observeTags(): Flow<List<LibraryTag>>
+
+    @Query("SELECT * FROM text_tags")
+    fun observeAllTagRefs(): Flow<List<TextTagCrossRef>>
+
+    @Insert
+    suspend fun insertFolder(folder: LibraryFolder): Long
+
+    @Query("SELECT * FROM library_folders WHERE name = :name COLLATE NOCASE AND (parentId IS :parentId) LIMIT 1")
+    suspend fun findFolderByName(name: String, parentId: Long? = null): LibraryFolder?
+
+    @Query("UPDATE library_folders SET name = :name WHERE id = :id")
+    suspend fun renameFolder(id: Long, name: String)
+
+    @Query("UPDATE library_folders SET parentId = :parentId WHERE id = :id")
+    suspend fun moveFolder(id: Long, parentId: Long?)
+
+    @Query("SELECT parentId FROM library_folders WHERE id = :id")
+    suspend fun getFolderParentId(id: Long): Long?
+
+    @Query("UPDATE library_folders SET parentId = :parentId WHERE parentId = :id")
+    suspend fun moveChildFoldersUp(id: Long, parentId: Long?)
+
+    @Query("UPDATE texts SET folderId = :parentId WHERE folderId = :id")
+    suspend fun moveTextsUp(id: Long, parentId: Long?)
+
+    @Query("DELETE FROM library_folders WHERE id = :id")
+    suspend fun deleteFolderRow(id: Long)
+
+    @Transaction
+    suspend fun deleteFolder(id: Long) {
+        val parentId = getFolderParentId(id)
+        moveChildFoldersUp(id, parentId)
+        moveTextsUp(id, parentId)
+        deleteFolderRow(id)
+    }
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTag(tag: LibraryTag): Long
+
+    @Query("SELECT * FROM library_tags WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun findTagByName(name: String): LibraryTag?
+
+    @Query("UPDATE library_tags SET name = :name WHERE id = :id")
+    suspend fun renameTag(id: Long, name: String)
+
+    @Query("DELETE FROM text_tags WHERE tagId = :id")
+    suspend fun deleteRefsForTag(id: Long)
+
+    @Query("DELETE FROM library_tags WHERE id = :id")
+    suspend fun deleteTagRow(id: Long)
+
+    @Transaction
+    suspend fun deleteTag(id: Long) {
+        deleteRefsForTag(id)
+        deleteTagRow(id)
+    }
+
+    @Query("DELETE FROM text_tags WHERE textId = :textId")
+    suspend fun deleteRefsForText(textId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTagRefs(refs: List<TextTagCrossRef>)
+
+    @Transaction
+    suspend fun addTagsToTexts(textIds: List<Long>, tagIds: List<Long>) {
+        insertTagRefs(textIds.distinct().flatMap { textId ->
+            tagIds.distinct().map { tagId -> TextTagCrossRef(textId, tagId) }
+        })
+    }
+
+    @Transaction
+    suspend fun setTextTags(textId: Long, tagIds: List<Long>) {
+        deleteRefsForText(textId)
+        insertTagRefs(tagIds.distinct().map { TextTagCrossRef(textId, it) })
+    }
 }
 
 @Dao
@@ -157,4 +250,25 @@ interface ActivityLogDao {
 
     @Query("SELECT date FROM activity_log WHERE listeningMs > 0")
     suspend fun activeDates(): List<String>
+}
+
+@Dao
+interface ResourceDao {
+    @Query("SELECT * FROM resources ORDER BY createdAtMs DESC, id DESC")
+    fun observeAll(): Flow<List<ResourceLink>>
+
+    @Query("SELECT COUNT(*) FROM resources")
+    suspend fun count(): Int
+
+    @Query("SELECT * FROM resources WHERE imageUrl IS NULL")
+    suspend fun getWithoutImages(): List<ResourceLink>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(resource: ResourceLink): Long
+
+    @Update
+    suspend fun update(resource: ResourceLink)
+
+    @Delete
+    suspend fun delete(resource: ResourceLink)
 }

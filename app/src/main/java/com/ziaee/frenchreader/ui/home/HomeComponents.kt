@@ -350,8 +350,8 @@ private fun NewsSourcePlaceholder(sourceId: String, modifier: Modifier) {
 }
 
 @Composable
-fun ContinueReadingCard(doc: TextDocument, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val metrics = remember(doc.id, doc.rawText, doc.lastChunkIndex) { homeReadingMetrics(doc) }
+fun ContinueReadingCard(doc: TextDocument, body: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val metrics = remember(doc.id, body, doc.lastChunkIndex) { homeReadingMetrics(doc, body) }
     Column(modifier = modifier) {
         EditorialSectionHeader(
             title = stringResource(R.string.home_section_continue_reading),
@@ -403,6 +403,7 @@ fun ContinueReadingCard(doc: TextDocument, onClick: () -> Unit, modifier: Modifi
 @Composable
 fun RecentTextsSection(
     documents: List<TextDocument>,
+    bodyByTextId: Map<Long, String> = emptyMap(),
     onOpen: (TextDocument) -> Unit,
     onSeeAll: () -> Unit,
     onAddText: () -> Unit,
@@ -424,14 +425,14 @@ fun RecentTextsSection(
             )
         } else {
             documents.forEach { doc ->
-                RecentTextRow(doc, onClick = { onOpen(doc) })
+                RecentTextRow(doc, bodyByTextId[doc.id].orEmpty(), onClick = { onOpen(doc) })
             }
         }
     }
 }
 
 @Composable
-private fun RecentTextRow(doc: TextDocument, onClick: () -> Unit) {
+private fun RecentTextRow(doc: TextDocument, body: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -446,7 +447,7 @@ private fun RecentTextRow(doc: TextDocument, onClick: () -> Unit) {
                 Text(doc.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(doc.createdAtMs))
-            val minutes = remember(doc.id, doc.rawText) { estimatedReadingMinutes(doc.rawText) }
+            val minutes = remember(doc.id, body) { estimatedReadingMinutes(body) }
             val metadata = doc.sourceName?.let { "$it · $date" } ?: date
             Text(
                 text = if (minutes > 0) "$metadata · " + stringResource(R.string.home_estimated_minutes, minutes) else metadata,

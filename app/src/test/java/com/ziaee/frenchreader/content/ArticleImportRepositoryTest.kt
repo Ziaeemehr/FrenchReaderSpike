@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.content
 
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDao
+import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.images.ArticleImageStorage
 import com.ziaee.frenchreader.news.normalizeArticleUrl
@@ -25,7 +26,7 @@ class ArticleImportRepositoryTest {
         )
         val textDao = FakeTextDao(mutableListOf(existing))
         val source = FakeContentSource { error("fetchArticle must not be called for a known externalKey") }
-        val repository = ArticleImportRepository(textDao, listOf(source), FakeImageStorage())
+        val repository = ArticleImportRepository(textDao, listOf(source), FakeImageStorage(), FakeBodyStorage())
 
         val result = repository.import(headline)
 
@@ -50,7 +51,7 @@ class ArticleImportRepositoryTest {
             )
         }
         val imageStorage = FakeImageStorage(storedPath = "text_images/1.jpg")
-        val repository = ArticleImportRepository(textDao, listOf(source), imageStorage)
+        val repository = ArticleImportRepository(textDao, listOf(source), imageStorage, FakeBodyStorage())
 
         val result = repository.import(headline)
 
@@ -59,6 +60,25 @@ class ArticleImportRepositoryTest {
         val inserted = textDao.inserted.single()
         assertEquals(normalizedKeyFor(headline), inserted.externalKey)
         assertEquals("text_images/1.jpg", textDao.imagePaths[inserted.id])
+    }
+
+    @Test
+    fun `deleting an epub chapter removes body images but keeps a shared cover`() = runBlocking {
+        val cover = "text_images/epub_hash_cover.jpg"
+        val deleting = TextDocument(
+            id = 1,
+            title = "One",
+            rawText = "Texte\n\n![illustration](epubimg:hash/0_0.jpg)",
+            imagePath = cover
+        )
+        val sibling = TextDocument(id = 2, title = "Two", rawText = "Texte", imagePath = cover)
+        val dao = FakeTextDao(mutableListOf(deleting, sibling))
+        val storage = FakeImageStorage()
+        val repository = ArticleImportRepository(dao, emptyList(), storage, FakeBodyStorage())
+
+        repository.deleteWithImage(deleting)
+
+        assertEquals(listOf("text_images/epub_hash/0_0.jpg"), storage.deleted)
     }
 
     private fun headline() = HeadlineEntity(
@@ -89,8 +109,19 @@ class ArticleImportRepositoryTest {
     }
 
     private class FakeImageStorage(private val storedPath: String? = null) : ArticleImageStorage {
+        val deleted = mutableListOf<String>()
         override suspend fun downloadAndStore(documentId: Long, imageUrl: String): String? = storedPath
-        override suspend fun delete(relativePath: String): Boolean = true
+        override suspend fun storeBytes(relativePath: String, bytes: ByteArray): String? = relativePath
+        override suspend fun delete(relativePath: String): Boolean {
+            deleted += relativePath
+            return true
+        }
+    }
+
+    private class FakeBodyStorage : TextBodyStorage {
+        override suspend fun read(doc: TextDocument): String = doc.rawText
+        override suspend fun writeBody(id: Long, body: String): String = "text_bodies/$id.txt"
+        override suspend fun delete(doc: TextDocument): Boolean = true
     }
 
     private class FakeTextDao(initial: MutableList<TextDocument>) : TextDao {
@@ -135,5 +166,12 @@ class ArticleImportRepositoryTest {
         override suspend fun updateImagePath(id: Long, imagePath: String) {
             imagePaths[id] = imagePath
         }
+
+        override suspend fun countOtherTextsWithImagePath(path: String, id: Long): Int =
+            documents.count { it.id != id && it.imagePath == path }
+
+        override suspend fun setFolder(id: Long, folderId: Long?) = Unit
+
+        override suspend fun setFolders(ids: List<Long>, folderId: Long?) = Unit
     }
 }
