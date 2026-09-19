@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         AppearanceState.themeMode = AppearancePrefs.getThemeMode(this)
         AppearanceState.readingBackground = AppearancePrefs.getReadingBackground(this)
         AppearanceState.fontScale = AppearancePrefs.getFontScale(this)
+        AppearanceState.highlightSavedWords = AppearancePrefs.getHighlightSavedWords(this)
 
         setContent {
             FrenchReaderTheme(themeMode = AppearanceState.themeMode) {

@@ -16,6 +16,8 @@ import com.ziaee.frenchreader.content.ContentSource
 import com.ziaee.frenchreader.content.FranceInfoContentSource
 import com.ziaee.frenchreader.content.EpubImportRepository
 import com.ziaee.frenchreader.content.EpubImportResult
+import com.ziaee.frenchreader.content.BatchImportRepository
+import com.ziaee.frenchreader.content.BatchImportResult
 import com.ziaee.frenchreader.content.RfiFacileContentSource
 import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.content.WikisourceContentSource
@@ -52,6 +54,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val bodyStore = TextBodyStore(app)
     private val newsRepository = NewsRepository(db.headlineDao())
     private val epubImportRepository = EpubImportRepository(app, db)
+    private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
     private val importRepository = ArticleImportRepository(
         db.textDao(),
         listOf(RfiFacileContentSource, FranceInfoContentSource),
@@ -222,6 +225,20 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 android.util.Log.w("EpubImport", "EPUB import failed", error)
                 onError(error.message.orEmpty())
             }
+        }
+    }
+
+    fun importFiles(uris: List<Uri>, onDone: (BatchImportResult) -> Unit) {
+        viewModelScope.launch {
+            onDone(runCatching { batchImportRepository.importAll(uris) }
+                .getOrElse { BatchImportResult(0, 0, uris.size, null) })
+        }
+    }
+
+    fun importTree(uri: Uri, onDone: (BatchImportResult) -> Unit) {
+        viewModelScope.launch {
+            onDone(runCatching { batchImportRepository.importTree(uri) }
+                .getOrElse { BatchImportResult(0, 0, 1, null) })
         }
     }
 

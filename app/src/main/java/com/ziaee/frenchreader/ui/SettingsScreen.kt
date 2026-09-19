@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -44,6 +46,7 @@ import com.ziaee.frenchreader.backup.AuthorizationOutcome
 import com.ziaee.frenchreader.backup.BackupPrefs
 import com.ziaee.frenchreader.backup.DriveBackupClient
 import com.ziaee.frenchreader.backup.GoogleAuthManager
+import com.ziaee.frenchreader.backup.LocalBackup
 import com.ziaee.frenchreader.backup.formatLastBackupLabel
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.AppLanguage
@@ -58,6 +61,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -167,8 +173,110 @@ fun SettingsScreen(onBack: () -> Unit) {
                 )
             }
 
+            SettingsSwitchRow(
+                label = stringResource(R.string.highlight_saved_words),
+                checked = AppearanceState.highlightSavedWords,
+                onCheckedChange = { enabled ->
+                    AppearanceState.highlightSavedWords = enabled
+                    AppearancePrefs.setHighlightSavedWords(context, enabled)
+                }
+            )
+
+            LocalBackupSection(context, scope, snackbarHostState)
             CloudBackupSection(context, scope, snackbarHostState)
         }
+    }
+}
+
+@Composable
+private fun LocalBackupSection(
+    context: Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
+) {
+    var restoreUri by remember { mutableStateOf<Uri?>(null) }
+
+    fun showMessage(text: String) {
+        scope.launch { snackbarHostState.showSnackbar(text) }
+    }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    LocalBackup.exportTo(context, uri)
+                    BackupPrefs.setLastBackupAtMs(context, System.currentTimeMillis())
+                    showMessage(context.getString(R.string.local_backup_save_success))
+                } catch (e: Exception) {
+                    showMessage(context.getString(R.string.local_backup_save_failure))
+                }
+            }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        restoreUri = uri
+    }
+
+    Text(
+        stringResource(R.string.local_backup_section_title),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 20.dp)
+    )
+    Button(onClick = {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date())
+        exportLauncher.launch("french_reader_backup_$timestamp.db")
+    }) {
+        Text(stringResource(R.string.local_backup_save))
+    }
+    Button(onClick = { importLauncher.launch(arrayOf("*/*")) }) {
+        Text(stringResource(R.string.local_backup_restore))
+    }
+
+    if (restoreUri != null) {
+        AlertDialog(
+            onDismissRequest = { restoreUri = null },
+            title = { Text(stringResource(R.string.local_backup_restore_confirm_title)) },
+            text = { Text(stringResource(R.string.local_backup_restore_confirm_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    val uri = restoreUri ?: return@Button
+                    restoreUri = null
+                    scope.launch {
+                        try {
+                            if (LocalBackup.importFrom(context, uri)) {
+                                restartApp(context)
+                            } else {
+                                showMessage(context.getString(R.string.local_backup_invalid_file))
+                            }
+                        } catch (e: Exception) {
+                            showMessage(context.getString(R.string.local_backup_restore_failure))
+                        }
+                    }
+                }) { Text(stringResource(R.string.local_backup_restore)) }
+            },
+            dismissButton = {
+                Button(onClick = { restoreUri = null }) {
+                    Text(stringResource(R.string.accessibility_back))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    androidx.compose.foundation.layout.Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

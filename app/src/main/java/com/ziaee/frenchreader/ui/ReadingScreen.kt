@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,9 @@ import androidx.compose.ui.window.Popup
 import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.content.SavedVocab
+import com.ziaee.frenchreader.content.VocabHighlighter
+import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
@@ -75,6 +80,8 @@ private val EPUB_IMAGE_REF = Regex("^[0-9a-f]+/[0-9]+_[0-9]+\\.jpg$")
 fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val vm: ReadingViewModel = viewModel()
     val state by vm.state.collectAsState()
+    val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
+    val savedVocabStatuses = if (AppearanceState.highlightSavedWords) allSavedVocabStatuses else emptyMap()
     val palette = readingPaletteFor(AppearanceState.readingBackground)
     val fontScale = AppearanceState.fontScale.multiplier
     val vocabularyDescription = stringResource(R.string.accessibility_vocabulary)
@@ -316,6 +323,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         isCurrentChunk = chunkIndex == state.currentChunkIndex,
                         currentPositionMs = if (chunkIndex == state.currentChunkIndex) state.currentPositionMs else 0L,
                         showTranslation = state.showTranslations,
+                        savedVocabStatuses = savedVocabStatuses,
                         palette = palette,
                         fontScale = fontScale,
                         onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
@@ -567,6 +575,7 @@ private fun ChunkParagraph(
     isCurrentChunk: Boolean,
     currentPositionMs: Long,
     showTranslation: Boolean,
+    savedVocabStatuses: Map<String, VocabStatus>,
     palette: ReadingPalette,
     fontScale: Float,
     onSentenceClick: (SentenceBoundary) -> Unit,
@@ -599,6 +608,7 @@ private fun ChunkParagraph(
                                 fontWeight = FontWeight.SemiBold,
                                 color = palette.ink,
                                 palette = palette,
+                                savedVocabStatuses = savedVocabStatuses,
                                 onSentenceClick = onSentenceClick,
                                 onWordLookup = onWordLookup,
                                 onPhraseSelected = onPhraseSelected,
@@ -628,6 +638,7 @@ private fun ChunkParagraph(
                                     fontWeight = null,
                                     color = palette.ink,
                                     palette = palette,
+                                    savedVocabStatuses = savedVocabStatuses,
                                     onSentenceClick = onSentenceClick,
                                     onWordLookup = onWordLookup,
                                     onPhraseSelected = onPhraseSelected,
@@ -644,6 +655,7 @@ private fun ChunkParagraph(
                             fontWeight = null,
                             color = palette.ink,
                             palette = palette,
+                            savedVocabStatuses = savedVocabStatuses,
                             onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup,
                             onPhraseSelected = onPhraseSelected,
@@ -803,11 +815,27 @@ private fun SentenceFlowText(
     fontWeight: FontWeight?,
     color: Color,
     palette: ReadingPalette,
+    savedVocabStatuses: Map<String, VocabStatus>,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String) -> Unit,
     onPhraseSelected: (String) -> Unit,
     clearSelectionSignal: Int
 ) {
+    val vocabHighlighter = remember(savedVocabStatuses) {
+        VocabHighlighter(savedVocabStatuses.map { SavedVocab(it.key, it.value) })
+    }
+    // Pick colors for the reading page's own background, not the system
+    // theme: a light sepia page can sit under a dark system theme.
+    val darkPage = palette.ink.luminance() > 0.5f
+    val vocabStyles = VocabStatus.entries.associateWith { status ->
+        SpanStyle(
+            color = status.color(darkPage),
+            background = status.containerColor(darkPage).copy(
+                alpha = if (status == VocabStatus.LEARNED) 0.12f else 0.7f
+            ),
+            textDecoration = if (status == VocabStatus.LEARNED) null else TextDecoration.Underline
+        )
+    }
     val ranges = remember(chunk.sentences) { mutableListOf<IntRange>() }
     val activeRange = remember(chunk.sentences, isCurrentChunk, currentPositionMs) {
         if (!isCurrentChunk) null else {
@@ -821,7 +849,15 @@ private fun SentenceFlowText(
             }
         }
     }
-    val annotated = remember(chunk.sentences, chunk.block, isCurrentChunk, currentPositionMs, palette) {
+    val annotated = remember(
+        chunk.sentences,
+        chunk.block,
+        isCurrentChunk,
+        currentPositionMs,
+        palette,
+        savedVocabStatuses,
+        vocabStyles
+    ) {
         buildAnnotatedString {
             ranges.clear()
             chunk.sentences.forEachIndexed { i, s ->
@@ -829,19 +865,31 @@ private fun SentenceFlowText(
                 append(s.text)
                 val end = length
                 ranges.add(start until end)
-                val isActive = isCurrentChunk &&
-                    currentPositionMs >= s.offsetMs &&
-                    currentPositionMs < s.offsetMs + s.durationMs
-                if (isActive) {
-                    addStyle(
-                        SpanStyle(color = palette.highlightInk, fontWeight = FontWeight.Medium),
-                        start, end
-                    )
-                }
                 if (i != chunk.sentences.lastIndex) append(" ")
             }
 
-            val full = toString()
+            // Builder.toString() doesn't return the text built so far, so
+            // derive it from the same sentences that were appended above.
+            val full = chunk.sentences.joinToString(" ") { it.text }
+            if (savedVocabStatuses.isNotEmpty()) {
+                for (match in vocabHighlighter.findMatches(full)) {
+                    val style = vocabStyles.getValue(match.status)
+                    addStyle(style, match.range.first, match.range.last + 1)
+                }
+            }
+            chunk.sentences.forEachIndexed { index, sentence ->
+                val isActive = isCurrentChunk &&
+                    currentPositionMs >= sentence.offsetMs &&
+                    currentPositionMs < sentence.offsetMs + sentence.durationMs
+                if (isActive) {
+                    val range = ranges[index]
+                    addStyle(
+                        SpanStyle(color = palette.highlightInk, fontWeight = FontWeight.Medium),
+                        range.first,
+                        range.last + 1
+                    )
+                }
+            }
             for (span in chunk.block.emphasisSpans) {
                 if (span.start < 0 || span.end > chunk.block.plainText.length || span.start >= span.end) continue
                 val phrase = chunk.block.plainText.substring(span.start, span.end)

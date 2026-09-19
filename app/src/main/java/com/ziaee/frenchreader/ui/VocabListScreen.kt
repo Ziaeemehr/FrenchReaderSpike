@@ -2,6 +2,8 @@ package com.ziaee.frenchreader.ui
 
 import android.app.Application
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +26,8 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
+import com.ziaee.frenchreader.data.VocabStatus
+import com.ziaee.frenchreader.data.status
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,6 +84,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     var meaningsVisible by remember { mutableStateOf(true) }
     var editing by remember { mutableStateOf<VocabEntry?>(null) }
     var selectedScope by remember { mutableStateOf(VOCAB_SCOPE_ALL) }
+    var selectedStatus by remember { mutableStateOf<VocabStatus?>(null) }
     var showNewListDialog by remember { mutableStateOf(false) }
 
     val scoped = remember(entries, selectedScope) {
@@ -88,9 +94,10 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
             else -> entries.filter { it.listId == selectedScope }
         }
     }
-    val filtered = remember(scoped, query) {
-        if (query.isBlank()) scoped
-        else scoped.filter {
+    val filtered = remember(scoped, query, selectedStatus) {
+        val statusFiltered = selectedStatus?.let { status -> scoped.filter { it.status() == status } } ?: scoped
+        if (query.isBlank()) statusFiltered
+        else statusFiltered.filter {
             it.word.contains(query, ignoreCase = true) || it.sentence.contains(query, ignoreCase = true)
         }
     }
@@ -166,7 +173,6 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
             }
 
             Card(
-                onClick = { if (dueCount > 0) onOpenReview(selectedScope) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (dueCount > 0) MaterialTheme.colorScheme.primaryContainer
@@ -179,11 +185,39 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                 ) {
                     Icon(Icons.Default.Style, contentDescription = null)
                     Spacer(Modifier.width(10.dp))
-                    Text(
-                        if (dueCount > 0) stringResource(R.string.vocab_due_today, dueCount) else stringResource(R.string.vocab_nothing_due),
-                        modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.vocab_due_now, dueCount), style = MaterialTheme.typography.titleSmall)
+                        if (dueCount == 0) {
+                            Text(stringResource(R.string.vocab_nothing_due), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Button(
+                        onClick = { onOpenReview(selectedScope) },
+                        enabled = dueCount > 0
+                    ) {
+                        Text(stringResource(R.string.vocab_review_start))
+                    }
+                }
+            }
+
+            LazyRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(VocabStatus.values().toList()) { status ->
+                    val count = scoped.count { it.status() == status }
+                    val statusColor = status.color()
+                    FilterChip(
+                        selected = selectedStatus == status,
+                        onClick = { selectedStatus = if (selectedStatus == status) null else status },
+                        label = { Text("${stringResource(status.labelRes())}  $count") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = status.containerColor(),
+                            labelColor = statusColor,
+                            selectedContainerColor = statusColor,
+                            selectedLabelColor = if (status == VocabStatus.LEARNING) Color.Black else Color.White
+                        )
                     )
-                    if (dueCount > 0) Icon(Icons.Default.ChevronRight, contentDescription = null)
                 }
             }
 
@@ -212,7 +246,6 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                             onToggleLearned = { vm.setLearned(entry, !entry.learned) },
                             onDelete = { vm.delete(entry) }
                         )
-                        HorizontalDivider()
                     }
                 }
             }
@@ -266,20 +299,30 @@ private fun VocabRow(
     onToggleLearned: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val isDue = !entry.learned && entry.nextReviewAtMs <= System.currentTimeMillis()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    val status = entry.status()
+    val statusColor = status.color()
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp),
+        colors = CardDefaults.cardColors(containerColor = status.containerColor())
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.width(5.dp).heightIn(min = 116.dp).background(statusColor))
+            Column(modifier = Modifier.weight(1f).padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(entry.word, style = MaterialTheme.typography.titleMedium)
-                if (entry.learned) {
-                    Spacer(Modifier.width(8.dp))
-                    AssistChip(onClick = onToggleLearned, label = { Text(stringResource(R.string.vocab_mark_known)) })
+                Text(entry.word, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Surface(
+                    color = statusColor.copy(alpha = 0.16f),
+                    contentColor = statusColor,
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text(
+                        stringResource(status.labelRes()),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
             }
             Text(
@@ -291,18 +334,56 @@ private fun VocabRow(
                 Spacer(Modifier.height(2.dp))
                 Text(entry.meaning, style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(Modifier.height(2.dp))
-            Text(
-                stringResource(R.string.vocab_leitner_box, entry.leitnerBox) + if (isDue) stringResource(R.string.vocab_due_marker) else "",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.width(92.dp),
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        repeat(5) { index ->
+                            Surface(
+                                modifier = Modifier.weight(1f).height(6.dp),
+                                shape = MaterialTheme.shapes.extraSmall,
+                                color = if (index < entry.leitnerBox) leitnerBoxColor(index + 1)
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            ) {}
+                        }
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        nextReviewText(entry),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onToggleLearned) {
+                    Icon(
+                        if (entry.learned) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                        contentDescription = stringResource(
+                            if (entry.learned) R.string.vocab_mark_learning else R.string.vocab_mark_known
+                        ),
+                        tint = if (entry.learned) statusColor else LocalContentColor.current
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.accessibility_delete))
+                }
+            }
         }
-        if (!entry.learned) {
-            TextButton(onClick = onToggleLearned) { Text(stringResource(R.string.vocab_mark_known)) }
-        }
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.accessibility_delete))
-        }
+    }
+}
+
+@Composable
+private fun nextReviewText(entry: VocabEntry): String = when (
+    val bucket = dueBucket(entry.nextReviewAtMs, System.currentTimeMillis(), entry.status() == VocabStatus.LEARNED)
+) {
+    DueBucket.Learned -> stringResource(R.string.vocab_next_review_learned)
+    DueBucket.Today -> stringResource(R.string.vocab_next_review_today)
+    is DueBucket.InDays -> if (bucket.days == 1L) {
+        stringResource(R.string.vocab_next_review_tomorrow)
+    } else {
+        stringResource(R.string.vocab_next_review_in_days, bucket.days)
     }
 }

@@ -117,4 +117,5 @@ object AppearanceState {
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     var readingBackground by mutableStateOf(ReadingBackground.SEPIA)
     var fontScale by mutableStateOf(FontScale.MEDIUM)
+    var highlightSavedWords by mutableStateOf(true)
 }

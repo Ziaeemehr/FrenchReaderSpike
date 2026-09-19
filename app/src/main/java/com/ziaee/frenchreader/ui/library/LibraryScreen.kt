@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileOpen
@@ -60,6 +61,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
@@ -95,6 +98,7 @@ fun LibraryScreen(
     val epubImportDone = stringResource(R.string.epub_import_done)
     val epubImportAlready = stringResource(R.string.epub_import_already)
     val epubImportFailed = stringResource(R.string.epub_import_failed)
+    val batchImportSummary = stringResource(R.string.batch_import_summary)
     val importEpub: (Uri) -> Unit = { uri ->
         Toast.makeText(context, epubImportStarted, Toast.LENGTH_SHORT).show()
         vm.importEpub(
@@ -110,7 +114,17 @@ fun LibraryScreen(
             onError = { Toast.makeText(context, epubImportFailed, Toast.LENGTH_LONG).show() }
         )
     }
-    val openFilePicker = rememberFilePickerLauncher(addTextState, onEpub = importEpub)
+    val showBatchResult: (com.ziaee.frenchreader.content.BatchImportResult) -> Unit = { result ->
+        Toast.makeText(context, batchImportSummary.format(result.imported, result.skipped, result.failed), Toast.LENGTH_LONG).show()
+    }
+    val openFilePicker = rememberFilePickerLauncher(
+        addTextState,
+        onEpub = importEpub,
+        onMultiple = { vm.importFiles(it, showBatchResult) }
+    )
+    val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        uri?.let { vm.importTree(it, showBatchResult) }
+    }
 
     LibraryContent(
         state = state,
@@ -136,6 +150,7 @@ fun LibraryScreen(
         onCreateTagAndAssign = vm::createTagAndAssign,
         onAddText = { addTextState.openBlank() },
         onFilePickerClick = openFilePicker,
+        onFolderPickerClick = { folderPicker.launch(null) },
         onOpenHome = onOpenHome,
         onOpenResources = onOpenResources,
         onToggleSelection = vm::toggleSelection,
@@ -166,6 +181,7 @@ fun LibraryContent(
     onDelete: (TextDocument) -> Unit,
     onAddText: () -> Unit,
     onFilePickerClick: () -> Unit,
+    onFolderPickerClick: () -> Unit = {},
     onOpenHome: () -> Unit,
     onOpenResources: () -> Unit = {},
     onEdit: (TextDocument, String, String) -> Unit = { _, _, _ -> },
@@ -250,6 +266,9 @@ fun LibraryContent(
                         }
                         IconButton(onClick = onFilePickerClick) {
                             Icon(Icons.Default.FileOpen, contentDescription = stringResource(R.string.accessibility_import_file))
+                        }
+                        IconButton(onClick = onFolderPickerClick) {
+                            Icon(Icons.Default.CreateNewFolder, contentDescription = stringResource(R.string.accessibility_import_folder))
                         }
                         Box {
                             IconButton(onClick = { sortMenuExpanded = true }) {

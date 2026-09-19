@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Application
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,20 +22,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.ReviewLogEntry
+import com.ziaee.frenchreader.data.VocabAnswer
 import com.ziaee.frenchreader.data.VocabEntry
+import com.ziaee.frenchreader.data.VocabSrs
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import kotlinx.coroutines.launch
-
-/**
- * A simple 5-box Leitner scheduler. A correct answer moves the card up a
- * box (capped at 5, at which point it's treated as learned/graduated and
- * drops out of the review queue); an incorrect answer sends it straight
- * back to box 1 and resurfaces it soon (short enough to reappear later in
- * the same or the next session, not weeks away).
- */
-private const val DAY_MS = 86_400_000L
-private const val FORGOT_DELAY_MS = 10 * 60_000L
-private val BOX_INTERVAL_DAYS = mapOf(1 to 1L, 2 to 3L, 3 to 7L, 4 to 16L, 5 to 30L)
 
 class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
@@ -78,33 +70,19 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun answer(knew: Boolean) {
+    fun answer(answer: VocabAnswer) {
         val entry = current ?: return
         player.stop()
         sentenceAudioError = false
         val now = System.currentTimeMillis()
-        val updated = if (knew) {
-            val newBox = (entry.leitnerBox + 1).coerceAtMost(5)
-            entry.copy(
-                leitnerBox = newBox,
-                nextReviewAtMs = now + (BOX_INTERVAL_DAYS[newBox] ?: 30L) * DAY_MS,
-                lastReviewedAtMs = now,
-                learned = newBox >= 5
-            )
-        } else {
-            entry.copy(
-                leitnerBox = 1,
-                nextReviewAtMs = now + FORGOT_DELAY_MS,
-                lastReviewedAtMs = now
-            )
-        }
+        val updated = VocabSrs.apply(entry, answer, now)
         viewModelScope.launch {
             db.vocabDao().update(updated)
             db.reviewLogDao().insert(
                 ReviewLogEntry(
                     entryId = entry.id,
                     timestampMs = now,
-                    knew = knew,
+                    knew = answer != VocabAnswer.FORGOT,
                     boxBefore = entry.leitnerBox,
                     boxAfter = updated.leitnerBox
                 )
@@ -159,9 +137,22 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
     val vm: VocabReviewViewModel = viewModel()
     var revealed by remember { mutableStateOf(false) }
+    var showDictionary by remember { mutableStateOf(false) }
 
     LaunchedEffect(scope) { vm.start(scope) }
-    LaunchedEffect(vm.current) { revealed = false }
+    LaunchedEffect(vm.current) { revealed = false; showDictionary = false }
+
+    vm.current?.takeIf { showDictionary }?.let { e ->
+        DictionarySheet(
+            textId = e.textId,
+            word = e.word,
+            sentence = e.sentence,
+            initialMeaning = e.meaning,
+            initialListId = e.listId,
+            isNew = false,
+            onDismiss = { showDictionary = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -206,10 +197,32 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(entry.word, style = MaterialTheme.typography.headlineMedium)
+                            Spacer(Modifier.height(14.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                repeat(5) { index ->
+                                    Surface(
+                                        modifier = Modifier.weight(1f).height(6.dp),
+                                        shape = MaterialTheme.shapes.extraSmall,
+                                        color = if (index < entry.leitnerBox) {
+                                            leitnerBoxColor(index + 1)
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                        }
+                                    ) {}
+                                }
+                            }
                             if (revealed) {
                                 Spacer(Modifier.height(14.dp))
                                 HorizontalDivider()
                                 Spacer(Modifier.height(14.dp))
+                                TextButton(onClick = { showDictionary = true }) {
+                                    Icon(Icons.Default.Translate, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(stringResource(R.string.vocab_open_dictionary))
+                                }
                                 if (!entry.meaning.isNullOrBlank()) {
                                     Text(entry.meaning, style = MaterialTheme.typography.titleMedium)
                                     Spacer(Modifier.height(8.dp))
@@ -266,25 +279,78 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                     } else {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            OutlinedButton(onClick = { vm.answer(false) }, modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.vocab_answer_forgot))
+                            AnswerButton(
+                                interval = formatInterval(VocabSrs.previewIntervalMs(entry, VocabAnswer.FORGOT)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { vm.answer(VocabAnswer.FORGOT) },
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.vocab_answer_forgot)) }
                             }
-                            Button(onClick = { vm.answer(true) }, modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.vocab_answer_knew))
+                            AnswerButton(
+                                interval = formatInterval(VocabSrs.previewIntervalMs(entry, VocabAnswer.HARD)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                FilledTonalButton(
+                                    onClick = { vm.answer(VocabAnswer.HARD) },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.vocab_answer_hard)) }
+                            }
+                            AnswerButton(
+                                interval = formatInterval(VocabSrs.previewIntervalMs(entry, VocabAnswer.KNEW)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Button(
+                                    onClick = { vm.answer(VocabAnswer.KNEW) },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.vocab_answer_knew)) }
                             }
                         }
                     }
-
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        stringResource(R.string.vocab_current_box, entry.leitnerBox),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun AnswerButton(
+    interval: String,
+    modifier: Modifier = Modifier,
+    button: @Composable () -> Unit
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        button()
+        Spacer(Modifier.height(4.dp))
+        Text(
+            interval,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun formatInterval(ms: Long): String {
+    if (ms < 60 * 60_000L) {
+        val minutes = (ms / 60_000L).coerceAtLeast(1)
+        return stringResource(
+            if (minutes == 1L) R.string.interval_minute else R.string.interval_minutes,
+            minutes
+        )
+    }
+    if (ms < VocabSrs.DAY_MS) {
+        val hours = ((ms + 30 * 60_000L) / (60 * 60_000L)).coerceAtLeast(1)
+        return stringResource(
+            if (hours == 1L) R.string.interval_hour else R.string.interval_hours,
+            hours
+        )
+    }
+    val days = (ms + VocabSrs.DAY_MS - 1) / VocabSrs.DAY_MS
+    return stringResource(if (days == 1L) R.string.interval_day else R.string.interval_days, days)
 }

@@ -141,12 +141,18 @@ fun AddTextHost(
 @Composable
 fun rememberFilePickerLauncher(
     state: AddTextUiState,
-    onEpub: (Uri) -> Unit = {}
+    onEpub: (Uri) -> Unit = {},
+    onMultiple: (List<Uri>) -> Unit = {}
 ): () -> Unit {
     val context = LocalContext.current
     val defaultTitle = stringResource(R.string.text_untitled)
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        uri ?: return@rememberLauncherForActivityResult
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        if (uris.size > 1) {
+            onMultiple(uris)
+            return@rememberLauncherForActivityResult
+        }
+        val uri = uris.single()
         val displayName = queryDisplayName(context, uri, stripExtension = false)
         val isEpub = context.contentResolver.getType(uri) == "application/epub+zip" ||
             displayName?.endsWith(".epub", ignoreCase = true) == true

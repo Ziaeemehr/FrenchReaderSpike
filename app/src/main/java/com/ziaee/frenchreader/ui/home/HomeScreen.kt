@@ -2,6 +2,8 @@ package com.ziaee.frenchreader.ui.home
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -93,6 +96,7 @@ fun HomeScreen(
     val epubImportDone = stringResource(R.string.epub_import_done)
     val epubImportAlready = stringResource(R.string.epub_import_already)
     val epubImportFailed = stringResource(R.string.epub_import_failed)
+    val batchImportSummary = stringResource(R.string.batch_import_summary)
     val importEpub: (Uri) -> Unit = { uri ->
         Toast.makeText(context, epubImportStarted, Toast.LENGTH_SHORT).show()
         vm.importEpub(
@@ -109,7 +113,30 @@ fun HomeScreen(
             onError = { Toast.makeText(context, epubImportFailed, Toast.LENGTH_LONG).show() }
         )
     }
-    val openFilePicker = rememberFilePickerLauncher(addTextState, onEpub = importEpub)
+    val openFilePicker = rememberFilePickerLauncher(
+        addTextState,
+        onEpub = importEpub,
+        onMultiple = { uris ->
+            vm.importFiles(uris) { result ->
+                Toast.makeText(
+                    context,
+                    batchImportSummary.format(result.imported, result.skipped, result.failed),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    )
+    val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        uri?.let {
+            vm.importTree(it) { result ->
+                Toast.makeText(
+                    context,
+                    batchImportSummary.format(result.imported, result.skipped, result.failed),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     LaunchedEffect(vm.contentSearchState) {
         if (vm.contentSearchState is ContentSearchUiState.Error) {
@@ -133,6 +160,7 @@ fun HomeScreen(
         snackbarHostState = snackbarHostState,
         onSearchClick = { showFindArticleSheet = true },
         onFilePickerClick = openFilePicker,
+        onFolderPickerClick = { folderPicker.launch(null) },
         onOpenVocab = onOpenVocab,
         onOpenStatistics = onOpenStatistics,
         onOpenSettings = onOpenSettings,
@@ -177,6 +205,7 @@ fun HomeContent(
     snackbarHostState: SnackbarHostState,
     onSearchClick: () -> Unit,
     onFilePickerClick: () -> Unit,
+    onFolderPickerClick: () -> Unit = {},
     onOpenVocab: () -> Unit,
     onOpenStatistics: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -221,6 +250,11 @@ fun HomeContent(
                             text = { Text(stringResource(R.string.home_action_import_file)) },
                             leadingIcon = { Icon(Icons.Default.FileOpen, contentDescription = null) },
                             onClick = { moreMenuExpanded = false; onFilePickerClick() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.home_action_import_folder)) },
+                            leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onFolderPickerClick() }
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.home_action_vocabulary)) },

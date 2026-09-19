@@ -12,6 +12,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.data.VocabStatus
+import com.ziaee.frenchreader.data.status
+import com.ziaee.frenchreader.content.SavedVocab
+import com.ziaee.frenchreader.content.buildVocabStatusMap
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
 import com.ziaee.frenchreader.text.ParsedBlock
@@ -23,8 +27,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -120,6 +127,12 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _state = MutableStateFlow(ReadingUiState())
     val state: StateFlow<ReadingUiState> = _state.asStateFlow()
+    val savedVocabStatuses: StateFlow<Map<String, VocabStatus>> = db.vocabDao()
+        .observeAll()
+        .map { entries ->
+            buildVocabStatusMap(entries.map { SavedVocab(it.word, it.status()) })
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     private var audioWindowJob: Job? = null
     private var translationJob: Job? = null

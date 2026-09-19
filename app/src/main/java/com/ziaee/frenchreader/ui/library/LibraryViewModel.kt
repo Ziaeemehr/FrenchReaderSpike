@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.ziaee.frenchreader.content.ArticleImportRepository
 import com.ziaee.frenchreader.content.EpubImportRepository
 import com.ziaee.frenchreader.content.EpubImportResult
+import com.ziaee.frenchreader.content.BatchImportRepository
+import com.ziaee.frenchreader.content.BatchImportResult
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.LibraryTag
@@ -34,6 +36,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
     private val epubImportRepository = EpubImportRepository(app, db)
+    private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
 
     // Library only ever deletes -- it never imports a headline, so no
     // ContentSource needs to be registered here.
@@ -344,6 +347,20 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
                 android.util.Log.w("EpubImport", "EPUB import failed", error)
                 onError(error.message.orEmpty())
             }
+        }
+    }
+
+    fun importFiles(uris: List<Uri>, onDone: (BatchImportResult) -> Unit) {
+        viewModelScope.launch {
+            onDone(runCatching { batchImportRepository.importAll(uris) }
+                .getOrElse { BatchImportResult(0, 0, uris.size, null) })
+        }
+    }
+
+    fun importTree(uri: Uri, onDone: (BatchImportResult) -> Unit) {
+        viewModelScope.launch {
+            onDone(runCatching { batchImportRepository.importTree(uri) }
+                .getOrElse { BatchImportResult(0, 0, 1, null) })
         }
     }
 }
