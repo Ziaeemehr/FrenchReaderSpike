@@ -47,7 +47,24 @@ def split_sentences(text: str) -> list[str]:
         replacements[marker] = abbreviation
         protected = protected.replace(abbreviation, marker)
     sentences = re.split(r"(?<=[.!?…])\s+", protected)
-    return [restore_abbreviations(sentence.strip(), replacements) for sentence in sentences if sentence.strip()]
+    merged: list[str] = []
+    for sentence in sentences:
+        sentence = restore_abbreviations(sentence.strip(), replacements)
+        if not sentence:
+            continue
+        if merged and not re.search(r"\w", sentence):
+            merged[-1] = f"{merged[-1]} {sentence}"
+        else:
+            merged.append(sentence)
+    return merged
+
+
+def clean_for_tts(text: str) -> str:
+    """Drop quotes, brackets and symbols XTTS vocalizes as noise; keep sentence punctuation."""
+    text = re.sub(r"[«»“”„‟\"‹›\[\]{}()<>*_#~^|\\/=+@]", " ", text)
+    text = re.sub(r"\s*[—–]+\s*", ", ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 def restore_abbreviations(text: str, replacements: dict[str, str]) -> str:
@@ -106,8 +123,11 @@ def synthesize(request: SynthesisRequest):
 
     with synthesis_lock:
         for index, sentence in enumerate(sentences):
+            tts_text = clean_for_tts(sentence)
+            if not re.search(r"\w", tts_text):
+                tts_text = "."
             samples = to_pcm16(
-                tts.tts(text=sentence, speaker=request.speaker, language=request.language, speed=speed)
+                tts.tts(text=tts_text, speaker=request.speaker, language=request.language, speed=speed)
             )
             boundaries.append(
                 {
