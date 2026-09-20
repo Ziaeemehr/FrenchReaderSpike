@@ -73,7 +73,7 @@ import java.io.File
 import kotlinx.coroutines.launch
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
-private val EPUB_IMAGE_REF = Regex("^[0-9a-f]+/[0-9]+_[0-9]+\\.jpg$")
+private val EPUB_IMAGE_REF = Regex("^[0-9a-f]+/[A-Za-z0-9][A-Za-z0-9_-]*\\.jpg$")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

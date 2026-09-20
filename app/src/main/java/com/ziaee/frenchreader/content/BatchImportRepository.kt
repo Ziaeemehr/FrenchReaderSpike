@@ -10,6 +10,8 @@ import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.insertTextDocument
+import com.ziaee.frenchreader.images.ArticleImageStorage
+import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.ui.shared.queryDisplayName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,11 +27,16 @@ data class BatchImportResult(
     val folderId: Long?
 )
 
+private val localImageLine = Regex("^!\\[([^]]*)]\\((?!epubimg:|https?:)([^)]+)\\)$")
+
+private val parentDocIds = java.util.concurrent.ConcurrentHashMap<String, String>()
+
 class BatchImportRepository(
     private val context: Context,
     private val db: AppDatabase,
     private val bodyStore: TextBodyStorage = TextBodyStore(context),
-    private val epubRepository: EpubImportRepository = EpubImportRepository(context, db)
+    private val epubRepository: EpubImportRepository = EpubImportRepository(context, db),
+    private val imageStore: ArticleImageStorage = ArticleImageStore(context)
 ) {
     suspend fun importAll(uris: List<Uri>, folderName: String? = null): BatchImportResult =
         withContext(Dispatchers.IO) {
@@ -38,10 +45,10 @@ class BatchImportRepository(
 
     suspend fun importTree(treeUri: Uri): BatchImportResult = withContext(Dispatchers.IO) {
         val name = queryTreeName(treeUri) ?: datedFolderName()
-        importUris(listTreeFiles(treeUri), name)
+        importUris(listTreeFiles(treeUri), name, treeUri)
     }
 
-    private suspend fun importUris(uris: List<Uri>, folderName: String?): BatchImportResult {
+    private suspend fun importUris(uris: List<Uri>, folderName: String?, treeUri: Uri? = null): BatchImportResult {
             val folderId = folderName?.let { createFolder(it) }
             var imported = 0
             var skipped = 0
@@ -53,7 +60,7 @@ class BatchImportRepository(
                         if (result.importedCount > 0) result.firstTextId?.let { db.textDao().setFolder(it, folderId) }
                         if (result.importedCount == 0) skipped++ else imported++
                     } else {
-                        when (importText(uri, folderId)) {
+                        when (importText(uri, folderId, treeUri)) {
                             true -> imported++
                             false -> skipped++
                         }
@@ -65,13 +72,14 @@ class BatchImportRepository(
             return BatchImportResult(imported, skipped, failed, folderId)
     }
 
-    private suspend fun importText(uri: Uri, folderId: Long?): Boolean {
+    private suspend fun importText(uri: Uri, folderId: Long?, treeUri: Uri?): Boolean {
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             ?: error("Unable to open document")
         val content = bytes.toString(Charsets.UTF_8)
         val externalKey = "file:${sha1(bytes)}"
         val displayName = queryDisplayName(context, uri, stripExtension = false) ?: "Untitled.txt"
         val parsed = parseFrontMatter(content)
+        val body = resolveLocalImages(parsed.body, uri, treeUri)
         return db.withTransaction {
             if (db.textDao().findByExternalKey(externalKey) != null) return@withTransaction false
             insertTextDocument(
@@ -83,10 +91,49 @@ class BatchImportRepository(
                     externalKey = externalKey,
                     folderId = folderId
                 ),
-                parsed.body
+                body
             )
             true
         }
+    }
+
+    /** Rewrites standalone `![alt](relative/path.jpg)` lines to the reader's `epubimg:` form when the
+     * image can be read from the imported tree; otherwise drops the line so it never reaches TTS. */
+    private suspend fun resolveLocalImages(body: String, docUri: Uri, treeUri: Uri?): String {
+        val out = mutableListOf<String>()
+        for (line in body.lines()) {
+            val m = localImageLine.matchEntire(line.trim())
+            if (m == null) { out += line; continue }
+            val bytes = treeUri?.let { readSibling(docUri, it, m.groupValues[2]) }
+            val name = m.groupValues[2].substringAfterLast('/')
+            val hash = bytes?.let(::sha1)
+            val stored = if (bytes != null && hash != null) imageStore.storeBytes("text_images/epub_$hash/$name", bytes) else null
+            if (stored != null) out += "![${m.groupValues[1]}](epubimg:$hash/$name)"
+        }
+        return out.joinToString("\n").replace(Regex("\n{3,}"), "\n\n")
+    }
+
+    private fun readSibling(docUri: Uri, treeUri: Uri, relative: String): ByteArray? = try {
+        var dirId = parentDocIds[docUri.toString()]
+        val parts = relative.split('/').filter { it.isNotEmpty() && it != "." }
+        parts.forEachIndexed { index, part ->
+            dirId = dirId?.let { findChild(treeUri, it, part) }
+        }
+        dirId?.let { id ->
+            context.contentResolver.openInputStream(DocumentsContract.buildDocumentUriUsingTree(treeUri, id))?.use { it.readBytes() }
+        }
+    } catch (_: Exception) { null }
+
+    private fun findChild(treeUri: Uri, parentId: String, name: String): String? {
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentId)
+        context.contentResolver.query(
+            childrenUri,
+            arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+            null, null, null
+        )?.use { c ->
+            while (c.moveToNext()) if (c.getString(1) == name) return c.getString(0)
+        }
+        return null
     }
 
     private suspend fun createFolder(name: String): Long = db.withTransaction {
@@ -118,7 +165,7 @@ class BatchImportRepository(
                     val type = cursor.getString(typeColumn)
                     if (type == DocumentsContract.Document.MIME_TYPE_DIR) visit(id)
                     else if (isTextName(cursor.getString(nameColumn))) {
-                        result += DocumentsContract.buildDocumentUriUsingTree(treeUri, id)
+                        result += DocumentsContract.buildDocumentUriUsingTree(treeUri, id).also { parentDocIds[it.toString()] = documentId }
                     }
                 }
             }
