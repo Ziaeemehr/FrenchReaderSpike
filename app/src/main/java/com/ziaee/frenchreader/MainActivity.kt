@@ -54,10 +54,14 @@ class MainActivity : AppCompatActivity() {
         AppearanceState.themeMode = AppearancePrefs.getThemeMode(this)
         AppearanceState.readingBackground = AppearancePrefs.getReadingBackground(this)
         AppearanceState.fontScale = AppearancePrefs.getFontScale(this)
+        AppearanceState.highlightColor = AppearancePrefs.getHighlightColor(this)
         AppearanceState.highlightSavedWords = AppearancePrefs.getHighlightSavedWords(this)
 
         setContent {
-            FrenchReaderTheme(themeMode = AppearanceState.themeMode) {
+            FrenchReaderTheme(
+                themeMode = AppearanceState.themeMode,
+                readingBackground = AppearanceState.readingBackground
+            ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost()
                 }
@@ -166,14 +170,16 @@ private fun AppNavHost() {
             LibraryScreen(
                 onOpenText = { id -> navController.navigate("reading/$id") },
                 onOpenHome = { navigateToTab("home") },
-                onOpenResources = { navigateToTab("resources") }
+                onOpenResources = { navigateToTab("resources") },
+                onReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
             )
         }
         composable("resources") {
             ResourcesScreen(
                 onOpenHome = { navigateToTab("home") },
                 onOpenLibrary = { navigateToTab("library") },
-                onAddText = { navigateToTab("home") }
+                onAddText = { navigateToTab("home") },
+                onReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
             )
         }
         composable(

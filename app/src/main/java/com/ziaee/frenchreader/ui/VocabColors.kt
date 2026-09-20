@@ -11,6 +11,7 @@ import kotlin.math.ceil
 @Composable
 fun VocabStatus.color(): Color = color(isSystemInDarkTheme())
 
+/** Accent color for dots, rules, icons, and other non-text status cues. */
 fun VocabStatus.color(dark: Boolean): Color {
     return when (this) {
         VocabStatus.NEW -> if (dark) Color(0xFFC4B5FD) else Color(0xFF6D28D9)
@@ -23,6 +24,7 @@ fun VocabStatus.color(dark: Boolean): Color {
 @Composable
 fun VocabStatus.containerColor(): Color = containerColor(isSystemInDarkTheme())
 
+/** Tint intended to sit behind the theme's on-surface color or reading-page ink. */
 fun VocabStatus.containerColor(dark: Boolean): Color {
     return when (this) {
         VocabStatus.NEW -> if (dark) Color(0xFF2E2547) else Color(0xFFF3EEFF)

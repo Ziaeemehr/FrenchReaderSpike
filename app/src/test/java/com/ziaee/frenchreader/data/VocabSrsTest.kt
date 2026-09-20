@@ -4,50 +4,72 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.ZoneId
 
 class VocabSrsTest {
     private val now = 1_000_000L
+    private val utc = ZoneId.of("UTC")
 
     @Test
-    fun `forgot returns card to box one and schedules it in ten minutes`() {
-        val result = VocabSrs.apply(entry(box = 4, learned = true), VocabAnswer.FORGOT, now)
+    fun `again returns card to box one and schedules the next calendar day`() {
+        val result = VocabSrs.apply(entry(box = 4, learned = true), VocabAnswer.FORGOT, now, zoneId = utc)
 
         assertEquals(1, result.leitnerBox)
-        assertEquals(now + VocabSrs.FORGOT_DELAY_MS, result.nextReviewAtMs)
+        assertEquals(VocabSrs.DAY_MS, result.nextReviewAtMs)
         assertEquals(now, result.lastReviewedAtMs)
         assertFalse(result.learned)
     }
 
     @Test
-    fun `hard keeps the box and uses half its interval`() {
+    fun `hard keeps the box and uses its full interval`() {
         val source = entry(box = 3)
 
-        val result = VocabSrs.apply(source, VocabAnswer.HARD, now)
+        val result = VocabSrs.apply(source, VocabAnswer.HARD, now, zoneId = utc)
 
         assertEquals(3, result.leitnerBox)
-        assertEquals(now + 7L * VocabSrs.DAY_MS / 2, result.nextReviewAtMs)
-        assertEquals(7L * VocabSrs.DAY_MS / 2, VocabSrs.previewIntervalMs(source, VocabAnswer.HARD))
+        assertEquals(4L * VocabSrs.DAY_MS, result.nextReviewAtMs)
+        assertEquals(4L, VocabSrs.previewIntervalDays(source, VocabAnswer.HARD))
     }
 
     @Test
     fun `knew advances the box and uses the new box interval`() {
-        val result = VocabSrs.apply(entry(box = 2), VocabAnswer.KNEW, now)
+        val result = VocabSrs.apply(entry(box = 2), VocabAnswer.KNEW, now, zoneId = utc)
 
         assertEquals(3, result.leitnerBox)
-        assertEquals(now + 7L * VocabSrs.DAY_MS, result.nextReviewAtMs)
+        assertEquals(4L * VocabSrs.DAY_MS, result.nextReviewAtMs)
         assertFalse(result.learned)
     }
 
     @Test
-    fun `knew caps at box five and marks the card learned`() {
-        val promoted = VocabSrs.apply(entry(box = 4), VocabAnswer.KNEW, now)
-        val capped = VocabSrs.apply(entry(box = 5), VocabAnswer.KNEW, now)
+    fun `good caps at box five and keeps it in rotation`() {
+        val promoted = VocabSrs.apply(entry(box = 4), VocabAnswer.KNEW, now, zoneId = utc)
+        val capped = VocabSrs.apply(entry(box = 5), VocabAnswer.KNEW, now, zoneId = utc)
 
         assertEquals(5, promoted.leitnerBox)
-        assertTrue(promoted.learned)
+        assertFalse(promoted.learned)
         assertEquals(5, capped.leitnerBox)
-        assertEquals(now + 30L * VocabSrs.DAY_MS, capped.nextReviewAtMs)
-        assertTrue(capped.learned)
+        assertEquals(16L * VocabSrs.DAY_MS, capped.nextReviewAtMs)
+        assertFalse(capped.learned)
+    }
+
+    @Test
+    fun `custom intervals are applied from the start of the current day`() {
+        val intervals = listOf(2L, 5L, 9L, 20L, 40L)
+
+        val result = VocabSrs.apply(entry(box = 1), VocabAnswer.KNEW, now, intervals, utc)
+
+        assertEquals(2, result.leitnerBox)
+        assertEquals(5L * VocabSrs.DAY_MS, result.nextReviewAtMs)
+        assertEquals(5L, VocabSrs.previewIntervalDays(entry(box = 1), VocabAnswer.KNEW, intervals))
+    }
+
+    @Test
+    fun `overdue timing does not shorten or extend the configured interval`() {
+        val muchLater = 20L * VocabSrs.DAY_MS + now
+
+        val result = VocabSrs.apply(entry(box = 2), VocabAnswer.HARD, muchLater, zoneId = utc)
+
+        assertEquals(22L * VocabSrs.DAY_MS, result.nextReviewAtMs)
     }
 
     @Test

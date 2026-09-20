@@ -15,9 +15,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -207,15 +207,25 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                 items(VocabStatus.values().toList()) { status ->
                     val count = scoped.count { it.status() == status }
                     val statusColor = status.color()
+                    val containerColor = status.containerColor()
                     FilterChip(
                         selected = selectedStatus == status,
                         onClick = { selectedStatus = if (selectedStatus == status) null else status },
+                        leadingIcon = {
+                            Box(
+                                Modifier
+                                    .size(8.dp)
+                                    .background(statusColor, RoundedCornerShape(50))
+                            )
+                        },
                         label = { Text("${stringResource(status.labelRes())}  $count") },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = status.containerColor(),
-                            labelColor = statusColor,
-                            selectedContainerColor = statusColor,
-                            selectedLabelColor = if (status == VocabStatus.LEARNING) Color.Black else Color.White
+                            containerColor = containerColor,
+                            labelColor = MaterialTheme.colorScheme.onSurface,
+                            iconColor = statusColor,
+                            selectedContainerColor = containerColor,
+                            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                            selectedLeadingIconColor = statusColor
                         )
                     )
                 }
@@ -303,7 +313,10 @@ private fun VocabRow(
     val statusColor = status.color()
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp),
-        colors = CardDefaults.cardColors(containerColor = status.containerColor())
+        colors = CardDefaults.cardColors(
+            containerColor = status.containerColor(),
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -314,15 +327,25 @@ private fun VocabRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(entry.word, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Surface(
-                    color = statusColor.copy(alpha = 0.16f),
-                    contentColor = statusColor,
+                    color = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = RoundedCornerShape(50)
                 ) {
-                    Text(
-                        stringResource(status.labelRes()),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Box(
+                            Modifier
+                                .size(7.dp)
+                                .background(statusColor, RoundedCornerShape(50))
+                        )
+                        Text(
+                            stringResource(status.labelRes()),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                 }
             }
             Text(
@@ -352,8 +375,7 @@ private fun VocabRow(
                     Spacer(Modifier.width(10.dp))
                     Text(
                         nextReviewText(entry),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }

@@ -2,11 +2,12 @@ package com.ziaee.frenchreader.data
 
 import android.content.Context
 import com.ziaee.frenchreader.ui.theme.FontScale
+import com.ziaee.frenchreader.ui.theme.HighlightColor
 import com.ziaee.frenchreader.ui.theme.ReadingBackground
 import com.ziaee.frenchreader.ui.theme.ThemeMode
 
 /**
- * Persists the three appearance choices from the Settings screen -- see
+ * Persists the appearance choices from the Settings screen -- see
  * ROADMAP.md section 7. Follows the same object + SharedPreferences +
  * Context-param shape as VocabPrefs.kt. Each value is stored by its enum
  * name; an unrecognized or missing name falls back to that setting's
@@ -18,6 +19,7 @@ object AppearancePrefs {
     private const val KEY_READING_BACKGROUND = "reading_background"
     private const val KEY_FONT_SCALE = "font_scale"
     private const val KEY_HIGHLIGHT_SAVED_WORDS = "highlight_saved_words"
+    private const val KEY_HIGHLIGHT_COLOR = "highlight_color"
 
     fun getThemeMode(context: Context): ThemeMode = read(context, KEY_THEME_MODE, ThemeMode.SYSTEM)
     fun setThemeMode(context: Context, mode: ThemeMode) = write(context, KEY_THEME_MODE, mode.name)
@@ -29,6 +31,11 @@ object AppearancePrefs {
 
     fun getFontScale(context: Context): FontScale = read(context, KEY_FONT_SCALE, FontScale.MEDIUM)
     fun setFontScale(context: Context, scale: FontScale) = write(context, KEY_FONT_SCALE, scale.name)
+
+    fun getHighlightColor(context: Context): HighlightColor =
+        read(context, KEY_HIGHLIGHT_COLOR, HighlightColor.YELLOW)
+    fun setHighlightColor(context: Context, color: HighlightColor) =
+        write(context, KEY_HIGHLIGHT_COLOR, color.name)
 
     fun getHighlightSavedWords(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

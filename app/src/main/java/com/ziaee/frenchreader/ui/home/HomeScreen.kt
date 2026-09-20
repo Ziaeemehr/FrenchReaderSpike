@@ -282,6 +282,7 @@ fun HomeContent(
                 onHome = {},
                 onLibrary = onOpenLibrary,
                 onAddText = onAddTextClick,
+                onReview = onStartReview,
                 onResources = onOpenGradedReaders
             )
         }
@@ -307,6 +308,15 @@ fun HomeContent(
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
                 }
+                state.continueReading?.let { doc ->
+                    item {
+                        ContinueReadingCard(
+                            doc = doc,
+                            body = state.bodyByTextId[doc.id].orEmpty(),
+                            onClick = { onOpenText(doc.id) }
+                        )
+                    }
+                }
                 item {
                     TodayNewsSection(
                         headlines = state.headlines,
@@ -324,15 +334,6 @@ fun HomeContent(
                             .fillMaxWidth()
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
-                }
-                state.continueReading?.let { doc ->
-                    item {
-                        ContinueReadingCard(
-                            doc = doc,
-                            body = state.bodyByTextId[doc.id].orEmpty(),
-                            onClick = { onOpenText(doc.id) }
-                        )
-                    }
                 }
                 item {
                     RecentTextsSection(

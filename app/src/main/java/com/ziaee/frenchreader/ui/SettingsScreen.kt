@@ -1,46 +1,40 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Activity
+import android.app.TimePickerDialog
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.backup.AuthorizationOutcome
 import com.ziaee.frenchreader.backup.BackupPrefs
@@ -52,11 +46,10 @@ import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.AppLanguage
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
+import com.ziaee.frenchreader.data.VocabPrefs
+import com.ziaee.frenchreader.data.VocabReviewReminder
 import com.ziaee.frenchreader.data.applyAppLanguage
-import com.ziaee.frenchreader.ui.theme.AppearanceState
-import com.ziaee.frenchreader.ui.theme.FontScale
-import com.ziaee.frenchreader.ui.theme.ReadingBackground
-import com.ziaee.frenchreader.ui.theme.ThemeMode
+import com.ziaee.frenchreader.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -80,112 +73,249 @@ fun SettingsScreen(onBack: () -> Unit) {
                 title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back))
                     }
                 }
             )
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+            Modifier.fillMaxWidth().padding(padding).verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Text(stringResource(R.string.language_title), style = MaterialTheme.typography.titleMedium)
-            AppLanguage.entries.forEach { language ->
-                SettingsRadioRow(
-                    label = stringResource(language.labelResource()),
-                    selected = appLanguage == language,
-                    onClick = {
-                        LocalePrefs.set(context, language)
-                        applyAppLanguage(language)
-                    }
-                )
+            SettingsSectionHeader(R.string.settings_section_appearance)
+            CompactSettingLabel(R.string.language_title)
+            CompactChoiceRow(AppLanguage.entries, appLanguage, { stringResource(it.labelResource()) }) { language ->
+                LocalePrefs.set(context, language)
+                applyAppLanguage(language)
+            }
+            CompactSettingLabel(R.string.theme_title)
+            CompactChoiceRow(ThemeMode.entries, AppearanceState.themeMode, { stringResource(it.labelResource()) }) { mode ->
+                AppearanceState.themeMode = mode
+                AppearancePrefs.setThemeMode(context, mode)
             }
 
-            Text(
-                stringResource(R.string.theme_title),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 20.dp)
-            )
-            SettingsRadioRow(
-                label = stringResource(R.string.theme_system),
-                selected = AppearanceState.themeMode == ThemeMode.SYSTEM,
-                onClick = {
-                    AppearanceState.themeMode = ThemeMode.SYSTEM
-                    AppearancePrefs.setThemeMode(context, ThemeMode.SYSTEM)
-                }
-            )
-            SettingsRadioRow(
-                label = stringResource(R.string.theme_light),
-                selected = AppearanceState.themeMode == ThemeMode.LIGHT,
-                onClick = {
-                    AppearanceState.themeMode = ThemeMode.LIGHT
-                    AppearancePrefs.setThemeMode(context, ThemeMode.LIGHT)
-                }
-            )
-            SettingsRadioRow(
-                label = stringResource(R.string.theme_dark),
-                selected = AppearanceState.themeMode == ThemeMode.DARK,
-                onClick = {
-                    AppearanceState.themeMode = ThemeMode.DARK
-                    AppearancePrefs.setThemeMode(context, ThemeMode.DARK)
-                }
-            )
-
-            Text(stringResource(R.string.reading_background_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
-            SettingsRadioRow(
-                label = stringResource(R.string.reading_background_sepia),
-                selected = AppearanceState.readingBackground == ReadingBackground.SEPIA,
-                onClick = {
-                    AppearanceState.readingBackground = ReadingBackground.SEPIA
-                    AppearancePrefs.setReadingBackground(context, ReadingBackground.SEPIA)
-                }
-            )
-            SettingsRadioRow(
-                label = stringResource(R.string.reading_background_white),
-                selected = AppearanceState.readingBackground == ReadingBackground.WHITE,
-                onClick = {
-                    AppearanceState.readingBackground = ReadingBackground.WHITE
-                    AppearancePrefs.setReadingBackground(context, ReadingBackground.WHITE)
-                }
-            )
-            SettingsRadioRow(
-                label = stringResource(R.string.reading_background_dark),
-                selected = AppearanceState.readingBackground == ReadingBackground.DARK,
-                onClick = {
-                    AppearanceState.readingBackground = ReadingBackground.DARK
-                    AppearancePrefs.setReadingBackground(context, ReadingBackground.DARK)
-                }
-            )
-
-            Text(stringResource(R.string.reading_font_scale_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
-            FontScale.entries.forEach { scale ->
-                SettingsRadioRow(
-                    label = stringResource(scale.labelResource()),
-                    selected = AppearanceState.fontScale == scale,
-                    onClick = {
-                        AppearanceState.fontScale = scale
-                        AppearancePrefs.setFontScale(context, scale)
-                    }
-                )
+            SectionDivider()
+            SettingsSectionHeader(R.string.settings_section_reading)
+            CompactSettingLabel(R.string.reading_background_title)
+            ColorGrid(
+                entries = ReadingBackground.entries,
+                selected = AppearanceState.readingBackground,
+                color = ::backgroundSwatch,
+                label = { stringResource(it.labelResource()) }
+            ) { background ->
+                AppearanceState.readingBackground = background
+                AppearancePrefs.setReadingBackground(context, background)
+            }
+            CompactSettingLabel(R.string.sync_highlight_color)
+            ColorGrid(
+                entries = HighlightColor.entries,
+                selected = AppearanceState.highlightColor,
+                color = { highlightSwatch(it, AppearanceState.readingBackground in listOf(ReadingBackground.DARK, ReadingBackground.BLACK)) },
+                label = { stringResource(it.labelResource()) }
+            ) { color ->
+                AppearanceState.highlightColor = color
+                AppearancePrefs.setHighlightColor(context, color)
+            }
+            CompactSettingLabel(R.string.reading_font_scale_title)
+            CompactChoiceRow(FontScale.entries, AppearanceState.fontScale, { stringResource(it.labelResource()) }) { scale ->
+                AppearanceState.fontScale = scale
+                AppearancePrefs.setFontScale(context, scale)
             }
 
+            SectionDivider()
+            SettingsSectionHeader(R.string.settings_section_vocabulary)
             SettingsSwitchRow(
                 label = stringResource(R.string.highlight_saved_words),
-                checked = AppearanceState.highlightSavedWords,
-                onCheckedChange = { enabled ->
-                    AppearanceState.highlightSavedWords = enabled
-                    AppearancePrefs.setHighlightSavedWords(context, enabled)
-                }
-            )
+                checked = AppearanceState.highlightSavedWords
+            ) { enabled ->
+                AppearanceState.highlightSavedWords = enabled
+                AppearancePrefs.setHighlightSavedWords(context, enabled)
+            }
+            VocabularyReviewSettings(context)
 
+            SectionDivider()
+            SettingsSectionHeader(R.string.settings_section_backup)
             LocalBackupSection(context, scope, snackbarHostState)
             CloudBackupSection(context, scope, snackbarHostState)
+            Spacer(Modifier.height(20.dp))
         }
     }
+}
+
+@Composable
+private fun VocabularyReviewSettings(context: Context) {
+    var reminder by remember { mutableStateOf(VocabPrefs.getReminderEnabled(context)) }
+    var hour by remember { mutableIntStateOf(VocabPrefs.getReminderHour(context)) }
+    var minute by remember { mutableIntStateOf(VocabPrefs.getReminderMinute(context)) }
+    var maxNew by remember { mutableIntStateOf(VocabPrefs.getMaxNewCards(context)) }
+    var dailyGoal by remember { mutableIntStateOf(VocabPrefs.getDailyGoal(context)) }
+    var autoplay by remember { mutableStateOf(VocabPrefs.getAudioAutoplay(context)) }
+    var meaningLanguage by remember { mutableStateOf(VocabPrefs.getMeaningLanguage(context)) }
+    var intervals by remember { mutableStateOf(VocabPrefs.getIntervals(context)) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    SettingsSwitchRow(stringResource(R.string.review_reminder_toggle), reminder) {
+        reminder = it
+        VocabPrefs.setReminderEnabled(context, it)
+        if (it) {
+            if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            VocabReviewReminder.schedule(context)
+        } else VocabReviewReminder.cancel(context)
+    }
+    if (reminder) {
+        TextButton(onClick = {
+            TimePickerDialog(context, { _, h, m ->
+                hour = h; minute = m
+                VocabPrefs.setReminderTime(context, h, m)
+                VocabReviewReminder.schedule(context)
+            }, hour, minute, true).show()
+        }) { Text(stringResource(R.string.review_reminder_time, hour, minute)) }
+    }
+    StepperSetting(stringResource(R.string.review_max_new), maxNew, 0, 100) {
+        maxNew = it; VocabPrefs.setMaxNewCards(context, it)
+    }
+    StepperSetting(stringResource(R.string.review_daily_goal), dailyGoal, 1, 200) {
+        dailyGoal = it; VocabPrefs.setDailyGoal(context, it)
+    }
+    SettingsSwitchRow(stringResource(R.string.review_audio_autoplay), autoplay) {
+        autoplay = it; VocabPrefs.setAudioAutoplay(context, it)
+    }
+    CompactSettingLabel(R.string.review_meaning_language)
+    CompactChoiceRow(
+        VocabPrefs.MeaningLanguage.entries,
+        meaningLanguage,
+        { stringResource(if (it == VocabPrefs.MeaningLanguage.PERSIAN) R.string.language_persian else R.string.language_english) }
+    ) { meaningLanguage = it; VocabPrefs.setMeaningLanguage(context, it) }
+    CompactSettingLabel(R.string.review_intervals)
+    intervals.forEachIndexed { index, days ->
+        StepperSetting(stringResource(R.string.review_box_interval, index + 1), days.toInt(), 1, 365) { value ->
+            intervals = intervals.toMutableList().also { it[index] = value.toLong() }
+            VocabPrefs.setIntervals(context, intervals)
+        }
+    }
+    TextButton(onClick = {
+        VocabPrefs.resetIntervals(context)
+        intervals = VocabPrefs.getIntervals(context)
+    }) { Text(stringResource(R.string.review_intervals_reset)) }
+}
+
+@Composable
+private fun StepperSetting(label: String, value: Int, minimum: Int, maximum: Int, onChange: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        IconButton(onClick = { onChange((value - 1).coerceAtLeast(minimum)) }, enabled = value > minimum) {
+            Text("−", style = MaterialTheme.typography.titleLarge)
+        }
+        Text(value.toString(), style = MaterialTheme.typography.bodyMedium)
+        IconButton(onClick = { onChange((value + 1).coerceAtMost(maximum)) }, enabled = value < maximum) {
+            Text("+", style = MaterialTheme.typography.titleLarge)
+        }
+    }
+}
+
+@Composable
+private fun SettingsSectionHeader(resource: Int) {
+    Text(
+        stringResource(resource),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
+    )
+}
+
+@Composable
+private fun CompactSettingLabel(resource: Int) {
+    Text(stringResource(resource), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp, bottom = 3.dp))
+}
+
+@Composable
+private fun SectionDivider() = HorizontalDivider(Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+
+@Composable
+private fun <T> CompactChoiceRow(
+    entries: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        entries.forEach { entry ->
+            FilterChip(
+                selected = entry == selected,
+                onClick = { onSelect(entry) },
+                label = { Text(label(entry), style = MaterialTheme.typography.labelSmall) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun <T> ColorGrid(
+    entries: List<T>, selected: T, color: (T) -> Color,
+    label: @Composable (T) -> String, onSelect: (T) -> Unit
+) {
+    entries.chunked(6).forEach { rowEntries ->
+        Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            rowEntries.forEach { entry ->
+                val description = label(entry)
+                Box(
+                    Modifier.size(34.dp).clip(CircleShape).background(color(entry))
+                        .then(if (entry == selected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape))
+                        .clickable { onSelect(entry) }
+                        .semantics { contentDescription = description; role = Role.RadioButton }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 44.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+private fun AppLanguage.labelResource(): Int = when (this) {
+    AppLanguage.SYSTEM -> R.string.language_system
+    AppLanguage.FA -> R.string.language_persian
+    AppLanguage.FR -> R.string.language_french
+    AppLanguage.EN -> R.string.language_english
+}
+private fun ThemeMode.labelResource(): Int = when (this) {
+    ThemeMode.SYSTEM -> R.string.theme_system
+    ThemeMode.LIGHT -> R.string.theme_light
+    ThemeMode.DARK -> R.string.theme_dark
+}
+private fun FontScale.labelResource(): Int = when (this) {
+    FontScale.SMALL -> R.string.font_scale_small
+    FontScale.MEDIUM -> R.string.font_scale_medium
+    FontScale.LARGE -> R.string.font_scale_large
+    FontScale.XLARGE -> R.string.font_scale_xlarge
+}
+private fun ReadingBackground.labelResource(): Int = when (this) {
+    ReadingBackground.WHITE -> R.string.reading_background_white
+    ReadingBackground.SEPIA -> R.string.reading_background_sepia
+    ReadingBackground.PAPER -> R.string.reading_background_paper
+    ReadingBackground.SAND -> R.string.reading_background_sand
+    ReadingBackground.GRAY -> R.string.reading_background_gray
+    ReadingBackground.MINT -> R.string.reading_background_mint
+    ReadingBackground.SAGE -> R.string.reading_background_sage
+    ReadingBackground.BLUE_TINT -> R.string.reading_background_blue
+    ReadingBackground.ROSE -> R.string.reading_background_rose
+    ReadingBackground.DARK -> R.string.reading_background_dark
+    ReadingBackground.BLACK -> R.string.reading_background_black
+}
+private fun HighlightColor.labelResource(): Int = when (this) {
+    HighlightColor.YELLOW -> R.string.highlight_yellow
+    HighlightColor.GREEN -> R.string.highlight_green
+    HighlightColor.BLUE -> R.string.highlight_blue
+    HighlightColor.PINK -> R.string.highlight_pink
+    HighlightColor.ORANGE -> R.string.highlight_orange
+    HighlightColor.PURPLE -> R.string.highlight_purple
+    HighlightColor.TEAL -> R.string.highlight_teal
+    HighlightColor.RED -> R.string.highlight_red
 }
 
 @Composable
@@ -223,16 +353,16 @@ private fun LocalBackupSection(
 
     Text(
         stringResource(R.string.local_backup_section_title),
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(top = 20.dp)
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
     )
-    Button(onClick = {
+    OutlinedButton(onClick = {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date())
         exportLauncher.launch("french_reader_backup_$timestamp.db")
     }) {
         Text(stringResource(R.string.local_backup_save))
     }
-    Button(onClick = { importLauncher.launch(arrayOf("*/*")) }) {
+    OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) }) {
         Text(stringResource(R.string.local_backup_restore))
     }
 
@@ -242,8 +372,8 @@ private fun LocalBackupSection(
             title = { Text(stringResource(R.string.local_backup_restore_confirm_title)) },
             text = { Text(stringResource(R.string.local_backup_restore_confirm_message)) },
             confirmButton = {
-                Button(onClick = {
-                    val uri = restoreUri ?: return@Button
+                OutlinedButton(onClick = {
+                    val uri = restoreUri ?: return@OutlinedButton
                     restoreUri = null
                     scope.launch {
                         try {
@@ -259,53 +389,11 @@ private fun LocalBackupSection(
                 }) { Text(stringResource(R.string.local_backup_restore)) }
             },
             dismissButton = {
-                Button(onClick = { restoreUri = null }) {
+                OutlinedButton(onClick = { restoreUri = null }) {
                     Text(stringResource(R.string.accessibility_back))
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun SettingsSwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    androidx.compose.foundation.layout.Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, modifier = Modifier.weight(1f))
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
-
-private fun AppLanguage.labelResource(): Int = when (this) {
-    AppLanguage.SYSTEM -> R.string.language_system
-    AppLanguage.FA -> R.string.language_persian
-    AppLanguage.FR -> R.string.language_french
-    AppLanguage.EN -> R.string.language_english
-}
-
-private fun FontScale.labelResource(): Int = when (this) {
-    FontScale.SMALL -> R.string.font_scale_small
-    FontScale.MEDIUM -> R.string.font_scale_medium
-    FontScale.LARGE -> R.string.font_scale_large
-    FontScale.XLARGE -> R.string.font_scale_xlarge
-}
-
-@Composable
-private fun SettingsRadioRow(label: String, selected: Boolean, onClick: () -> Unit) {
-    Column {
-        androidx.compose.foundation.layout.Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
-            Text(label)
-        }
     }
 }
 
@@ -356,12 +444,12 @@ private fun CloudBackupSection(
 
     Text(
         stringResource(R.string.backup_section_title),
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(top = 20.dp)
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
     )
 
     if (signedInEmail == null) {
-        Button(onClick = {
+        OutlinedButton(onClick = {
             scope.launch {
                 try {
                     val account = authManager.signIn()
@@ -378,7 +466,7 @@ private fun CloudBackupSection(
         Text(signedInEmail!!)
         Text(formatLastBackupLabel(context, lastBackupAtMs))
 
-        Button(onClick = {
+        OutlinedButton(onClick = {
             withDriveAccessToken { token ->
                 scope.launch {
                     try {
@@ -402,11 +490,11 @@ private fun CloudBackupSection(
             Text(stringResource(R.string.backup_now))
         }
 
-        Button(onClick = { showRestoreConfirm = true }) {
+        OutlinedButton(onClick = { showRestoreConfirm = true }) {
             Text(stringResource(R.string.backup_restore))
         }
 
-        Button(onClick = {
+        OutlinedButton(onClick = {
             scope.launch {
                 authManager.signOut()
                 BackupPrefs.setSignedInEmail(context, null)
@@ -423,7 +511,7 @@ private fun CloudBackupSection(
             title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
             text = { Text(stringResource(R.string.backup_restore_confirm_message)) },
             confirmButton = {
-                Button(onClick = {
+                OutlinedButton(onClick = {
                     showRestoreConfirm = false
                     withDriveAccessToken { token ->
                         scope.launch {
@@ -452,7 +540,7 @@ private fun CloudBackupSection(
                 }) { Text(stringResource(R.string.backup_restore)) }
             },
             dismissButton = {
-                Button(onClick = { showRestoreConfirm = false }) {
+                OutlinedButton(onClick = { showRestoreConfirm = false }) {
                     Text(stringResource(R.string.accessibility_back))
                 }
             }

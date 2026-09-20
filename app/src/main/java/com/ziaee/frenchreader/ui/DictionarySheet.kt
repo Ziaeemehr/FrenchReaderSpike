@@ -170,16 +170,18 @@ fun DictionarySheet(
     var showNewListDialog by remember { mutableStateOf(false) }
     var selectedProvider by remember(word) { mutableStateOf(DICTIONARY_PROVIDERS.first()) }
     val url = remember(word, selectedProvider) { selectedProvider.urlFor(word) }
+    val meaningLanguage = VocabPrefs.getMeaningLanguage(context)
+    val meaningTarget = if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) "fa" else "en"
 
     // Auto-fill the meaning field with a Persian translation of just the
     // word, using the same free translation service/cache as paragraph
     // translation -- only when there's nothing saved for it yet, and only
     // if the person hasn't already started typing their own correction.
-    LaunchedEffect(word, sentence, initialMeaning) {
+    LaunchedEffect(word, sentence, initialMeaning, meaningTarget) {
         if (initialMeaning.isNullOrBlank()) {
             autoTranslating = true
             val repo = TranslationRepository(context.applicationContext)
-            val result = repo.getOrTranslate(word, "fa")
+            val result = repo.getOrTranslate(word, meaningTarget)
             if (meaning.isBlank()) {
                 result.onSuccess { meaning = it }
             }
@@ -217,7 +219,7 @@ fun DictionarySheet(
             OutlinedTextField(
                 value = meaning,
                 onValueChange = { meaning = it; saved = false },
-                label = { Text(stringResource(R.string.dictionary_meaning_field)) },
+                label = { Text(stringResource(if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) R.string.dictionary_meaning_persian else R.string.dictionary_meaning_english)) },
                 trailingIcon = {
                     if (autoTranslating) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)

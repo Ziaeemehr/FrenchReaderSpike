@@ -82,7 +82,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val state by vm.state.collectAsState()
     val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
     val savedVocabStatuses = if (AppearanceState.highlightSavedWords) allSavedVocabStatuses else emptyMap()
-    val palette = readingPaletteFor(AppearanceState.readingBackground)
+    val palette = readingPaletteFor(AppearanceState.readingBackground, AppearanceState.highlightColor)
     val fontScale = AppearanceState.fontScale.multiplier
     val vocabularyDescription = stringResource(R.string.accessibility_vocabulary)
     val voiceDescription = stringResource(R.string.accessibility_select_voice)
@@ -829,7 +829,9 @@ private fun SentenceFlowText(
     val darkPage = palette.ink.luminance() > 0.5f
     val vocabStyles = VocabStatus.entries.associateWith { status ->
         SpanStyle(
-            color = status.color(darkPage),
+            // Keep the page's high-contrast ink over the status tint. The
+            // status hue remains visible in the background and underline.
+            color = palette.ink,
             background = status.containerColor(darkPage).copy(
                 alpha = if (status == VocabStatus.LEARNED) 0.12f else 0.7f
             ),

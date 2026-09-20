@@ -68,7 +68,8 @@ import java.net.URI
 fun ResourcesScreen(
     onOpenHome: () -> Unit,
     onOpenLibrary: () -> Unit,
-    onAddText: () -> Unit
+    onAddText: () -> Unit,
+    onReview: () -> Unit = {}
 ) {
     val vm: ResourcesViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -81,7 +82,8 @@ fun ResourcesScreen(
         onDismissError = vm::dismissError,
         onOpenHome = onOpenHome,
         onOpenLibrary = onOpenLibrary,
-        onAddText = onAddText
+        onAddText = onAddText,
+        onReview = onReview
     )
 }
 
@@ -96,7 +98,8 @@ fun ResourcesContent(
     onDismissError: () -> Unit,
     onOpenHome: () -> Unit,
     onOpenLibrary: () -> Unit,
-    onAddText: () -> Unit
+    onAddText: () -> Unit,
+    onReview: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var editing by remember { mutableStateOf<ResourceLink?>(null) }
@@ -121,6 +124,7 @@ fun ResourcesContent(
                 onHome = onOpenHome,
                 onLibrary = onOpenLibrary,
                 onAddText = onAddText,
+                onReview = onReview,
                 onResources = {}
             )
         }

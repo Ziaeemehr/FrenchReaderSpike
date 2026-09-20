@@ -8,14 +8,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 
-/** Which color scheme the whole app uses -- see ROADMAP.md section 7. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-/** Pure decision logic extracted out of [FrenchReaderTheme] so it's unit
- * testable without needing a Compose/Android runtime for
- * [isSystemInDarkTheme]. */
 internal fun resolveDarkTheme(mode: ThemeMode, systemInDarkTheme: Boolean): Boolean = when (mode) {
     ThemeMode.SYSTEM -> systemInDarkTheme
     ThemeMode.LIGHT -> false
@@ -23,9 +20,24 @@ internal fun resolveDarkTheme(mode: ThemeMode, systemInDarkTheme: Boolean): Bool
 }
 
 @Composable
-fun FrenchReaderTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
+fun FrenchReaderTheme(
+    themeMode: ThemeMode,
+    readingBackground: ReadingBackground = ReadingBackground.SEPIA,
+    content: @Composable () -> Unit
+) {
     val darkTheme = resolveDarkTheme(themeMode, isSystemInDarkTheme())
     val language = LocalConfiguration.current.locales[0].language
+    val readingPalette = readingPaletteFor(readingBackground)
+    val baseScheme = if (darkTheme) FrenchReaderDarkColorScheme else FrenchReaderLightColorScheme
+    val appScheme = baseScheme.copy(
+        background = readingPalette.background,
+        onBackground = readingPalette.ink,
+        surface = readingPalette.background,
+        onSurface = readingPalette.ink,
+        surfaceVariant = blend(readingPalette.background, readingPalette.ink, 0.08f),
+        onSurfaceVariant = readingPalette.inkFaded,
+        outlineVariant = readingPalette.divider
+    )
     CompositionLocalProvider(
         LocalAppSpacing provides AppSpacing(),
         LocalAppSizes provides AppSizes(),
@@ -33,7 +45,7 @@ fun FrenchReaderTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
         LocalEditorialTypography provides editorialTypography(language)
     ) {
         MaterialTheme(
-            colorScheme = if (darkTheme) FrenchReaderDarkColorScheme else FrenchReaderLightColorScheme,
+            colorScheme = appScheme,
             typography = interfaceTypography(language),
             shapes = FrenchReaderShapes,
             content = content
@@ -41,14 +53,13 @@ fun FrenchReaderTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
     }
 }
 
-/** Which fixed color set the reading screen uses -- independent of
- * [ThemeMode], like a book-reader app's own reading theme. See
- * ROADMAP.md section 7. */
-enum class ReadingBackground { SEPIA, WHITE, DARK }
+/** Existing names are retained so stored preferences from older versions remain valid. */
+enum class ReadingBackground {
+    WHITE, SEPIA, PAPER, SAND, GRAY, MINT, SAGE, BLUE_TINT, ROSE, DARK, BLACK
+}
 
-/** A reading screen's full color set. [ReadingBackground.SEPIA]'s values
- * are byte-identical to the original hardcoded ReadingPalette in
- * ReadingScreen.kt, so someone who never opens Settings sees no change. */
+enum class HighlightColor { YELLOW, GREEN, BLUE, PINK, ORANGE, PURPLE, TEAL, RED }
+
 data class ReadingPalette(
     val background: Color,
     val ink: Color,
@@ -61,61 +72,93 @@ data class ReadingPalette(
     val selectionHandle: Color
 )
 
-fun readingPaletteFor(background: ReadingBackground): ReadingPalette = when (background) {
-    ReadingBackground.SEPIA -> ReadingPalette(
-        background = Color(0xFFFBF6EC),
-        ink = Color(0xFF2E2A22),
-        inkFaded = Color(0xFF6B6252),
-        highlightBg = Color(0xFFF2D995).copy(alpha = 0.72f),
-        highlightInk = Color(0xFF2E2A22),
-        divider = Color(0xFFE6DDC8),
-        accent = Color(0xFF8A6D3B),
-        selectionBg = Color(0xFF8A6D3B).copy(alpha = 0.28f),
-        selectionHandle = Color(0xFF8A6D3B)
-    )
-    ReadingBackground.WHITE -> ReadingPalette(
-        background = Color(0xFFFFFFFF),
-        ink = Color(0xFF1A1A1A),
-        inkFaded = Color(0xFF5C5C5C),
-        highlightBg = Color(0xFFFFE7A3).copy(alpha = 0.72f),
-        highlightInk = Color(0xFF1A1A1A),
-        divider = Color(0xFFE0E0E0),
-        accent = Color(0xFF3B6EA8),
-        selectionBg = Color(0xFF3B6EA8).copy(alpha = 0.28f),
-        selectionHandle = Color(0xFF3B6EA8)
-    )
-    ReadingBackground.DARK -> ReadingPalette(
-        background = Color(0xFF1A1A1A),
-        ink = Color(0xFFE8E4DA),
-        inkFaded = Color(0xFFA8A296),
-        highlightBg = Color(0xFF65562D).copy(alpha = 0.72f),
-        highlightInk = Color(0xFFFFE4A3),
-        divider = Color(0xFF3A3A3A),
-        accent = Color(0xFFD8B978),
-        selectionBg = Color(0xFFD8B978).copy(alpha = 0.28f),
-        selectionHandle = Color(0xFFD8B978)
+fun backgroundSwatch(background: ReadingBackground): Color = when (background) {
+    ReadingBackground.WHITE -> Color(0xFFFFFFFF)
+    ReadingBackground.SEPIA -> Color(0xFFFBF6EC)
+    ReadingBackground.PAPER -> Color(0xFFFFFDF5)
+    ReadingBackground.SAND -> Color(0xFFF3E5C8)
+    ReadingBackground.GRAY -> Color(0xFFE8E9EB)
+    ReadingBackground.MINT -> Color(0xFFE5F3EA)
+    ReadingBackground.SAGE -> Color(0xFFDCE7DA)
+    ReadingBackground.BLUE_TINT -> Color(0xFFE5EFF8)
+    ReadingBackground.ROSE -> Color(0xFFF7E9EA)
+    ReadingBackground.DARK -> Color(0xFF1A1A1A)
+    ReadingBackground.BLACK -> Color(0xFF0D0D0E)
+}
+
+fun highlightSwatch(color: HighlightColor, dark: Boolean = false): Color = when (color) {
+    HighlightColor.YELLOW -> if (dark) Color(0xFF65562D) else Color(0xFFF2D995)
+    HighlightColor.GREEN -> if (dark) Color(0xFF315A3C) else Color(0xFFAEDDB5)
+    HighlightColor.BLUE -> if (dark) Color(0xFF31516B) else Color(0xFFAED5F2)
+    HighlightColor.PINK -> if (dark) Color(0xFF704052) else Color(0xFFF2BCD0)
+    HighlightColor.ORANGE -> if (dark) Color(0xFF74472A) else Color(0xFFF3C18E)
+    HighlightColor.PURPLE -> if (dark) Color(0xFF564371) else Color(0xFFD1B9ED)
+    HighlightColor.TEAL -> if (dark) Color(0xFF275D5B) else Color(0xFFA6DEDA)
+    HighlightColor.RED -> if (dark) Color(0xFF713838) else Color(0xFFF1AEAA)
+}
+
+fun readingPaletteFor(
+    background: ReadingBackground,
+    highlightColor: HighlightColor = HighlightColor.YELLOW
+): ReadingPalette {
+    val bg = backgroundSwatch(background)
+    val dark = bg.luminance() < 0.35f
+    val ink = when (background) {
+        ReadingBackground.SEPIA -> Color(0xFF2E2A22)
+        ReadingBackground.WHITE -> Color(0xFF1A1A1A)
+        ReadingBackground.DARK -> Color(0xFFE8E4DA)
+        else -> if (dark) Color(0xFFF0ECE4) else Color(0xFF272522)
+    }
+    val faded = when (background) {
+        ReadingBackground.SEPIA -> Color(0xFF6B6252)
+        ReadingBackground.WHITE -> Color(0xFF5C5C5C)
+        ReadingBackground.DARK -> Color(0xFFA8A296)
+        else -> if (dark) Color(0xFFB4AEA4) else Color(0xFF68635C)
+    }
+    val accent = when (background) {
+        ReadingBackground.SEPIA -> Color(0xFF8A6D3B)
+        ReadingBackground.WHITE -> Color(0xFF3B6EA8)
+        ReadingBackground.DARK -> Color(0xFFD8B978)
+        else -> if (dark) Color(0xFFD8B978) else Color(0xFF7D6336)
+    }
+    val highlight = when {
+        highlightColor == HighlightColor.YELLOW && background == ReadingBackground.WHITE -> Color(0xFFFFE7A3)
+        else -> highlightSwatch(highlightColor, dark)
+    }
+    return ReadingPalette(
+        background = bg,
+        ink = ink,
+        inkFaded = faded,
+        highlightBg = highlight.copy(alpha = 0.72f),
+        highlightInk = if (highlightColor == HighlightColor.YELLOW && background == ReadingBackground.DARK) Color(0xFFFFE4A3)
+            else if (highlight.luminance() > 0.48f) ink else Color(0xFFFFF8EE),
+        divider = when (background) {
+            ReadingBackground.SEPIA -> Color(0xFFE6DDC8)
+            ReadingBackground.WHITE -> Color(0xFFE0E0E0)
+            ReadingBackground.DARK -> Color(0xFF3A3A3A)
+            else -> blend(bg, ink, if (dark) 0.18f else 0.12f)
+        },
+        accent = accent,
+        selectionBg = accent.copy(alpha = 0.28f),
+        selectionHandle = accent
     )
 }
 
-/** How large the reading screen's text renders -- a multiplier applied to
- * every hardcoded sp value in ReadingScreen.kt. See ROADMAP.md section 7. */
+private fun blend(base: Color, overlay: Color, amount: Float) = Color(
+    red = base.red * (1f - amount) + overlay.red * amount,
+    green = base.green * (1f - amount) + overlay.green * amount,
+    blue = base.blue * (1f - amount) + overlay.blue * amount,
+    alpha = 1f
+)
+
 enum class FontScale(val multiplier: Float) {
-    SMALL(0.85f),
-    MEDIUM(1f),
-    LARGE(1.15f),
-    XLARGE(1.3f)
+    SMALL(0.85f), MEDIUM(1f), LARGE(1.15f), XLARGE(1.3f)
 }
 
-/** Live, in-memory mirror of the three appearance settings -- read
- * directly by composables (no CompositionLocal, no ViewModel/DI; matches
- * this codebase's existing lightweight style). [com.ziaee.frenchreader.MainActivity]
- * initializes these three fields from [com.ziaee.frenchreader.data.AppearancePrefs]
- * once at startup; SettingsScreen updates both the field here (for
- * immediate recomposition) and the persisted pref (Task 2/3) on every
- * change. */
 object AppearanceState {
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     var readingBackground by mutableStateOf(ReadingBackground.SEPIA)
     var fontScale by mutableStateOf(FontScale.MEDIUM)
+    var highlightColor by mutableStateOf(HighlightColor.YELLOW)
     var highlightSavedWords by mutableStateOf(true)
 }

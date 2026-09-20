@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
@@ -59,7 +60,6 @@ import com.ziaee.frenchreader.ui.components.EditorialEmptyState
 import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
 import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
-import com.ziaee.frenchreader.ui.components.MetadataBadge
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import java.io.File
 import java.text.SimpleDateFormat
@@ -223,37 +223,38 @@ fun TodayNewsSection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        EditorialSectionHeader(
-            title = stringResource(R.string.home_section_today_news),
-            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall)
+        Text(
+            text = stringResource(R.string.home_section_today_news),
+            style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
         )
         when {
             isEmptyError -> HomeErrorState(
                 message = stringResource(R.string.home_news_empty_error),
                 onRetry = onRetry,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 12.dp)
             )
             else -> {
                 if (hasPartialError) {
                     Text(
                         stringResource(R.string.home_news_partial_error),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 12.sp),
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
                     )
                 }
                 val listState = rememberLazyListState()
                 LazyRow(
                     state = listState,
                     flingBehavior = rememberSnapFlingBehavior(listState),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(headlines, key = { it.sourceId + it.externalId }) { headline ->
                         NewsCard(
                             headline,
                             onClick = { onSelect(headline) },
-                            modifier = Modifier.fillParentMaxWidth(0.6f)
+                            modifier = Modifier.fillParentMaxWidth(0.42f)
                         )
                     }
                 }
@@ -291,21 +292,20 @@ fun NewsCard(headline: HeadlineEntity, onClick: () -> Unit, modifier: Modifier =
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(FrenchReaderDesign.spacing.xSmall)
+                    .padding(6.dp)
             ) {
-                MetadataBadge(
-                    text = headline.sourceLabel,
-                    containerColor = Color.White.copy(alpha = 0.16f),
-                    contentColor = Color.White
-                )
-                Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
+                NewsSourceBadge(headline.sourceLabel)
+                Spacer(Modifier.height(3.dp))
                 // The headline title is French source content -- always LTR,
                 // regardless of a Persian (RTL) interface, same as article
                 // bodies on the Reading screen.
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Text(
                         headline.title,
-                        style = FrenchReaderDesign.editorialTypography.articleHeadline,
+                        style = FrenchReaderDesign.editorialTypography.articleHeadline.copy(
+                            fontSize = 15.sp,
+                            lineHeight = 20.sp
+                        ),
                         color = Color.White,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
@@ -313,6 +313,21 @@ fun NewsCard(headline: HeadlineEntity, onClick: () -> Unit, modifier: Modifier =
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NewsSourceBadge(text: String) {
+    Surface(
+        shape = MaterialTheme.shapes.extraSmall,
+        color = Color.White.copy(alpha = 0.16f),
+        contentColor = Color.White
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 11.sp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+        )
     }
 }
 

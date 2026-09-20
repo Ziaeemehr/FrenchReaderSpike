@@ -102,6 +102,8 @@ class HomeScreenTest {
 
         setHomeContent(state)
 
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(string(R.string.home_section_today_news)))
         composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).assertExists()
         composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)

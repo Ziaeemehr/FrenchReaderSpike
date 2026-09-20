@@ -26,6 +26,10 @@
         android:theme="@style/Theme.FrenchReader"
         android:usesCleartextTraffic="false">
 
+        <receiver
+            android:name=".data.VocabReviewReminderReceiver"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

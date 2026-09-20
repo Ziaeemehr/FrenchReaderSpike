@@ -86,7 +86,8 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 fun LibraryScreen(
     onOpenText: (Long) -> Unit,
     onOpenHome: () -> Unit,
-    onOpenResources: () -> Unit = {}
+    onOpenResources: () -> Unit = {},
+    onReview: () -> Unit = {}
 ) {
     val vm: LibraryViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -153,6 +154,7 @@ fun LibraryScreen(
         onFolderPickerClick = { folderPicker.launch(null) },
         onOpenHome = onOpenHome,
         onOpenResources = onOpenResources,
+        onReview = onReview,
         onToggleSelection = vm::toggleSelection,
         onStartSelection = vm::startSelection,
         onSelectAll = vm::selectAll,
@@ -184,6 +186,7 @@ fun LibraryContent(
     onFolderPickerClick: () -> Unit = {},
     onOpenHome: () -> Unit,
     onOpenResources: () -> Unit = {},
+    onReview: () -> Unit = {},
     onEdit: (TextDocument, String, String) -> Unit = { _, _, _ -> },
     onLoadBody: (TextDocument, (String) -> Unit) -> Unit = { _, loaded -> loaded("") },
     onFolderFilterChange: (FolderFilter) -> Unit = {},
@@ -299,6 +302,7 @@ fun LibraryContent(
                 onHome = onOpenHome,
                 onLibrary = {},
                 onAddText = onAddText,
+                onReview = onReview,
                 onResources = onOpenResources
             )
         }
