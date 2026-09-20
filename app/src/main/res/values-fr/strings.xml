@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_section_news">Actualités</string>
+    <string name="news_sources_title">Sources</string>
+    <string name="news_keywords_label">Mots-clés</string>
+    <string name="news_keywords_hint">Séparez les mots-clés par des virgules ou des retours à la ligne</string>
+    <string name="news_only_matching">Afficher uniquement les actualités correspondantes</string>
+    <string name="news_category_general">Général</string>
+    <string name="news_category_international_europe">International / Europe</string>
+    <string name="news_category_politics">Politique</string>
+    <string name="news_category_economy">Économie</string>
+    <string name="news_category_technology">Technologie</string>
+    <string name="news_category_science">Science</string>
+    <string name="news_category_health">Santé</string>
+    <string name="news_category_psychology">Psychologie</string>
+    <string name="news_category_culture">Culture</string>
+    <string name="news_category_sport">Sport</string>
     <string name="app_name">French Reader</string>
     <string name="settings_section_appearance">Apparence</string>
     <string name="settings_section_reading">Lecture</string>

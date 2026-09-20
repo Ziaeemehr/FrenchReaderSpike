@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_section_news">اخبار</string>
+    <string name="news_sources_title">منابع</string>
+    <string name="news_keywords_label">کلیدواژه‌ها</string>
+    <string name="news_keywords_hint">کلیدواژه‌ها را با ویرگول یا خط جدید جدا کنید</string>
+    <string name="news_only_matching">فقط اخبار مطابق را نمایش بده</string>
+    <string name="news_category_general">عمومی</string>
+    <string name="news_category_international_europe">بین‌الملل / اروپا</string>
+    <string name="news_category_politics">سیاست</string>
+    <string name="news_category_economy">اقتصاد</string>
+    <string name="news_category_technology">فناوری</string>
+    <string name="news_category_science">علم</string>
+    <string name="news_category_health">سلامت</string>
+    <string name="news_category_psychology">روان‌شناسی</string>
+    <string name="news_category_culture">فرهنگ</string>
+    <string name="news_category_sport">ورزش</string>
     <string name="app_name">فرنچ ریدر</string>
     <string name="settings_section_appearance">ظاهر</string>
     <string name="settings_section_reading">مطالعه</string>

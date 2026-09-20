@@ -23,6 +23,7 @@ import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.content.WikisourceContentSource
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HeadlineEntity
+import com.ziaee.frenchreader.data.NewsPrefs
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.insertTextDocument
@@ -30,6 +31,7 @@ import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.news.NewsRepository
 import com.ziaee.frenchreader.news.normalizeArticleUrl
+import com.ziaee.frenchreader.news.personalizeHeadlines
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.async
@@ -52,7 +54,10 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
-    private val newsRepository = NewsRepository(db.headlineDao())
+    private val newsRepository = NewsRepository(
+        db.headlineDao(),
+        enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app) }
+    )
     private val epubImportRepository = EpubImportRepository(app, db)
     private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
     private val importRepository = ArticleImportRepository(
@@ -115,7 +120,11 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         val texts = values[1] as TextsWithBodies
         val continuing = values[3] as Pair<TextDocument?, String?>
         composeHomeState(
-            headlines = values[0] as List<HeadlineEntity>,
+            headlines = personalizeHeadlines(
+                values[0] as List<HeadlineEntity>,
+                NewsPrefs.getKeywords(app),
+                NewsPrefs.getMatchingFirst(app)
+            ),
             allTexts = texts.documents,
             vocabEntries = values[2] as List<VocabEntry>,
             continueReading = continuing.first,

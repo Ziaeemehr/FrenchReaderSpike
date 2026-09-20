@@ -46,11 +46,14 @@ import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.AppLanguage
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
+import com.ziaee.frenchreader.data.NewsPrefs
 import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.VocabReviewReminder
 import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.tts.XttsClient
+import com.ziaee.frenchreader.news.NEWS_SOURCES
+import com.ziaee.frenchreader.news.NewsCategory
 import com.ziaee.frenchreader.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -127,6 +130,10 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
 
             SectionDivider()
+            SettingsSectionHeader(R.string.settings_section_news)
+            NewsSettings(context)
+
+            SectionDivider()
             SettingsSectionHeader(R.string.settings_section_xtts)
             LocalXttsSettings(context, scope, snackbarHostState)
 
@@ -148,6 +155,66 @@ fun SettingsScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(20.dp))
         }
     }
+}
+
+@Composable
+private fun NewsSettings(context: Context) {
+    var enabledIds by remember { mutableStateOf(NewsPrefs.getEnabledSourceIds(context)) }
+    var keywords by remember { mutableStateOf(NewsPrefs.getKeywords(context)) }
+    var matchingFirst by remember { mutableStateOf(NewsPrefs.getMatchingFirst(context)) }
+
+    CompactSettingLabel(R.string.news_sources_title)
+    NEWS_SOURCES.groupBy { it.category }.forEach { (category, sources) ->
+        Text(
+            stringResource(category.labelResource()),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        sources.forEach { source ->
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 40.dp).clickable {
+                    enabledIds = if (source.id in enabledIds) enabledIds - source.id else enabledIds + source.id
+                    NewsPrefs.setEnabledSourceIds(context, enabledIds)
+                },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = source.id in enabledIds,
+                    onCheckedChange = { checked ->
+                        enabledIds = if (checked) enabledIds + source.id else enabledIds - source.id
+                        NewsPrefs.setEnabledSourceIds(context, enabledIds)
+                    }
+                )
+                Text(source.label, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+    OutlinedTextField(
+        value = keywords,
+        onValueChange = { keywords = it; NewsPrefs.setKeywords(context, it) },
+        label = { Text(stringResource(R.string.news_keywords_label)) },
+        supportingText = { Text(stringResource(R.string.news_keywords_hint)) },
+        minLines = 2,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+    )
+    SettingsSwitchRow(stringResource(R.string.news_only_matching), !matchingFirst) { onlyMatching ->
+        matchingFirst = !onlyMatching
+        NewsPrefs.setMatchingFirst(context, matchingFirst)
+    }
+}
+
+private fun NewsCategory.labelResource(): Int = when (this) {
+    NewsCategory.GENERAL -> R.string.news_category_general
+    NewsCategory.INTERNATIONAL_EUROPE -> R.string.news_category_international_europe
+    NewsCategory.POLITICS -> R.string.news_category_politics
+    NewsCategory.ECONOMY -> R.string.news_category_economy
+    NewsCategory.TECHNOLOGY -> R.string.news_category_technology
+    NewsCategory.SCIENCE -> R.string.news_category_science
+    NewsCategory.HEALTH -> R.string.news_category_health
+    NewsCategory.PSYCHOLOGY -> R.string.news_category_psychology
+    NewsCategory.CULTURE -> R.string.news_category_culture
+    NewsCategory.SPORT -> R.string.news_category_sport
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

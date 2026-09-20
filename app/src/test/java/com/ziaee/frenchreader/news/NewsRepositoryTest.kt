@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.news
 import com.ziaee.frenchreader.data.HeadlineDao
 import com.ziaee.frenchreader.data.HeadlineEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -31,7 +32,12 @@ class NewsRepositoryTest {
 
     @Test
     fun `refresh skips non-stale cache unless forced`() = runBlocking {
-        val dao = FakeHeadlineDao(listOf(headline(cachedAtMs = NOW_MS)))
+        val dao = FakeHeadlineDao(
+            listOf(
+                headline(cachedAtMs = NOW_MS),
+                headline(sourceId = FRANCE_INFO_SOURCE_ID, externalId = "cached-fi", cachedAtMs = NOW_MS)
+            )
+        )
         val fetchedUrls = mutableListOf<String>()
         val client = NewsFeedClient { url, _ ->
             fetchedUrls += url
@@ -46,6 +52,34 @@ class NewsRepositoryTest {
         assertEquals(listOf(RFI_FACILE_FEED_URL, FRANCE_INFO_FEED_URL), fetchedUrls)
         assertEquals(listOf("rfi_facile", "france_info"), forcedResult.updatedSources)
         assertTrue(forcedResult.failedSources.isEmpty())
+    }
+
+    @Test
+    fun `refresh fetches and observes only enabled sources`() = runBlocking {
+        val dao = FakeHeadlineDao(
+            listOf(
+                headline(sourceId = RFI_FACILE_SOURCE_ID, externalId = "disabled"),
+                headline(sourceId = FRANCE_INFO_SOURCE_ID, externalId = "enabled")
+            )
+        )
+        val fetchedUrls = mutableListOf<String>()
+        val repository = NewsRepository(
+            dao,
+            NewsFeedClient { url, _ ->
+                fetchedUrls.add(url)
+                listOf(newsItem("fresh"))
+            },
+            Clock { NOW_MS },
+            enabledSourceIds = { setOf(FRANCE_INFO_SOURCE_ID) }
+        )
+
+        repository.refresh(force = true)
+
+        assertEquals(listOf(FRANCE_INFO_FEED_URL), fetchedUrls)
+        assertEquals(
+            setOf(FRANCE_INFO_SOURCE_ID),
+            repository.observeHeadlines().first().map { it.sourceId }.toSet()
+        )
     }
 
     private fun newsItem(guid: String) = NewsItem(
