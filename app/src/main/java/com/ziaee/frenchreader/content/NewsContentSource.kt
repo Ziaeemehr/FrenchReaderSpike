@@ -31,8 +31,7 @@ internal fun filterNewsItems(items: List<NewsItem>, query: String): List<NewsIte
 
 /** Some RSS feeds (e.g. RFI Facile's per-item links) still advertise plain
  * http:// even though the site itself serves https -- upgrade the scheme
- * before fetching, since the app blocks cleartext traffic
- * (see AndroidManifest.xml's android:usesCleartextTraffic="false"). */
+ * before fetching so remote article traffic remains encrypted. */
 internal fun httpsUrl(urlString: String): String =
     if (urlString.startsWith("http://")) "https://" + urlString.removePrefix("http://") else urlString
 

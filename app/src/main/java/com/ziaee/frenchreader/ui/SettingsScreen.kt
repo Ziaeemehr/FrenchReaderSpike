@@ -48,9 +48,12 @@ import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.VocabReviewReminder
+import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
+import com.ziaee.frenchreader.tts.XttsClient
 import com.ziaee.frenchreader.ui.theme.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -124,6 +127,10 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
 
             SectionDivider()
+            SettingsSectionHeader(R.string.settings_section_xtts)
+            LocalXttsSettings(context, scope, snackbarHostState)
+
+            SectionDivider()
             SettingsSectionHeader(R.string.settings_section_vocabulary)
             SettingsSwitchRow(
                 label = stringResource(R.string.highlight_saved_words),
@@ -141,6 +148,112 @@ fun SettingsScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(20.dp))
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.CoroutineScope, snackbarHostState: SnackbarHostState) {
+    var serverUrl by remember { mutableStateOf(XttsPrefs.getServerUrl(context)) }
+    var speaker by remember { mutableStateOf(XttsPrefs.getSpeaker(context)) }
+    var speakers by remember { mutableStateOf(emptyList<String>()) }
+    var speakersExpanded by remember { mutableStateOf(false) }
+    var token by remember { mutableStateOf(XttsPrefs.getToken(context)) }
+    val connectionOk = stringResource(R.string.xtts_connection_ok)
+    val connectionFailed = stringResource(R.string.xtts_connection_failed)
+
+    fun refreshSpeakers() {
+        scope.launch {
+            speakers = withContext(Dispatchers.IO) {
+                try {
+                    XttsClient.listSpeakers(context)
+                } catch (_: Exception) {
+                    emptyList()
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(serverUrl) {
+        delay(600)
+        speakers = withContext(Dispatchers.IO) {
+            try {
+                XttsClient.listSpeakers(context)
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
+    }
+
+    OutlinedTextField(
+        value = serverUrl,
+        onValueChange = { serverUrl = it; XttsPrefs.setServerUrl(context, it) },
+        label = { Text(stringResource(R.string.xtts_server_url)) },
+        placeholder = { Text("http://192.168.1.10:8020") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = speakersExpanded,
+            onExpandedChange = { speakersExpanded = it },
+            modifier = Modifier.weight(1f)
+        ) {
+            OutlinedTextField(
+                value = speaker,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.xtts_speaker)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = speakersExpanded) },
+                singleLine = true,
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = speakersExpanded,
+                onDismissRequest = { speakersExpanded = false }
+            ) {
+                if (speakers.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.xtts_speakers_unavailable)) },
+                        onClick = {},
+                        enabled = false
+                    )
+                } else {
+                    speakers.forEach { availableSpeaker ->
+                        DropdownMenuItem(
+                            text = { Text(availableSpeaker) },
+                            onClick = {
+                                speaker = availableSpeaker
+                                XttsPrefs.setSpeaker(context, availableSpeaker)
+                                speakersExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        TextButton(onClick = { refreshSpeakers() }) {
+            Text(stringResource(R.string.xtts_refresh_speakers))
+        }
+    }
+    OutlinedTextField(
+        value = token,
+        onValueChange = { token = it; XttsPrefs.setToken(context, it) },
+        label = { Text(stringResource(R.string.xtts_token)) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+    )
+    OutlinedButton(
+        onClick = {
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) { XttsClient.ping(context) }
+                snackbarHostState.showSnackbar(if (ok) connectionOk else connectionFailed)
+            }
+        },
+        modifier = Modifier.padding(top = 8.dp)
+    ) { Text(stringResource(R.string.xtts_test_connection)) }
 }
 
 @Composable

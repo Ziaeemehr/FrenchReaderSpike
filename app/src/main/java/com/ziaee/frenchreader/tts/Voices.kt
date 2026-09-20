@@ -26,6 +26,8 @@ import com.ziaee.frenchreader.R
  */
 data class VoiceOption(val id: String, @StringRes val labelRes: Int)
 
+const val XTTS_VOICE_PREFIX = "xtts:"
+
 val AVAILABLE_VOICES = listOf(
     VoiceOption("fr-FR-HenriNeural", R.string.voice_label_henri),
     VoiceOption("fr-FR-DeniseNeural", R.string.voice_label_denise),
@@ -34,5 +36,6 @@ val AVAILABLE_VOICES = listOf(
     VoiceOption("fr-CA-AntoineNeural", R.string.voice_label_antoine),
     VoiceOption("fr-BE-CharlineNeural", R.string.voice_label_charline),
     VoiceOption("fr-BE-GerardNeural", R.string.voice_label_gerard),
-    VoiceOption("fr-CH-ArianeNeural", R.string.voice_label_ariane)
+    VoiceOption("fr-CH-ArianeNeural", R.string.voice_label_ariane),
+    VoiceOption("${XTTS_VOICE_PREFIX}local", R.string.voice_label_xtts_local)
 )

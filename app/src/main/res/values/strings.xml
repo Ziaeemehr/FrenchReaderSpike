@@ -5,6 +5,15 @@
     <string name="settings_section_reading">Reading</string>
     <string name="settings_section_vocabulary">Vocabulary and review</string>
     <string name="settings_section_backup">Backup</string>
+    <string name="settings_section_xtts">Local voice server (XTTS)</string>
+    <string name="xtts_server_url">Server URL</string>
+    <string name="xtts_speaker">Speaker</string>
+    <string name="xtts_speakers_unavailable">Connect to the server to load speakers</string>
+    <string name="xtts_refresh_speakers">Refresh</string>
+    <string name="xtts_token">Token (optional)</string>
+    <string name="xtts_test_connection">Test connection</string>
+    <string name="xtts_connection_ok">Connection successful</string>
+    <string name="xtts_connection_failed">Connection failed</string>
     <string name="sync_highlight_color">Audio sync highlight</string>
     <string name="reading_background_paper">Paper</string>
     <string name="reading_background_sand">Sand</string>
@@ -288,6 +297,7 @@
     <string name="voice_label_charline">Charline – Female, Belgium</string>
     <string name="voice_label_gerard">Gerard – Male, Belgium</string>
     <string name="voice_label_ariane">Ariane – Female, Switzerland</string>
+    <string name="voice_label_xtts_local">Local XTTS server</string>
     <string name="backup_section_title">Cloud Backup</string>
     <string name="backup_sign_in">Sign in with Google</string>
     <string name="backup_sign_out">Sign out</string>

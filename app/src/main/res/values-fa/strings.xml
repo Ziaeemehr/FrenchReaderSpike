@@ -5,6 +5,15 @@
     <string name="settings_section_reading">مطالعه</string>
     <string name="settings_section_vocabulary">واژگان و مرور</string>
     <string name="settings_section_backup">پشتیبان‌گیری</string>
+    <string name="settings_section_xtts">سرور صوتی محلی (XTTS)</string>
+    <string name="xtts_server_url">نشانی سرور</string>
+    <string name="xtts_speaker">گوینده</string>
+    <string name="xtts_speakers_unavailable">برای بارگیری گویندگان به سرور متصل شوید</string>
+    <string name="xtts_refresh_speakers">تازه‌سازی</string>
+    <string name="xtts_token">توکن (اختیاری)</string>
+    <string name="xtts_test_connection">آزمایش اتصال</string>
+    <string name="xtts_connection_ok">اتصال موفق بود</string>
+    <string name="xtts_connection_failed">اتصال ناموفق بود</string>
     <string name="sync_highlight_color">رنگ برجسته‌سازی همگام با صدا</string>
     <string name="reading_background_paper">کاغذ</string>
     <string name="reading_background_sand">شنی</string>
@@ -286,6 +295,7 @@
     <string name="voice_label_charline">شارلین – زن، بلژیک</string>
     <string name="voice_label_gerard">ژرار – مرد، بلژیک</string>
     <string name="voice_label_ariane">آریان – زن، سوئیس</string>
+    <string name="voice_label_xtts_local">سرور محلی XTTS</string>
     <string name="backup_section_title">پشتیبان‌گیری ابری</string>
     <string name="backup_sign_in">ورود با گوگل</string>
     <string name="backup_sign_out">خروج از حساب</string>

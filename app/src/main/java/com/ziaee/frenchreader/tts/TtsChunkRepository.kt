@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.tts
 
 import android.content.Context
+import com.ziaee.frenchreader.data.XttsPrefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -11,6 +12,7 @@ import kotlinx.coroutines.withContext
  * لغات نشود").
  */
 class TtsChunkRepository(context: Context) {
+    private val context = context.applicationContext
     private val cache = TtsCache(context)
 
     suspend fun getOrSynthesize(
@@ -19,12 +21,19 @@ class TtsChunkRepository(context: Context) {
         ratePercent: Int,
         attempt: Int = 0
     ): Result<SynthesisResult> = withContext(Dispatchers.IO) {
-        cache.get(text, voice, ratePercent)?.let { return@withContext Result.success(it) }
+        val cacheVoice = if (voice.startsWith(XTTS_VOICE_PREFIX)) {
+            "$XTTS_VOICE_PREFIX${XttsPrefs.getSpeaker(context)}"
+        } else voice
+        cache.get(text, cacheVoice, ratePercent)?.let { return@withContext Result.success(it) }
 
         try {
-            val outFile = cache.audioPathFor(text, voice, ratePercent)
-            val result = PyTts.synthesizeSentences(text, voice, ratePercent, outFile)
-            cache.put(text, voice, ratePercent, result)
+            val outFile = cache.audioPathFor(text, cacheVoice, ratePercent)
+            val result = if (voice.startsWith(XTTS_VOICE_PREFIX)) {
+                XttsClient.synthesizeSentences(context, text, XttsPrefs.getSpeaker(context), ratePercent, outFile)
+            } else {
+                PyTts.synthesizeSentences(text, voice, ratePercent, outFile)
+            }
+            cache.put(text, cacheVoice, ratePercent, result)
             Result.success(result)
         } catch (e: Exception) {
             if (attempt < 1) {
