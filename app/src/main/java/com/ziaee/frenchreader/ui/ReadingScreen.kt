@@ -887,7 +887,7 @@ private fun SentenceFlowText(
                 if (isActive) {
                     val range = ranges[index]
                     addStyle(
-                        SpanStyle(color = palette.highlightInk, fontWeight = FontWeight.Medium),
+                        SpanStyle(color = palette.highlightInk),
                         range.first,
                         range.last + 1
                     )
