@@ -27,7 +27,7 @@ data class AppSizes(
     val thumbnailSmall: Dp = 48.dp,
     val thumbnailMedium: Dp = 72.dp,
     val readerMeasure: Dp = 640.dp,
-    val playerPrimaryControl: Dp = 64.dp
+    val playerPrimaryControl: Dp = 48.dp
 )
 
 @Immutable

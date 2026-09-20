@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1062,24 +1063,24 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palett
     Surface(
         color = palette.background,
         tonalElevation = FrenchReaderDesign.elevations.raised,
-        shadowElevation = FrenchReaderDesign.elevations.overlay,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        shadowElevation = FrenchReaderDesign.elevations.raised,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
     ) {
-        Column(modifier = Modifier.padding(top = FrenchReaderDesign.spacing.xSmall, bottom = FrenchReaderDesign.spacing.small)) {
+        Column(modifier = Modifier.padding(top = 4.dp, bottom = FrenchReaderDesign.spacing.xSmall)) {
             Box(
-                Modifier.align(Alignment.CenterHorizontally).width(36.dp).height(4.dp)
+                Modifier.align(Alignment.CenterHorizontally).width(32.dp).height(3.dp)
                     .clip(RoundedCornerShape(2.dp)).background(palette.divider)
             )
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = FrenchReaderDesign.spacing.xSmall, start = 4.dp, end = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, start = 4.dp, end = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { vm.previousSentence() }) {
-                    Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.accessibility_previous_sentence), tint = palette.ink)
+                IconButton(onClick = { vm.previousSentence() }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.accessibility_previous_sentence), modifier = Modifier.size(22.dp), tint = palette.ink.copy(alpha = 0.75f))
                 }
-                IconButton(onClick = { vm.skipMs(-10_000) }) {
-                    Icon(Icons.Default.Replay10, contentDescription = stringResource(R.string.accessibility_skip_back), tint = palette.ink)
+                IconButton(onClick = { vm.skipMs(-10_000) }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Replay10, contentDescription = stringResource(R.string.accessibility_skip_back), modifier = Modifier.size(22.dp), tint = palette.ink.copy(alpha = 0.75f))
                 }
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(FrenchReaderDesign.sizes.playerPrimaryControl + 4.dp)) {
                     FilledIconButton(
@@ -1094,7 +1095,7 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palett
                             Icon(
                                 if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = stringResource(R.string.accessibility_play_pause),
-                                modifier = Modifier.size(32.dp),
+                                modifier = Modifier.size(26.dp),
                                 tint = Color.White
                             )
                         }
@@ -1108,19 +1109,27 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palett
                         )
                     }
                 }
-                IconButton(onClick = { vm.skipMs(10_000) }) {
-                    Icon(Icons.Default.Forward10, contentDescription = stringResource(R.string.accessibility_skip_forward), tint = palette.ink)
+                IconButton(onClick = { vm.skipMs(10_000) }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Forward10, contentDescription = stringResource(R.string.accessibility_skip_forward), modifier = Modifier.size(22.dp), tint = palette.ink.copy(alpha = 0.75f))
                 }
-                IconButton(onClick = { vm.nextSentence() }) {
-                    Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.accessibility_next_sentence), tint = palette.ink)
+                IconButton(onClick = { vm.nextSentence() }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.accessibility_next_sentence), modifier = Modifier.size(22.dp), tint = palette.ink.copy(alpha = 0.75f))
                 }
                 Box {
-                    AssistChip(
-                        onClick = { speedMenuExpanded = true },
-                        label = { Text("${state.speed}x", fontWeight = FontWeight.SemiBold) },
-                        colors = AssistChipDefaults.assistChipColors(labelColor = palette.accent),
-                        border = AssistChipDefaults.assistChipBorder(enabled = true, borderColor = palette.divider)
-                    )
+                    Surface(
+                        modifier = Modifier.clickable { speedMenuExpanded = true },
+                        shape = RoundedCornerShape(50),
+                        color = Color.Transparent,
+                        border = BorderStroke(1.dp, palette.divider)
+                    ) {
+                        Text(
+                            "${state.speed}x",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = palette.accent
+                        )
+                    }
                     DropdownMenu(expanded = speedMenuExpanded, onDismissRequest = { speedMenuExpanded = false }) {
                         SPEED_OPTIONS.forEach { s ->
                             DropdownMenuItem(text = { Text("${s}x") }, onClick = {
