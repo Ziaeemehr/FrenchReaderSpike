@@ -70,4 +70,13 @@ class ReviewLogDaoTest {
         assertEquals(2, dao.countKnew())
         assertEquals(3, dao.countTotal())
     }
+
+    @Test
+    fun deleteById_removesOnlyTheInsertedRow() = runBlocking {
+        val today = LocalDate.now()
+        val id = dao.insert(ReviewLogEntry(entryId = 1, timestampMs = epochMsAt(today), knew = true, boxBefore = 1, boxAfter = 2))
+        dao.insert(ReviewLogEntry(entryId = 2, timestampMs = epochMsAt(today), knew = true, boxBefore = 1, boxAfter = 2))
+        dao.deleteById(id)
+        assertEquals(1, dao.countTotal())
+    }
 }

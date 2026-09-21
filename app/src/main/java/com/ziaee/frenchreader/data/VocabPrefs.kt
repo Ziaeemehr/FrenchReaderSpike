@@ -82,4 +82,9 @@ object VocabPrefs {
         val current = getNewReviewedToday(context, date)
         prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current + 1).apply()
     }
+
+    fun decrementNewReviewed(context: Context, date: String) {
+        val current = getNewReviewedToday(context, date)
+        if (current > 0) prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current - 1).apply()
+    }
 }

@@ -211,7 +211,10 @@ interface VocabListDao {
 @Dao
 interface ReviewLogDao {
     @Insert
-    suspend fun insert(entry: ReviewLogEntry)
+    suspend fun insert(entry: ReviewLogEntry): Long
+
+    @Query("DELETE FROM review_log WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     @Query("SELECT COUNT(*) FROM review_log WHERE timestampMs >= :sinceMs")
     suspend fun countSince(sinceMs: Long): Int

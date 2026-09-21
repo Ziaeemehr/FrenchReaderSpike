@@ -389,4 +389,5 @@
     <string name="review_open_settings">Paramètres de révision</string>
     <string name="review_box_tap_hint">Touchez une boîte pour ne réviser que ses cartes</string>
     <string name="review_tap_to_reveal">Touchez la carte pour voir la réponse</string>
+    <string name="review_undo">Annuler la dernière réponse</string>
 </resources>

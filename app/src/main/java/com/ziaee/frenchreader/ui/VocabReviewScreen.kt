@@ -31,6 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -70,6 +71,15 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private val completedIds = mutableSetOf<Long>()
     private var sessionStartedAtMs = 0L
     private var scopeId = VOCAB_SCOPE_ALL
+    private var stats = ReviewSessionStats()
+    private var undoing = false
+
+    private class UndoRecord(
+        val previousEntry: VocabEntry, val logId: Long, val statsBefore: ReviewSessionStats,
+        val wasNewCard: Boolean, val requeued: VocabEntry?, val completedId: Long?, val answeredDate: String
+    )
+    private var undoRecord: UndoRecord? = null
+    var canUndo by mutableStateOf(false); private set
 
     var loading by mutableStateOf(true); private set
     var stage by mutableStateOf(ReviewStage.OVERVIEW); private set
@@ -125,37 +135,70 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val dayStart = VocabSrs.startOfDayMs(now)
             queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, newCount, box))
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
-            cardsReviewed = 0; answerCount = 0; correctCount = 0; movedForward = 0; returnedToBoxOne = 0
+            cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
             sessionStartedAtMs = now
             current = queue.removeFirstOrNull()
             stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
         }
     }
 
+    private fun applyStats(s: ReviewSessionStats) {
+        stats = s
+        answerCount = s.answerCount; correctCount = s.correctCount
+        movedForward = s.movedForward; returnedToBoxOne = s.returnedToBoxOne
+    }
+
     fun answer(answer: VocabAnswer) {
+        if (undoing) return
         val entry = current ?: return
         current = null
+        canUndo = false
         player.stop(); sentenceAudioError = false
         val now = System.currentTimeMillis()
         val updated = VocabSrs.apply(entry, answer, now, intervals)
         viewModelScope.launch {
             db.vocabDao().update(updated)
-            db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = entry.leitnerBox, boxAfter = updated.leitnerBox))
-            answerCount++
-            if (answer != VocabAnswer.FORGOT) correctCount++
-            if (updated.leitnerBox > entry.leitnerBox) movedForward++
-            if (answer == VocabAnswer.FORGOT && entry.leitnerBox > 1) returnedToBoxOne++
-            if (entry.lastReviewedAtMs == null) VocabPrefs.incrementNewReviewed(context, LocalDate.now().toString())
+            val logId = db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = entry.leitnerBox, boxAfter = updated.leitnerBox))
+            val statsBefore = stats
+            applyStats(stats.after(answer, entry.leitnerBox, updated.leitnerBox))
+            val date = LocalDate.now().toString()
+            val wasNew = entry.lastReviewedAtMs == null
+            if (wasNew) VocabPrefs.incrementNewReviewed(context, date)
             moveLabel = when {
                 updated.leitnerBox > entry.leitnerBox -> context.getString(R.string.review_moved_forward, updated.leitnerBox)
                 updated.leitnerBox < entry.leitnerBox -> context.getString(R.string.review_returned_box_one)
                 else -> context.getString(R.string.review_stayed_box, updated.leitnerBox)
             }
-            if (answer == VocabAnswer.FORGOT) queue.add(3.coerceAtMost(queue.size), updated)
+            val requeued = if (answer == VocabAnswer.FORGOT) updated else null
+            val completedId = if (answer == VocabAnswer.FORGOT) null else entry.id
+            if (requeued != null) queue.add(3.coerceAtMost(queue.size), requeued)
             else completedIds.add(entry.id)
             cardsReviewed = completedIds.size
+            undoRecord = UndoRecord(entry, logId, statsBefore, wasNew, requeued, completedId, date)
             current = queue.removeFirstOrNull()
-            if (current == null) finishSession()
+            if (current == null) finishSession() else canUndo = true
+        }
+    }
+
+    fun undo() {
+        val r = undoRecord ?: return
+        if (current == null || undoing) return
+        undoing = true
+        canUndo = false
+        viewModelScope.launch {
+            db.vocabDao().update(r.previousEntry)
+            db.reviewLogDao().deleteById(r.logId)
+            if (r.wasNewCard) VocabPrefs.decrementNewReviewed(context, r.answeredDate)
+            applyStats(r.statsBefore)
+            if (r.requeued != null) queue.removeAll { it === r.requeued }
+            else if (r.completedId != null) completedIds.remove(r.completedId)
+            cardsReviewed = completedIds.size
+            current?.let { queue.add(0, it) }
+            player.stop(); sentenceAudioError = false
+            moveLabel = null
+            current = r.previousEntry.copy()
+            undoRecord = null
+            undoing = false
         }
     }
 
@@ -216,7 +259,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     } }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }, actions = { IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, stringResource(R.string.review_open_settings)) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }, actions = { if (vm.stage == ReviewStage.REVIEW) IconButton(onClick = vm::undo, enabled = vm.canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.review_undo)) }; IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, stringResource(R.string.review_open_settings)) } }) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp)) {
             when {

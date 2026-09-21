@@ -387,4 +387,5 @@
     <string name="review_open_settings">تنظیمات مرور</string>
     <string name="review_box_tap_hint">برای مرور فقط یک جعبه، روی آن بزنید</string>
     <string name="review_tap_to_reveal">برای دیدن معنی روی کارت بزنید</string>
+    <string name="review_undo">برگرداندن آخرین پاسخ</string>
 </resources>
