@@ -190,10 +190,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             db.reviewLogDao().deleteById(r.logId)
             if (r.wasNewCard) VocabPrefs.decrementNewReviewed(context, r.answeredDate)
             applyStats(r.statsBefore)
-            if (r.requeued != null) queue.removeAll { it === r.requeued }
-            else if (r.completedId != null) completedIds.remove(r.completedId)
+            if (r.requeued == null && r.completedId != null) completedIds.remove(r.completedId)
             cardsReviewed = completedIds.size
-            current?.let { queue.add(0, it) }
+            val restored = restoreQueueAfterUndo(queue.toList(), current, r.requeued)
+            queue.clear(); queue.addAll(restored)
             player.stop(); sentenceAudioError = false
             moveLabel = null
             current = r.previousEntry.copy()

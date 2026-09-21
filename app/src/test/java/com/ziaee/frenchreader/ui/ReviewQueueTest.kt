@@ -38,4 +38,28 @@ class ReviewQueueTest {
         assertEquals(listOf(0f, 0f), boxBarFractions(listOf(0, 0)))
         assertEquals(emptyList<Float>(), boxBarFractions(emptyList()))
     }
+
+    private fun ids(l: List<VocabEntry>) = l.map { it.id }
+
+    @Test fun `undo restore removes requeued and puts current first`() {
+        val o = (1L..4L).map { e(it, 1, 0) }
+        val rq = e(9, 1, 0)
+        val q = listOf(o[0], o[1], o[2], rq, o[3])
+        val cur = e(7, 1, 0)
+        val r = restoreQueueAfterUndo(q, cur, rq)
+        assertEquals(listOf(7L, 1L, 2L, 3L, 4L), ids(r))
+        assertEquals(true, r[0] === cur)
+    }
+    @Test fun `undo restore does not resurrect requeued that is current`() {
+        val rq = e(9, 1, 0)
+        assertEquals(emptyList<VocabEntry>(), restoreQueueAfterUndo(emptyList(), rq, rq))
+    }
+    @Test fun `undo restore without requeued only prepends current`() {
+        val a = e(1, 1, 0); val cur = e(2, 1, 0)
+        assertEquals(listOf(2L, 1L), ids(restoreQueueAfterUndo(listOf(a), cur, null)))
+    }
+    @Test fun `undo restore with no current only removes requeued`() {
+        val a = e(1, 1, 0); val rq = e(9, 1, 0)
+        assertEquals(listOf(1L), ids(restoreQueueAfterUndo(listOf(a, rq), null, rq)))
+    }
 }

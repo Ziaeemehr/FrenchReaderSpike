@@ -18,3 +18,8 @@ internal fun boxBarFractions(counts: List<Int>): List<Float> {
     val max = maxOf(counts.maxOrNull() ?: 0, 1)
     return counts.map { it.toFloat() / max }
 }
+
+internal fun restoreQueueAfterUndo(queue: List<VocabEntry>, current: VocabEntry?, requeued: VocabEntry?): List<VocabEntry> {
+    val rest = queue.filter { it !== requeued }
+    return if (current != null && current !== requeued) listOf(current) + rest else rest
+}
