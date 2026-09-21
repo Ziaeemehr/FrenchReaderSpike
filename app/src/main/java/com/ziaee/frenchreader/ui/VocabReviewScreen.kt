@@ -84,7 +84,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     var loading by mutableStateOf(true); private set
     var stage by mutableStateOf(ReviewStage.OVERVIEW); private set
-    var current by mutableStateOf<VocabEntry?>(null); private set
+    private var slot by mutableStateOf<CardSlot?>(null)
+    internal val currentSlot: CardSlot? get() = slot
+    val current: VocabEntry? get() = slot?.entry
+    private fun show(entry: VocabEntry?) { slot = entry?.let { CardSlot(it) } }
     var dueCount by mutableIntStateOf(0); private set
     var newCount by mutableIntStateOf(0); private set
     var reviewedToday by mutableIntStateOf(0); private set
@@ -138,7 +141,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
             cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
             sessionStartedAtMs = now
-            current = queue.removeFirstOrNull()
+            show(queue.removeFirstOrNull())
             stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
         }
     }
@@ -152,7 +155,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     fun answer(answer: VocabAnswer) {
         if (undoing) return
         val entry = current ?: return
-        current = null
+        show(null)
         canUndo = false
         player.stop(); sentenceAudioError = false
         val now = System.currentTimeMillis()
@@ -176,7 +179,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             else completedIds.add(entry.id)
             cardsReviewed = completedIds.size
             undoRecord = UndoRecord(entry, logId, statsBefore, wasNew, requeued, completedId, date)
-            current = queue.removeFirstOrNull()
+            show(queue.removeFirstOrNull())
             if (current == null) finishSession() else canUndo = true
         }
     }
@@ -197,7 +200,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 queue.clear(); queue.addAll(restored)
                 player.stop(); sentenceAudioError = false
                 moveLabel = null
-                current = r.previousEntry.copy()
+                show(r.previousEntry.copy())
                 undoRecord = null
             } finally { undoing = false }
         }
@@ -247,9 +250,9 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     LaunchedEffect(scope) { vm.load(scope) }
     LaunchedEffect(vm.current) { showDictionary = false; tappedWord = null }
     // Held so the card container does not collapse while vm.current is briefly null between answers.
-    var lastEntry by remember { mutableStateOf<VocabEntry?>(null) }
-    LaunchedEffect(vm.current) { vm.current?.let { lastEntry = it } }
-    LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastEntry = null }
+    var lastSlot by remember { mutableStateOf<CardSlot?>(null) }
+    LaunchedEffect(vm.currentSlot) { vm.currentSlot?.let { lastSlot = it } }
+    LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastSlot = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
     LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.audioAutoplay) vm.playSentence() }
     vm.current?.takeIf { showDictionary }?.let { e ->
@@ -270,11 +273,11 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
                 else -> {
                     val dir = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
                     AnimatedContent(
-                        targetState = vm.current ?: lastEntry,
+                        targetState = vm.currentSlot ?: lastSlot,
                         transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) using SizeTransform(clip = false) },
                         modifier = Modifier.align(Alignment.Center),
                         label = "card"
-                    ) { entry -> entry?.let { e -> ReviewCard(vm, e, e === revealedEntry, e === vm.current, { revealedEntry = e }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
+                    ) { slot -> slot?.let { sl -> val e = sl.entry; ReviewCard(vm, e, e === revealedEntry, e === vm.current, { revealedEntry = e }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
                 }
             }
         }
