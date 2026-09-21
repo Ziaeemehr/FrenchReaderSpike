@@ -42,8 +42,8 @@ private fun LabelRow(labels: List<String>) {
 }
 
 @Composable
-fun BarChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier) {
-    val max = maxOf(values.maxOrNull() ?: 0f, 1f)
+fun BarChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier, maxValue: Float? = null) {
+    val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
         Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
             if (values.isEmpty()) return@Canvas
@@ -51,7 +51,7 @@ fun BarChart(values: List<Float>, labels: List<String>, color: Color, modifier: 
             val barWidth = slot * 0.6f
             values.forEachIndexed { i, v ->
                 val h = size.height * (v / max).coerceIn(0f, 1f)
-                // Canvas x is mirrored automatically? No, so mirror manually for RTL.
+                // DrawScope does not auto-mirror in RTL; flip x so bars line up with the (mirrored) label Row.
                 val x0 = i * slot + (slot - barWidth) / 2f
                 val x = if (layoutDirection == LayoutDirection.Rtl) size.width - x0 - barWidth else x0
                 drawRect(color, Offset(x, size.height - h), Size(barWidth, h))
@@ -62,8 +62,8 @@ fun BarChart(values: List<Float>, labels: List<String>, color: Color, modifier: 
 }
 
 @Composable
-fun LineChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier) {
-    val max = maxOf(values.maxOrNull() ?: 0f, 1f)
+fun LineChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier, maxValue: Float? = null) {
+    val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
         Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
             if (values.isEmpty()) return@Canvas
@@ -71,6 +71,7 @@ fun LineChart(values: List<Float>, labels: List<String>, color: Color, modifier:
             val r = 4.dp.toPx()
             val points = values.mapIndexed { i, v ->
                 val x0 = i * slot + slot / 2f
+                // DrawScope does not auto-mirror in RTL; flip x so points line up with the (mirrored) label Row.
                 val x = if (layoutDirection == LayoutDirection.Rtl) size.width - x0 else x0
                 val y = r + (size.height - 2 * r) * (1f - (v / max).coerceIn(0f, 1f))
                 Offset(x, y)

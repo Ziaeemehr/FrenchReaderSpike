@@ -25,6 +25,7 @@ import com.ziaee.frenchreader.data.TextBodyStore
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -53,19 +54,13 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
             val knewCount = db.reviewLogDao().countKnew()
             val totalReviewCount = db.reviewLogDao().countTotal()
 
-            val days = last7Days(today)
-            val activityRows = db.activityLogDao().getForDates(days.map { it.toString() })
-                .associateBy { it.date }
-            val weeklyListening = days.map { day ->
-                DailyListening(day, activityRows[day.toString()]?.listeningMs ?: 0L)
-            }
-
             val monthDays = lastDays(today, 30)
             val monthRows = db.activityLogDao().getForDates(monthDays.map { it.toString() })
                 .associateBy { it.date }
             val monthlyListening = monthDays.map { day ->
                 DailyListening(day, monthRows[day.toString()]?.listeningMs ?: 0L)
             }
+            val weeklyListening = monthlyListening.takeLast(7)
             val reviewLogs = db.reviewLogDao().getAll()
 
             val activeDates = loadActiveDates(
@@ -255,7 +250,7 @@ private fun ChartTitle(res: Int) {
 @Composable
 private fun NewChartSections(state: StatisticsUiState) {
     val primary = MaterialTheme.colorScheme.primary
-    val dm = java.time.format.DateTimeFormatter.ofPattern("d/M")
+    val dm = remember { DateTimeFormatter.ofPattern("d/M", Locale.getDefault()) }
     val noData = stringResource(R.string.statistics_no_data)
 
     ChartTitle(R.string.statistics_heatmap_title)
@@ -272,7 +267,8 @@ private fun NewChartSections(state: StatisticsUiState) {
     if (state.accuracyTrend.all { it.answers == 0 }) Text(noData) else LineChart(
         state.accuracyTrend.map { it.percent.toFloat() },
         state.accuracyTrend.map { it.weekStart.format(dm) },
-        primary
+        primary,
+        maxValue = 100f
     )
 
     ChartTitle(R.string.statistics_words_added_title)
