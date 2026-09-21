@@ -28,7 +28,7 @@ class SelectionToolbarTest {
     fun selectionToolbarMoreButtonInvokesCallback() {
         var moreClicked = false
         composeTestRule.setContent {
-            SelectionToolbarContent(onCopy = {}, onListen = {}, onMore = { moreClicked = true })
+            SelectionToolbarContent(onCopy = {}, onSave = {}, onListen = {}, onMore = { moreClicked = true })
         }
 
         composeTestRule.onNodeWithContentDescription(string(R.string.selection_action_more)).performClick()

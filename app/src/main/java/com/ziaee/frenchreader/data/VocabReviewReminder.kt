@@ -11,6 +11,9 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.ziaee.frenchreader.MainActivity
 import com.ziaee.frenchreader.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
 object VocabReviewReminder {
@@ -43,8 +46,27 @@ object VocabReviewReminder {
     )
 }
 
+class VocabReviewBootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action == Intent.ACTION_BOOT_COMPLETED) VocabReviewReminder.schedule(context)
+    }
+}
+
 class VocabReviewReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
+        val pending = goAsync()
+        val app = context.applicationContext
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val now = System.currentTimeMillis()
+                val hasWork = AppDatabase.get(app).vocabDao().getAllOnce()
+                    .any { !it.learned && (it.lastReviewedAtMs == null || it.nextReviewAtMs <= now) }
+                if (hasWork) notifyDue(app)
+            } finally { pending.finish() }
+        }
+    }
+
+    private fun notifyDue(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
         val channelId = "vocabulary_review"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -390,4 +390,8 @@
     <string name="review_box_tap_hint">Touchez une boîte pour ne réviser que ses cartes</string>
     <string name="review_tap_to_reveal">Touchez la carte pour voir la réponse</string>
     <string name="review_undo">Annuler la dernière réponse</string>
+    <string name="vocab_edit_title">Modifier la carte</string>
+    <string name="vocab_edit_word">Mot</string>
+    <string name="vocab_edit_meaning">Sens</string>
+    <string name="vocab_edit_sentence">Phrase</string>
 </resources>

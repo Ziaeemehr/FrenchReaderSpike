@@ -388,4 +388,8 @@
     <string name="review_box_tap_hint">برای مرور فقط یک جعبه، روی آن بزنید</string>
     <string name="review_tap_to_reveal">برای دیدن معنی روی کارت بزنید</string>
     <string name="review_undo">برگرداندن آخرین پاسخ</string>
+    <string name="vocab_edit_title">ویرایش کارت</string>
+    <string name="vocab_edit_word">کلمه</string>
+    <string name="vocab_edit_meaning">معنی</string>
+    <string name="vocab_edit_sentence">جمله</string>
 </resources>

@@ -75,7 +75,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var stats = ReviewSessionStats()
     private var undoing = false
 
-    private class UndoRecord(
+    private data class UndoRecord(
         val previousEntry: VocabEntry, val logId: Long, val statsBefore: ReviewSessionStats,
         val wasNewCard: Boolean, val requeued: VocabEntry?, val completedId: Long?, val answeredDate: String
     )
@@ -161,8 +161,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         val now = System.currentTimeMillis()
         val updated = VocabSrs.apply(entry, answer, now, intervals)
         viewModelScope.launch {
-            db.vocabDao().update(updated)
-            val logId = db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = entry.leitnerBox, boxAfter = updated.leitnerBox))
+            val logId = db.withTransaction {
+                db.vocabDao().update(updated)
+                db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = entry.leitnerBox, boxAfter = updated.leitnerBox))
+            }
             val statsBefore = stats
             applyStats(stats.after(answer, entry.leitnerBox, updated.leitnerBox))
             val date = LocalDate.now().toString()
@@ -206,6 +208,28 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Edits the card on screen in place (text only; schedule untouched) and returns the new instance. */
+    fun editCurrent(word: String, meaning: String?, sentence: String): VocabEntry? {
+        val slot = slot ?: return null
+        val old = slot.entry
+        val edited = old.copy(word = word, meaning = meaning, sentence = sentence)
+        slot.entry = edited
+        val r = undoRecord
+        var requeued = r?.requeued
+        if (old === requeued) requeued = edited
+        for (i in queue.indices) if (queue[i].id == edited.id) {
+            val patched = queue[i].copy(word = word, meaning = meaning, sentence = sentence)
+            if (queue[i] === r?.requeued) requeued = patched
+            queue[i] = patched
+        }
+        if (r != null) {
+            val prev = if (r.previousEntry.id == edited.id) r.previousEntry.copy(word = word, meaning = meaning, sentence = sentence) else r.previousEntry
+            undoRecord = r.copy(previousEntry = prev, requeued = requeued)
+        }
+        viewModelScope.launch { db.vocabDao().update(edited) }
+        return edited
+    }
+
     fun consumeMoveLabel() { moveLabel = null }
     private suspend fun finishSession() {
         studyTimeMs = System.currentTimeMillis() - sessionStartedAtMs
@@ -246,15 +270,23 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     var revealedEntry by remember { mutableStateOf<VocabEntry?>(null) }
     val currentRevealed = vm.current != null && vm.current === revealedEntry
     var showDictionary by remember { mutableStateOf(false) }
+    var showEdit by remember { mutableStateOf(false) }
     var tappedWord by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(scope) { vm.load(scope) }
-    LaunchedEffect(vm.current) { showDictionary = false; tappedWord = null }
+    LaunchedEffect(vm.currentSlot) { showDictionary = false; showEdit = false; tappedWord = null }
     // Held so the card container does not collapse while vm.current is briefly null between answers.
     var lastSlot by remember { mutableStateOf<CardSlot?>(null) }
     LaunchedEffect(vm.currentSlot) { vm.currentSlot?.let { lastSlot = it } }
     LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastSlot = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
     LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.audioAutoplay) vm.playSentence() }
+    vm.current?.takeIf { showEdit }?.let { e ->
+        VocabEditDialog(e, onDismiss = { showEdit = false }) { w, m, s ->
+            val wasRevealed = e === revealedEntry
+            vm.editCurrent(w, m, s)?.let { if (wasRevealed) revealedEntry = it }
+            showEdit = false
+        }
+    }
     vm.current?.takeIf { showDictionary }?.let { e ->
         DictionarySheet(e.textId, e.word, e.sentence, e.meaning, e.listId, false, onDismiss = { showDictionary = false })
     }
@@ -277,7 +309,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
                         transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) using SizeTransform(clip = false) },
                         modifier = Modifier.align(Alignment.Center),
                         label = "card"
-                    ) { slot -> slot?.let { sl -> val e = sl.entry; ReviewCard(vm, e, e === revealedEntry, e === vm.current, { revealedEntry = e }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
+                    ) { slot -> slot?.let { sl -> val e = sl.entry; ReviewCard(vm, e, e === revealedEntry, e === vm.current, { revealedEntry = e }, { showDictionary = true }, { showEdit = true }, { w -> tappedWord = w }, Modifier) } }
                 }
             }
         }
@@ -408,7 +440,7 @@ private fun AccuracyRing(percent: Int) {
 }
 
 @Composable
-private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, interactive: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
+private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, interactive: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onEdit: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
     val wordTap: (String) -> Unit = { w -> if (interactive) onWordTap(w) }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         BoxDots(entry.leitnerBox)
@@ -428,7 +460,10 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     TappableFrenchText(entry.word, wordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
-                    TextButton(onClick = onDictionary, enabled = interactive) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = onDictionary, enabled = interactive) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
+                        IconButton(onClick = onEdit, enabled = interactive) { Icon(Icons.Default.Edit, stringResource(R.string.action_edit)) }
+                    }
                     if (!entry.meaning.isNullOrBlank()) { Text(entry.meaning, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))

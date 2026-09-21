@@ -67,6 +67,10 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { db.vocabDao().update(entry.copy(learned = learned)) }
     }
 
+    fun edit(entry: VocabEntry, word: String, meaning: String?, sentence: String) {
+        viewModelScope.launch { db.vocabDao().update(entry.copy(word = word, meaning = meaning, sentence = sentence)) }
+    }
+
     fun delete(entry: VocabEntry) {
         viewModelScope.launch { db.vocabDao().delete(entry) }
     }
@@ -109,6 +113,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     var query by remember { mutableStateOf("") }
     var meaningsVisible by remember { mutableStateOf(true) }
     var editing by remember { mutableStateOf<VocabEntry?>(null) }
+    var editingText by remember { mutableStateOf<VocabEntry?>(null) }
     var selectedScope by remember { mutableStateOf(VOCAB_SCOPE_ALL) }
     var selectedStatus by remember { mutableStateOf<VocabStatus?>(null) }
     var showNewListDialog by remember { mutableStateOf(false) }
@@ -339,12 +344,19 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                             entry = entry,
                             showMeaning = meaningsVisible,
                             onClick = { editing = entry },
+                            onEdit = { editingText = entry },
                             onToggleLearned = { vm.setLearned(entry, !entry.learned) },
                             onDelete = { vm.delete(entry) }
                         )
                     }
                 }
             }
+        }
+    }
+
+    editingText?.let { entry ->
+        VocabEditDialog(entry, onDismiss = { editingText = null }) { w, m, s ->
+            vm.edit(entry, w, m, s); editingText = null
         }
     }
 
@@ -392,6 +404,7 @@ private fun VocabRow(
     entry: VocabEntry,
     showMeaning: Boolean,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onToggleLearned: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -481,6 +494,13 @@ private fun VocabRow(
                             if (entry.learned) R.string.vocab_mark_learning else R.string.vocab_mark_known
                         ),
                         tint = if (entry.learned) statusColor else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.action_edit),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(onClick = onDelete) {

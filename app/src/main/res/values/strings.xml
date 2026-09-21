@@ -390,4 +390,8 @@
     <string name="review_box_tap_hint">Tap a box to review only its cards</string>
     <string name="review_tap_to_reveal">Tap the card to reveal</string>
     <string name="review_undo">Undo last answer</string>
+    <string name="vocab_edit_title">Edit card</string>
+    <string name="vocab_edit_word">Word</string>
+    <string name="vocab_edit_meaning">Meaning</string>
+    <string name="vocab_edit_sentence">Sentence</string>
 </resources>
