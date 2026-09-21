@@ -21,5 +21,5 @@ internal fun boxBarFractions(counts: List<Int>): List<Float> {
 
 internal fun restoreQueueAfterUndo(queue: List<VocabEntry>, current: VocabEntry?, requeued: VocabEntry?): List<VocabEntry> {
     val rest = queue.filter { it !== requeued }
-    return if (current != null && current !== requeued) listOf(current) + rest else rest
+    return if (current != null && current !== requeued) listOf(current.copy()) + rest else rest
 }

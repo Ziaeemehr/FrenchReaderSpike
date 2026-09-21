@@ -2,6 +2,8 @@ package com.ziaee.frenchreader.ui
 
 import com.ziaee.frenchreader.data.VocabEntry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class ReviewQueueTest {
@@ -48,7 +50,8 @@ class ReviewQueueTest {
         val cur = e(7, 1, 0)
         val r = restoreQueueAfterUndo(q, cur, rq)
         assertEquals(listOf(7L, 1L, 2L, 3L, 4L), ids(r))
-        assertEquals(true, r[0] === cur)
+        assertNotSame(cur, r[0])
+        assertSame(o[0], r[1]); assertSame(o[1], r[2]); assertSame(o[2], r[3]); assertSame(o[3], r[4])
     }
     @Test fun `undo restore does not resurrect requeued that is current`() {
         val rq = e(9, 1, 0)
@@ -56,7 +59,8 @@ class ReviewQueueTest {
     }
     @Test fun `undo restore without requeued only prepends current`() {
         val a = e(1, 1, 0); val cur = e(2, 1, 0)
-        assertEquals(listOf(2L, 1L), ids(restoreQueueAfterUndo(listOf(a), cur, null)))
+        val r = restoreQueueAfterUndo(listOf(a), cur, null)
+        assertEquals(listOf(2L, 1L), ids(r)); assertNotSame(cur, r.first()); assertEquals(cur, r.first()); assertSame(a, r[1])
     }
     @Test fun `undo restore with no current only removes requeued`() {
         val a = e(1, 1, 0); val rq = e(9, 1, 0)

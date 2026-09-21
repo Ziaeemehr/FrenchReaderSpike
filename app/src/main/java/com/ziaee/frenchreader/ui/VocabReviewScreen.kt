@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -186,19 +187,19 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         undoing = true
         canUndo = false
         viewModelScope.launch {
-            db.vocabDao().update(r.previousEntry)
-            db.reviewLogDao().deleteById(r.logId)
-            if (r.wasNewCard) VocabPrefs.decrementNewReviewed(context, r.answeredDate)
-            applyStats(r.statsBefore)
-            if (r.requeued == null && r.completedId != null) completedIds.remove(r.completedId)
-            cardsReviewed = completedIds.size
-            val restored = restoreQueueAfterUndo(queue.toList(), current, r.requeued)
-            queue.clear(); queue.addAll(restored)
-            player.stop(); sentenceAudioError = false
-            moveLabel = null
-            current = r.previousEntry.copy()
-            undoRecord = null
-            undoing = false
+            try {
+                db.withTransaction { db.vocabDao().update(r.previousEntry); db.reviewLogDao().deleteById(r.logId) }
+                if (r.wasNewCard) VocabPrefs.decrementNewReviewed(context, r.answeredDate)
+                applyStats(r.statsBefore)
+                if (r.requeued == null && r.completedId != null) completedIds.remove(r.completedId)
+                cardsReviewed = completedIds.size
+                val restored = restoreQueueAfterUndo(queue.toList(), current, r.requeued)
+                queue.clear(); queue.addAll(restored)
+                player.stop(); sentenceAudioError = false
+                moveLabel = null
+                current = r.previousEntry.copy()
+                undoRecord = null
+            } finally { undoing = false }
         }
     }
 
