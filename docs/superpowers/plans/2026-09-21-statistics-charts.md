@@ -105,9 +105,9 @@ class StatisticsAggregatesTest {
     }
 
     @Test fun `words added per week`() {
-        val entries = listOf(vocab(today, today), vocab(today.minusDays(1), today), vocab(today.minusWeeks(1), today))
+        val entries = listOf(vocab(today, today), vocab(today, today), vocab(today.minusWeeks(1), today))
         val w = wordsAddedPerWeek(entries, today, weeks = 2, zone = utc)
-        assertEquals(listOf(WeeklyCount(today.minusWeeks(1), 2), WeeklyCount(today, 1)).map { it.count }.reversed(), w.map { it.count })
+        assertEquals(listOf(1, 2), w.map { it.count }) // oldest week first
     }
 
     @Test fun `retention by box uses boxBefore`() {
@@ -120,8 +120,6 @@ class StatisticsAggregatesTest {
     }
 }
 ```
-
-Note on `words added per week`: `today` is a Monday, so `today` and `today.minusDays(1)` fall in different weeks -- fix the fixture while writing: use `today.plusDays(2)` is in the future, so instead create the second entry on `today` too. Expected result `[1, 2]` is wrong for that fixture; final assertion must be `assertEquals(listOf(1, 2), w.map { it.count })` with entries `[vocab(today), vocab(today), vocab(today.minusWeeks(1))]`... use: created on `today` (x2) and `today.minusWeeks(1)` (x1) → oldest first `[1, 2]`. Replace the fixture and assertion accordingly before running.
 
 - [ ] **Step 2: Run to verify failure**
 
