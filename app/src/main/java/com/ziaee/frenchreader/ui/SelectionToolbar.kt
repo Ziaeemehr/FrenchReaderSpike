@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
@@ -90,7 +91,7 @@ class SelectionRectPositionProvider(
 
 /** The floating toolbar shown for a multi-word selection. */
 @Composable
-fun SelectionToolbarContent(onCopy: () -> Unit, onListen: () -> Unit, onMore: () -> Unit) {
+fun SelectionToolbarContent(onCopy: () -> Unit, onSave: () -> Unit, onListen: () -> Unit, onMore: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         tonalElevation = 6.dp,
@@ -101,6 +102,10 @@ fun SelectionToolbarContent(onCopy: () -> Unit, onListen: () -> Unit, onMore: ()
             TextButton(onClick = onCopy) {
                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_copy))
+            }
+            TextButton(onClick = onSave) {
+                Icon(Icons.Default.BookmarkAdd, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                Text(stringResource(R.string.selection_action_save))
             }
             TextButton(onClick = onListen) {
                 Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.padding(end = 4.dp))

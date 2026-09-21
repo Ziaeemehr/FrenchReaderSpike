@@ -245,6 +245,7 @@
     <string name="statistics_texts_completed">متن‌های تکمیل‌شده: %1$d</string>
     <string name="statistics_words_saved">لغات ذخیره‌شده: %1$d</string>
     <string name="selection_action_copy">کپی</string>
+    <string name="selection_action_save">ذخیره</string>
     <string name="selection_action_listen">شنیدن</string>
     <string name="selection_action_define">تعریف</string>
     <string name="selection_action_more">بیشتر</string>

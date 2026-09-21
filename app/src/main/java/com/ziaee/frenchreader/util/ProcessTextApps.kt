@@ -20,7 +20,7 @@ data class ProcessTextApp(
  * disambiguates entries that happen to share the same [ProcessTextApp.label]
  * (e.g. Samsung's own "Translate" and the Google Translate app both use that
  * exact label) by appending the app's own name, and sorts the rest by label
- * so the sheet reads the same every time. */
+ * so the sheet reads the same every time, with Google Translate pinned first. */
 fun filterAndSortProcessTextApps(apps: List<ProcessTextApp>, ownPackageName: String): List<ProcessTextApp> {
     val filtered = apps.filter { it.packageName != ownPackageName }
     val labelCounts = filtered.groupingBy { it.label }.eachCount()
@@ -28,8 +28,11 @@ fun filterAndSortProcessTextApps(apps: List<ProcessTextApp>, ownPackageName: Str
         .map { app ->
             if (labelCounts.getValue(app.label) > 1) app.copy(label = "${app.label} (${app.appLabel})") else app
         }
-        .sortedBy { it.label.lowercase() }
+        .sortedWith(compareBy<ProcessTextApp> { it.packageName != GOOGLE_TRANSLATE_PACKAGE }.thenBy { it.label.lowercase() })
 }
+
+private const val GOOGLE_TRANSLATE_PACKAGE = "com.google.android.apps.translate"
+
 
 /** Queries the PackageManager for every app that can handle ACTION_PROCESS_TEXT
  * (the framework's own text-selection-toolbar mechanism), excluding this app. */

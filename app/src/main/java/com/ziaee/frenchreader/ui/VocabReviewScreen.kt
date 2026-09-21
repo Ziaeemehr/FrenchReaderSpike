@@ -24,6 +24,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.*
 import com.ziaee.frenchreader.tts.TtsChunkRepository
+import com.ziaee.frenchreader.ui.components.TappableFrenchText
 import com.ziaee.frenchreader.ui.statistics.computeStreak
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -175,13 +176,17 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     var revealed by remember { mutableStateOf(false) }
     var showDictionary by remember { mutableStateOf(false) }
+    var tappedWord by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(scope) { vm.load(scope) }
-    LaunchedEffect(vm.current) { revealed = false; showDictionary = false }
+    LaunchedEffect(vm.current) { revealed = false; showDictionary = false; tappedWord = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
     LaunchedEffect(revealed, vm.current) { if (revealed && vm.audioAutoplay) vm.playSentence() }
     vm.current?.takeIf { showDictionary }?.let { e ->
         DictionarySheet(e.textId, e.word, e.sentence, e.meaning, e.listId, false, onDismiss = { showDictionary = false })
     }
+    vm.current?.let { e -> tappedWord?.let { w ->
+        DictionarySheet(e.textId, w, e.sentence, null, null, true, onDismiss = { tappedWord = null })
+    } }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }) }
@@ -191,7 +196,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
                 vm.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 vm.stage == ReviewStage.OVERVIEW -> ReviewOverview(vm)
                 vm.stage == ReviewStage.SUMMARY -> ReviewSummary(vm, onBack, Modifier.align(Alignment.Center))
-                else -> vm.current?.let { ReviewCard(vm, it, revealed, { revealed = true }, { showDictionary = true }, Modifier.align(Alignment.Center)) }
+                else -> vm.current?.let { ReviewCard(vm, it, revealed, { revealed = true }, { showDictionary = true }, { tappedWord = it }, Modifier.align(Alignment.Center)) }
             }
         }
     }
@@ -237,18 +242,19 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
 }
 
 @Composable
-private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, modifier: Modifier) {
+private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(R.string.review_progress, vm.progressPosition, vm.totalCards), style = MaterialTheme.typography.labelLarge)
         LinearProgressIndicator(progress = { if (vm.totalCards == 0) 0f else vm.progressPosition.toFloat() / vm.totalCards }, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp))
         Card(Modifier.fillMaxWidth()) { Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(entry.word, style = MaterialTheme.typography.headlineMedium)
+            if (revealed) TappableFrenchText(entry.word, onWordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+            else Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
             if (revealed) {
                 Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
                 TextButton(onClick = onDictionary) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
                 if (!entry.meaning.isNullOrBlank()) { Text(entry.meaning, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(entry.sentence, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                    TappableFrenchText(entry.sentence, onWordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                     IconButton(onClick = vm::playSentence) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
                 }
                 if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)

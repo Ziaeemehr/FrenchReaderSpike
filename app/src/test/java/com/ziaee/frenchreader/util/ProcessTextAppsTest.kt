@@ -40,8 +40,20 @@ class ProcessTextAppsTest {
         val result = filterAndSortProcessTextApps(apps, ownPackageName = "com.ziaee.frenchreader")
 
         assertEquals(
-            listOf("Ask Claude", "Translate (Bixby Interpreter)", "Translate (Translate)"),
+            listOf("Translate (Translate)", "Ask Claude", "Translate (Bixby Interpreter)"),
             result.map { it.label }
         )
+    }
+
+    @Test
+    fun `filterAndSortProcessTextApps pins Google Translate first`() {
+        val apps = listOf(
+            ProcessTextApp("Anki Card", "com.ichi2.anki", "A", "AnkiDroid"),
+            ProcessTextApp("Translate", "com.google.android.apps.translate", "T", "Translate")
+        )
+
+        val result = filterAndSortProcessTextApps(apps, ownPackageName = "com.ziaee.frenchreader")
+
+        assertEquals("Translate", result.first().label)
     }
 }

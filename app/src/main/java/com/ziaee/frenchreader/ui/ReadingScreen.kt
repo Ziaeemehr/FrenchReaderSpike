@@ -61,7 +61,9 @@ import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
+import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.ui.theme.AppearanceState
+import com.ziaee.frenchreader.ui.theme.FontScale
 import com.ziaee.frenchreader.ui.theme.ReadingPalette
 import com.ziaee.frenchreader.ui.theme.readingPaletteFor
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
@@ -84,6 +86,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
     val savedVocabStatuses = if (AppearanceState.highlightSavedWords) allSavedVocabStatuses else emptyMap()
     val palette = readingPaletteFor(AppearanceState.readingBackground, AppearanceState.highlightColor)
+    val settingsContext = LocalContext.current
     val fontScale = AppearanceState.fontScale.multiplier
     val vocabularyDescription = stringResource(R.string.accessibility_vocabulary)
     val voiceDescription = stringResource(R.string.accessibility_select_voice)
@@ -98,6 +101,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     // user has a chance to drag a handle and extend it to a phrase.
     var selectedWord by remember { mutableStateOf<Pair<String, String>?>(null) }
     var selectedPhrase by remember { mutableStateOf<String?>(null) }
+    var selectedPhraseSentence by remember { mutableStateOf("") }
     var clearSelectionTick by remember { mutableIntStateOf(0) }
     var processTextTarget by remember { mutableStateOf<String?>(null) }
     val selectionToolbarController = remember { SelectionToolbarController() }
@@ -236,6 +240,26 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                                         modifier = Modifier.semantics { contentDescription = vocabularyDescription },
                                         onClick = { moreMenuExpanded = false; onOpenVocab() }
                                     )
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(stringResource(R.string.reading_font_scale_title), Modifier.weight(1f))
+                                        val scales = FontScale.entries
+                                        val index = scales.indexOf(AppearanceState.fontScale)
+                                        fun setScale(scale: FontScale) {
+                                            AppearanceState.fontScale = scale
+                                            AppearancePrefs.setFontScale(settingsContext, scale)
+                                        }
+                                        IconButton(
+                                            onClick = { setScale(scales[index - 1]) },
+                                            enabled = index > 0
+                                        ) { Text("A−", style = MaterialTheme.typography.bodyMedium) }
+                                        IconButton(
+                                            onClick = { setScale(scales[index + 1]) },
+                                            enabled = index < scales.lastIndex
+                                        ) { Text("A+", style = MaterialTheme.typography.titleMedium) }
+                                    }
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.accessibility_select_voice)) },
                                         leadingIcon = { Icon(Icons.Default.RecordVoiceOver, contentDescription = null) },
@@ -334,8 +358,9 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             selectedWord = word to sentenceText
                             selectedPhrase = null
                         },
-                        onPhraseSelected = { phrase ->
+                        onPhraseSelected = { phrase, sentenceText ->
                             selectedPhrase = phrase
+                            selectedPhraseSentence = sentenceText
                             selectedWord = null
                         },
                         clearSelectionSignal = clearSelectionTick
@@ -373,6 +398,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 rect = toolbarRect,
                 marginPx = with(density) { 8.dp.toPx() }
             ),
+            // Dragging a selection handle is an "outside" touch for the popup; dismissing on it
+            // would clear the selection mid-adjustment. Tapping elsewhere collapses the
+            // selection, which hides the toolbar on its own.
+            properties = androidx.compose.ui.window.PopupProperties(dismissOnClickOutside = false),
             onDismissRequest = {
                 vm.stopSelectionPlayback()
                 selectedPhrase = null
@@ -411,6 +440,12 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         selectedPhrase = null
                         clearSelectionTick++
                     },
+                    onSave = {
+                        vm.player.pause()
+                        dictionaryTarget = phrase to selectedPhraseSentence
+                        selectedPhrase = null
+                        clearSelectionTick++
+                    },
                     onListen = {
                         vm.player.pause()
                         vm.playSelection(phrase)
@@ -432,6 +467,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 rect = toolbarRect,
                 marginPx = with(density) { 8.dp.toPx() }
             ),
+            // Dragging a selection handle is an "outside" touch for the popup; dismissing on it
+            // would clear the selection mid-adjustment. Tapping elsewhere collapses the
+            // selection, which hides the toolbar on its own.
+            properties = androidx.compose.ui.window.PopupProperties(dismissOnClickOutside = false),
             onDismissRequest = {
                 selectedWord = null
                 processTextTarget = null
@@ -583,16 +622,26 @@ private fun ChunkParagraph(
     onPendingClick: () -> Unit,
     onRetry: () -> Unit,
     onWordLookup: (word: String, sentence: String) -> Unit,
-    onPhraseSelected: (String) -> Unit,
+    onPhraseSelected: (phrase: String, sentence: String) -> Unit,
     clearSelectionSignal: Int
 ) {
+    // Not-yet-synthesized chunks have no sentence timings, but must still render with
+    // their Markdown structure (headings, lists, emphasis) -- so show the whole block as
+    // one untimed sentence through the same path as READY chunks.
+    val unsynthesized = chunk.status == ChunkStatus.PENDING || chunk.status == ChunkStatus.LOADING
+    val chunk = if (unsynthesized && chunk.sentences.isEmpty()) {
+        chunk.copy(sentences = listOf(SentenceBoundary(text = chunk.text, offsetMs = 0.0, durationMs = 0.0)))
+    } else chunk
+    val onSentenceClick: (SentenceBoundary) -> Unit =
+        if (unsynthesized) { _ -> onPendingClick() } else onSentenceClick
+
     if (chunk.block.type == BlockType.IMAGE) {
         EpubImage(block = chunk.block, palette = palette, fontScale = fontScale)
         return
     }
 
     when (chunk.status) {
-        ChunkStatus.READY -> {
+        ChunkStatus.READY, ChunkStatus.PENDING, ChunkStatus.LOADING -> {
             // The French text must always read left-to-right regardless of
             // the surrounding Persian UI's layout direction.
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
@@ -665,6 +714,15 @@ private fun ChunkParagraph(
                         BlockType.IMAGE -> Unit
                     }
 
+                    if (chunk.status == ChunkStatus.LOADING) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = palette.accent)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.audio_preparing), fontSize = (12f * fontScale).sp, color = palette.inkFaded)
+                        }
+                    }
+
                     if (showTranslation && chunk.block.type != BlockType.HEADER) {
                         Spacer(Modifier.height(6.dp))
                         when (chunk.translationStatus) {
@@ -695,21 +753,6 @@ private fun ChunkParagraph(
                 }
             }
         }
-        ChunkStatus.LOADING -> {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = palette.accent
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    stringResource(R.string.audio_preparing),
-                    fontSize = (13f * fontScale).sp,
-                    color = palette.inkFaded
-                )
-            }
-        }
         ChunkStatus.ERROR -> {
             Column {
                 Text(
@@ -718,17 +761,6 @@ private fun ChunkParagraph(
                     fontSize = (13f * fontScale).sp
                 )
                 TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
-            }
-        }
-        ChunkStatus.PENDING -> {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                Text(
-                    chunk.text,
-                    fontSize = (19f * fontScale).sp,
-                    lineHeight = (31f * fontScale).sp,
-                    color = palette.inkFaded,
-                    modifier = Modifier.clickable(onClick = onPendingClick)
-                )
             }
         }
     }
@@ -819,7 +851,7 @@ private fun SentenceFlowText(
     savedVocabStatuses: Map<String, VocabStatus>,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String) -> Unit,
-    onPhraseSelected: (String) -> Unit,
+    onPhraseSelected: (phrase: String, sentence: String) -> Unit,
     clearSelectionSignal: Int
 ) {
     val vocabHighlighter = remember(savedVocabStatuses) {
@@ -939,7 +971,8 @@ private fun SentenceFlowText(
                     when (val kind = classifySelection(annotated.text, newValue.selection)) {
                         is SelectionKind.Word ->
                             onWordLookup(kind.word, sentenceTextFor(newValue.selection.start))
-                        is SelectionKind.Phrase -> onPhraseSelected(kind.text)
+                        is SelectionKind.Phrase ->
+                            onPhraseSelected(kind.text, sentenceTextFor(newValue.selection.start))
                         null -> selection = TextRange.Zero
                     }
                 }

@@ -247,6 +247,7 @@
     <string name="statistics_texts_completed">Textes terminés : %1$d</string>
     <string name="statistics_words_saved">Mots enregistrés : %1$d</string>
     <string name="selection_action_copy">Copier</string>
+    <string name="selection_action_save">Enregistrer</string>
     <string name="selection_action_listen">Écouter</string>
     <string name="selection_action_define">Définir</string>
     <string name="selection_action_more">Plus</string>

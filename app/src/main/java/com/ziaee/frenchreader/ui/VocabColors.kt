@@ -1,15 +1,16 @@
 package com.ziaee.frenchreader.ui
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.VocabStatus
 import kotlin.math.ceil
 
 @Composable
-fun VocabStatus.color(): Color = color(isSystemInDarkTheme())
+fun VocabStatus.color(): Color = color(MaterialTheme.colorScheme.surface.luminance() < 0.5f)
 
 /** Accent color for dots, rules, icons, and other non-text status cues. */
 fun VocabStatus.color(dark: Boolean): Color {
@@ -22,7 +23,7 @@ fun VocabStatus.color(dark: Boolean): Color {
 }
 
 @Composable
-fun VocabStatus.containerColor(): Color = containerColor(isSystemInDarkTheme())
+fun VocabStatus.containerColor(): Color = containerColor(MaterialTheme.colorScheme.surface.luminance() < 0.5f)
 
 /** Tint intended to sit behind the theme's on-surface color or reading-page ink. */
 fun VocabStatus.containerColor(dark: Boolean): Color {
@@ -44,7 +45,7 @@ fun VocabStatus.labelRes(): Int = when (this) {
 
 @Composable
 fun leitnerBoxColor(box: Int): Color {
-    val dark = isSystemInDarkTheme()
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     return when (box.coerceIn(1, 5)) {
         1 -> if (dark) Color(0xFFFF8A65) else Color(0xFFD84315)
         2 -> if (dark) Color(0xFFFFCA5C) else Color(0xFFCA8A04)

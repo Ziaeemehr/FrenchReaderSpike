@@ -8,6 +8,7 @@ import threading
 import wave
 
 import numpy as np
+import torch
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
@@ -22,6 +23,7 @@ MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
 ABBREVIATIONS = ("M.", "Mme.", "Mme", "Dr.")
 
 app = FastAPI()
+torch.set_num_threads(int(os.environ.get("XTTS_THREADS", os.cpu_count() or 1)))
 tts = TTS(MODEL_NAME).to("cpu")
 synthesis_lock = threading.Lock()
 

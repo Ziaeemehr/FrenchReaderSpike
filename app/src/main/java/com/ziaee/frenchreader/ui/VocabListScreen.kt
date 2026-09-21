@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Application
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -311,71 +315,79 @@ private fun VocabRow(
 ) {
     val status = entry.status()
     val statusColor = status.color()
+    val surface = MaterialTheme.colorScheme.surface
+    // Very light status tint over the theme surface, so text always keeps the
+    // theme's own on-surface contrast (whatever the app/system theme is).
+    val cardColor = statusColor.copy(alpha = 0.08f).compositeOver(surface)
+    val shape = RoundedCornerShape(16.dp)
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = status.containerColor(),
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = cardColor, contentColor = MaterialTheme.colorScheme.onSurface),
+        border = BorderStroke(1.dp, statusColor.copy(alpha = 0.28f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).clickable(onClick = onClick),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(Modifier.width(5.dp).heightIn(min = 116.dp).background(statusColor))
-            Column(modifier = Modifier.weight(1f).padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(entry.word, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Surface(
-                    color = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = RoundedCornerShape(50)
-                ) {
+            Box(
+                Modifier.padding(vertical = 12.dp, horizontal = 10.dp).width(4.dp).fillMaxHeight()
+                    .background(statusColor, RoundedCornerShape(2.dp))
+            )
+            Column(modifier = Modifier.weight(1f).padding(vertical = 12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        entry.word,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(Modifier.width(8.dp))
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier
+                            .background(statusColor.copy(alpha = 0.16f), RoundedCornerShape(50))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        Box(
-                            Modifier
-                                .size(7.dp)
-                                .background(statusColor, RoundedCornerShape(50))
-                        )
+                        Box(Modifier.size(6.dp).background(statusColor, RoundedCornerShape(50)))
                         Text(
                             stringResource(status.labelRes()),
-                            style = MaterialTheme.typography.labelSmall
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
-            }
-            Text(
-                entry.sentence,
-                style = MaterialTheme.typography.bodySmall,
-                fontStyle = FontStyle.Italic
-            )
-            if (showMeaning && !entry.meaning.isNullOrBlank()) {
-                Spacer(Modifier.height(2.dp))
-                Text(entry.meaning, style = MaterialTheme.typography.bodyMedium)
-            }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    entry.sentence,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (showMeaning && !entry.meaning.isNullOrBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(entry.meaning, style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier.width(92.dp),
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
+                    Row(modifier = Modifier.width(92.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         repeat(5) { index ->
                             Surface(
-                                modifier = Modifier.weight(1f).height(6.dp),
-                                shape = MaterialTheme.shapes.extraSmall,
+                                modifier = Modifier.weight(1f).height(5.dp),
+                                shape = RoundedCornerShape(50),
                                 color = if (index < entry.leitnerBox) leitnerBoxColor(index + 1)
-                                else MaterialTheme.colorScheme.surfaceVariant
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                             ) {}
                         }
                     }
                     Spacer(Modifier.width(10.dp))
                     Text(
                         nextReviewText(entry),
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -386,11 +398,15 @@ private fun VocabRow(
                         contentDescription = stringResource(
                             if (entry.learned) R.string.vocab_mark_learning else R.string.vocab_mark_known
                         ),
-                        tint = if (entry.learned) statusColor else LocalContentColor.current
+                        tint = if (entry.learned) statusColor else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.accessibility_delete))
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.accessibility_delete),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

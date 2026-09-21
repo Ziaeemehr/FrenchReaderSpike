@@ -247,6 +247,7 @@
     <string name="statistics_texts_completed">Texts completed: %1$d</string>
     <string name="statistics_words_saved">Words saved: %1$d</string>
     <string name="selection_action_copy">Copy</string>
+    <string name="selection_action_save">Save</string>
     <string name="selection_action_listen">Listen</string>
     <string name="selection_action_define">Define</string>
     <string name="selection_action_more">More</string>
