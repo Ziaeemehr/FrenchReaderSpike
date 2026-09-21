@@ -60,6 +60,14 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 DailyListening(day, activityRows[day.toString()]?.listeningMs ?: 0L)
             }
 
+            val monthDays = lastDays(today, 30)
+            val monthRows = db.activityLogDao().getForDates(monthDays.map { it.toString() })
+                .associateBy { it.date }
+            val monthlyListening = monthDays.map { day ->
+                DailyListening(day, monthRows[day.toString()]?.listeningMs ?: 0L)
+            }
+            val reviewLogs = db.reviewLogDao().getAll()
+
             val activeDates = loadActiveDates(
                 reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
                 activityLogDates = { db.activityLogDao().activeDates() }
@@ -75,7 +83,9 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 totalReviewCount = totalReviewCount,
                 weeklyListening = weeklyListening,
                 activeDates = activeDates,
-                today = today
+                today = today,
+                reviewLogs = reviewLogs,
+                monthlyListening = monthlyListening
             )
             loading = false
         }

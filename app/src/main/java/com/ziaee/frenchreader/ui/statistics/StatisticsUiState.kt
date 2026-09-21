@@ -5,7 +5,9 @@ import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.text.TextChunker
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
+import com.ziaee.frenchreader.data.ReviewLogEntry
 import java.time.LocalDate
+import java.time.ZoneId
 
 internal const val LEITNER_BOX_COUNT = 5
 
@@ -22,7 +24,13 @@ data class StatisticsUiState(
     val leitnerBoxCounts: Map<Int, Int> = emptyMap(),
     val textsSaved: Int = 0,
     val textsCompleted: Int = 0,
-    val wordsSaved: Int = 0
+    val wordsSaved: Int = 0,
+    val reviewHeatmap: List<HeatmapDay> = emptyList(),
+    val dueForecast: List<Int> = emptyList(),
+    val accuracyTrend: List<WeeklyAccuracy> = emptyList(),
+    val wordsAddedPerWeek: List<WeeklyCount> = emptyList(),
+    val retentionByBox: List<BoxRetention> = emptyList(),
+    val monthlyListening: List<DailyListening> = emptyList()
 )
 
 /** A text is "completed" once its saved reading position has reached the
@@ -80,7 +88,10 @@ internal fun composeStatisticsState(
     totalReviewCount: Int,
     weeklyListening: List<DailyListening>,
     activeDates: Set<LocalDate>,
-    today: LocalDate
+    today: LocalDate,
+    reviewLogs: List<ReviewLogEntry> = emptyList(),
+    monthlyListening: List<DailyListening> = emptyList(),
+    zone: ZoneId = ZoneId.systemDefault()
 ): StatisticsUiState = StatisticsUiState(
     streakDays = computeStreak(activeDates, today),
     weeklyListening = weeklyListening,
@@ -90,5 +101,11 @@ internal fun composeStatisticsState(
     leitnerBoxCounts = leitnerBoxCounts(vocabEntries),
     textsSaved = texts.size,
     textsCompleted = texts.count { isTextCompleted(it, bodyByTextId[it.id].orEmpty()) },
-    wordsSaved = vocabEntries.size
+    wordsSaved = vocabEntries.size,
+    reviewHeatmap = reviewHeatmap(reviewLogs, today, zone = zone),
+    dueForecast = dueForecast(vocabEntries, today, zone = zone),
+    accuracyTrend = accuracyTrend(reviewLogs, today, zone = zone),
+    wordsAddedPerWeek = wordsAddedPerWeek(vocabEntries, today, zone = zone),
+    retentionByBox = retentionByBox(reviewLogs),
+    monthlyListening = monthlyListening
 )

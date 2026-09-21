@@ -1,10 +1,12 @@
 package com.ziaee.frenchreader.ui.statistics
 
+import com.ziaee.frenchreader.data.ReviewLogEntry
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabEntry
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 class StatisticsUiStateTest {
 
@@ -122,6 +124,21 @@ class StatisticsUiStateTest {
         assertEquals(1, state.textsCompleted)
         assertEquals(2, state.wordsSaved)
         assertEquals(7, state.weeklyListening.size)
+    }
+
+    @Test fun `composeStatisticsState fills new chart fields`() {
+        val today = LocalDate.of(2026, 9, 21)
+        val log = ReviewLogEntry(entryId = 1, timestampMs = today.atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli(),
+            knew = true, boxBefore = 2, boxAfter = 3)
+        val state = composeStatisticsState(
+            texts = emptyList(), vocabEntries = emptyList(), reviewedToday = 0, reviewedThisWeek = 0,
+            knewCount = 0, totalReviewCount = 0, weeklyListening = emptyList(), activeDates = emptySet(),
+            today = today, reviewLogs = listOf(log), zone = ZoneOffset.UTC
+        )
+        assertEquals(30, state.dueForecast.size)
+        assertEquals(8, state.accuracyTrend.size)
+        assertEquals(5, state.retentionByBox.size)
+        assertEquals(1, state.reviewHeatmap.last().count)
     }
 
     private fun vocabEntry(leitnerBox: Int) = VocabEntry(

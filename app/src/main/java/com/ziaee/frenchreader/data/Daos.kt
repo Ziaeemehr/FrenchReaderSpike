@@ -221,6 +221,9 @@ interface ReviewLogDao {
 
     @Query("SELECT DISTINCT date(timestampMs / 1000, 'unixepoch', 'localtime') FROM review_log")
     suspend fun distinctActiveDates(): List<String>
+
+    @Query("SELECT * FROM review_log")
+    suspend fun getAll(): List<ReviewLogEntry>
 }
 
 @Dao
