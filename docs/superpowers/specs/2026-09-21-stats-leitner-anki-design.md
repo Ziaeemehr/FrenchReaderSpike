@@ -10,11 +10,16 @@ More charts from existing data, no schema change.
   accuracy trend, words added per week, listening minutes per day, retention by box.
 - Queries live in DAOs; aggregation in pure functions in `StatisticsUiState` for unit testing.
 
-## 2. Leitner redesign
-- Box overview (boxes 1-5 with counts; tap a box to review it).
-- Card flip animation, session progress bar, end-of-session summary.
-- Daily review goal; editable intervals (feeds `VocabSrs` `intervalDays`).
-- Shares visual style with the new stats screen.
+## 2. Leitner redesign (revised 2026-09-21 after reading the code)
+Already present: box overview with counts/intervals/due, daily goal + progress, streak, session progress
+bar, end-of-session summary, new-cards cap, editable intervals (all in `SettingsScreen`).
+Scope of this sub-project:
+- Tap a box on the overview to review only that box's due cards (new cards excluded).
+- Motion: 3D card flip on reveal, animated card-to-card transition, animated box indicator on the card.
+- Visual refresh: box "ladder" with colored bars scaled to card counts and a due badge, goal ring + streak chip,
+  box dots on the card, summary with accuracy ring.
+- Gear shortcut on the review overview that opens the existing Settings screen.
+- Queue selection extracted into a pure, unit-tested function.
 
 ## 3. Anki import (exported file)
 - `tools/anki_export.py` reads AnkiConnect (localhost:8765, read-only actions)
