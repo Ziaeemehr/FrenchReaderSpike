@@ -23,7 +23,6 @@ import com.ziaee.frenchreader.ui.statistics.computeAccuracyPercent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -203,6 +202,10 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     var tappedWord by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(scope) { vm.load(scope) }
     LaunchedEffect(vm.current) { showDictionary = false; tappedWord = null }
+    // Held so the card container does not collapse while vm.current is briefly null between answers.
+    var lastEntry by remember { mutableStateOf<VocabEntry?>(null) }
+    LaunchedEffect(vm.current) { vm.current?.let { lastEntry = it } }
+    LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastEntry = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
     LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.audioAutoplay) vm.playSentence() }
     vm.current?.takeIf { showDictionary }?.let { e ->
@@ -223,11 +226,11 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
                 else -> {
                     val dir = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
                     AnimatedContent(
-                        targetState = vm.current,
+                        targetState = vm.current ?: lastEntry,
                         transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) using SizeTransform(clip = false) },
                         modifier = Modifier.align(Alignment.Center),
                         label = "card"
-                    ) { entry -> entry?.let { ReviewCard(vm, it, it === revealedEntry, { revealedEntry = it }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
+                    ) { entry -> entry?.let { e -> ReviewCard(vm, e, e === revealedEntry, e === vm.current, { revealedEntry = e }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
                 }
             }
         }
@@ -292,7 +295,7 @@ private fun BoxLadder(boxes: List<ReviewBoxSummary>, onBoxClick: (Int) -> Unit) 
     boxes.forEachIndexed { i, box ->
         val enabled = box.dueCount > 0
         val color = leitnerBoxColor(box.box)
-        Card(onClick = { onBoxClick(box.box) }, enabled = enabled, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).alpha(if (enabled) 1f else 0.6f)) {
+        Card(onClick = { onBoxClick(box.box) }, enabled = enabled, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
             Column(Modifier.padding(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(icons[(box.box - 1).coerceIn(0, icons.lastIndex)], null, tint = color); Spacer(Modifier.width(10.dp))
@@ -320,12 +323,12 @@ private fun BoxLadder(boxes: List<ReviewBoxSummary>, onBoxClick: (Int) -> Unit) 
 }
 
 @Composable
-private fun FlipCard(revealed: Boolean, onFlip: () -> Unit, front: @Composable () -> Unit, back: @Composable () -> Unit) {
+private fun FlipCard(revealed: Boolean, onFlip: () -> Unit, interactive: Boolean = true, front: @Composable () -> Unit, back: @Composable () -> Unit) {
     val rotation by animateFloatAsState(if (revealed) 180f else 0f, tween(350), label = "flip")
     val density = LocalDensity.current.density
     Card(
         Modifier.fillMaxWidth().graphicsLayer { rotationY = rotation; cameraDistance = 12f * density }
-            .clickable(enabled = !revealed, role = Role.Button, onClick = onFlip)
+            .clickable(enabled = !revealed && interactive, role = Role.Button, onClick = onFlip)
     ) {
         if (rotation <= 90f) front()
         else Box(Modifier.graphicsLayer { rotationY = 180f }) { back() }
@@ -358,14 +361,15 @@ private fun AccuracyRing(percent: Int) {
 }
 
 @Composable
-private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
+private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, interactive: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
+    val wordTap: (String) -> Unit = { w -> if (interactive) onWordTap(w) }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         BoxDots(entry.leitnerBox)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.review_progress, vm.progressPosition, vm.totalCards), style = MaterialTheme.typography.labelLarge)
         LinearProgressIndicator(progress = { if (vm.totalCards == 0) 0f else vm.progressPosition.toFloat() / vm.totalCards }, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp))
         FlipCard(
-            revealed, onReveal,
+            revealed, onReveal, interactive,
             front = {
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
@@ -375,31 +379,31 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
             },
             back = {
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    TappableFrenchText(entry.word, onWordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    TappableFrenchText(entry.word, wordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
-                    TextButton(onClick = onDictionary) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
+                    TextButton(onClick = onDictionary, enabled = interactive) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
                     if (!entry.meaning.isNullOrBlank()) { Text(entry.meaning, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        TappableFrenchText(entry.sentence, onWordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                        IconButton(onClick = vm::playSentence) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
+                        TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                        IconButton(onClick = vm::playSentence, enabled = interactive) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
                     }
                     if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
                 }
             }
         )
         Spacer(Modifier.height(14.dp))
-        if (!revealed) Button(onClick = onReveal, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }
+        if (!revealed) Button(onClick = onReveal, enabled = interactive, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_again), vm.intervals[0], Modifier.weight(1f), MaterialTheme.colorScheme.error) { vm.answer(VocabAnswer.FORGOT) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals), Modifier.weight(1f)) { vm.answer(VocabAnswer.HARD) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_good), VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals), Modifier.weight(1f), MaterialTheme.colorScheme.primary) { vm.answer(VocabAnswer.KNEW) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_again), vm.intervals[0], Modifier.weight(1f), MaterialTheme.colorScheme.error, interactive) { vm.answer(VocabAnswer.FORGOT) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals), Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_good), VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals), Modifier.weight(1f), MaterialTheme.colorScheme.primary, interactive) { vm.answer(VocabAnswer.KNEW) }
         }
     }
 }
 
-@Composable private fun ReviewAnswerButton(label: String, days: Long, modifier: Modifier, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface, onClick: () -> Unit) {
+@Composable private fun ReviewAnswerButton(label: String, days: Long, modifier: Modifier, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface, enabled: Boolean = true, onClick: () -> Unit) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, color), colors = ButtonDefaults.outlinedButtonColors(contentColor = color)) { Text(label) }
+        OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, color), colors = ButtonDefaults.outlinedButtonColors(contentColor = color)) { Text(label) }
         Text(stringResource(if (days == 1L) R.string.interval_day else R.string.interval_days, days), style = MaterialTheme.typography.labelSmall)
     }
 }
