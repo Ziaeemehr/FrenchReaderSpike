@@ -3,6 +3,8 @@ package com.ziaee.frenchreader.ui
 import android.app.Application
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.ui.semantics.Role
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -193,13 +195,16 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Unit) {
     val vm: VocabReviewViewModel = viewModel()
     val snackbar = remember { SnackbarHostState() }
-    var revealed by remember { mutableStateOf(false) }
+    // Reveal state is keyed by entry instance (identity): each presentation is a distinct object
+    // (answer() re-queues a copy), so the outgoing card keeps its state and a returning card starts unrevealed.
+    var revealedEntry by remember { mutableStateOf<VocabEntry?>(null) }
+    val currentRevealed = vm.current != null && vm.current === revealedEntry
     var showDictionary by remember { mutableStateOf(false) }
     var tappedWord by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(scope) { vm.load(scope) }
-    LaunchedEffect(vm.current) { revealed = false; showDictionary = false; tappedWord = null }
+    LaunchedEffect(vm.current) { showDictionary = false; tappedWord = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
-    LaunchedEffect(revealed, vm.current) { if (revealed && vm.audioAutoplay) vm.playSentence() }
+    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.audioAutoplay) vm.playSentence() }
     vm.current?.takeIf { showDictionary }?.let { e ->
         DictionarySheet(e.textId, e.word, e.sentence, e.meaning, e.listId, false, onDismiss = { showDictionary = false })
     }
@@ -219,10 +224,10 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
                     val dir = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
                     AnimatedContent(
                         targetState = vm.current,
-                        transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) },
+                        transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) using SizeTransform(clip = false) },
                         modifier = Modifier.align(Alignment.Center),
                         label = "card"
-                    ) { entry -> entry?.let { ReviewCard(vm, it, revealed, { revealed = true }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
+                    ) { entry -> entry?.let { ReviewCard(vm, it, it === revealedEntry, { revealedEntry = it }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
                 }
             }
         }
@@ -320,7 +325,7 @@ private fun FlipCard(revealed: Boolean, onFlip: () -> Unit, front: @Composable (
     val density = LocalDensity.current.density
     Card(
         Modifier.fillMaxWidth().graphicsLayer { rotationY = rotation; cameraDistance = 12f * density }
-            .clickable(enabled = !revealed, onClick = onFlip)
+            .clickable(enabled = !revealed, role = Role.Button, onClick = onFlip)
     ) {
         if (rotation <= 90f) front()
         else Box(Modifier.graphicsLayer { rotationY = 180f }) { back() }
