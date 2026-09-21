@@ -384,4 +384,7 @@
     <string name="anki_import_confirm">ایمپورت</string>
     <string name="anki_import_done">%1$d لغت اضافه شد (%2$d ردشده) در %3$d لیست جدید</string>
     <string name="anki_import_failed">خواندن فایل خروجی انکی ممکن نشد</string>
+    <string name="review_open_settings">تنظیمات مرور</string>
+    <string name="review_box_tap_hint">برای مرور فقط یک جعبه، روی آن بزنید</string>
+    <string name="review_tap_to_reveal">برای دیدن معنی روی کارت بزنید</string>
 </resources>

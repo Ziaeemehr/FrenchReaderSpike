@@ -386,4 +386,7 @@
     <string name="anki_import_confirm">Importer</string>
     <string name="anki_import_done">%1$d mots ajoutés (%2$d ignorés) dans %3$d nouvelles listes</string>
     <string name="anki_import_failed">Impossible de lire ce fichier d\'export Anki</string>
+    <string name="review_open_settings">Paramètres de révision</string>
+    <string name="review_box_tap_hint">Touchez une boîte pour ne réviser que ses cartes</string>
+    <string name="review_tap_to_reveal">Touchez la carte pour voir la réponse</string>
 </resources>

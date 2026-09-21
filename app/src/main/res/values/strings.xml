@@ -386,4 +386,7 @@
     <string name="anki_import_confirm">Import</string>
     <string name="anki_import_done">Added %1$d words (%2$d skipped) in %3$d new lists</string>
     <string name="anki_import_failed">Could not read this Anki export file</string>
+    <string name="review_open_settings">Review settings</string>
+    <string name="review_box_tap_hint">Tap a box to review only its cards</string>
+    <string name="review_tap_to_reveal">Tap the card to reveal</string>
 </resources>

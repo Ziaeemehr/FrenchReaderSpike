@@ -2,6 +2,13 @@ package com.ziaee.frenchreader.ui
 
 import android.app.Application
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -95,15 +102,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun startReview() {
+    fun startReview(box: Int? = null) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
-            val all = scoped(db.vocabDao().getAllOnce()).filter { !it.learned }
-            val overdue = all.filter { it.lastReviewedAtMs != null && it.nextReviewAtMs < dayStart }.sortedBy { it.nextReviewAtMs }
-            val today = all.filter { it.lastReviewedAtMs != null && it.nextReviewAtMs in dayStart..now }.sortedBy { it.nextReviewAtMs }
-            val fresh = all.filter { it.lastReviewedAtMs == null }.sortedBy { it.createdAtMs }.take(newCount)
-            queue.clear(); queue.addAll(overdue + today + fresh)
+            queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, newCount, box))
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
             cardsReviewed = 0; answerCount = 0; correctCount = 0; movedForward = 0; returnedToBoxOne = 0
             sessionStartedAtMs = now
@@ -171,7 +174,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
+fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Unit) {
     val vm: VocabReviewViewModel = viewModel()
     val snackbar = remember { SnackbarHostState() }
     var revealed by remember { mutableStateOf(false) }
@@ -189,7 +192,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit) {
     } }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }, actions = { IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, stringResource(R.string.review_open_settings)) } }) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp)) {
             when {
@@ -207,19 +210,40 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(R.string.review_today_title), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            GoalRing(vm.reviewedToday.coerceAtMost(vm.dailyGoal), vm.dailyGoal, Modifier.size(72.dp))
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text(stringResource(R.string.review_goal_progress, vm.reviewedToday.coerceAtMost(vm.dailyGoal), vm.dailyGoal))
+                SuggestionChip(onClick = {}, label = { Text(stringResource(R.string.review_streak, vm.streak)) }, icon = { Icon(Icons.Default.LocalFireDepartment, null, Modifier.size(18.dp)) })
+            }
+        }
+        Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Metric(vm.dueCount.toString(), stringResource(R.string.review_due_count))
             Metric(vm.newCount.toString(), stringResource(R.string.review_new_count))
             Metric(stringResource(R.string.review_minutes_short, vm.estimatedMinutes), stringResource(R.string.review_estimated_time))
         }
-        Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.review_goal_progress, vm.reviewedToday.coerceAtMost(vm.dailyGoal), vm.dailyGoal))
-        LinearProgressIndicator(progress = { (vm.reviewedToday.toFloat() / vm.dailyGoal).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
-        Text(stringResource(R.string.review_streak, vm.streak))
-        Button(onClick = vm::startReview, enabled = vm.dueCount + vm.newCount > 0, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).height(52.dp)) {
+        Button(onClick = { vm.startReview() }, enabled = vm.dueCount + vm.newCount > 0, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).height(52.dp)) {
             Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.review_start))
         }
-        vm.boxes.forEach { BoxDashboardRow(it) }
+        Text(stringResource(R.string.review_box_tap_hint), style = MaterialTheme.typography.labelSmall)
+        Spacer(Modifier.height(4.dp))
+        BoxLadder(vm.boxes, onBoxClick = { vm.startReview(it) })
+    }
+}
+
+@Composable
+private fun GoalRing(done: Int, goal: Int, modifier: Modifier = Modifier) {
+    val track = MaterialTheme.colorScheme.outlineVariant
+    val fill = MaterialTheme.colorScheme.primary
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize().padding(4.dp)) {
+            val stroke = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+            drawArc(track, 0f, 360f, false, style = stroke)
+            drawArc(fill, -90f, (done.toFloat() / goal.coerceAtLeast(1)).coerceIn(0f, 1f) * 360f, false, style = stroke)
+        }
+        Text("$done/$goal", style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -227,16 +251,36 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
     Text(value, style = MaterialTheme.typography.titleLarge); Text(label, style = MaterialTheme.typography.labelSmall)
 }
 
-@Composable private fun BoxDashboardRow(box: ReviewBoxSummary) {
+@Composable
+private fun BoxLadder(boxes: List<ReviewBoxSummary>, onBoxClick: (Int) -> Unit) {
     val icons = listOf(Icons.Default.School, Icons.Default.AutoStories, Icons.Default.Psychology, Icons.Default.TrendingUp, Icons.Default.EmojiEvents)
-    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icons[box.box - 1], null, tint = leitnerBoxColor(box.box)); Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.review_box_label, box.box), style = MaterialTheme.typography.titleSmall)
-                Text(stringResource(R.string.review_box_details, box.count, box.intervalDays, box.dueCount), style = MaterialTheme.typography.bodySmall)
+    val fractions = boxBarFractions(boxes.map { it.count })
+    boxes.forEachIndexed { i, box ->
+        val enabled = box.dueCount > 0
+        val color = leitnerBoxColor(box.box)
+        Card(onClick = { onBoxClick(box.box) }, enabled = enabled, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).alpha(if (enabled) 1f else 0.6f)) {
+            Column(Modifier.padding(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(icons[(box.box - 1).coerceIn(0, icons.lastIndex)], null, tint = color); Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.review_box_label, box.box), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.review_box_details, box.count, box.intervalDays, box.dueCount), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text(box.nextReviewAtMs?.let(::formatDate) ?: "—", style = MaterialTheme.typography.labelSmall)
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+                        Box(Modifier.fillMaxWidth(fractions[i]).fillMaxHeight().background(color))
+                    }
+                    if (enabled) {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primary) {
+                            Text(box.dueCount.toString(), Modifier.padding(horizontal = 8.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
+                        }
+                    }
+                }
             }
-            Text(box.nextReviewAtMs?.let(::formatDate) ?: "—", style = MaterialTheme.typography.labelSmall)
         }
     }
 }

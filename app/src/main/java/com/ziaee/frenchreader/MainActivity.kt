@@ -204,7 +204,7 @@ private fun AppNavHost() {
             arguments = listOf(navArgument("scope") { type = NavType.LongType })
         ) { backStackEntry ->
             val scope = backStackEntry.arguments?.getLong("scope") ?: VOCAB_SCOPE_ALL
-            VocabReviewScreen(scope = scope, onBack = { navController.popBackStack() })
+            VocabReviewScreen(scope = scope, onBack = { navController.popBackStack() }, onOpenSettings = { navController.navigate("settings") })
         }
         composable("settings") {
             SettingsScreen(onBack = { navController.popBackStack() })
