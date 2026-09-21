@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
 /** Primary dictionary source per the design doc: WordReference French->English. */
-private fun wordReferenceUrl(word: String): String =
+internal fun wordReferenceUrl(word: String): String =
     "https://www.wordreference.com/fren/" + URLEncoder.encode(word, "UTF-8")
 
 /** One free, no-API-key dictionary source shown as a switchable tab in the

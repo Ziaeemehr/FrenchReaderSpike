@@ -27,6 +27,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.content.AnkiImportRepository
+import com.ziaee.frenchreader.content.AnkiImportResult
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
@@ -35,7 +37,14 @@ import com.ziaee.frenchreader.data.status
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Scope sentinels for [VocabListScreen]'s filter chips -- real list ids are
  * always >= 1 (Room autoGenerate), so these never collide with one. */
@@ -70,6 +79,19 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun importAnki(json: String, keepProgress: Boolean, onDone: (AnkiImportResult?) -> Unit) {
+        viewModelScope.launch {
+            val result = try {
+                AnkiImportRepository(db).import(json, keepProgress)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            onDone(result)
+        }
+    }
+
     fun deleteList(list: VocabList) {
         viewModelScope.launch {
             db.vocabDao().clearListId(list.id)
@@ -90,6 +112,14 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     var selectedScope by remember { mutableStateOf(VOCAB_SCOPE_ALL) }
     var selectedStatus by remember { mutableStateOf<VocabStatus?>(null) }
     var showNewListDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingAnkiUri by remember { mutableStateOf<Uri?>(null) }
+    var keepAnkiProgress by remember { mutableStateOf(true) }
+    val ankiPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) { keepAnkiProgress = true; pendingAnkiUri = uri }
+    }
 
     val scoped = remember(entries, selectedScope) {
         when (selectedScope) {
@@ -110,7 +140,56 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
         scoped.count { !it.learned && it.nextReviewAtMs <= now }
     }
 
+    pendingAnkiUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingAnkiUri = null },
+            title = { Text(stringResource(R.string.anki_import_title)) },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable { keepAnkiProgress = !keepAnkiProgress },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(checked = keepAnkiProgress, onCheckedChange = { keepAnkiProgress = it })
+                    Text(stringResource(R.string.anki_import_keep_progress))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val keep = keepAnkiProgress
+                    pendingAnkiUri = null
+                    scope.launch {
+                        val json = try {
+                            withContext(Dispatchers.IO) {
+                                context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                            }
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (json == null) {
+                            snackbarHostState.showSnackbar(context.getString(R.string.anki_import_failed))
+                        } else {
+                            vm.importAnki(json, keep) { r ->
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        if (r == null) context.getString(R.string.anki_import_failed)
+                                        else context.getString(R.string.anki_import_done, r.added, r.skipped, r.lists)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }) { Text(stringResource(R.string.anki_import_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingAnkiUri = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.vocab_screen_title)) },
@@ -120,6 +199,9 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { ankiPicker.launch(arrayOf("application/json", "*/*")) }) {
+                        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.anki_import_action))
+                    }
                     IconButton(onClick = { meaningsVisible = !meaningsVisible }) {
                         Icon(
                             if (meaningsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,

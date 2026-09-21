@@ -380,4 +380,10 @@
     <string name="statistics_retention_title">Retention by Leitner box</string>
     <string name="statistics_listening_month_title">Listening time (last 30 days, min)</string>
     <string name="statistics_no_data">Not enough data yet</string>
+    <string name="anki_import_action">Import from Anki</string>
+    <string name="anki_import_title">Import Anki deck</string>
+    <string name="anki_import_keep_progress">Keep Anki progress</string>
+    <string name="anki_import_confirm">Import</string>
+    <string name="anki_import_done">Added %1$d words (%2$d skipped) in %3$d new lists</string>
+    <string name="anki_import_failed">Could not read this Anki export file</string>
 </resources>

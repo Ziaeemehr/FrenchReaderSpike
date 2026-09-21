@@ -380,4 +380,10 @@
     <string name="statistics_retention_title">Rétention par boîte de Leitner</string>
     <string name="statistics_listening_month_title">Temps d\'écoute (30 derniers jours, min)</string>
     <string name="statistics_no_data">Pas encore assez de données</string>
+    <string name="anki_import_action">Importer depuis Anki</string>
+    <string name="anki_import_title">Importer un paquet Anki</string>
+    <string name="anki_import_keep_progress">Conserver la progression Anki</string>
+    <string name="anki_import_confirm">Importer</string>
+    <string name="anki_import_done">%1$d mots ajoutés (%2$d ignorés) dans %3$d nouvelles listes</string>
+    <string name="anki_import_failed">Impossible de lire ce fichier d\'export Anki</string>
 </resources>

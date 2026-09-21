@@ -198,6 +198,9 @@ interface VocabListDao {
     @Query("SELECT * FROM vocab_lists ORDER BY createdAtMs ASC")
     fun observeAll(): Flow<List<VocabList>>
 
+    @Query("SELECT * FROM vocab_lists")
+    suspend fun getAllOnce(): List<VocabList>
+
     @Insert
     suspend fun insert(list: VocabList): Long
 
