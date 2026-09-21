@@ -132,6 +132,7 @@ fun StatisticsScreen(onBack: () -> Unit) {
             StreakSection(state.streakDays)
             WeeklyListeningSection(state.weeklyListening)
             VocabReviewSection(state)
+            NewChartSections(state)
             TotalsSection(state)
         }
     }
@@ -240,4 +241,58 @@ private fun TotalsSection(state: StatisticsUiState) {
     Text(stringResource(R.string.statistics_texts_saved, state.textsSaved))
     Text(stringResource(R.string.statistics_texts_completed, state.textsCompleted))
     Text(stringResource(R.string.statistics_words_saved, state.wordsSaved))
+}
+
+@Composable
+private fun ChartTitle(res: Int) {
+    Text(
+        stringResource(res),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 20.dp)
+    )
+}
+
+@Composable
+private fun NewChartSections(state: StatisticsUiState) {
+    val primary = MaterialTheme.colorScheme.primary
+    val dm = java.time.format.DateTimeFormatter.ofPattern("d/M")
+    val noData = stringResource(R.string.statistics_no_data)
+
+    ChartTitle(R.string.statistics_heatmap_title)
+    if (state.reviewHeatmap.all { it.count == 0 }) Text(noData) else HeatmapGrid(state.reviewHeatmap)
+
+    ChartTitle(R.string.statistics_forecast_title)
+    if (state.dueForecast.sum() == 0) Text(noData) else BarChart(
+        state.dueForecast.map { it.toFloat() },
+        state.dueForecast.indices.map { if (it % 5 == 0) "+$it" else "" },
+        primary
+    )
+
+    ChartTitle(R.string.statistics_accuracy_trend_title)
+    if (state.accuracyTrend.all { it.answers == 0 }) Text(noData) else LineChart(
+        state.accuracyTrend.map { it.percent.toFloat() },
+        state.accuracyTrend.map { it.weekStart.format(dm) },
+        primary
+    )
+
+    ChartTitle(R.string.statistics_words_added_title)
+    if (state.wordsAddedPerWeek.all { it.count == 0 }) Text(noData) else BarChart(
+        state.wordsAddedPerWeek.map { it.count.toFloat() },
+        state.wordsAddedPerWeek.map { it.weekStart.format(dm) },
+        primary
+    )
+
+    ChartTitle(R.string.statistics_retention_title)
+    if (state.retentionByBox.all { it.answers == 0 }) Text(noData) else BarChart(
+        state.retentionByBox.map { it.percent.toFloat() },
+        state.retentionByBox.indices.map { (it + 1).toString() },
+        MaterialTheme.colorScheme.secondary
+    )
+
+    ChartTitle(R.string.statistics_listening_month_title)
+    if (state.monthlyListening.all { it.listeningMs == 0L }) Text(noData) else BarChart(
+        state.monthlyListening.map { it.listeningMs / 60_000f },
+        state.monthlyListening.mapIndexed { i, d -> if (i % 5 == 0) d.date.dayOfMonth.toString() else "" },
+        primary
+    )
 }

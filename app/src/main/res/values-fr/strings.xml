@@ -373,4 +373,11 @@
     <string name="review_reminder_body">Continuez votre série avec les cartes du jour.</string>
     <string name="dictionary_meaning_persian">Sens en persan</string>
     <string name="dictionary_meaning_english">Sens en anglais</string>
+    <string name="statistics_heatmap_title">Activité de révision (12 dernières semaines)</string>
+    <string name="statistics_forecast_title">Révisions à venir (30 prochains jours)</string>
+    <string name="statistics_accuracy_trend_title">Précision hebdomadaire</string>
+    <string name="statistics_words_added_title">Mots ajoutés par semaine</string>
+    <string name="statistics_retention_title">Rétention par boîte de Leitner</string>
+    <string name="statistics_listening_month_title">Temps d\'écoute (30 derniers jours, min)</string>
+    <string name="statistics_no_data">Pas encore assez de données</string>
 </resources>

@@ -373,4 +373,11 @@
     <string name="review_reminder_body">Keep your streak going with today\'s cards.</string>
     <string name="dictionary_meaning_persian">Persian meaning</string>
     <string name="dictionary_meaning_english">English meaning</string>
+    <string name="statistics_heatmap_title">Review activity (last 12 weeks)</string>
+    <string name="statistics_forecast_title">Reviews due (next 30 days)</string>
+    <string name="statistics_accuracy_trend_title">Weekly accuracy</string>
+    <string name="statistics_words_added_title">Words added per week</string>
+    <string name="statistics_retention_title">Retention by Leitner box</string>
+    <string name="statistics_listening_month_title">Listening time (last 30 days, min)</string>
+    <string name="statistics_no_data">Not enough data yet</string>
 </resources>

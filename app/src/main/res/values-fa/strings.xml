@@ -371,4 +371,11 @@
     <string name="review_reminder_body">با کارت‌های امروز روند خود را ادامه دهید.</string>
     <string name="dictionary_meaning_persian">معنی فارسی</string>
     <string name="dictionary_meaning_english">معنی انگلیسی</string>
+    <string name="statistics_heatmap_title">فعالیت مرور (۱۲ هفتهٔ اخیر)</string>
+    <string name="statistics_forecast_title">مرورهای پیش‌رو (۳۰ روز آینده)</string>
+    <string name="statistics_accuracy_trend_title">دقت هفتگی</string>
+    <string name="statistics_words_added_title">لغات اضافه‌شده در هر هفته</string>
+    <string name="statistics_retention_title">ماندگاری در هر جعبهٔ لایتنر</string>
+    <string name="statistics_listening_month_title">زمان گوش دادن (۳۰ روز اخیر، دقیقه)</string>
+    <string name="statistics_no_data">هنوز داده کافی نیست</string>
 </resources>
