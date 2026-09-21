@@ -2,8 +2,24 @@ package com.ziaee.frenchreader.ui
 
 import android.app.Application
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import com.ziaee.frenchreader.ui.statistics.computeAccuracyPercent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -199,7 +215,15 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
                 vm.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 vm.stage == ReviewStage.OVERVIEW -> ReviewOverview(vm)
                 vm.stage == ReviewStage.SUMMARY -> ReviewSummary(vm, onBack, Modifier.align(Alignment.Center))
-                else -> vm.current?.let { ReviewCard(vm, it, revealed, { revealed = true }, { showDictionary = true }, { tappedWord = it }, Modifier.align(Alignment.Center)) }
+                else -> {
+                    val dir = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
+                    AnimatedContent(
+                        targetState = vm.current,
+                        transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) },
+                        modifier = Modifier.align(Alignment.Center),
+                        label = "card"
+                    ) { entry -> entry?.let { ReviewCard(vm, it, revealed, { revealed = true }, { showDictionary = true }, { w -> tappedWord = w }, Modifier) } }
+                }
             }
         }
     }
@@ -215,7 +239,12 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(stringResource(R.string.review_goal_progress, vm.reviewedToday.coerceAtMost(vm.dailyGoal), vm.dailyGoal))
-                SuggestionChip(onClick = {}, label = { Text(stringResource(R.string.review_streak, vm.streak)) }, icon = { Icon(Icons.Default.LocalFireDepartment, null, Modifier.size(18.dp)) })
+                Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.LocalFireDepartment, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.review_streak, vm.streak), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -243,7 +272,7 @@ private fun GoalRing(done: Int, goal: Int, modifier: Modifier = Modifier) {
             drawArc(track, 0f, 360f, false, style = stroke)
             drawArc(fill, -90f, (done.toFloat() / goal.coerceAtLeast(1)).coerceIn(0f, 1f) * 360f, false, style = stroke)
         }
-        Text("$done/$goal", style = MaterialTheme.typography.labelLarge)
+        Text("$done/$goal", style = MaterialTheme.typography.labelLarge, maxLines = 1)
     }
 }
 
@@ -286,24 +315,73 @@ private fun BoxLadder(boxes: List<ReviewBoxSummary>, onBoxClick: (Int) -> Unit) 
 }
 
 @Composable
+private fun FlipCard(revealed: Boolean, onFlip: () -> Unit, front: @Composable () -> Unit, back: @Composable () -> Unit) {
+    val rotation by animateFloatAsState(if (revealed) 180f else 0f, tween(350), label = "flip")
+    val density = LocalDensity.current.density
+    Card(
+        Modifier.fillMaxWidth().graphicsLayer { rotationY = rotation; cameraDistance = 12f * density }
+            .clickable(enabled = !revealed, onClick = onFlip)
+    ) {
+        if (rotation <= 90f) front()
+        else Box(Modifier.graphicsLayer { rotationY = 180f }) { back() }
+    }
+}
+
+@Composable
+private fun BoxDots(box: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (i in 1..5) {
+            val target = if (i <= box) leitnerBoxColor(i) else MaterialTheme.colorScheme.outlineVariant
+            val color by animateColorAsState(target, label = "dot")
+            Box(Modifier.size(10.dp).clip(CircleShape).background(color))
+        }
+    }
+}
+
+@Composable
+private fun AccuracyRing(percent: Int) {
+    val track = MaterialTheme.colorScheme.outlineVariant
+    val fill = MaterialTheme.colorScheme.primary
+    Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize().padding(6.dp)) {
+            val stroke = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round)
+            drawArc(track, 0f, 360f, false, style = stroke)
+            drawArc(fill, -90f, percent.coerceIn(0, 100) / 100f * 360f, false, style = stroke)
+        }
+        Text("$percent%", style = MaterialTheme.typography.titleMedium, maxLines = 1)
+    }
+}
+
+@Composable
 private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        BoxDots(entry.leitnerBox)
+        Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.review_progress, vm.progressPosition, vm.totalCards), style = MaterialTheme.typography.labelLarge)
         LinearProgressIndicator(progress = { if (vm.totalCards == 0) 0f else vm.progressPosition.toFloat() / vm.totalCards }, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp))
-        Card(Modifier.fillMaxWidth()) { Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            if (revealed) TappableFrenchText(entry.word, onWordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-            else Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-            if (revealed) {
-                Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
-                TextButton(onClick = onDictionary) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
-                if (!entry.meaning.isNullOrBlank()) { Text(entry.meaning, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TappableFrenchText(entry.sentence, onWordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                    IconButton(onClick = vm::playSentence) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
+        FlipCard(
+            revealed, onReveal,
+            front = {
+                Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(12.dp))
+                    Text(stringResource(R.string.review_tap_to_reveal), style = MaterialTheme.typography.labelSmall)
                 }
-                if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+            },
+            back = {
+                Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    TappableFrenchText(entry.word, onWordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
+                    TextButton(onClick = onDictionary) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
+                    if (!entry.meaning.isNullOrBlank()) { Text(entry.meaning, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TappableFrenchText(entry.sentence, onWordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                        IconButton(onClick = vm::playSentence) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
+                    }
+                    if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                }
             }
-        } }
+        )
         Spacer(Modifier.height(14.dp))
         if (!revealed) Button(onClick = onReveal, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -324,9 +402,9 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
 @Composable private fun ReviewSummary(vm: VocabReviewViewModel, onBack: () -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(Icons.Default.CheckCircle, null, Modifier.size(58.dp), tint = MaterialTheme.colorScheme.primary)
-        Text(stringResource(R.string.review_summary_title), style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.review_summary_title), style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.height(12.dp))
+        AccuracyRing(computeAccuracyPercent(vm.correctCount, vm.answerCount)); Spacer(Modifier.height(12.dp))
         SummaryLine(R.string.review_summary_cards, vm.cardsReviewed.toString())
-        SummaryLine(R.string.review_summary_correct, if (vm.answerCount == 0) "0%" else "${vm.correctCount * 100 / vm.answerCount}%")
         SummaryLine(R.string.review_summary_forward, vm.movedForward.toString())
         SummaryLine(R.string.review_summary_returned, vm.returnedToBoxOne.toString())
         SummaryLine(R.string.review_summary_time, formatDuration(vm.studyTimeMs))
