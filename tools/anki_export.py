@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+import urllib.error
 import urllib.request
 
 URL = "http://localhost:8765"
@@ -10,8 +11,11 @@ URL = "http://localhost:8765"
 
 def call(action, **params):
     body = json.dumps({"action": action, "version": 6, "params": params}).encode()
-    with urllib.request.urlopen(urllib.request.Request(URL, body), timeout=60) as r:
-        reply = json.load(r)
+    try:
+        with urllib.request.urlopen(urllib.request.Request(URL, body), timeout=60) as r:
+            reply = json.load(r)
+    except (urllib.error.URLError, OSError):
+        sys.exit("Cannot reach AnkiConnect at localhost:8765 - is Anki open with the AnkiConnect add-on installed?")
     if reply.get("error"):
         sys.exit(f"AnkiConnect error in {action}: {reply['error']}")
     return reply["result"]

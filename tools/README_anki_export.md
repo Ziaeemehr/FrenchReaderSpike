@@ -16,6 +16,8 @@ python3 tools/anki_export.py --out anki.json [--deck "Deck Name"]...
 - Omit `--deck` to export all decks
 - Repeat `--deck` multiple times to export specific decks
 - A deck name includes all subdecks
+- Anki must stay open while the script runs
+- Note: audio files are not exported or imported; only card text is transferred
 
 ## Import to App
 
