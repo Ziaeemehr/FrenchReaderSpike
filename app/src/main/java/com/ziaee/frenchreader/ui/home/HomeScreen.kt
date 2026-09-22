@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -262,6 +263,7 @@ fun HomeContent(
         topBar = {
             EditorialTopAppBar(
                 title = stringResource(R.string.home_brand_title),
+                titleStyle = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp),
                 actions = {
                     IconButton(onClick = onOpenDictionary) {
                         Icon(

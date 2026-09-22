@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
@@ -47,6 +48,7 @@ fun EditorialTopAppBar(
     title: String,
     modifier: Modifier = Modifier,
     titleModifier: Modifier = Modifier,
+    titleStyle: TextStyle = FrenchReaderDesign.editorialTypography.sectionTitle,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {}
 ) {
@@ -54,7 +56,7 @@ fun EditorialTopAppBar(
         title = {
             Text(
                 text = title,
-                style = FrenchReaderDesign.editorialTypography.sectionTitle,
+                style = titleStyle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = titleModifier
