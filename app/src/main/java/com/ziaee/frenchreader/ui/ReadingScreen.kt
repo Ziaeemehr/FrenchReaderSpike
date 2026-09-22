@@ -337,10 +337,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             },
             bottomBar = { PlaybackControls(vm, state, palette) }
         ) { padding ->
-            if (!state.ready) {
+            if (state.chunks.isEmpty()) {
                 Box(
-                    Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
+                    Modifier.fillMaxSize().padding(padding).padding(bottom = 48.dp),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
                     CircularProgressIndicator(color = palette.accent)
                 }
