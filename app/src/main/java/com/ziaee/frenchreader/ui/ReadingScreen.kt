@@ -29,6 +29,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalTextToolbar
@@ -58,6 +60,7 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.SavedVocab
 import com.ziaee.frenchreader.content.VocabHighlighter
 import com.ziaee.frenchreader.data.VocabStatus
+import com.ziaee.frenchreader.data.HighlightEntry
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
@@ -84,6 +87,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val vm: ReadingViewModel = viewModel()
     val state by vm.state.collectAsState()
     val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
+    val highlights by vm.highlights.collectAsState()
     val savedVocabStatuses = if (AppearanceState.highlightSavedWords) allSavedVocabStatuses else emptyMap()
     val palette = readingPaletteFor(AppearanceState.readingBackground, AppearanceState.highlightColor)
     val settingsContext = LocalContext.current
@@ -100,8 +104,14 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     // so a long-press's initial single-word selection doesn't collapse itself before the
     // user has a chance to drag a handle and extend it to a phrase.
     var selectedWord by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var selectedWordRange by remember { mutableStateOf<TextRange?>(null) }
     var selectedPhrase by remember { mutableStateOf<String?>(null) }
     var selectedPhraseSentence by remember { mutableStateOf("") }
+    var selectedPhraseRange by remember { mutableStateOf<TextRange?>(null) }
+    var showHighlightPalette by remember { mutableStateOf(false) }
+    var highlightPopupTarget by remember { mutableStateOf<HighlightEntry?>(null) }
+    var highlightPopupRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    var changeHighlightColor by remember { mutableStateOf(false) }
     var clearSelectionTick by remember { mutableIntStateOf(0) }
     var processTextTarget by remember { mutableStateOf<String?>(null) }
     val selectionToolbarController = remember { SelectionToolbarController() }
@@ -124,6 +134,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val spokenChunkIndices = remember(state.chunks) {
         state.chunks.indices.filter { state.chunks[it].block.type != BlockType.IMAGE }
     }
+    val chunkDocumentOffsets = remember(state.chunks) { documentOffsets(state.chunks) }
     val spokenProgress = remember(spokenChunkIndices, state.currentChunkIndex) {
         val reached = spokenChunkIndices.count { it <= state.currentChunkIndex }
         reached to spokenChunkIndices.size
@@ -349,19 +360,37 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         currentPositionMs = if (chunkIndex == state.currentChunkIndex) state.currentPositionMs else 0L,
                         showTranslation = state.showTranslations,
                         savedVocabStatuses = savedVocabStatuses,
+                        highlights = highlights,
+                        documentStartOffset = chunkDocumentOffsets.getOrElse(chunkIndex) { 0 },
                         palette = palette,
                         fontScale = fontScale,
                         onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
                         onPendingClick = { vm.jumpToChunk(chunkIndex) },
                         onRetry = { vm.retryChunk(chunkIndex) },
-                        onWordLookup = { word, sentenceText ->
+                        onWordLookup = { word, sentenceText, range ->
                             selectedWord = word to sentenceText
+                            selectedWordRange = range
                             selectedPhrase = null
+                            selectedPhraseRange = null
+                            showHighlightPalette = false
                         },
-                        onPhraseSelected = { phrase, sentenceText ->
+                        onPhraseSelected = { phrase, sentenceText, range ->
                             selectedPhrase = phrase
                             selectedPhraseSentence = sentenceText
+                            selectedPhraseRange = range
                             selectedWord = null
+                            selectedWordRange = null
+                            highlightPopupTarget = null
+                            highlightPopupRect = null
+                        },
+                        onHighlightClick = { highlight, rect ->
+                            selectedPhrase = null
+                            selectedPhraseRange = null
+                            selectedWord = null
+                            selectedWordRange = null
+                            highlightPopupTarget = highlight
+                            highlightPopupRect = rect
+                            changeHighlightColor = false
                         },
                         clearSelectionSignal = clearSelectionTick
                     )
@@ -405,6 +434,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             onDismissRequest = {
                 vm.stopSelectionPlayback()
                 selectedPhrase = null
+                selectedPhraseRange = null
+                showHighlightPalette = false
                 processTextTarget = null
                 clearSelectionTick++
             }
@@ -414,7 +445,20 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             // overflow (More) replaces this popup's content rather than opening a
             // separate one, and Back restores the actions without losing the
             // still-highlighted selection (clearSelectionTick isn't touched here).
-            if (processTextTarget != null) {
+            if (showHighlightPalette) {
+                HighlightPalettePopupContent(
+                    onColorSelected = { colorKey ->
+                        selectedPhraseRange?.let { range ->
+                            vm.addHighlight(range.min, range.max, colorKey)
+                        }
+                        showHighlightPalette = false
+                        selectedPhrase = null
+                        selectedPhraseRange = null
+                        clearSelectionTick++
+                    },
+                    onBack = { showHighlightPalette = false }
+                )
+            } else if (processTextTarget != null) {
                 val text = processTextTarget!!
                 val context = LocalContext.current
                 val apps = remember(text) { queryProcessTextApps(context) }
@@ -423,6 +467,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                     onAppSelected = { app ->
                         launchProcessTextApp(context, app, text)
                         selectedPhrase = null
+                        selectedPhraseRange = null
                         processTextTarget = null
                         clearSelectionTick++
                     },
@@ -438,21 +483,62 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         // classifySelection) and would silently overwrite it.
                         clipboard.setText(androidx.compose.ui.text.AnnotatedString(phrase))
                         selectedPhrase = null
+                        selectedPhraseRange = null
                         clearSelectionTick++
                     },
                     onSave = {
                         vm.player.pause()
                         dictionaryTarget = phrase to selectedPhraseSentence
                         selectedPhrase = null
+                        selectedPhraseRange = null
                         clearSelectionTick++
                     },
                     onListen = {
                         vm.player.pause()
                         vm.playSelection(phrase)
                         selectedPhrase = null
+                        selectedPhraseRange = null
                         clearSelectionTick++
                     },
+                    onHighlight = { showHighlightPalette = true },
                     onMore = { processTextTarget = phrase }
+                )
+            }
+        }
+    }
+
+    val existingHighlight = highlightPopupTarget
+    val existingHighlightRect = highlightPopupRect
+    if (existingHighlight != null && existingHighlightRect != null) {
+        Popup(
+            popupPositionProvider = SelectionRectPositionProvider(
+                rect = existingHighlightRect,
+                marginPx = with(density) { 8.dp.toPx() }
+            ),
+            onDismissRequest = {
+                highlightPopupTarget = null
+                highlightPopupRect = null
+                changeHighlightColor = false
+            }
+        ) {
+            if (changeHighlightColor) {
+                HighlightPalettePopupContent(
+                    onColorSelected = { colorKey ->
+                        vm.updateHighlightColor(existingHighlight.id, colorKey)
+                        highlightPopupTarget = null
+                        highlightPopupRect = null
+                        changeHighlightColor = false
+                    },
+                    onBack = { changeHighlightColor = false }
+                )
+            } else {
+                HighlightActionsPopupContent(
+                    onChangeColor = { changeHighlightColor = true },
+                    onDelete = {
+                        vm.deleteHighlight(existingHighlight.id)
+                        highlightPopupTarget = null
+                        highlightPopupRect = null
+                    }
                 )
             }
         }
@@ -473,11 +559,25 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             properties = androidx.compose.ui.window.PopupProperties(dismissOnClickOutside = false),
             onDismissRequest = {
                 selectedWord = null
+                selectedWordRange = null
                 processTextTarget = null
                 clearSelectionTick++
             }
         ) {
-            if (processTextTarget != null) {
+            if (showHighlightPalette) {
+                HighlightPalettePopupContent(
+                    onColorSelected = { colorKey ->
+                        selectedWordRange?.let { range ->
+                            vm.addHighlight(range.min, range.max, colorKey)
+                        }
+                        showHighlightPalette = false
+                        selectedWord = null
+                        selectedWordRange = null
+                        clearSelectionTick++
+                    },
+                    onBack = { showHighlightPalette = false }
+                )
+            } else if (processTextTarget != null) {
                 val text = processTextTarget!!
                 val context = LocalContext.current
                 val apps = remember(text) { queryProcessTextApps(context) }
@@ -486,6 +586,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                     onAppSelected = { app ->
                         launchProcessTextApp(context, app, text)
                         selectedWord = null
+                        selectedWordRange = null
                         processTextTarget = null
                         clearSelectionTick++
                     },
@@ -497,8 +598,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         vm.player.pause()
                         dictionaryTarget = word to sentence
                         selectedWord = null
+                        selectedWordRange = null
                         clearSelectionTick++
                     },
+                    onHighlight = { showHighlightPalette = true },
                     onMore = { processTextTarget = word }
                 )
             }
@@ -616,13 +719,16 @@ private fun ChunkParagraph(
     currentPositionMs: Long,
     showTranslation: Boolean,
     savedVocabStatuses: Map<String, VocabStatus>,
+    highlights: List<HighlightEntry>,
+    documentStartOffset: Int,
     palette: ReadingPalette,
     fontScale: Float,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onPendingClick: () -> Unit,
     onRetry: () -> Unit,
-    onWordLookup: (word: String, sentence: String) -> Unit,
-    onPhraseSelected: (phrase: String, sentence: String) -> Unit,
+    onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
+    onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
+    onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
     clearSelectionSignal: Int
 ) {
     // Not-yet-synthesized chunks have no sentence timings, but must still render with
@@ -659,9 +765,12 @@ private fun ChunkParagraph(
                                 color = palette.ink,
                                 palette = palette,
                                 savedVocabStatuses = savedVocabStatuses,
+                                highlights = highlights,
+                                documentStartOffset = documentStartOffset,
                                 onSentenceClick = onSentenceClick,
                                 onWordLookup = onWordLookup,
                                 onPhraseSelected = onPhraseSelected,
+                                onHighlightClick = onHighlightClick,
                                 clearSelectionSignal = clearSelectionSignal
                             )
                             if (chunk.block.headerLevel == 1) {
@@ -689,9 +798,12 @@ private fun ChunkParagraph(
                                     color = palette.ink,
                                     palette = palette,
                                     savedVocabStatuses = savedVocabStatuses,
+                                    highlights = highlights,
+                                    documentStartOffset = documentStartOffset,
                                     onSentenceClick = onSentenceClick,
                                     onWordLookup = onWordLookup,
                                     onPhraseSelected = onPhraseSelected,
+                                    onHighlightClick = onHighlightClick,
                                     clearSelectionSignal = clearSelectionSignal
                                 )
                             }
@@ -706,9 +818,12 @@ private fun ChunkParagraph(
                             color = palette.ink,
                             palette = palette,
                             savedVocabStatuses = savedVocabStatuses,
+                            highlights = highlights,
+                            documentStartOffset = documentStartOffset,
                             onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup,
                             onPhraseSelected = onPhraseSelected,
+                            onHighlightClick = onHighlightClick,
                             clearSelectionSignal = clearSelectionSignal
                         )
                         BlockType.IMAGE -> Unit
@@ -849,9 +964,12 @@ private fun SentenceFlowText(
     color: Color,
     palette: ReadingPalette,
     savedVocabStatuses: Map<String, VocabStatus>,
+    highlights: List<HighlightEntry>,
+    documentStartOffset: Int,
     onSentenceClick: (SentenceBoundary) -> Unit,
-    onWordLookup: (word: String, sentence: String) -> Unit,
-    onPhraseSelected: (phrase: String, sentence: String) -> Unit,
+    onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
+    onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
+    onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
     clearSelectionSignal: Int
 ) {
     val vocabHighlighter = remember(savedVocabStatuses) {
@@ -891,7 +1009,9 @@ private fun SentenceFlowText(
         currentPositionMs,
         palette,
         savedVocabStatuses,
-        vocabStyles
+        vocabStyles,
+        highlights,
+        documentStartOffset
     ) {
         buildAnnotatedString {
             ranges.clear()
@@ -911,6 +1031,18 @@ private fun SentenceFlowText(
                     val style = vocabStyles.getValue(match.status)
                     addStyle(style, match.range.first, match.range.last + 1)
                 }
+            }
+            // Manual highlights are a separate, offset-based layer. Apply
+            // their background after vocabulary styles so a saved-word tint
+            // cannot hide the color the reader explicitly chose; the vocab
+            // underline and foreground color remain intact.
+            val localHighlights = highlights.mapNotNull { highlight ->
+                val start = maxOf(highlight.startOffset, documentStartOffset) - documentStartOffset
+                val end = minOf(highlight.endOffset, documentStartOffset + full.length) - documentStartOffset
+                if (start < end) highlight.copy(startOffset = start, endOffset = end) else null
+            }
+            applyHighlights(full, localHighlights).spanStyles.forEach { span ->
+                addStyle(span.item, span.start, span.end)
             }
             chunk.sentences.forEachIndexed { index, sentence ->
                 val isActive = isCurrentChunk &&
@@ -945,6 +1077,7 @@ private fun SentenceFlowText(
 
     var selection by remember(chunk.sentences, clearSelectionSignal) { mutableStateOf(TextRange.Zero) }
     var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var layoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val headingFontFamily = FrenchReaderDesign.editorialTypography.articleHeadline.fontFamily
 
     fun sentenceTextFor(offset: Int): String {
@@ -963,22 +1096,56 @@ private fun SentenceFlowText(
             value = TextFieldValue(annotatedString = annotated, selection = selection),
             onValueChange = { newValue ->
                 if (newValue.selection.collapsed) {
-                    val idx = ranges.indexOfFirst { newValue.selection.start in it }
-                    if (idx >= 0) onSentenceClick(chunk.sentences[idx])
-                    selection = TextRange.Zero
+                    val localOffset = newValue.selection.start.coerceIn(0, annotated.length)
+                    val documentOffset = documentStartOffset + localOffset
+                    val tappedHighlight = highlights.lastOrNull {
+                        documentOffset >= it.startOffset && documentOffset < it.endOffset
+                    }
+                    if (tappedHighlight != null) {
+                        val layout = textLayout
+                        val coordinates = layoutCoordinates
+                        if (layout != null && coordinates != null && annotated.isNotEmpty()) {
+                            val box = layout.getBoundingBox(localOffset.coerceAtMost(annotated.lastIndex))
+                            val topLeft = coordinates.localToWindow(box.topLeft)
+                            val bottomRight = coordinates.localToWindow(box.bottomRight)
+                            onHighlightClick(
+                                tappedHighlight,
+                                androidx.compose.ui.geometry.Rect(topLeft, bottomRight)
+                            )
+                        }
+                        selection = TextRange.Zero
+                    } else {
+                        val idx = ranges.indexOfFirst { newValue.selection.start in it }
+                        if (idx >= 0) onSentenceClick(chunk.sentences[idx])
+                        selection = TextRange.Zero
+                    }
                 } else {
                     selection = newValue.selection
                     when (val kind = classifySelection(annotated.text, newValue.selection)) {
                         is SelectionKind.Word ->
-                            onWordLookup(kind.word, sentenceTextFor(newValue.selection.start))
+                            onWordLookup(
+                                kind.word,
+                                sentenceTextFor(newValue.selection.start),
+                                TextRange(
+                                    documentStartOffset + kind.range.min,
+                                    documentStartOffset + kind.range.max
+                                )
+                            )
                         is SelectionKind.Phrase ->
-                            onPhraseSelected(kind.text, sentenceTextFor(newValue.selection.start))
+                            onPhraseSelected(
+                                kind.text,
+                                sentenceTextFor(newValue.selection.start),
+                                TextRange(
+                                    documentStartOffset + kind.range.min,
+                                    documentStartOffset + kind.range.max
+                                )
+                            )
                         null -> selection = TextRange.Zero
                     }
                 }
             },
             readOnly = true,
-            modifier = Modifier.drawBehind {
+            modifier = Modifier.onGloballyPositioned { layoutCoordinates = it }.drawBehind {
                 val layout = textLayout ?: return@drawBehind
                 val range = activeRange ?: return@drawBehind
                 if (range.isEmpty()) return@drawBehind
@@ -1046,8 +1213,8 @@ internal fun extractWordAt(text: String, offset: Int): String {
  * boundaries: exactly one word (dictionary lookup), or a multi-word phrase (selection
  * toolbar). */
 internal sealed interface SelectionKind {
-    data class Word(val word: String) : SelectionKind
-    data class Phrase(val text: String) : SelectionKind
+    data class Word(val word: String, val range: TextRange) : SelectionKind
+    data class Phrase(val text: String, val range: TextRange) : SelectionKind
 }
 
 /** Classifies a raw text-field [selection] against [text]'s word boundaries. Both edges of
@@ -1081,9 +1248,12 @@ internal fun classifySelection(text: String, selection: androidx.compose.ui.text
 
     return if (snapped.none { it.isWhitespace() }) {
         val word = if (endBounds != null) text.substring(endBounds.first, endBounds.last + 1) else snapped
-        SelectionKind.Word(word)
+        val wordRange = endBounds?.let { TextRange(it.first, it.last + 1) } ?: TextRange(start, end)
+        SelectionKind.Word(word, wordRange)
     } else {
-        SelectionKind.Phrase(snapped.trim())
+        val trimmedStart = start + snapped.indexOfFirst { !it.isWhitespace() }.coerceAtLeast(0)
+        val trimmedEnd = end - snapped.reversed().indexOfFirst { !it.isWhitespace() }.coerceAtLeast(0)
+        SelectionKind.Phrase(snapped.trim(), TextRange(trimmedStart, trimmedEnd))
     }
 }
 

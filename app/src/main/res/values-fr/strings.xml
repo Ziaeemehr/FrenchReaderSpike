@@ -249,6 +249,10 @@
     <string name="selection_action_copy">Copier</string>
     <string name="selection_action_save">Enregistrer</string>
     <string name="selection_action_listen">Écouter</string>
+    <string name="selection_action_highlight">Surligner</string>
+    <string name="highlight_choose_color">Choisir une couleur</string>
+    <string name="highlight_change_color">Changer la couleur</string>
+    <string name="highlight_delete">Supprimer le surlignage</string>
     <string name="selection_action_define">Définir</string>
     <string name="selection_action_more">Plus</string>
     <string name="process_text_apps_empty">Aucune application trouvée</string>

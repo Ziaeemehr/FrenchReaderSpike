@@ -249,6 +249,10 @@
     <string name="selection_action_copy">Copy</string>
     <string name="selection_action_save">Save</string>
     <string name="selection_action_listen">Listen</string>
+    <string name="selection_action_highlight">Highlight</string>
+    <string name="highlight_choose_color">Choose color</string>
+    <string name="highlight_change_color">Change color</string>
+    <string name="highlight_delete">Delete highlight</string>
     <string name="selection_action_define">Define</string>
     <string name="selection_action_more">More</string>
     <string name="process_text_apps_empty">No apps found</string>

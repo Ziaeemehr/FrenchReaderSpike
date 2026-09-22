@@ -28,7 +28,10 @@ class SelectionToolbarTest {
     fun selectionToolbarMoreButtonInvokesCallback() {
         var moreClicked = false
         composeTestRule.setContent {
-            SelectionToolbarContent(onCopy = {}, onSave = {}, onListen = {}, onMore = { moreClicked = true })
+            SelectionToolbarContent(
+                onCopy = {}, onSave = {}, onListen = {}, onHighlight = {},
+                onMore = { moreClicked = true }
+            )
         }
 
         composeTestRule.onNodeWithContentDescription(string(R.string.selection_action_more)).performClick()
@@ -37,15 +40,46 @@ class SelectionToolbarTest {
     }
 
     @Test
+    fun selectionToolbarHighlightButtonInvokesCallback() {
+        var highlightClicked = false
+        composeTestRule.setContent {
+            SelectionToolbarContent(
+                onCopy = {}, onSave = {}, onListen = {},
+                onHighlight = { highlightClicked = true }, onMore = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.selection_action_highlight)).performClick()
+
+        assertEquals(true, highlightClicked)
+    }
+
+    @Test
     fun defineToolbarMoreButtonInvokesCallback() {
         var moreClicked = false
         composeTestRule.setContent {
-            DefineToolbarContent(onDefine = {}, onMore = { moreClicked = true })
+            DefineToolbarContent(onDefine = {}, onHighlight = {}, onMore = { moreClicked = true })
         }
 
         composeTestRule.onNodeWithContentDescription(string(R.string.selection_action_more)).performClick()
 
         assertEquals(true, moreClicked)
+    }
+
+    @Test
+    fun defineToolbarHighlightButtonInvokesCallback() {
+        var highlightClicked = false
+        composeTestRule.setContent {
+            DefineToolbarContent(
+                onDefine = {},
+                onHighlight = { highlightClicked = true },
+                onMore = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.selection_action_highlight)).performClick()
+
+        assertEquals(true, highlightClicked)
     }
 
     @Test

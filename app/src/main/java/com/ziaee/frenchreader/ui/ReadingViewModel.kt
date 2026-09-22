@@ -10,6 +10,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.HighlightEntry
+import com.ziaee.frenchreader.data.HighlightRepository
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabStatus
@@ -121,12 +123,15 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val bodyStore = TextBodyStore(app)
     private val ttsRepo = TtsChunkRepository(app)
     private val translationRepo = TranslationRepository(app)
+    private val highlightRepository = HighlightRepository(db.highlightDao())
     val player: ExoPlayer = ExoPlayer.Builder(app).build()
     private val selectionPlayer: ExoPlayer = ExoPlayer.Builder(app).build()
     private var selectionPlaybackJob: Job? = null
 
     private val _state = MutableStateFlow(ReadingUiState())
     val state: StateFlow<ReadingUiState> = _state.asStateFlow()
+    private val _highlights = MutableStateFlow<List<HighlightEntry>>(emptyList())
+    val highlights: StateFlow<List<HighlightEntry>> = _highlights.asStateFlow()
     val savedVocabStatuses: StateFlow<Map<String, VocabStatus>> = db.vocabDao()
         .observeAll()
         .map { entries ->
@@ -136,6 +141,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
     private var audioWindowJob: Job? = null
     private var translationJob: Job? = null
+    private var highlightsJob: Job? = null
     private var positionTickerJob: Job? = null
     private var savePositionJob: Job? = null
     private var pendingListeningMs = 0L
@@ -166,6 +172,11 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun load(textId: Long) {
+        highlightsJob?.cancel()
+        _highlights.value = emptyList()
+        highlightsJob = viewModelScope.launch {
+            highlightRepository.observeHighlights(textId).collect { _highlights.value = it }
+        }
         viewModelScope.launch {
             val doc = db.textDao().getById(textId) ?: return@launch
             // Once per successful load, not on every playback tick -- feeds
@@ -196,6 +207,21 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             resumeFromSavedPosition(doc)
             restartTranslationWindow(_state.value.currentChunkIndex)
         }
+    }
+
+    fun addHighlight(startOffset: Int, endOffset: Int, colorKey: String) {
+        val textId = _state.value.textDoc?.id ?: return
+        viewModelScope.launch {
+            highlightRepository.addHighlight(textId, startOffset, endOffset, colorKey)
+        }
+    }
+
+    fun updateHighlightColor(id: Long, colorKey: String) {
+        viewModelScope.launch { highlightRepository.updateColor(id, colorKey) }
+    }
+
+    fun deleteHighlight(id: Long) {
+        viewModelScope.launch { highlightRepository.delete(id) }
     }
 
     private fun restartTranslationWindow(currentIndex: Int) {

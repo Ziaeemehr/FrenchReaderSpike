@@ -32,6 +32,7 @@ class ReadingScreenSelectionTest {
         val kind = classifySelection(sentence, TextRange(4, 6))
         assertTrue(kind is SelectionKind.Word)
         assertEquals("chat", (kind as SelectionKind.Word).word)
+        assertEquals(TextRange(3, 7), kind.range)
     }
 
     @Test
@@ -53,6 +54,7 @@ class ReadingScreenSelectionTest {
         val kind = classifySelection(sentence, TextRange(start, end))
         assertTrue(kind is SelectionKind.Phrase)
         assertEquals("chat noir dort", (kind as SelectionKind.Phrase).text)
+        assertEquals(TextRange(start, end), kind.range)
     }
 
     @Test

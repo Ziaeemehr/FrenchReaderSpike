@@ -247,6 +247,10 @@
     <string name="selection_action_copy">کپی</string>
     <string name="selection_action_save">ذخیره</string>
     <string name="selection_action_listen">شنیدن</string>
+    <string name="selection_action_highlight">برجسته‌سازی</string>
+    <string name="highlight_choose_color">انتخاب رنگ</string>
+    <string name="highlight_change_color">تغییر رنگ</string>
+    <string name="highlight_delete">حذف برجسته‌سازی</string>
     <string name="selection_action_define">تعریف</string>
     <string name="selection_action_more">بیشتر</string>
     <string name="process_text_apps_empty">اپی پیدا نشد</string>

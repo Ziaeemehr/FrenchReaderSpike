@@ -194,18 +194,39 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     }
 }
 
+// v11 -> v12: adds manual, color-keyed text highlights. Offsets are stored
+// against the reading screen's Markdown-stripped document text; existing
+// texts and vocabulary are untouched and the new table starts empty.
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `highlights` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`textId` INTEGER NOT NULL, " +
+                "`startOffset` INTEGER NOT NULL, " +
+                "`endOffset` INTEGER NOT NULL, " +
+                "`colorKey` TEXT NOT NULL, " +
+                "`createdAtMs` INTEGER NOT NULL)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_highlights_textId` " +
+                "ON `highlights` (`textId`)"
+        )
+    }
+}
+
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
-    MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11
+    MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12
 )
 
 @Database(
     entities = [
         TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class,
         ReviewLogEntry::class, ActivityLogEntry::class, ResourceLink::class,
-        LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class
+        LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class, HighlightEntry::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -217,6 +238,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun activityLogDao(): ActivityLogDao
     abstract fun resourceDao(): ResourceDao
     abstract fun libraryOrganizerDao(): LibraryOrganizerDao
+    abstract fun highlightDao(): HighlightDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
