@@ -32,17 +32,22 @@ object TranslationService {
         val urlStr = "https://translate.googleapis.com/translate_a/single" +
             "?client=gtx&sl=$sourceLang&tl=$targetLang&dt=t&q=$encoded"
         val conn = URL(urlStr).openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.connectTimeout = 10_000
-        conn.readTimeout = 15_000
-        // Google's endpoint sometimes 403s requests without a browser-like UA.
-        conn.setRequestProperty(
-            "User-Agent",
-            "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36"
-        )
-        conn.inputStream.use { stream ->
-            val body = stream.bufferedReader(Charsets.UTF_8).readText()
-            return parseGoogleResponse(body)
+        try {
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 15_000
+            // Google's endpoint sometimes 403s requests without a browser-like UA.
+            conn.setRequestProperty(
+                "User-Agent",
+                "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36"
+            )
+            conn.inputStream.use { stream ->
+                val body = stream.bufferedReader(Charsets.UTF_8).readText()
+                return parseGoogleResponse(body)
+            }
+        } finally {
+            conn.errorStream?.close()
+            conn.disconnect()
         }
     }
 
@@ -66,15 +71,20 @@ object TranslationService {
         val urlStr = "https://api.mymemory.translated.net/get" +
             "?q=$encoded&langpair=$sourceLang|$targetLang"
         val conn = URL(urlStr).openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.connectTimeout = 10_000
-        conn.readTimeout = 15_000
-        conn.inputStream.use { stream ->
-            val body = stream.bufferedReader(Charsets.UTF_8).readText()
-            val obj = org.json.JSONObject(body)
-            val translated = obj.getJSONObject("responseData").getString("translatedText")
-            if (translated.isBlank()) throw IllegalStateException("Empty translation from MyMemory")
-            return translated
+        try {
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 15_000
+            conn.inputStream.use { stream ->
+                val body = stream.bufferedReader(Charsets.UTF_8).readText()
+                val obj = org.json.JSONObject(body)
+                val translated = obj.getJSONObject("responseData").getString("translatedText")
+                if (translated.isBlank()) throw IllegalStateException("Empty translation from MyMemory")
+                return translated
+            }
+        } finally {
+            conn.errorStream?.close()
+            conn.disconnect()
         }
     }
 }

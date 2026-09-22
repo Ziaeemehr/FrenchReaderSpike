@@ -36,6 +36,7 @@ import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -78,6 +79,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val isRefreshing = MutableStateFlow(false)
     private val sourceErrors = MutableStateFlow<List<String>>(emptyList())
     private val importingKey = MutableStateFlow<String?>(null)
+    private val timeRefresh = MutableStateFlow(0L)
+    private var headlineLookupJob: Job? = null
+    private var searchJob: Job? = null
 
     private data class TextsWithBodies(
         val documents: List<TextDocument>,
@@ -114,7 +118,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         isRefreshing,
         sourceErrors,
         importingKey,
-        activeDates
+        activeDates,
+        timeRefresh
     ) { values ->
         @Suppress("UNCHECKED_CAST")
         val texts = values[1] as TextsWithBodies
@@ -174,12 +179,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         selectedHeadline = headline
         previewImportError = false
         existingDocumentId = null
-        viewModelScope.launch {
-            existingDocumentId = db.textDao().findByExternalKey(normalizeArticleUrl(headline.articleUrl))?.id
+        headlineLookupJob?.cancel()
+        headlineLookupJob = viewModelScope.launch {
+            val documentId = db.textDao().findByExternalKey(normalizeArticleUrl(headline.articleUrl))?.id
+            if (selectedHeadline == headline) existingDocumentId = documentId
         }
     }
 
     fun dismissPreview() {
+        headlineLookupJob?.cancel()
         selectedHeadline = null
         previewImportError = false
         existingDocumentId = null
@@ -256,7 +264,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
      * opens, unrelated to the two-source news dashboard above. */
     fun searchContent(query: String) {
         if (query.isBlank()) return
-        viewModelScope.launch {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
             contentSearchState = ContentSearchUiState.Searching
             contentSearchState = try {
                 val perSource = coroutineScope {
@@ -280,6 +289,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 ContentSearchUiState.Error(e.message ?: e.toString())
             }
         }
+    }
+
+    fun refreshTimeSensitiveState() {
+        timeRefresh.value = System.currentTimeMillis()
     }
 
     fun resetContentSearch() {

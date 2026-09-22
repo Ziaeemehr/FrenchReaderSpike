@@ -11,8 +11,6 @@ private const val FILES_ENDPOINT = "https://www.googleapis.com/drive/v3/files"
 private const val UPLOAD_ENDPOINT = "https://www.googleapis.com/upload/drive/v3/files"
 
 object DriveBackupClient {
-    // The existing backup format uploads only the Room database. Files in
-    // text_images and text_bodies are intentionally outside that format.
     fun findBackupFileId(accessToken: String): String? {
         val url = "$FILES_ENDPOINT?spaces=appDataFolder&fields=files(id,name)"
         val json = httpGet(url, accessToken)
@@ -40,36 +38,58 @@ object DriveBackupClient {
 
     private fun httpGet(urlString: String, accessToken: String): String {
         val connection = URL(urlString).openConnection() as HttpURLConnection
-        connection.connectTimeout = 15_000
-        connection.readTimeout = 15_000
-        connection.setRequestProperty("Authorization", "Bearer $accessToken")
-        connection.setRequestProperty("Accept", "application/json")
-        val code = connection.responseCode
-        if (code !in 200..299) throw IOException("Drive files.list failed: HTTP $code")
-        return connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+        try {
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 15_000
+            connection.setRequestProperty("Authorization", "Bearer $accessToken")
+            connection.setRequestProperty("Accept", "application/json")
+            val code = connection.responseCode
+            if (code !in 200..299) {
+                connection.errorStream?.use { it.readBytes() }
+                throw IOException("Drive files.list failed: HTTP $code")
+            }
+            return connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun httpUpload(urlString: String, accessToken: String, method: String, boundary: String, body: ByteArray) {
         val connection = URL(urlString).openConnection() as HttpURLConnection
-        connection.connectTimeout = 15_000
-        connection.readTimeout = 30_000
-        connection.requestMethod = method
-        connection.doOutput = true
-        connection.setRequestProperty("Authorization", "Bearer $accessToken")
-        connection.setRequestProperty("Content-Type", "multipart/related; boundary=$boundary")
-        connection.outputStream.use { it.write(body) }
-        val code = connection.responseCode
-        if (code !in 200..299) throw IOException("Drive upload failed: HTTP $code")
+        try {
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 30_000
+            connection.requestMethod = method
+            connection.doOutput = true
+            connection.setRequestProperty("Authorization", "Bearer $accessToken")
+            connection.setRequestProperty("Content-Type", "multipart/related; boundary=$boundary")
+            connection.outputStream.use { it.write(body) }
+            val code = connection.responseCode
+            if (code !in 200..299) {
+                connection.errorStream?.use { it.readBytes() }
+                throw IOException("Drive upload failed: HTTP $code")
+            }
+            connection.inputStream.use { it.readBytes() }
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun httpDownload(urlString: String, accessToken: String): ByteArray {
         val connection = URL(urlString).openConnection() as HttpURLConnection
-        connection.connectTimeout = 15_000
-        connection.readTimeout = 30_000
-        connection.setRequestProperty("Authorization", "Bearer $accessToken")
-        val code = connection.responseCode
-        if (code !in 200..299) throw IOException("Drive download failed: HTTP $code")
-        return connection.inputStream.use { it.readBytes() }
+        try {
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 30_000
+            connection.setRequestProperty("Authorization", "Bearer $accessToken")
+            val code = connection.responseCode
+            if (code !in 200..299) {
+                connection.errorStream?.use { it.readBytes() }
+                throw IOException("Drive download failed: HTTP $code")
+            }
+            return connection.inputStream.use { it.readBytes() }
+        } finally {
+            connection.disconnect()
+        }
     }
 }
 

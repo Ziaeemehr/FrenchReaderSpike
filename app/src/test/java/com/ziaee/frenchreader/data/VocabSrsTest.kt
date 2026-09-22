@@ -41,15 +41,15 @@ class VocabSrsTest {
     }
 
     @Test
-    fun `good caps at box five and keeps it in rotation`() {
+    fun `good caps at box five and graduates it`() {
         val promoted = VocabSrs.apply(entry(box = 4), VocabAnswer.KNEW, now, zoneId = utc)
         val capped = VocabSrs.apply(entry(box = 5), VocabAnswer.KNEW, now, zoneId = utc)
 
         assertEquals(5, promoted.leitnerBox)
-        assertFalse(promoted.learned)
+        assertTrue(promoted.learned)
         assertEquals(5, capped.leitnerBox)
         assertEquals(16L * VocabSrs.DAY_MS, capped.nextReviewAtMs)
-        assertFalse(capped.learned)
+        assertTrue(capped.learned)
     }
 
     @Test

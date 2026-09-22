@@ -36,7 +36,7 @@ object VocabSrs {
             leitnerBox = newBox,
             nextReviewAtMs = dueAtMs(newBox, nowMs, intervalDays, zoneId),
             lastReviewedAtMs = nowMs,
-            learned = false
+            learned = newBox == 5
         )
     }
 

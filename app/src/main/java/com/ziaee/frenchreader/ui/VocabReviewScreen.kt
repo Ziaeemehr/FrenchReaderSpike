@@ -54,6 +54,7 @@ import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.ui.components.TappableFrenchText
 import com.ziaee.frenchreader.ui.statistics.computeStreak
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -76,6 +77,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var scopeId = VOCAB_SCOPE_ALL
     private var stats = ReviewSessionStats()
     private var undoing = false
+    private var loadJob: Job? = null
 
     private data class UndoRecord(
         val previousEntry: VocabEntry, val logId: Long, val statsBefore: ReviewSessionStats,
@@ -103,10 +105,13 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     var boxes by mutableStateOf<List<ReviewBoxSummary>>(emptyList()); private set
     var totalCards by mutableIntStateOf(0); private set
     var cardsReviewed by mutableIntStateOf(0); private set
+    var cardsReviewedToday by mutableIntStateOf(0); private set
     var answerCount by mutableIntStateOf(0); private set
     var correctCount by mutableIntStateOf(0); private set
     var movedForward by mutableIntStateOf(0); private set
+    var movedForwardToday by mutableIntStateOf(0); private set
     var returnedToBoxOne by mutableIntStateOf(0); private set
+    var returnedToBoxOneToday by mutableIntStateOf(0); private set
     var studyTimeMs by mutableLongStateOf(0L); private set
     var nextScheduledAtMs by mutableStateOf<Long?>(null); private set
     var moveLabel by mutableStateOf<String?>(null); private set
@@ -123,22 +128,31 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     fun load(scope: Long) {
         scopeId = scope
-        viewModelScope.launch {
+        val requestedScope = scope
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             loading = true
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
-            val all = scoped(db.vocabDao().getAllOnce()).filter { !it.learned }
-            dueCount = all.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }
+            val all = scoped(db.vocabDao().getAllOnce(), requestedScope).filter { !it.learned }
+            val loadedDueCount = all.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }
             val date = LocalDate.now().toString()
             val remainingNew = (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, date)).coerceAtLeast(0)
-            newCount = all.count { it.lastReviewedAtMs == null }.coerceAtMost(remainingNew)
-            reviewedToday = db.reviewLogDao().countSince(dayStart)
-            dailyGoal = VocabPrefs.getDailyGoal(context)
-            streak = computeStreak(db.reviewLogDao().distinctActiveDates().map(LocalDate::parse).toSet(), LocalDate.now())
-            boxes = (1..5).map { box ->
+            val loadedNewCount = all.count { it.lastReviewedAtMs == null }.coerceAtMost(remainingNew)
+            val loadedReviewedToday = db.reviewLogDao().countSince(dayStart)
+            val loadedDailyGoal = VocabPrefs.getDailyGoal(context)
+            val loadedStreak = computeStreak(db.reviewLogDao().distinctActiveDates().map(LocalDate::parse).toSet(), LocalDate.now())
+            val loadedBoxes = (1..5).map { box ->
                 val entries = all.filter { it.leitnerBox == box }
                 ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.minOfOrNull { it.nextReviewAtMs })
             }
+            if (scopeId != requestedScope) return@launch
+            dueCount = loadedDueCount
+            newCount = loadedNewCount
+            reviewedToday = loadedReviewedToday
+            dailyGoal = loadedDailyGoal
+            streak = loadedStreak
+            boxes = loadedBoxes
             loading = false
         }
     }
@@ -242,8 +256,13 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     fun consumeMoveLabel() { moveLabel = null }
     private suspend fun finishSession() {
-        studyTimeMs = System.currentTimeMillis() - sessionStartedAtMs
-        nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned }.minOfOrNull { it.nextReviewAtMs }
+        val now = System.currentTimeMillis()
+        studyTimeMs = now - sessionStartedAtMs
+        nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
+        val dayStart = VocabSrs.startOfDayMs(now)
+        cardsReviewedToday = db.reviewLogDao().countSince(dayStart)
+        movedForwardToday = db.reviewLogDao().countMovedForwardSince(dayStart)
+        returnedToBoxOneToday = db.reviewLogDao().countReturnedToBoxOneSince(dayStart)
         stage = ReviewStage.SUMMARY
     }
 
@@ -277,10 +296,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         sentenceTranslationLoading = false
     }
 
-    private fun scoped(all: List<VocabEntry>) = when (scopeId) {
+    private fun scoped(all: List<VocabEntry>, scope: Long = scopeId) = when (scope) {
         VOCAB_SCOPE_ALL -> all
         VOCAB_SCOPE_UNFILED -> all.filter { it.listId == null }
-        else -> all.filter { it.listId == scopeId }
+        else -> all.filter { it.listId == scope }
     }
     override fun onCleared() { player.release(); super.onCleared() }
 }
@@ -526,9 +545,9 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
         Icon(Icons.Default.CheckCircle, null, Modifier.size(58.dp), tint = MaterialTheme.colorScheme.primary)
         Text(stringResource(R.string.review_summary_title), style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.height(12.dp))
         AccuracyRing(computeAccuracyPercent(vm.correctCount, vm.answerCount)); Spacer(Modifier.height(12.dp))
-        SummaryLine(R.string.review_summary_cards, vm.cardsReviewed.toString())
-        SummaryLine(R.string.review_summary_forward, vm.movedForward.toString())
-        SummaryLine(R.string.review_summary_returned, vm.returnedToBoxOne.toString())
+        SummaryLine(R.string.review_summary_cards, vm.cardsReviewedToday.toString())
+        SummaryLine(R.string.review_summary_forward, vm.movedForwardToday.toString())
+        SummaryLine(R.string.review_summary_returned, vm.returnedToBoxOneToday.toString())
         SummaryLine(R.string.review_summary_time, formatDuration(vm.studyTimeMs))
         SummaryLine(R.string.review_summary_next, vm.nextScheduledAtMs?.let(::formatDate) ?: "—")
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) { Text(stringResource(R.string.action_close)) }

@@ -42,7 +42,6 @@ import com.ziaee.frenchreader.backup.DriveBackupClient
 import com.ziaee.frenchreader.backup.GoogleAuthManager
 import com.ziaee.frenchreader.backup.LocalBackup
 import com.ziaee.frenchreader.backup.formatLastBackupLabel
-import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.AppLanguage
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
@@ -59,7 +58,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -511,7 +509,7 @@ private fun LocalBackupSection(
     }
 
     val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/octet-stream")
+        ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
         if (uri != null) {
             scope.launch {
@@ -538,7 +536,7 @@ private fun LocalBackupSection(
     )
     OutlinedButton(onClick = {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date())
-        exportLauncher.launch("french_reader_backup_$timestamp.db")
+        exportLauncher.launch("french_reader_backup_$timestamp.zip")
     }) {
         Text(stringResource(R.string.local_backup_save))
     }
@@ -651,11 +649,13 @@ private fun CloudBackupSection(
                 scope.launch {
                     try {
                         withContext(Dispatchers.IO) {
-                            val db = AppDatabase.get(context)
-                            AppDatabase.checkpointWal(db)
-                            val dbFile = context.getDatabasePath("french_reader.db")
+                            val archive = LocalBackup.createArchive(context)
                             val existingId = DriveBackupClient.findBackupFileId(token)
-                            DriveBackupClient.uploadBackup(token, existingId, dbFile)
+                            try {
+                                DriveBackupClient.uploadBackup(token, existingId, archive)
+                            } finally {
+                                archive.delete()
+                            }
                         }
                         val now = System.currentTimeMillis()
                         BackupPrefs.setLastBackupAtMs(context, now)
@@ -700,12 +700,7 @@ private fun CloudBackupSection(
                                     val fileId = DriveBackupClient.findBackupFileId(token)
                                         ?: return@withContext false
                                     val bytes = DriveBackupClient.downloadBackup(token, fileId)
-                                    val dbFile = context.getDatabasePath("french_reader.db")
-                                    AppDatabase.closeForRestore()
-                                    File(dbFile.path + "-wal").delete()
-                                    File(dbFile.path + "-shm").delete()
-                                    dbFile.writeBytes(bytes)
-                                    true
+                                    LocalBackup.importBytes(context, bytes)
                                 }
                                 if (!restored) {
                                     showMessage(context.getString(R.string.backup_restore_not_found))

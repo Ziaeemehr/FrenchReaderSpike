@@ -48,6 +48,8 @@ class ArticleImageStore(private val context: Context) : ArticleImageStorage {
 
     override suspend fun storeBytes(relativePath: String, bytes: ByteArray): String? = withContext(Dispatchers.IO) {
         var file: File? = null
+        var decoded: Bitmap? = null
+        var scaled: Bitmap? = null
         try {
             val ownedFile = resolveOwned(relativePath) ?: return@withContext null
             file = ownedFile
@@ -57,14 +59,17 @@ class ArticleImageStore(private val context: Context) : ArticleImageStorage {
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
             val (targetWidth, targetHeight) = scaledDimensions(bounds.outWidth, bounds.outHeight, MAX_IMAGE_WIDTH)
             val options = BitmapFactory.Options().apply { inSampleSize = sampleSizeFor(bounds.outWidth, targetWidth) }
-            val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return@withContext null
-            val scaled = if (decoded.width != targetWidth || decoded.height != targetHeight) {
-                Bitmap.createScaledBitmap(decoded, targetWidth, targetHeight, true)
-            } else decoded
+            val decodedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+                ?: return@withContext null
+            decoded = decodedBitmap
+            val outputBitmap = if (decodedBitmap.width != targetWidth || decodedBitmap.height != targetHeight) {
+                Bitmap.createScaledBitmap(decodedBitmap, targetWidth, targetHeight, true)
+            } else decodedBitmap
+            scaled = outputBitmap
             ownedFile.parentFile?.mkdirs()
-            val written = FileOutputStream(ownedFile).use { scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
-            if (scaled !== decoded) decoded.recycle()
-            scaled.recycle()
+            val written = FileOutputStream(ownedFile).use {
+                outputBitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it)
+            }
             if (!written) {
                 ownedFile.delete()
                 null
@@ -72,6 +77,9 @@ class ArticleImageStore(private val context: Context) : ArticleImageStorage {
         } catch (e: Exception) {
             file?.delete()
             null
+        } finally {
+            scaled?.takeUnless { it.isRecycled }?.recycle()
+            decoded?.takeUnless { it === scaled || it.isRecycled }?.recycle()
         }
     }
 

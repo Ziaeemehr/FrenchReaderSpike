@@ -313,11 +313,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateText(doc: TextDocument, title: String, body: String) {
         viewModelScope.launch {
-            if (doc.bodyPath != null) {
-                db.textDao().update(doc.copy(title = title.ifBlank { doc.title }))
-            } else {
-                updateTextDocumentBody(db.textDao(), bodyStore, doc, title, body)
-            }
+            updateTextDocumentBody(db.textDao(), bodyStore, doc, title, body)
         }
     }
 

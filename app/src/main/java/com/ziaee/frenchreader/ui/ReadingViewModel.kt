@@ -27,6 +27,7 @@ import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,8 +36,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
+import java.time.Instant
+import java.time.ZoneId
 
 enum class ChunkStatus { PENDING, LOADING, READY, ERROR }
 
@@ -142,9 +145,12 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private var audioWindowJob: Job? = null
     private var translationJob: Job? = null
     private var highlightsJob: Job? = null
+    private var loadJob: Job? = null
+    private var requestedTextId: Long? = null
     private var positionTickerJob: Job? = null
     private var savePositionJob: Job? = null
-    private var pendingListeningMs = 0L
+    private val pendingListeningMsByDate = linkedMapOf<String, Long>()
+    private var lastListeningAccountedAtMs: Long? = null
     private var playlistGeneration = 0L
     private var translationGeneration = 0L
     private val playerItemToChunk = mutableListOf<Int>()
@@ -154,6 +160,8 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     init {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
+                accountListeningUntil(System.currentTimeMillis())
+                lastListeningAccountedAtMs = if (isPlaying) System.currentTimeMillis() else null
                 _state.value = _state.value.copy(isPlaying = isPlaying)
                 if (isPlaying) requestAudioWindow(_state.value.currentChunkIndex)
             }
@@ -172,12 +180,14 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun load(textId: Long) {
+        requestedTextId = textId
         highlightsJob?.cancel()
         _highlights.value = emptyList()
         highlightsJob = viewModelScope.launch {
             highlightRepository.observeHighlights(textId).collect { _highlights.value = it }
         }
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             val doc = db.textDao().getById(textId) ?: return@launch
             // Once per successful load, not on every playback tick -- feeds
             // Home's Continue Reading and Library's "last read" sort.
@@ -196,6 +206,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 }
             }.toMutableStateList()
+            if (requestedTextId != textId) return@launch
             _state.value = ReadingUiState(
                 textDoc = doc,
                 chunks = chunks,
@@ -580,7 +591,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             while (true) {
                 if (player.isPlaying) {
                     _state.value = _state.value.copy(currentPositionMs = player.currentPosition)
-                    pendingListeningMs += 150
+                    accountListeningUntil(System.currentTimeMillis())
                     schedulePositionSave()
                 }
                 delay(150)
@@ -592,26 +603,56 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         if (savePositionJob?.isActive == true) return
         savePositionJob = viewModelScope.launch {
             delay(3000)
-            persistPositionNow()
+            flushPositionNow()
         }
     }
 
     fun persistPositionNow() {
+        savePositionJob?.cancel()
+        savePositionJob = viewModelScope.launch { flushPositionNow() }
+    }
+
+    private suspend fun flushPositionNow() {
         val doc = _state.value.textDoc ?: return
-        val chunkIndex = _state.value.currentChunkIndex
-        val positionMs = player.currentPosition
-        val listeningMs = pendingListeningMs
-        pendingListeningMs = 0
-        viewModelScope.launch {
-            db.textDao().savePosition(doc.id, chunkIndex, positionMs)
-            if (listeningMs > 0) {
-                db.activityLogDao().addListening(LocalDate.now().toString(), listeningMs)
-            }
+        accountListeningUntil(System.currentTimeMillis())
+        val listeningByDate = pendingListeningMsByDate.toMap()
+        persistPositionSnapshot(doc.id, _state.value.currentChunkIndex, player.currentPosition, listeningByDate)
+        listeningByDate.forEach { (date, savedMs) ->
+            val remaining = pendingListeningMsByDate.getOrDefault(date, 0L) - savedMs
+            if (remaining > 0) pendingListeningMsByDate[date] = remaining else pendingListeningMsByDate.remove(date)
+        }
+    }
+
+    private fun accountListeningUntil(nowMs: Long) {
+        var startMs = lastListeningAccountedAtMs ?: return
+        if (nowMs <= startMs) return
+        val zone = ZoneId.systemDefault()
+        while (startMs < nowMs) {
+            val date = Instant.ofEpochMilli(startMs).atZone(zone).toLocalDate()
+            val nextDayMs = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            val endMs = minOf(nowMs, nextDayMs)
+            pendingListeningMsByDate[date.toString()] =
+                pendingListeningMsByDate.getOrDefault(date.toString(), 0L) + (endMs - startMs)
+            startMs = endMs
+        }
+        lastListeningAccountedAtMs = nowMs
+    }
+
+    private suspend fun persistPositionSnapshot(
+        textId: Long,
+        chunkIndex: Int,
+        positionMs: Long,
+        listeningByDate: Map<String, Long>
+    ) {
+        db.textDao().savePosition(textId, chunkIndex, positionMs)
+        listeningByDate.forEach { (date, durationMs) ->
+            if (durationMs > 0) db.activityLogDao().addListening(date, durationMs)
         }
     }
 
     override fun onCleared() {
-        persistPositionNow()
+        savePositionJob?.cancel()
+        runBlocking(NonCancellable) { flushPositionNow() }
         player.release()
         selectionPlayer.release()
         super.onCleared()

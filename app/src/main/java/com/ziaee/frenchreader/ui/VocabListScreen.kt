@@ -46,6 +46,7 @@ import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.room.withTransaction
 
 /** Scope sentinels for [VocabListScreen]'s filter chips -- real list ids are
  * always >= 1 (Room autoGenerate), so these never collide with one. */
@@ -99,8 +100,10 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
 
     fun deleteList(list: VocabList) {
         viewModelScope.launch {
-            db.vocabDao().clearListId(list.id)
-            db.vocabListDao().delete(list)
+            db.withTransaction {
+                db.vocabDao().clearListId(list.id)
+                db.vocabListDao().delete(list)
+            }
         }
     }
 }

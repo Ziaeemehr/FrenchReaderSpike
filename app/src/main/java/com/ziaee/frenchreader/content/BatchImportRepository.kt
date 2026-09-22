@@ -19,6 +19,8 @@ import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.io.File
+import java.util.UUID
 
 data class BatchImportResult(
     val imported: Int,
@@ -79,27 +81,45 @@ class BatchImportRepository(
         val externalKey = "file:${sha1(bytes)}"
         val displayName = queryDisplayName(context, uri, stripExtension = false) ?: "Untitled.txt"
         val parsed = parseFrontMatter(content)
-        val body = resolveLocalImages(parsed.body, uri, treeUri)
-        return db.withTransaction {
-            if (db.textDao().findByExternalKey(externalKey) != null) return@withTransaction false
-            insertTextDocument(
-                db.textDao(), bodyStore,
-                TextDocument(
-                    title = parsed.title?.takeIf { it.isNotBlank() } ?: displayName.substringBeforeLast('.'),
-                    rawText = "",
-                    sourceName = displayName,
-                    externalKey = externalKey,
-                    folderId = folderId
-                ),
-                body
-            )
-            true
+        if (db.textDao().findByExternalKey(externalKey) != null) return false
+        val stagingDir = File(context.cacheDir, "batch-import-${UUID.randomUUID()}").apply { mkdirs() }
+        val writtenPaths = mutableListOf<String>()
+        try {
+            File(stagingDir, "body-source.txt").writeText(parsed.body, Charsets.UTF_8)
+            val body = resolveLocalImages(parsed.body, uri, treeUri, stagingDir, writtenPaths)
+            val stagedBody = File(stagingDir, "body-final.txt").apply { writeText(body, Charsets.UTF_8) }
+            return db.withTransaction {
+                if (db.textDao().findByExternalKey(externalKey) != null) {
+                    writtenPaths.forEach { imageStore.delete(it) }
+                    return@withTransaction false
+                }
+                insertTextDocument(
+                    db.textDao(), bodyStore,
+                    TextDocument(
+                        title = parsed.title?.takeIf { it.isNotBlank() } ?: displayName.substringBeforeLast('.'),
+                        rawText = "", sourceName = displayName, externalKey = externalKey, folderId = folderId
+                    ),
+                    stagedBody.readText(Charsets.UTF_8)
+                )
+                true
+            }
+        } catch (error: Exception) {
+            writtenPaths.forEach { runCatching { imageStore.delete(it) } }
+            throw error
+        } finally {
+            stagingDir.deleteRecursively()
         }
     }
 
     /** Rewrites standalone `![alt](relative/path.jpg)` lines to the reader's `epubimg:` form when the
      * image can be read from the imported tree; otherwise drops the line so it never reaches TTS. */
-    private suspend fun resolveLocalImages(body: String, docUri: Uri, treeUri: Uri?): String {
+    private suspend fun resolveLocalImages(
+        body: String,
+        docUri: Uri,
+        treeUri: Uri?,
+        stagingDir: File,
+        writtenPaths: MutableList<String>
+    ): String {
         val out = mutableListOf<String>()
         for (line in body.lines()) {
             val m = localImageLine.matchEntire(line.trim())
@@ -107,8 +127,14 @@ class BatchImportRepository(
             val bytes = treeUri?.let { readSibling(docUri, it, m.groupValues[2]) }
             val name = m.groupValues[2].substringAfterLast('/')
             val hash = bytes?.let(::sha1)
-            val stored = if (bytes != null && hash != null) imageStore.storeBytes("text_images/epub_$hash/$name", bytes) else null
-            if (stored != null) out += "![${m.groupValues[1]}](epubimg:$hash/$name)"
+            val staged = bytes?.let { File(stagingDir, "image_${out.size}").apply { writeBytes(it) } }
+            val stored = if (staged != null && hash != null) {
+                imageStore.storeBytes("text_images/epub_$hash/$name", staged.readBytes())
+            } else null
+            if (stored != null) {
+                writtenPaths += stored
+                out += "![${m.groupValues[1]}](epubimg:$hash/$name)"
+            }
         }
         return out.joinToString("\n").replace(Regex("\n{3,}"), "\n\n")
     }

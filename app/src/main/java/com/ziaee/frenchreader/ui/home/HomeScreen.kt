@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,6 +47,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
@@ -88,6 +92,18 @@ fun HomeScreen(
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, vm) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) vm.refreshTimeSensitiveState()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            vm.refreshTimeSensitiveState()
+        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val addTextState = rememberAddTextUiState()
     val context = LocalContext.current
