@@ -179,6 +179,13 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
             onDone()
         }
     }
+
+    fun delete(entry: com.ziaee.frenchreader.data.VocabEntry, onDone: () -> Unit) {
+        viewModelScope.launch {
+            db.vocabDao().delete(entry)
+            onDone()
+        }
+    }
 }
 
 /**
@@ -262,12 +269,14 @@ fun DictionarySheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, windowInsets = WindowInsets(0)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 24.dp)
+                .imePadding()
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(word, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
@@ -347,6 +356,23 @@ fun DictionarySheet(
                     }
                 }
                 Spacer(Modifier.width(8.dp))
+                if (saved && savedState.exactEntry != null) {
+                    IconButton(
+                        onClick = {
+                            savedState.exactEntry?.let { entry ->
+                                vm.delete(entry) {
+                                    saved = false
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.accessibility_delete)
+                        )
+                    }
+                    Spacer(Modifier.width(4.dp))
+                }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     FilledIconButton(
                         onClick = {
