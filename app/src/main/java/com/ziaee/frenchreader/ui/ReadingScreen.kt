@@ -61,6 +61,7 @@ import com.ziaee.frenchreader.content.SavedVocab
 import com.ziaee.frenchreader.content.VocabHighlighter
 import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.data.HighlightEntry
+import com.ziaee.frenchreader.data.HighlightPrefs
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
@@ -112,6 +113,9 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     var highlightPopupTarget by remember { mutableStateOf<HighlightEntry?>(null) }
     var highlightPopupRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var changeHighlightColor by remember { mutableStateOf(false) }
+    var lastHighlightColorKey by remember(settingsContext) {
+        mutableStateOf(HighlightPrefs.getLastColorKey(settingsContext))
+    }
     var clearSelectionTick by remember { mutableIntStateOf(0) }
     var processTextTarget by remember { mutableStateOf<String?>(null) }
     val selectionToolbarController = remember { SelectionToolbarController() }
@@ -422,6 +426,9 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
         selectionToolbarController.status == TextToolbarStatus.Shown
     ) {
         val phrase = selectedPhrase!!
+        val selectedHighlightIds = selectedPhraseRange
+            ?.let { overlappingHighlightIds(it, highlights) }
+            .orEmpty()
         Popup(
             popupPositionProvider = SelectionRectPositionProvider(
                 rect = toolbarRect,
@@ -451,6 +458,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         selectedPhraseRange?.let { range ->
                             vm.addHighlight(range.min, range.max, colorKey)
                         }
+                        HighlightPrefs.setLastColorKey(settingsContext, colorKey)
+                        lastHighlightColorKey = colorKey
                         showHighlightPalette = false
                         selectedPhrase = null
                         selectedPhraseRange = null
@@ -500,7 +509,23 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         selectedPhraseRange = null
                         clearSelectionTick++
                     },
-                    onHighlight = { showHighlightPalette = true },
+                    onHighlight = {
+                        selectedPhraseRange?.let { range ->
+                            vm.addHighlight(range.min, range.max, lastHighlightColorKey)
+                        }
+                        selectedPhrase = null
+                        selectedPhraseRange = null
+                        clearSelectionTick++
+                    },
+                    onChooseHighlightColor = { showHighlightPalette = true },
+                    onDeleteHighlight = selectedHighlightIds.takeIf { it.isNotEmpty() }?.let { ids ->
+                        {
+                            vm.deleteHighlights(ids)
+                            selectedPhrase = null
+                            selectedPhraseRange = null
+                            clearSelectionTick++
+                        }
+                    },
                     onMore = { processTextTarget = phrase }
                 )
             }
@@ -525,6 +550,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 HighlightPalettePopupContent(
                     onColorSelected = { colorKey ->
                         vm.updateHighlightColor(existingHighlight.id, colorKey)
+                        HighlightPrefs.setLastColorKey(settingsContext, colorKey)
+                        lastHighlightColorKey = colorKey
                         highlightPopupTarget = null
                         highlightPopupRect = null
                         changeHighlightColor = false
@@ -548,6 +575,9 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
         selectionToolbarController.status == TextToolbarStatus.Shown
     ) {
         val (word, sentence) = selectedWord!!
+        val selectedHighlightIds = selectedWordRange
+            ?.let { overlappingHighlightIds(it, highlights) }
+            .orEmpty()
         Popup(
             popupPositionProvider = SelectionRectPositionProvider(
                 rect = toolbarRect,
@@ -570,6 +600,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         selectedWordRange?.let { range ->
                             vm.addHighlight(range.min, range.max, colorKey)
                         }
+                        HighlightPrefs.setLastColorKey(settingsContext, colorKey)
+                        lastHighlightColorKey = colorKey
                         showHighlightPalette = false
                         selectedWord = null
                         selectedWordRange = null
@@ -601,7 +633,23 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         selectedWordRange = null
                         clearSelectionTick++
                     },
-                    onHighlight = { showHighlightPalette = true },
+                    onHighlight = {
+                        selectedWordRange?.let { range ->
+                            vm.addHighlight(range.min, range.max, lastHighlightColorKey)
+                        }
+                        selectedWord = null
+                        selectedWordRange = null
+                        clearSelectionTick++
+                    },
+                    onChooseHighlightColor = { showHighlightPalette = true },
+                    onDeleteHighlight = selectedHighlightIds.takeIf { it.isNotEmpty() }?.let { ids ->
+                        {
+                            vm.deleteHighlights(ids)
+                            selectedWord = null
+                            selectedWordRange = null
+                            clearSelectionTick++
+                        }
+                    },
                     onMore = { processTextTarget = word }
                 )
             }

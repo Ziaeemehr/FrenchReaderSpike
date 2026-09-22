@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import com.ziaee.frenchreader.data.HighlightEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -76,6 +77,19 @@ class HighlightRenderingTest {
         assertEquals(1, result.spanStyles.size)
         assertEquals(0, result.spanStyles.single().start)
         assertEquals(7, result.spanStyles.single().end)
+    }
+
+    @Test
+    fun overlappingHighlightIdsFindsSelectionsForWordsAndPhrases() {
+        val highlights = listOf(
+            highlight(id = 1, start = 2, end = 7, colorKey = "yellow"),
+            highlight(id = 2, start = 9, end = 18, colorKey = "green"),
+            highlight(id = 3, start = 18, end = 24, colorKey = "blue")
+        )
+
+        assertEquals(listOf(1L), overlappingHighlightIds(TextRange(3, 6), highlights))
+        assertEquals(listOf(1L, 2L), overlappingHighlightIds(TextRange(5, 12), highlights))
+        assertEquals(emptyList<Long>(), overlappingHighlightIds(TextRange(7, 9), highlights))
     }
 
     private fun highlight(id: Long, start: Int, end: Int, colorKey: String) = HighlightEntry(

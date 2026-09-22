@@ -22,6 +22,10 @@ class HighlightRepository(private val dao: HighlightDao) {
     }
 
     suspend fun delete(id: Long) = dao.deleteById(id)
+
+    suspend fun delete(ids: Collection<Long>) {
+        ids.distinct().forEach { dao.deleteById(it) }
+    }
 }
 
 object HighlightColors {

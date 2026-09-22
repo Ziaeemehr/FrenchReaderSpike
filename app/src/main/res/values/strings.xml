@@ -253,6 +253,10 @@
     <string name="highlight_choose_color">Choose color</string>
     <string name="highlight_change_color">Change color</string>
     <string name="highlight_delete">Delete highlight</string>
+    <string name="manual_dictionary_action">Dictionary</string>
+    <string name="manual_dictionary_title">Look up a word</string>
+    <string name="manual_dictionary_word_hint">French word or phrase</string>
+    <string name="manual_dictionary_lookup">Look up</string>
     <string name="selection_action_define">Define</string>
     <string name="selection_action_more">More</string>
     <string name="process_text_apps_empty">No apps found</string>

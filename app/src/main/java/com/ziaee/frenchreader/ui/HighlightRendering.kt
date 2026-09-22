@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.ui
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import com.ziaee.frenchreader.data.HighlightEntry
 
@@ -38,3 +39,10 @@ internal fun documentOffsets(chunks: List<ChunkState>): List<Int> {
         start
     }
 }
+
+internal fun overlappingHighlightIds(
+    selection: TextRange,
+    highlights: List<HighlightEntry>
+): List<Long> = highlights
+    .filter { highlight -> selection.min < highlight.endOffset && selection.max > highlight.startOffset }
+    .map { it.id }

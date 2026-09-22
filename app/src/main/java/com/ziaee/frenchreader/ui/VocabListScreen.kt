@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -117,6 +118,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     var selectedScope by remember { mutableStateOf(VOCAB_SCOPE_ALL) }
     var selectedStatus by remember { mutableStateOf<VocabStatus?>(null) }
     var showNewListDialog by remember { mutableStateOf(false) }
+    var showManualDictionary by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -204,6 +206,12 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showManualDictionary = true }) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.manual_dictionary_action)
+                        )
+                    }
                     IconButton(onClick = { ankiPicker.launch(arrayOf("application/json", "*/*")) }) {
                         Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.anki_import_action))
                     }
@@ -371,6 +379,11 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
             onDismiss = { editing = null }
         )
     }
+
+    ManualDictionaryHost(
+        open = showManualDictionary,
+        onDismiss = { showManualDictionary = false }
+    )
 
     if (showNewListDialog) {
         var newListName by remember { mutableStateOf("") }

@@ -224,6 +224,11 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { highlightRepository.delete(id) }
     }
 
+    fun deleteHighlights(ids: Collection<Long>) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch { highlightRepository.delete(ids) }
+    }
+
     private fun restartTranslationWindow(currentIndex: Int) {
         val targetLang = _state.value.textDoc?.translationLang ?: return
         val generation = ++translationGeneration

@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -104,6 +107,8 @@ fun SelectionToolbarContent(
     onSave: () -> Unit,
     onListen: () -> Unit,
     onHighlight: () -> Unit,
+    onChooseHighlightColor: () -> Unit,
+    onDeleteHighlight: (() -> Unit)?,
     onMore: () -> Unit
 ) {
     Surface(
@@ -112,7 +117,27 @@ fun SelectionToolbarContent(
         shadowElevation = 6.dp,
         color = MaterialTheme.colorScheme.surface
     ) {
-        Row(modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)) {
+        Row(
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 4.dp, vertical = 2.dp)
+        ) {
+            TextButton(onClick = onHighlight) {
+                Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                Text(stringResource(R.string.selection_action_highlight))
+            }
+            IconButton(onClick = onChooseHighlightColor) {
+                Icon(
+                    Icons.Default.Palette,
+                    contentDescription = stringResource(R.string.highlight_choose_color)
+                )
+            }
+            onDeleteHighlight?.let { delete ->
+                TextButton(onClick = delete) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                    Text(stringResource(R.string.highlight_delete))
+                }
+            }
             TextButton(onClick = onCopy) {
                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_copy))
@@ -124,10 +149,6 @@ fun SelectionToolbarContent(
             TextButton(onClick = onListen) {
                 Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_listen))
-            }
-            TextButton(onClick = onHighlight) {
-                Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_highlight))
             }
             IconButton(onClick = onMore) {
                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.selection_action_more))
@@ -202,21 +223,43 @@ fun HighlightActionsPopupContent(onChangeColor: () -> Unit, onDelete: () -> Unit
  * (handled entirely by [SentenceFlowText] -- this toolbar doesn't need to do anything for
  * that case, it just doesn't get in the way). */
 @Composable
-fun DefineToolbarContent(onDefine: () -> Unit, onHighlight: () -> Unit, onMore: () -> Unit) {
+fun DefineToolbarContent(
+    onDefine: () -> Unit,
+    onHighlight: () -> Unit,
+    onChooseHighlightColor: () -> Unit,
+    onDeleteHighlight: (() -> Unit)?,
+    onMore: () -> Unit
+) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         tonalElevation = 6.dp,
         shadowElevation = 6.dp,
         color = MaterialTheme.colorScheme.surface
     ) {
-        Row(modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)) {
-            TextButton(onClick = onDefine) {
-                Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_define))
-            }
+        Row(
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 4.dp, vertical = 2.dp)
+        ) {
             TextButton(onClick = onHighlight) {
                 Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_highlight))
+            }
+            IconButton(onClick = onChooseHighlightColor) {
+                Icon(
+                    Icons.Default.Palette,
+                    contentDescription = stringResource(R.string.highlight_choose_color)
+                )
+            }
+            onDeleteHighlight?.let { delete ->
+                TextButton(onClick = delete) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                    Text(stringResource(R.string.highlight_delete))
+                }
+            }
+            TextButton(onClick = onDefine) {
+                Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                Text(stringResource(R.string.selection_action_define))
             }
             IconButton(onClick = onMore) {
                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.selection_action_more))

@@ -251,6 +251,10 @@
     <string name="highlight_choose_color">انتخاب رنگ</string>
     <string name="highlight_change_color">تغییر رنگ</string>
     <string name="highlight_delete">حذف برجسته‌سازی</string>
+    <string name="manual_dictionary_action">واژه‌نامه</string>
+    <string name="manual_dictionary_title">جست‌وجوی واژه</string>
+    <string name="manual_dictionary_word_hint">واژه یا عبارت فرانسوی</string>
+    <string name="manual_dictionary_lookup">جست‌وجو</string>
     <string name="selection_action_define">تعریف</string>
     <string name="selection_action_more">بیشتر</string>
     <string name="process_text_apps_empty">اپی پیدا نشد</string>

@@ -178,6 +178,9 @@ interface VocabDao {
     @Query("SELECT * FROM vocab WHERE textId = :textId AND word = :word AND sentence = :sentence LIMIT 1")
     suspend fun findExisting(textId: Long, word: String, sentence: String): VocabEntry?
 
+    @Query("SELECT * FROM vocab WHERE textId = -1 AND sentence = ''")
+    suspend fun getManualEntries(): List<VocabEntry>
+
     @Insert
     suspend fun insert(entry: VocabEntry): Long
 

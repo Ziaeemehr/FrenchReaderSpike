@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -50,6 +52,7 @@ import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialSearchEntry
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
+import com.ziaee.frenchreader.ui.ManualDictionaryHost
 import com.ziaee.frenchreader.ui.shared.AddTextHost
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
 import com.ziaee.frenchreader.ui.shared.FindArticleSheet
@@ -89,6 +92,7 @@ fun HomeScreen(
     val addTextState = rememberAddTextUiState()
     val context = LocalContext.current
     var showFindArticleSheet by remember { mutableStateOf(false) }
+    var showManualDictionary by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val genericErrorMessage = stringResource(R.string.error_generic)
     val untitledFallback = stringResource(R.string.text_untitled)
@@ -158,6 +162,7 @@ fun HomeScreen(
         previewHasError = vm.previewImportError,
         isPreviewAlreadyDownloaded = vm.existingDocumentId != null,
         snackbarHostState = snackbarHostState,
+        onOpenDictionary = { showManualDictionary = true },
         onSearchClick = { showFindArticleSheet = true },
         onFilePickerClick = openFilePicker,
         onFolderPickerClick = { folderPicker.launch(null) },
@@ -179,6 +184,11 @@ fun HomeScreen(
     AddTextHost(addTextState, onEpub = importEpub) { title, body ->
         vm.pasteText(title.ifBlank { untitledFallback }, body) { id -> onOpenText(id) }
     }
+
+    ManualDictionaryHost(
+        open = showManualDictionary,
+        onDismiss = { showManualDictionary = false }
+    )
 
     if (showFindArticleSheet) {
         FindArticleSheet(
@@ -203,6 +213,7 @@ fun HomeContent(
     previewHasError: Boolean,
     isPreviewAlreadyDownloaded: Boolean,
     snackbarHostState: SnackbarHostState,
+    onOpenDictionary: () -> Unit = {},
     onSearchClick: () -> Unit,
     onFilePickerClick: () -> Unit,
     onFolderPickerClick: () -> Unit = {},
@@ -236,6 +247,12 @@ fun HomeContent(
             EditorialTopAppBar(
                 title = stringResource(R.string.home_brand_title),
                 actions = {
+                    IconButton(onClick = onOpenDictionary) {
+                        Icon(
+                            Icons.Default.Translate,
+                            contentDescription = stringResource(R.string.manual_dictionary_action)
+                        )
+                    }
                     IconButton(onClick = onSearchClick) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.content_search_title))
                     }

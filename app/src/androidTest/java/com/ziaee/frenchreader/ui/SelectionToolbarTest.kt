@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.ui
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -30,6 +31,7 @@ class SelectionToolbarTest {
         composeTestRule.setContent {
             SelectionToolbarContent(
                 onCopy = {}, onSave = {}, onListen = {}, onHighlight = {},
+                onChooseHighlightColor = {}, onDeleteHighlight = null,
                 onMore = { moreClicked = true }
             )
         }
@@ -45,7 +47,8 @@ class SelectionToolbarTest {
         composeTestRule.setContent {
             SelectionToolbarContent(
                 onCopy = {}, onSave = {}, onListen = {},
-                onHighlight = { highlightClicked = true }, onMore = {}
+                onHighlight = { highlightClicked = true },
+                onChooseHighlightColor = {}, onDeleteHighlight = null, onMore = {}
             )
         }
 
@@ -58,7 +61,10 @@ class SelectionToolbarTest {
     fun defineToolbarMoreButtonInvokesCallback() {
         var moreClicked = false
         composeTestRule.setContent {
-            DefineToolbarContent(onDefine = {}, onHighlight = {}, onMore = { moreClicked = true })
+            DefineToolbarContent(
+                onDefine = {}, onHighlight = {}, onChooseHighlightColor = {},
+                onDeleteHighlight = null, onMore = { moreClicked = true }
+            )
         }
 
         composeTestRule.onNodeWithContentDescription(string(R.string.selection_action_more)).performClick()
@@ -73,6 +79,8 @@ class SelectionToolbarTest {
             DefineToolbarContent(
                 onDefine = {},
                 onHighlight = { highlightClicked = true },
+                onChooseHighlightColor = {},
+                onDeleteHighlight = null,
                 onMore = {}
             )
         }
@@ -80,6 +88,48 @@ class SelectionToolbarTest {
         composeTestRule.onNodeWithText(string(R.string.selection_action_highlight)).performClick()
 
         assertEquals(true, highlightClicked)
+    }
+
+    @Test
+    fun phraseToolbarExposesColorPaletteAndDeleteCallbacks() {
+        var paletteClicked = false
+        var deleteClicked = false
+        composeTestRule.setContent {
+            SelectionToolbarContent(
+                onCopy = {}, onSave = {}, onListen = {}, onHighlight = {},
+                onChooseHighlightColor = { paletteClicked = true },
+                onDeleteHighlight = { deleteClicked = true }, onMore = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.highlight_choose_color))
+            .assertIsDisplayed().performClick()
+        composeTestRule.onNodeWithText(string(R.string.highlight_delete))
+            .assertIsDisplayed().performClick()
+
+        assertEquals(true, paletteClicked)
+        assertEquals(true, deleteClicked)
+    }
+
+    @Test
+    fun wordToolbarExposesColorPaletteAndDeleteCallbacks() {
+        var paletteClicked = false
+        var deleteClicked = false
+        composeTestRule.setContent {
+            DefineToolbarContent(
+                onDefine = {}, onHighlight = {},
+                onChooseHighlightColor = { paletteClicked = true },
+                onDeleteHighlight = { deleteClicked = true }, onMore = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription(string(R.string.highlight_choose_color))
+            .assertIsDisplayed().performClick()
+        composeTestRule.onNodeWithText(string(R.string.highlight_delete))
+            .assertIsDisplayed().performClick()
+
+        assertEquals(true, paletteClicked)
+        assertEquals(true, deleteClicked)
     }
 
     @Test

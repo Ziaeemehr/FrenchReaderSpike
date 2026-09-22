@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,15 +28,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
-import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
 import com.ziaee.frenchreader.data.VocabPrefs
+import com.ziaee.frenchreader.data.VocabRepository
+import com.ziaee.frenchreader.data.MANUAL_VOCAB_TEXT_ID
 import com.ziaee.frenchreader.translate.TranslationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
+
+internal fun manualDictionaryWord(raw: String): String? = raw.trim().takeIf { it.isNotEmpty() }
 
 /** Primary dictionary source per the design doc: WordReference French->English. */
 internal fun wordReferenceUrl(word: String): String =
@@ -79,8 +83,57 @@ private val AD_BLOCK_HOSTS = setOf(
 private fun isAdHost(host: String): Boolean =
     AD_BLOCK_HOSTS.any { host == it || host.endsWith(".$it") }
 
+@Composable
+fun ManualDictionaryHost(open: Boolean, onDismiss: () -> Unit) {
+    var lookupWord by rememberSaveable(open) { mutableStateOf<String?>(null) }
+    if (!open) return
+
+    val word = lookupWord
+    if (word == null) {
+        ManualDictionaryDialog(
+            onDismiss = onDismiss,
+            onLookup = { lookupWord = it }
+        )
+    } else {
+        DictionarySheet(
+            textId = MANUAL_VOCAB_TEXT_ID,
+            word = word,
+            sentence = "",
+            onDismiss = onDismiss
+        )
+    }
+}
+
+@Composable
+fun ManualDictionaryDialog(onDismiss: () -> Unit, onLookup: (String) -> Unit) {
+    var rawWord by rememberSaveable { mutableStateOf("") }
+    val word = manualDictionaryWord(rawWord)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.manual_dictionary_title)) },
+        text = {
+            OutlinedTextField(
+                value = rawWord,
+                onValueChange = { rawWord = it },
+                label = { Text(stringResource(R.string.manual_dictionary_word_hint)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { word?.let(onLookup) }, enabled = word != null) {
+                Text(stringResource(R.string.manual_dictionary_lookup))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        }
+    )
+}
+
 class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val repository = VocabRepository(db.vocabDao())
 
     private val _lists = MutableStateFlow<List<VocabList>>(emptyList())
     val lists: StateFlow<List<VocabList>> = _lists.asStateFlow()
@@ -100,29 +153,16 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun save(textId: Long, word: String, sentence: String, meaning: String?, listId: Long?, onDone: () -> Unit) {
+        val normalizedWord = manualDictionaryWord(word) ?: return
         viewModelScope.launch {
-            // Repeating a word within the same sentence updates the
-            // existing entry instead of creating a duplicate.
-            val existing = db.vocabDao().findExisting(textId, word, sentence)
-            if (existing != null) {
-                db.vocabDao().update(
-                    existing.copy(
-                        meaning = meaning?.ifBlank { existing.meaning } ?: existing.meaning,
-                        listId = listId
-                    )
-                )
-            } else {
-                db.vocabDao().insert(
-                    VocabEntry(
-                        word = word,
-                        sentence = sentence,
-                        textId = textId,
-                        dictionaryUrl = wordReferenceUrl(word),
-                        meaning = meaning?.ifBlank { null },
-                        listId = listId
-                    )
-                )
-            }
+            repository.save(
+                textId = textId,
+                word = normalizedWord,
+                sentence = sentence,
+                dictionaryUrl = wordReferenceUrl(normalizedWord),
+                meaning = meaning,
+                listId = listId
+            )
             onDone()
         }
     }

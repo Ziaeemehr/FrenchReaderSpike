@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -60,6 +61,7 @@ class HomeScreenTest {
         onAddTextClick: () -> Unit = {},
         onOpenGradedReaders: () -> Unit = {},
         onSearchClick: () -> Unit = {},
+        onOpenDictionary: () -> Unit = {},
         onStartReview: () -> Unit = {}
     ) {
         composeTestRule.setContent {
@@ -71,6 +73,7 @@ class HomeScreenTest {
                     previewHasError = false,
                     isPreviewAlreadyDownloaded = false,
                     snackbarHostState = remember { SnackbarHostState() },
+                    onOpenDictionary = onOpenDictionary,
                     onSearchClick = onSearchClick,
                     onFilePickerClick = onFilePickerClick,
                     onOpenVocab = onOpenVocab,
@@ -154,7 +157,19 @@ class HomeScreenTest {
     }
 
     @Test
-    fun onlySearchSettingsAndMoreAreDirectHeaderActions() {
+    fun dictionaryIsADirectHeaderAction() {
+        var dictionaryClicks = 0
+        setHomeContent(HomeUiState(), onOpenDictionary = { dictionaryClicks++ })
+
+        composeTestRule
+            .onNodeWithContentDescription(string(R.string.manual_dictionary_action))
+            .performClick()
+
+        assertEquals(1, dictionaryClicks)
+    }
+
+    @Test
+    fun importAndLibraryActionsStayInMoreMenu() {
         setHomeContent(HomeUiState())
 
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()

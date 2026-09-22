@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "commit": "8fe07079b00b04bd2a8015f88f83122954b5dac2",
-    "indexed_at": "2026-09-17T05:59:24Z",
+    "commit": "d0134a002349ab2db2f9297d991fa8725b1285eb",
+    "indexed_at": "2026-09-22T08:27:43Z",
     "project": "Users-tng-Downloads-language_app-FrenchReaderSpike",
-    "nodes": 1062,
-    "edges": 3939,
-    "original_size": 4128768,
-    "compressed_size": 719800,
-    "compression_level": 9
+    "nodes": 2599,
+    "edges": 10432,
+    "original_size": 12255232,
+    "compressed_size": 1945731,
+    "compression_level": 3
 }

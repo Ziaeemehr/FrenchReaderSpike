@@ -253,6 +253,10 @@
     <string name="highlight_choose_color">Choisir une couleur</string>
     <string name="highlight_change_color">Changer la couleur</string>
     <string name="highlight_delete">Supprimer le surlignage</string>
+    <string name="manual_dictionary_action">Dictionnaire</string>
+    <string name="manual_dictionary_title">Rechercher un mot</string>
+    <string name="manual_dictionary_word_hint">Mot ou expression en français</string>
+    <string name="manual_dictionary_lookup">Rechercher</string>
     <string name="selection_action_define">Définir</string>
     <string name="selection_action_more">Plus</string>
     <string name="process_text_apps_empty">Aucune application trouvée</string>
