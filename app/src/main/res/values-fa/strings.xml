@@ -255,6 +255,9 @@
     <string name="manual_dictionary_title">جست‌وجوی واژه</string>
     <string name="manual_dictionary_word_hint">واژه یا عبارت فرانسوی</string>
     <string name="manual_dictionary_lookup">جست‌وجو</string>
+    <string name="dictionary_saved_exact">ذخیره‌شده</string>
+    <string name="dictionary_saved_elsewhere">قبلاً در %1$d زمینه‌ی دیگر ذخیره شده</string>
+    <string name="accessibility_vocabulary_saved">مدخل واژگان ذخیره شده است</string>
     <string name="selection_action_define">تعریف</string>
     <string name="selection_action_more">بیشتر</string>
     <string name="process_text_apps_empty">اپی پیدا نشد</string>

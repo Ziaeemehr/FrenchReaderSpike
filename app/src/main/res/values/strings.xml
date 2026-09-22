@@ -257,6 +257,9 @@
     <string name="manual_dictionary_title">Look up a word</string>
     <string name="manual_dictionary_word_hint">French word or phrase</string>
     <string name="manual_dictionary_lookup">Look up</string>
+    <string name="dictionary_saved_exact">Saved</string>
+    <string name="dictionary_saved_elsewhere">Previously saved in %1$d other context(s)</string>
+    <string name="accessibility_vocabulary_saved">Vocabulary entry saved</string>
     <string name="selection_action_define">Define</string>
     <string name="selection_action_more">More</string>
     <string name="process_text_apps_empty">No apps found</string>

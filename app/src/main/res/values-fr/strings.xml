@@ -257,6 +257,9 @@
     <string name="manual_dictionary_title">Rechercher un mot</string>
     <string name="manual_dictionary_word_hint">Mot ou expression en français</string>
     <string name="manual_dictionary_lookup">Rechercher</string>
+    <string name="dictionary_saved_exact">Enregistré</string>
+    <string name="dictionary_saved_elsewhere">Déjà enregistré dans %1$d autre(s) contexte(s)</string>
+    <string name="accessibility_vocabulary_saved">Entrée de vocabulaire enregistrée</string>
     <string name="selection_action_define">Définir</string>
     <string name="selection_action_more">Plus</string>
     <string name="process_text_apps_empty">Aucune application trouvée</string>

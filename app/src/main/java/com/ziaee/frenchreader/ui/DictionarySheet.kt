@@ -11,6 +11,7 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -32,10 +33,14 @@ import com.ziaee.frenchreader.data.VocabList
 import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.VocabRepository
 import com.ziaee.frenchreader.data.MANUAL_VOCAB_TEXT_ID
+import com.ziaee.frenchreader.data.DictionarySavedState
+import com.ziaee.frenchreader.data.dictionarySavedState
 import com.ziaee.frenchreader.translate.TranslationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
@@ -54,6 +59,9 @@ private data class DictionaryProvider(val id: String, val label: String, val url
 
 private val DICTIONARY_PROVIDERS = listOf(
     DictionaryProvider("wordreference", "WordReference") { wordReferenceUrl(it) },
+    DictionaryProvider("bamooz", "B-amooz") {
+        "https://dic.b-amooz.com/fr/dictionary/w?word=" + URLEncoder.encode(it, "UTF-8")
+    },
     DictionaryProvider("larousse", "Larousse") {
         "https://www.larousse.fr/dictionnaires/francais/" + URLEncoder.encode(it, "UTF-8")
     },
@@ -152,6 +160,11 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun observeSavedState(textId: Long, word: String, sentence: String): Flow<DictionarySavedState> =
+        db.vocabDao().observeAll().map { entries ->
+            dictionarySavedState(entries, textId, word, sentence)
+        }
+
     fun save(textId: Long, word: String, sentence: String, meaning: String?, listId: Long?, onDone: () -> Unit) {
         val normalizedWord = manualDictionaryWord(word) ?: return
         viewModelScope.launch {
@@ -198,12 +211,16 @@ fun DictionarySheet(
     val vm: DictionaryViewModel = viewModel()
     val context = LocalContext.current
     val lists by vm.lists.collectAsState()
+    val savedStateFlow = remember(vm, textId, word, sentence) {
+        vm.observeSavedState(textId, word, sentence)
+    }
+    val savedState by savedStateFlow.collectAsState(initial = DictionarySavedState())
 
     var meaning by remember(word, sentence) { mutableStateOf(initialMeaning.orEmpty()) }
     var selectedListId by remember(word, sentence) {
         mutableStateOf(initialListId ?: if (isNew) VocabPrefs.getLastListId(context) else null)
     }
-    var saved by remember(word, sentence) { mutableStateOf(false) }
+    var saved by remember(word, sentence, isNew) { mutableStateOf(!isNew) }
     var autoTranslating by remember(word) { mutableStateOf(false) }
     var webViewFailed by remember(word) { mutableStateOf(false) }
     var listMenuExpanded by remember { mutableStateOf(false) }
@@ -217,8 +234,16 @@ fun DictionarySheet(
     // word, using the same free translation service/cache as paragraph
     // translation -- only when there's nothing saved for it yet, and only
     // if the person hasn't already started typing their own correction.
-    LaunchedEffect(word, sentence, initialMeaning, meaningTarget) {
-        if (initialMeaning.isNullOrBlank()) {
+    LaunchedEffect(savedState.exactEntry?.id) {
+        savedState.exactEntry?.let { existing ->
+            meaning = existing.meaning.orEmpty()
+            selectedListId = existing.listId
+            saved = true
+        }
+    }
+
+    LaunchedEffect(word, sentence, initialMeaning, meaningTarget, savedState.isLoaded) {
+        if (savedState.isLoaded && savedState.exactEntry == null && initialMeaning.isNullOrBlank()) {
             autoTranslating = true
             val repo = TranslationRepository(context.applicationContext)
             val result = repo.getOrTranslate(word, meaningTarget)
@@ -271,6 +296,31 @@ fun DictionarySheet(
 
             Spacer(Modifier.height(10.dp))
 
+            if (savedState.otherContextCount > 0) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.BookmarkAdded, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(
+                                R.string.dictionary_saved_elsewhere,
+                                savedState.otherContextCount
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+            }
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.weight(1f)) {
                     AssistChip(
@@ -281,12 +331,12 @@ fun DictionarySheet(
                     DropdownMenu(expanded = listMenuExpanded, onDismissRequest = { listMenuExpanded = false }) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.vocab_list_uncategorized)) },
-                            onClick = { selectedListId = null; listMenuExpanded = false }
+                            onClick = { selectedListId = null; saved = false; listMenuExpanded = false }
                         )
                         lists.forEach { l ->
                             DropdownMenuItem(
                                 text = { Text(l.name) },
-                                onClick = { selectedListId = l.id; listMenuExpanded = false }
+                                onClick = { selectedListId = l.id; saved = false; listMenuExpanded = false }
                             )
                         }
                         HorizontalDivider()
@@ -297,18 +347,30 @@ fun DictionarySheet(
                     }
                 }
                 Spacer(Modifier.width(8.dp))
-                FilledIconButton(
-                    onClick = {
-                        vm.save(textId, word, sentence, meaning, selectedListId) {
-                            saved = true
-                            VocabPrefs.setLastListId(context, selectedListId)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    FilledIconButton(
+                        onClick = {
+                            vm.save(textId, word, sentence, meaning, selectedListId) {
+                                saved = true
+                                VocabPrefs.setLastListId(context, selectedListId)
+                            }
                         }
+                    ) {
+                        Icon(
+                            if (saved) Icons.Default.Check else Icons.Default.Save,
+                            contentDescription = stringResource(
+                                if (saved) R.string.accessibility_vocabulary_saved
+                                else R.string.accessibility_save_vocabulary
+                            )
+                        )
                     }
-                ) {
-                    Icon(
-                        if (saved) Icons.Default.Check else Icons.Default.Save,
-                        contentDescription = stringResource(R.string.accessibility_save_vocabulary)
-                    )
+                    if (saved) {
+                        Text(
+                            stringResource(R.string.dictionary_saved_exact),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -441,7 +503,7 @@ fun DictionarySheet(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.createList(newListName) { newId -> selectedListId = newId }
+                    vm.createList(newListName) { newId -> selectedListId = newId; saved = false }
                     showNewListDialog = false
                 }) { Text(stringResource(R.string.action_create)) }
             },

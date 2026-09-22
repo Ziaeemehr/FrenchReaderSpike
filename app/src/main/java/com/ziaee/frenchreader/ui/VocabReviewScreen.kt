@@ -267,7 +267,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     val snackbar = remember { SnackbarHostState() }
     // Reveal state is keyed by entry instance (identity): each presentation is a distinct object
     // (answer() re-queues a copy), so the outgoing card keeps its state and a returning card starts unrevealed.
-    var revealedEntry by remember { mutableStateOf<VocabEntry?>(null) }
+    var revealedEntry by remember { newRevealedEntryState() }
     val currentRevealed = vm.current != null && vm.current === revealedEntry
     var showDictionary by remember { mutableStateOf(false) }
     var showEdit by remember { mutableStateOf(false) }

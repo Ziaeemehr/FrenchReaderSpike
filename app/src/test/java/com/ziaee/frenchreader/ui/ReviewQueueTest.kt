@@ -66,4 +66,15 @@ class ReviewQueueTest {
         val a = e(1, 1, 0); val rq = e(9, 1, 0)
         assertEquals(listOf(1L), ids(restoreQueueAfterUndo(listOf(a, rq), null, rq)))
     }
+
+    @Test fun `reveal state accepts a structurally equal replacement instance after undo`() {
+        val beforeUndo = e(1, 1, 0)
+        val restoredAfterUndo = beforeUndo.copy()
+        val state = newRevealedEntryState()
+
+        state.value = beforeUndo
+        state.value = restoredAfterUndo
+
+        assertSame(restoredAfterUndo, state.value)
+    }
 }

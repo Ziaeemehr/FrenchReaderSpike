@@ -9,6 +9,31 @@ const val MANUAL_VOCAB_TEXT_ID = -1L
 internal fun vocabIdentityKey(word: String): String =
     Normalizer.normalize(word.trim(), Normalizer.Form.NFKC).lowercase(Locale.ROOT)
 
+data class DictionarySavedState(
+    val exactEntry: VocabEntry? = null,
+    val totalWordMatches: Int = 0,
+    val isLoaded: Boolean = false
+) {
+    val otherContextCount: Int
+        get() = (totalWordMatches - if (exactEntry == null) 0 else 1).coerceAtLeast(0)
+}
+
+fun dictionarySavedState(
+    entries: List<VocabEntry>,
+    textId: Long,
+    word: String,
+    sentence: String
+): DictionarySavedState {
+    val identity = vocabIdentityKey(word)
+    val matches = entries.filter { vocabIdentityKey(it.word) == identity }
+    val exact = matches.firstOrNull { it.textId == textId && it.sentence == sentence }
+    return DictionarySavedState(
+        exactEntry = exact,
+        totalWordMatches = matches.size,
+        isLoaded = true
+    )
+}
+
 class VocabRepository(private val dao: VocabDao) {
     suspend fun save(
         textId: Long,
