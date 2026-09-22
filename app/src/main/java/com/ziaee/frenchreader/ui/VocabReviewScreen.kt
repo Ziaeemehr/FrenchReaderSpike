@@ -49,6 +49,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.*
+import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.ui.components.TappableFrenchText
 import com.ziaee.frenchreader.ui.statistics.computeStreak
@@ -66,6 +67,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val context = app.applicationContext
     private val ttsRepo = TtsChunkRepository(app)
+    private val translationRepo = TranslationRepository(app)
     private val player = ExoPlayer.Builder(app).build()
     private val voiceCache = HashMap<Long, Pair<String, Int>>()
     private val queue = mutableListOf<VocabEntry>()
@@ -87,7 +89,12 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var slot by mutableStateOf<CardSlot?>(null)
     internal val currentSlot: CardSlot? get() = slot
     val current: VocabEntry? get() = slot?.entry
-    private fun show(entry: VocabEntry?) { slot = entry?.let { CardSlot(it) } }
+    private fun show(entry: VocabEntry?) {
+        sentenceTranslation = null
+        sentenceTranslationLoading = false
+        sentenceTranslationError = false
+        slot = entry?.let { CardSlot(it) }
+    }
     var dueCount by mutableIntStateOf(0); private set
     var newCount by mutableIntStateOf(0); private set
     var reviewedToday by mutableIntStateOf(0); private set
@@ -105,6 +112,9 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     var moveLabel by mutableStateOf<String?>(null); private set
     var sentenceAudioLoading by mutableStateOf(false); private set
     var sentenceAudioError by mutableStateOf(false); private set
+    var sentenceTranslation by mutableStateOf<String?>(null); private set
+    var sentenceTranslationLoading by mutableStateOf(false); private set
+    var sentenceTranslationError by mutableStateOf(false); private set
 
     val progressPosition get() = if (totalCards == 0) 0 else (completedIds.size + 1).coerceAtMost(totalCards)
     val estimatedMinutes get() = ((dueCount + newCount) * 12 / 60.0).roundToInt().coerceAtLeast(if (dueCount + newCount > 0) 1 else 0)
@@ -252,6 +262,21 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    suspend fun translateSentence() {
+        val entry = current ?: return
+        sentenceTranslation = null
+        sentenceTranslationError = false
+        sentenceTranslationLoading = true
+        val targetLang = meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context))
+        val result = translationRepo.getOrTranslate(entry.sentence, targetLang)
+        if (current !== entry) return
+        result.fold(
+            onSuccess = { sentenceTranslation = it },
+            onFailure = { sentenceTranslationError = true }
+        )
+        sentenceTranslationLoading = false
+    }
+
     private fun scoped(all: List<VocabEntry>) = when (scopeId) {
         VOCAB_SCOPE_ALL -> all
         VOCAB_SCOPE_UNFILED -> all.filter { it.listId == null }
@@ -280,6 +305,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastSlot = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
     LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.audioAutoplay) vm.playSentence() }
+    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed) vm.translateSentence() }
     vm.current?.takeIf { showEdit }?.let { e ->
         VocabEditDialog(e, onDismiss = { showEdit = false }) { w, m, s ->
             val wasRevealed = e === revealedEntry
@@ -469,6 +495,11 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
                         TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                         IconButton(onClick = vm::playSentence, enabled = interactive) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
                     }
+                    when {
+                        vm.sentenceTranslationLoading -> Text(stringResource(R.string.translation_loading), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                        vm.sentenceTranslationError -> Text(stringResource(R.string.error_translation_unavailable), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                        vm.sentenceTranslation != null -> Text(vm.sentenceTranslation!!, color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = FontStyle.Italic, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                    }
                     if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
                 }
             }
@@ -506,3 +537,5 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
 @Composable private fun SummaryLine(label: Int, value: String) = Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) { Text(stringResource(label), Modifier.weight(1f)); Text(value, style = MaterialTheme.typography.titleSmall) }
 private fun formatDate(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate().format(DateTimeFormatter.ofPattern("d MMM"))
 private fun formatDuration(ms: Long): String { val seconds = ms / 1000; return if (seconds < 60) "${seconds}s" else "${seconds / 60}m ${seconds % 60}s" }
+internal fun meaningTargetLanguage(language: VocabPrefs.MeaningLanguage) =
+    if (language == VocabPrefs.MeaningLanguage.PERSIAN) "fa" else "en"
