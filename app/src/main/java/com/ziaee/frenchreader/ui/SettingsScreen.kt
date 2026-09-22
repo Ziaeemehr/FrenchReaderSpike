@@ -11,12 +11,14 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -33,6 +35,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
@@ -95,15 +99,7 @@ fun SettingsScreen(onBack: () -> Unit) {
         var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
         Column(Modifier.fillMaxWidth().padding(padding)) {
-            ScrollableTabRow(selectedTabIndex = selectedTab, edgePadding = 12.dp) {
-                tabTitles.forEachIndexed { index, resource ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(stringResource(resource), style = MaterialTheme.typography.labelMedium) }
-                    )
-                }
-            }
+            SettingsTabRow(tabTitles = tabTitles, selectedTab = selectedTab, onSelect = { selectedTab = it })
             Column(
                 Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -169,6 +165,52 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun SettingsTabRow(tabTitles: List<Int>, selectedTab: Int, onSelect: (Int) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        tabTitles.forEachIndexed { index, resource ->
+            val selected = selectedTab == index
+            val background by animateColorAsState(
+                if (selected) MaterialTheme.colorScheme.tertiaryContainer else Color.Transparent,
+                label = "settingsTabBackground"
+            )
+            val contentColor by animateColorAsState(
+                if (selected) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                label = "settingsTabContent"
+            )
+            Box(
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(50))
+                    .background(background)
+                    .border(
+                        width = if (selected) 0.dp else 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = RoundedCornerShape(50)
+                    )
+                    .clickable { onSelect(index) }
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    stringResource(resource),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
