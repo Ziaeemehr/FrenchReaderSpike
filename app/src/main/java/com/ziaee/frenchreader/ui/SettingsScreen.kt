@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,74 +84,89 @@ fun SettingsScreen(onBack: () -> Unit) {
             )
         }
     ) { padding ->
-        Column(
-            Modifier.fillMaxWidth().padding(padding).verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            SettingsSectionHeader(R.string.settings_section_appearance)
-            CompactSettingLabel(R.string.language_title)
-            CompactChoiceRow(AppLanguage.entries, appLanguage, { stringResource(it.labelResource()) }) { language ->
-                LocalePrefs.set(context, language)
-                applyAppLanguage(language)
-            }
-            CompactSettingLabel(R.string.theme_title)
-            CompactChoiceRow(ThemeMode.entries, AppearanceState.themeMode, { stringResource(it.labelResource()) }) { mode ->
-                AppearanceState.themeMode = mode
-                AppearancePrefs.setThemeMode(context, mode)
-            }
+        val tabTitles = listOf(
+            R.string.settings_section_appearance,
+            R.string.settings_section_reading,
+            R.string.settings_section_news,
+            R.string.settings_section_xtts,
+            R.string.settings_section_vocabulary,
+            R.string.settings_section_backup
+        )
+        var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
-            SectionDivider()
-            SettingsSectionHeader(R.string.settings_section_reading)
-            CompactSettingLabel(R.string.reading_background_title)
-            ColorGrid(
-                entries = ReadingBackground.entries,
-                selected = AppearanceState.readingBackground,
-                color = ::backgroundSwatch,
-                label = { stringResource(it.labelResource()) }
-            ) { background ->
-                AppearanceState.readingBackground = background
-                AppearancePrefs.setReadingBackground(context, background)
+        Column(Modifier.fillMaxWidth().padding(padding)) {
+            ScrollableTabRow(selectedTabIndex = selectedTab, edgePadding = 12.dp) {
+                tabTitles.forEachIndexed { index, resource ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(stringResource(resource), style = MaterialTheme.typography.labelMedium) }
+                    )
+                }
             }
-            CompactSettingLabel(R.string.sync_highlight_color)
-            ColorGrid(
-                entries = HighlightColor.entries,
-                selected = AppearanceState.highlightColor,
-                color = { highlightSwatch(it, AppearanceState.readingBackground in listOf(ReadingBackground.DARK, ReadingBackground.BLACK)) },
-                label = { stringResource(it.labelResource()) }
-            ) { color ->
-                AppearanceState.highlightColor = color
-                AppearancePrefs.setHighlightColor(context, color)
+            Column(
+                Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                when (selectedTab) {
+                    0 -> {
+                        CompactSettingLabel(R.string.language_title)
+                        CompactChoiceRow(AppLanguage.entries, appLanguage, { stringResource(it.labelResource()) }) { language ->
+                            LocalePrefs.set(context, language)
+                            applyAppLanguage(language)
+                        }
+                        CompactSettingLabel(R.string.theme_title)
+                        CompactChoiceRow(ThemeMode.entries, AppearanceState.themeMode, { stringResource(it.labelResource()) }) { mode ->
+                            AppearanceState.themeMode = mode
+                            AppearancePrefs.setThemeMode(context, mode)
+                        }
+                    }
+                    1 -> {
+                        CompactSettingLabel(R.string.reading_background_title)
+                        ColorGrid(
+                            entries = ReadingBackground.entries,
+                            selected = AppearanceState.readingBackground,
+                            color = ::backgroundSwatch,
+                            label = { stringResource(it.labelResource()) }
+                        ) { background ->
+                            AppearanceState.readingBackground = background
+                            AppearancePrefs.setReadingBackground(context, background)
+                        }
+                        CompactSettingLabel(R.string.sync_highlight_color)
+                        ColorGrid(
+                            entries = HighlightColor.entries,
+                            selected = AppearanceState.highlightColor,
+                            color = { highlightSwatch(it, AppearanceState.readingBackground in listOf(ReadingBackground.DARK, ReadingBackground.BLACK)) },
+                            label = { stringResource(it.labelResource()) }
+                        ) { color ->
+                            AppearanceState.highlightColor = color
+                            AppearancePrefs.setHighlightColor(context, color)
+                        }
+                        CompactSettingLabel(R.string.reading_font_scale_title)
+                        CompactChoiceRow(FontScale.entries, AppearanceState.fontScale, { stringResource(it.labelResource()) }) { scale ->
+                            AppearanceState.fontScale = scale
+                            AppearancePrefs.setFontScale(context, scale)
+                        }
+                    }
+                    2 -> NewsSettings(context)
+                    3 -> LocalXttsSettings(context, scope, snackbarHostState)
+                    4 -> {
+                        SettingsSwitchRow(
+                            label = stringResource(R.string.highlight_saved_words),
+                            checked = AppearanceState.highlightSavedWords
+                        ) { enabled ->
+                            AppearanceState.highlightSavedWords = enabled
+                            AppearancePrefs.setHighlightSavedWords(context, enabled)
+                        }
+                        VocabularyReviewSettings(context)
+                    }
+                    5 -> {
+                        LocalBackupSection(context, scope, snackbarHostState)
+                        CloudBackupSection(context, scope, snackbarHostState)
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
             }
-            CompactSettingLabel(R.string.reading_font_scale_title)
-            CompactChoiceRow(FontScale.entries, AppearanceState.fontScale, { stringResource(it.labelResource()) }) { scale ->
-                AppearanceState.fontScale = scale
-                AppearancePrefs.setFontScale(context, scale)
-            }
-
-            SectionDivider()
-            SettingsSectionHeader(R.string.settings_section_news)
-            NewsSettings(context)
-
-            SectionDivider()
-            SettingsSectionHeader(R.string.settings_section_xtts)
-            LocalXttsSettings(context, scope, snackbarHostState)
-
-            SectionDivider()
-            SettingsSectionHeader(R.string.settings_section_vocabulary)
-            SettingsSwitchRow(
-                label = stringResource(R.string.highlight_saved_words),
-                checked = AppearanceState.highlightSavedWords
-            ) { enabled ->
-                AppearanceState.highlightSavedWords = enabled
-                AppearancePrefs.setHighlightSavedWords(context, enabled)
-            }
-            VocabularyReviewSettings(context)
-
-            SectionDivider()
-            SettingsSectionHeader(R.string.settings_section_backup)
-            LocalBackupSection(context, scope, snackbarHostState)
-            CloudBackupSection(context, scope, snackbarHostState)
-            Spacer(Modifier.height(20.dp))
         }
     }
 }
@@ -408,9 +424,6 @@ private fun SettingsSectionHeader(resource: Int) {
 private fun CompactSettingLabel(resource: Int) {
     Text(stringResource(resource), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp, bottom = 3.dp))
 }
-
-@Composable
-private fun SectionDivider() = HorizontalDivider(Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
 @Composable
 private fun <T> CompactChoiceRow(
