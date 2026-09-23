@@ -1,14 +1,15 @@
 # Shadowing mode — design
 
 Date: 2026-09-23
-Status: draft, awaiting review
+Status: approved; revised 2026-09-23 (pace score + per-text summary)
 
 ## Goal
 
 Let the learner practice speaking with the text they are reading: the app plays
 one sentence with TTS, the learner repeats it, and the app shows which words were
 recognized (pronunciation feedback) and lets them compare their recording with
-the original (fluency/rhythm practice).
+the original (fluency/rhythm practice). Each sentence gets a word-accuracy
+score and a pace rating, and finishing a session shows a summary for the text.
 
 ## Decisions
 
@@ -19,6 +20,8 @@ the original (fluency/rhythm practice).
 | Loop | Manual: user holds the mic button to speak; result stays until Next / Retry |
 | Persistence | Per-sentence score and study time are stored; recordings are never stored |
 | Placement | Inside the reading screen (no separate section) |
+| Rhythm | Simple pace measure: speech length (silence trimmed) vs. the TTS sentence length |
+| End of text | Per-text session summary: accuracy, pace, weakest sentences |
 
 ## User experience
 
@@ -29,6 +32,8 @@ the original (fluency/rhythm practice).
   - The current sentence's words, colored after an attempt: green = matched,
     red = missing or misrecognized. Before an attempt they are neutral.
   - Score `matched / total` (e.g. `7 / 9`).
+  - Pace line, when a recording is available: *good pace (1.1×)*,
+    *a bit slow (1.4×)* or *a bit fast (0.7×)*.
   - Buttons: **Play original** (replays the TTS sentence), **Replay mine**,
     **Retry** (clears the result), **Next** (advances with the existing
     `nextSentence`, then plays it).
@@ -38,7 +43,28 @@ the original (fluency/rhythm practice).
   recording, so the two never overlap.
 - Tapping a sentence in the text while in shadowing mode jumps to that sentence
   (existing `seekToSentence`) and plays it.
-- Turning the toggle off hides the panel and restores normal playback.
+- Turning the toggle off, or pressing Next on the last sentence, ends the
+  session. If at least one attempt was saved in it, a **summary dialog** for
+  this text appears:
+  - sentences practiced and word accuracy (word-weighted over the latest attempt
+    per sentence in this session)
+  - average pace ratio and the share of sentences at a good pace
+  - up to 3 weakest sentences (lowest accuracy below 100%). Tapping one turns
+    shadowing back on at that sentence.
+- Closing the summary hides the panel and restores normal playback.
+
+## Pace measure
+
+- Only computed when the app has the PCM (Vosk, or Android engine on API 33+).
+  Otherwise the pace is absent and only accuracy is shown.
+- Speech length: split the PCM into 20 ms frames and compute RMS for each. A frame
+  counts as speech when its RMS is above `max(300, 0.15 × loudest frame RMS)`.
+  Speech length runs from the first speech frame to the last one, so silence
+  before and after speaking is not counted.
+- Expected length: the TTS sentence duration divided by the current playback speed.
+- `ratio = speech / expected`. Below 0.8 is *a bit fast*, 0.8–1.3 is *good pace*,
+  and above 1.3 is *a bit slow*.
+- Speech shorter than 300 ms gives no pace.
 
 ## Architecture
 
@@ -78,7 +104,7 @@ stop-at-sentence-end flag in playback, and the new panel composable
 ## Data
 
 - New Room entity `ShadowAttempt(id, textId, chunkIndex, sentenceIndex, matched,
-  total, engine, timestamp)` plus a DAO. `SCHEMA_VERSION` + 1 with a migration.
+  total, paceRatio?, engine, timestamp)` plus a DAO. `SCHEMA_VERSION` + 1 with a migration.
 - Only attempts with a non-empty transcript are stored.
 - Shadowing time (from pressing the mic until the result is shown) is added to the
   daily study time used by the review screen (`VocabPrefs` study-time counters).
@@ -112,6 +138,8 @@ shadowing from vocab review cards, a separate practice section.
 
 ## Testing
 
+- Unit tests for the pace analyzer (silence padding, quiet noise, missing PCM)
+  and the per-text summary (latest attempt wins, weakest ordering, no pace data).
 - Unit tests for `TranscriptAligner`: exact match, elisions (`l'avion`), accents,
   punctuation, extra words, missing words, empty transcript.
 - DAO test and Room migration test for the new schema version.

@@ -2,10 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a shadowing mode to the reading screen. The TTS plays one sentence, the learner holds a mic button and repeats it, the app colors each word matched or missed, shows a score, and lets the learner replay their own recording.
+**Goal:** Add a shadowing mode to the reading screen. The TTS plays one sentence, the learner holds a mic button and repeats it, the app colors each word matched or missed, shows an accuracy score and a pace rating, and lets the learner replay their own recording. Ending a session shows a per-text summary (accuracy, pace, weakest sentences).
 
 **Architecture:** A new `shadowing/` package holds these pieces:
-- a pure `TranscriptAligner`
+- a pure `TranscriptAligner` and a pure `PaceAnalyzer`
+- a pure `shadowTextSummary` for the end-of-session summary
 - a `SpeechEngine` interface with two implementations (Vosk offline and Android `SpeechRecognizer`), built on a shared `MicRecorder`
 - a `VoskModelManager` for the one-time model download
 - a testable `ShadowingController` state machine
@@ -32,11 +33,12 @@
 
 ## Review Focus
 
-1. **Next right after an auto-pause.** The auto-pause fires at the exact start of the next sentence, so position-based `nextSentence()` would skip a sentence. Next and Play original must use the explicit shadow target (Task 5 tests `nextSentenceRef` and `previousSentenceRef`).
+1. **Next right after an auto-pause.** The auto-pause fires at the exact start of the next sentence, so position-based `nextSentence()` would skip a sentence. Next and Play original must use the explicit shadow target (Task 6 tests `nextSentenceRef` and `previousSentenceRef`).
 2. **Words with elisions, hyphens and apostrophe variants** (`l’avion` with a curly apostrophe, `peut-être`, `c'est-à-dire`) must still match what the recognizer prints (Task 1 tests).
-3. **An interrupted or partial model download** must never count as installed. The unzip goes to a temp dir with an atomic rename and a marker file (Task 3 tests).
-4. **Pressing the mic while TTS plays, or Play while recording**, must not overlap. The controller refuses to record during playback, and playback is refused while recording (Task 5 controller tests).
-5. **Leaving the reading screen or rotating mid-recording** must release the mic and not save a half attempt. `onCleared` cancels the controller (Task 5 test `cancel_whileRecording_savesNothing`).
+3. **An interrupted or partial model download** must never count as installed. The unzip goes to a temp dir with an atomic rename and a marker file (Task 4 tests).
+4. **Pressing the mic while TTS plays, or Play while recording**, must not overlap. The controller refuses to record during playback, and playback is refused while recording (Task 6 controller tests).
+5. **Leaving the reading screen or rotating mid-recording** must release the mic and not save a half attempt. `onCleared` cancels the controller (Task 6 test `cancel_whileRecording_savesNothing`).
+6. **Silence before or after speaking** (the learner presses the mic, then waits a second) must not make the pace look slow. Speech length is trimmed by frame energy (Task 2 test `leadingAndTrailingSilenceTrimmed`).
 
 ---
 
@@ -203,7 +205,141 @@ git commit -m "feat(shadowing): word-level transcript aligner"
 
 ---
 
-### Task 2: ShadowAttempt table, DAO and migration 14→15
+### Task 2: PaceAnalyzer
+
+**Files:**
+- Create: `app/src/main/java/com/ziaee/frenchreader/shadowing/PaceAnalyzer.kt`
+- Test: `app/src/test/java/com/ziaee/frenchreader/shadowing/PaceAnalyzerTest.kt`
+
+**Interfaces:**
+- Consumes: nothing. The sample rate is passed in, so this task doesn't depend on Task 5's `SAMPLE_RATE`.
+- Produces:
+  - `enum class PaceRating { FAST, GOOD, SLOW }`
+  - `data class PaceResult(val ratio: Float, val rating: PaceRating)`
+  - `object PaceAnalyzer { fun speechDurationMs(pcm: ShortArray, sampleRate: Int): Long; fun rate(ratio: Float): PaceRating; fun pace(pcm: ShortArray?, sampleRate: Int, expectedMs: Long): PaceResult? }`
+  - `pace` returns null when `pcm` is null, `expectedMs <= 0`, or speech is shorter than 300 ms.
+  - Thresholds: `ratio < 0.8` is FAST, `0.8..1.3` is GOOD, `> 1.3` is SLOW.
+
+- [ ] **Step 1: Write the failing tests**
+
+```kotlin
+package com.ziaee.frenchreader.shadowing
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class PaceAnalyzerTest {
+    private val rate = 16_000
+    private fun silence(ms: Int) = ShortArray(rate * ms / 1000)
+    private fun noise(ms: Int, amp: Int) = ShortArray(rate * ms / 1000) { if (it % 2 == 0) amp.toShort() else (-amp).toShort() }
+    private fun concat(vararg parts: ShortArray) = parts.fold(ShortArray(0)) { acc, p -> acc + p }
+
+    @Test fun leadingAndTrailingSilenceTrimmed() {
+        val pcm = concat(silence(800), noise(1500, 6000), silence(700))
+        assertEquals(1500.0, PaceAnalyzer.speechDurationMs(pcm, rate).toDouble(), 40.0)
+    }
+
+    @Test fun shortPauseInsideSpeechIsKept() {
+        val pcm = concat(noise(500, 6000), silence(300), noise(500, 6000))
+        assertEquals(1300.0, PaceAnalyzer.speechDurationMs(pcm, rate).toDouble(), 40.0)
+    }
+
+    @Test fun quietBackgroundNoiseIsNotSpeech() {
+        val pcm = concat(noise(1000, 150), noise(1000, 6000), noise(1000, 150))
+        assertEquals(1000.0, PaceAnalyzer.speechDurationMs(pcm, rate).toDouble(), 40.0)
+    }
+
+    @Test fun ratingThresholds() {
+        assertEquals(PaceRating.FAST, PaceAnalyzer.rate(0.79f))
+        assertEquals(PaceRating.GOOD, PaceAnalyzer.rate(0.8f))
+        assertEquals(PaceRating.GOOD, PaceAnalyzer.rate(1.3f))
+        assertEquals(PaceRating.SLOW, PaceAnalyzer.rate(1.31f))
+    }
+
+    @Test fun paceComparesAgainstExpected() {
+        val result = PaceAnalyzer.pace(concat(silence(500), noise(2000, 6000)), rate, expectedMs = 1000)!!
+        assertEquals(2.0f, result.ratio, 0.05f)
+        assertEquals(PaceRating.SLOW, result.rating)
+    }
+
+    @Test fun noPcmOrTooShortOrNoExpectedGivesNull() {
+        assertNull(PaceAnalyzer.pace(null, rate, 1000))
+        assertNull(PaceAnalyzer.pace(noise(200, 6000), rate, 1000))
+        assertNull(PaceAnalyzer.pace(noise(1000, 6000), rate, 0))
+        assertNull(PaceAnalyzer.pace(silence(1000), rate, 1000))
+    }
+}
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `./gradlew testDebugUnitTest --tests 'com.ziaee.frenchreader.shadowing.PaceAnalyzerTest'`
+Expected: compilation FAIL, `Unresolved reference: PaceAnalyzer`
+
+- [ ] **Step 3: Implement**
+
+```kotlin
+package com.ziaee.frenchreader.shadowing
+
+import kotlin.math.sqrt
+
+enum class PaceRating { FAST, GOOD, SLOW }
+data class PaceResult(val ratio: Float, val rating: PaceRating)
+
+/** Rhythm proxy: how long the learner actually spoke vs. how long the TTS sentence lasts. */
+object PaceAnalyzer {
+    private const val FRAME_MS = 20
+    private const val MIN_SPEECH_MS = 300L
+    private const val ABS_THRESHOLD = 300.0
+    private const val REL_THRESHOLD = 0.15
+
+    fun speechDurationMs(pcm: ShortArray, sampleRate: Int): Long {
+        val frame = sampleRate * FRAME_MS / 1000
+        if (frame <= 0 || pcm.size < frame) return 0
+        val rms = DoubleArray(pcm.size / frame) { f ->
+            var sum = 0.0
+            for (i in f * frame until (f + 1) * frame) { val v = pcm[i].toDouble(); sum += v * v }
+            sqrt(sum / frame)
+        }
+        val threshold = maxOf(ABS_THRESHOLD, (rms.maxOrNull() ?: 0.0) * REL_THRESHOLD)
+        val first = rms.indexOfFirst { it > threshold }
+        if (first < 0) return 0
+        val last = rms.indexOfLast { it > threshold }
+        return (last - first + 1).toLong() * FRAME_MS
+    }
+
+    fun rate(ratio: Float): PaceRating = when {
+        ratio < 0.8f -> PaceRating.FAST
+        ratio > 1.3f -> PaceRating.SLOW
+        else -> PaceRating.GOOD
+    }
+
+    fun pace(pcm: ShortArray?, sampleRate: Int, expectedMs: Long): PaceResult? {
+        if (pcm == null || expectedMs <= 0) return null
+        val speech = speechDurationMs(pcm, sampleRate)
+        if (speech < MIN_SPEECH_MS) return null
+        val ratio = speech.toFloat() / expectedMs
+        return PaceResult(ratio, rate(ratio))
+    }
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `./gradlew testDebugUnitTest --tests 'com.ziaee.frenchreader.shadowing.PaceAnalyzerTest'`
+Expected: PASS (6 tests)
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add app/src/main/java/com/ziaee/frenchreader/shadowing/PaceAnalyzer.kt app/src/test/java/com/ziaee/frenchreader/shadowing/PaceAnalyzerTest.kt
+git commit -m "feat(shadowing): pace analyzer with silence trimming"
+```
+
+---
+
+### Task 3: ShadowAttempt table, DAO and migration 14→15
 
 **Files:**
 - Modify: `app/src/main/java/com/ziaee/frenchreader/data/Entities.kt` (append entity)
@@ -215,8 +351,8 @@ git commit -m "feat(shadowing): word-level transcript aligner"
 **Interfaces:**
 - Consumes: nothing
 - Produces:
-  - `@Entity(tableName = "shadow_attempts") data class ShadowAttempt(id: Long = 0, textId: Long, chunkIndex: Int, sentenceIndex: Int, matched: Int, total: Int, engine: String, timestampMs: Long)`
-  - `interface ShadowAttemptDao { suspend fun insert(a: ShadowAttempt): Long; suspend fun getSince(sinceMs: Long): List<ShadowAttempt>; suspend fun countAll(): Int; suspend fun distinctActiveDates(): List<String> }`
+  - `@Entity(tableName = "shadow_attempts") data class ShadowAttempt(id: Long = 0, textId: Long, chunkIndex: Int, sentenceIndex: Int, matched: Int, total: Int, paceRatio: Float? = null, engine: String, timestampMs: Long)`
+  - `interface ShadowAttemptDao { suspend fun insert(a: ShadowAttempt): Long; suspend fun getSince(sinceMs: Long): List<ShadowAttempt>; suspend fun getForTextSince(textId: Long, sinceMs: Long): List<ShadowAttempt>; suspend fun countAll(): Int; suspend fun distinctActiveDates(): List<String> }`
   - `AppDatabase.shadowAttemptDao()`
   - `MIGRATION_14_15`
 
@@ -253,12 +389,15 @@ class Migration14To15Test {
         val db = helper.writableDatabase
         MIGRATION_14_15.migrate(db)
         db.execSQL(
-            "INSERT INTO shadow_attempts (textId, chunkIndex, sentenceIndex, matched, total, engine, timestampMs) " +
-                "VALUES (1, 0, 2, 7, 9, 'vosk', 1000)"
+            "INSERT INTO shadow_attempts (textId, chunkIndex, sentenceIndex, matched, total, paceRatio, engine, timestampMs) " +
+                "VALUES (1, 0, 2, 7, 9, 1.25, 'vosk', 1000), (1, 0, 3, 2, 4, NULL, 'android', 2000)"
         )
-        db.query("SELECT matched, total, engine FROM shadow_attempts").use { c ->
+        db.query("SELECT matched, total, engine, paceRatio FROM shadow_attempts ORDER BY id").use { c ->
             c.moveToFirst()
             assertEquals(7, c.getInt(0)); assertEquals(9, c.getInt(1)); assertEquals("vosk", c.getString(2))
+            assertEquals(1.25f, c.getFloat(3), 0.001f)
+            c.moveToNext()
+            assertEquals(true, c.isNull(3))
         }
     }
 }
@@ -295,7 +434,7 @@ class ShadowAttemptDaoTest {
     @After fun tearDown() { db.close() }
 
     private fun ms(date: LocalDate) = date.atStartOfDay(ZoneId.systemDefault()).plusHours(12).toInstant().toEpochMilli()
-    private fun attempt(ts: Long) = ShadowAttempt(textId = 1, chunkIndex = 0, sentenceIndex = 0, matched = 3, total = 4, engine = "vosk", timestampMs = ts)
+    private fun attempt(ts: Long, textId: Long = 1) = ShadowAttempt(textId = textId, chunkIndex = 0, sentenceIndex = 0, matched = 3, total = 4, paceRatio = 1.1f, engine = "vosk", timestampMs = ts)
 
     @Test fun getSince_filtersByTimestamp_andDistinctDates() = runBlocking {
         val today = LocalDate.now()
@@ -305,6 +444,15 @@ class ShadowAttemptDaoTest {
         assertEquals(2, dao.getSince(ms(today.minusDays(6))).size)
         assertEquals(3, dao.countAll())
         assertEquals(setOf(today.toString(), today.minusDays(10).toString()), dao.distinctActiveDates().toSet())
+    }
+
+    @Test fun getForTextSince_filtersByTextAndTime() = runBlocking {
+        dao.insert(attempt(1_000, textId = 1))
+        dao.insert(attempt(5_000, textId = 1))
+        dao.insert(attempt(5_000, textId = 2))
+        val rows = dao.getForTextSince(textId = 1, sinceMs = 2_000)
+        assertEquals(1, rows.size)
+        assertEquals(1.1f, rows[0].paceRatio!!, 0.001f)
     }
 }
 ```
@@ -328,6 +476,8 @@ data class ShadowAttempt(
     val sentenceIndex: Int,
     val matched: Int,
     val total: Int,
+    /** Speech length / expected TTS length; null when the engine gave no audio to measure. */
+    val paceRatio: Float? = null,
     val engine: String,
     val timestampMs: Long
 )
@@ -343,6 +493,9 @@ interface ShadowAttemptDao {
 
     @Query("SELECT * FROM shadow_attempts WHERE timestampMs >= :sinceMs ORDER BY timestampMs")
     suspend fun getSince(sinceMs: Long): List<ShadowAttempt>
+
+    @Query("SELECT * FROM shadow_attempts WHERE textId = :textId AND timestampMs >= :sinceMs ORDER BY timestampMs")
+    suspend fun getForTextSince(textId: Long, sinceMs: Long): List<ShadowAttempt>
 
     @Query("SELECT COUNT(*) FROM shadow_attempts")
     suspend fun countAll(): Int
@@ -366,6 +519,7 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
                 "`sentenceIndex` INTEGER NOT NULL, " +
                 "`matched` INTEGER NOT NULL, " +
                 "`total` INTEGER NOT NULL, " +
+                "`paceRatio` REAL, " +
                 "`engine` TEXT NOT NULL, " +
                 "`timestampMs` INTEGER NOT NULL)"
         )
@@ -399,7 +553,7 @@ git commit -m "feat(shadowing): shadow_attempts table, DAO and v15 migration"
 
 ---
 
-### Task 3: ShadowingPrefs and VoskModelManager
+### Task 4: ShadowingPrefs and VoskModelManager
 
 **Files:**
 - Create: `app/src/main/java/com/ziaee/frenchreader/shadowing/ShadowingPrefs.kt`
@@ -609,7 +763,7 @@ git commit -m "feat(shadowing): engine preference and safe Vosk model install"
 
 ---
 
-### Task 4: MicRecorder and the two speech engines
+### Task 5: MicRecorder and the two speech engines
 
 **Files:**
 - Modify: `app/build.gradle` (Vosk + JNA dependencies)
@@ -619,7 +773,7 @@ git commit -m "feat(shadowing): engine preference and safe Vosk model install"
 - Test: `app/src/test/java/com/ziaee/frenchreader/shadowing/SpeechEngineHelpersTest.kt`
 
 **Interfaces:**
-- Consumes: `VoskModelManager.modelDir` (Task 3)
+- Consumes: `VoskModelManager.modelDir` (Task 4)
 - Produces:
   - `const val SAMPLE_RATE = 16_000`
   - `data class Recording(val transcript: String, val pcm: ShortArray?, val durationMs: Long)`: `pcm == null` means Replay mine is unavailable.
@@ -915,7 +1069,7 @@ git commit -m "feat(shadowing): mic recorder and Vosk/Android speech engines"
 
 ---
 
-### Task 5: ShadowingController and sentence-targeted playback in ReadingViewModel
+### Task 6: ShadowingController and sentence-targeted playback in ReadingViewModel
 
 **Files:**
 - Create: `app/src/main/java/com/ziaee/frenchreader/shadowing/ShadowingController.kt`
@@ -924,15 +1078,15 @@ git commit -m "feat(shadowing): mic recorder and Vosk/Android speech engines"
 - Test: `app/src/test/java/com/ziaee/frenchreader/ui/ShadowSentenceRefTest.kt`
 
 **Interfaces:**
-- Consumes: `TranscriptAligner.align` (Task 1), `ShadowAttempt` and `shadowAttemptDao()` (Task 2), `SpeechEngine`, `Recording` and `PcmPlayer` (Task 4), `ShadowingPrefs` and `VoskModelManager` (Task 3), `VocabPrefs.addStudyTimeMs(context, date, deltaMs)` (existing)
+- Consumes: `TranscriptAligner.align` (Task 1), `PaceAnalyzer.pace`, `PaceResult` (Task 2), `ShadowAttempt` and `shadowAttemptDao()` (Task 3), `SAMPLE_RATE` (Task 5), `SpeechEngine`, `Recording` and `PcmPlayer` (Task 5), `ShadowingPrefs` and `VoskModelManager` (Task 4), `VocabPrefs.addStudyTimeMs(context, date, deltaMs)` (existing)
 - Produces:
   - `data class SentenceRef(val chunkIndex: Int, val sentenceIndex: Int)`
   - `internal fun nextSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): SentenceRef?` and `internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): SentenceRef?` (in `ReadingViewModel.kt`)
-  - `sealed interface ShadowPhase { Idle; Recording; Recognizing; data class Result(val alignment: AlignmentResult); data class Error(val kind: ShadowError) }`
+  - `sealed interface ShadowPhase { Idle; Recording; Recognizing; data class Result(val alignment: AlignmentResult, val pace: PaceResult?); data class Error(val kind: ShadowError) }`
   - `enum class ShadowError { NOT_HEARD, ENGINE_FAILED }`
   - `data class ShadowingState(val enabled: Boolean = false, val target: SentenceRef? = null, val sentenceText: String = "", val phase: ShadowPhase = ShadowPhase.Idle, val hasRecording: Boolean = false)`
-  - `class ShadowingController(scope, engineFactory: () -> SpeechEngine, saveAttempt: suspend (ShadowAttempt) -> Unit, addStudyTimeMs: (Long) -> Unit, now: () -> Long, isPlaying: () -> Boolean)` with `state: StateFlow<ShadowingState>`, `setEnabled(Boolean)`, `setTarget(textId: Long, ref: SentenceRef, text: String)`, `pressStart(): Boolean`, `pressEnd()`, `retry()`, `replayMine()`, `cancel()`, `release()`
-  - `ReadingViewModel`: `val shadowing: StateFlow<ShadowingState>`, `fun setShadowing(enabled: Boolean)`, `fun shadowPlayOriginal()`, `fun shadowNext()`, `fun shadowPrevious()`, `fun shadowPressStart()`, `fun shadowPressEnd()`, `fun shadowRetry()`, `fun shadowReplayMine()`
+  - `class ShadowingController(scope, engineFactory: () -> SpeechEngine, saveAttempt: suspend (ShadowAttempt) -> Unit, addStudyTimeMs: (Long) -> Unit, now: () -> Long, isPlaying: () -> Boolean)` with `state: StateFlow<ShadowingState>`, `setEnabled(Boolean)`, `setTarget(textId: Long, ref: SentenceRef, text: String, expectedMs: Long)`, `pressStart(): Boolean`, `pressEnd()`, `retry()`, `replayMine()`, `cancel()`, `release()`
+  - `ReadingViewModel`: `val shadowing: StateFlow<ShadowingState>`, `fun setShadowing(enabled: Boolean)`, `fun shadowPlayOriginal()`, `fun shadowNext()`, `fun shadowPrevious()`, `fun shadowPressStart()`, `fun shadowPressEnd()`, `fun shadowRetry()`, `fun shadowReplayMine()`, `fun finishShadowing()` (Task 8 consumes it, and it is a plain `setShadowing(false)` until then)
 
 - [ ] **Step 1: Write the failing sentence-ref tests**
 
@@ -1011,7 +1165,7 @@ class ShadowingControllerTest {
         now = { clock }, isPlaying = { playing }
     ).apply {
         setEnabled(true)
-        setTarget(textId = 7, ref = SentenceRef(1, 2), text = "le chat dort")
+        setTarget(textId = 7, ref = SentenceRef(1, 2), text = "le chat dort", expectedMs = 1000)
     }
 
     @Test fun pressAndRelease_scoresAndSaves() = runTest(StandardTestDispatcher()) {
@@ -1023,6 +1177,25 @@ class ShadowingControllerTest {
         assertEquals(ShadowAttempt(textId = 7, chunkIndex = 1, sentenceIndex = 2, matched = 2, total = 3, engine = "vosk", timestampMs = clock), saved[0])
         assertEquals(2_000L, studyMs)
         assertTrue(c.state.value.hasRecording)
+    }
+
+    @Test fun paceMeasuredFromRecording() = runTest(StandardTestDispatcher()) {
+        // 0.5 s silence + 1.2 s loud signal: speech 1200 ms vs expected 1000 ms -> 1.2, GOOD.
+        val pcm = ShortArray(8000) + ShortArray(19_200) { (if (it % 2 == 0) 6000 else -6000).toShort() }
+        val c = controller(FakeEngine(Recording("le chat dort", pcm, 1700)))
+        c.pressStart(); c.pressEnd(); advanceUntilIdle()
+        val pace = (c.state.value.phase as ShadowPhase.Result).pace!!
+        assertEquals(1.2f, pace.ratio, 0.05f)
+        assertEquals(PaceRating.GOOD, pace.rating)
+        assertEquals(1.2f, saved.single().paceRatio!!, 0.05f)
+    }
+
+    @Test fun noPcm_noPaceButStillScored() = runTest(StandardTestDispatcher()) {
+        val c = controller(FakeEngine(Recording("le chat dort", null, 1500)))
+        c.pressStart(); c.pressEnd(); advanceUntilIdle()
+        assertEquals(null, (c.state.value.phase as ShadowPhase.Result).pace)
+        assertEquals(null, saved.single().paceRatio)
+        assertFalse(c.state.value.hasRecording)
     }
 
     @Test fun emptyTranscript_errorAndNothingSaved() = runTest(StandardTestDispatcher()) {
@@ -1059,7 +1232,7 @@ class ShadowingControllerTest {
     @Test fun newTarget_clearsResultAndRecording() = runTest(StandardTestDispatcher()) {
         val c = controller(FakeEngine(Recording("le chat dort", ShortArray(8000), 500)))
         c.pressStart(); c.pressEnd(); advanceUntilIdle()
-        c.setTarget(7, SentenceRef(1, 3), "autre phrase")
+        c.setTarget(7, SentenceRef(1, 3), "autre phrase", expectedMs = 1000)
         assertEquals(ShadowPhase.Idle, c.state.value.phase)
         assertFalse(c.state.value.hasRecording)
     }
@@ -1094,7 +1267,7 @@ sealed interface ShadowPhase {
     data object Idle : ShadowPhase
     data object Recording : ShadowPhase
     data object Recognizing : ShadowPhase
-    data class Result(val alignment: AlignmentResult) : ShadowPhase
+    data class Result(val alignment: AlignmentResult, val pace: PaceResult?) : ShadowPhase
     data class Error(val kind: ShadowError) : ShadowPhase
 }
 
@@ -1120,6 +1293,7 @@ class ShadowingController(
 
     private var engine: SpeechEngine? = null
     private var textId = 0L
+    private var expectedMs = 0L
     private var pressedAtMs = 0L
     private var lastPcm: ShortArray? = null
     private var job: Job? = null
@@ -1129,9 +1303,11 @@ class ShadowingController(
         _state.value = if (enabled) _state.value.copy(enabled = true) else ShadowingState()
     }
 
-    fun setTarget(textId: Long, ref: SentenceRef, text: String) {
+    /** [expectedMs] = TTS sentence duration at the current playback speed. */
+    fun setTarget(textId: Long, ref: SentenceRef, text: String, expectedMs: Long) {
         cancel()
         this.textId = textId
+        this.expectedMs = expectedMs
         lastPcm = null
         _state.value = _state.value.copy(target = ref, sentenceText = text, phase = ShadowPhase.Idle, hasRecording = false)
     }
@@ -1170,11 +1346,13 @@ class ShadowingController(
             }
             val target = _state.value.target ?: return@launch
             val alignment = TranscriptAligner.align(_state.value.sentenceText, rec.transcript)
+            val pace = PaceAnalyzer.pace(rec.pcm, SAMPLE_RATE, expectedMs)
             saveAttempt(
                 ShadowAttempt(textId = textId, chunkIndex = target.chunkIndex, sentenceIndex = target.sentenceIndex,
-                    matched = alignment.matched, total = alignment.total, engine = e.kind.id, timestampMs = now())
+                    matched = alignment.matched, total = alignment.total, paceRatio = pace?.ratio,
+                    engine = e.kind.id, timestampMs = now())
             )
-            _state.value = _state.value.copy(phase = ShadowPhase.Result(alignment), hasRecording = rec.pcm != null)
+            _state.value = _state.value.copy(phase = ShadowPhase.Result(alignment, pace), hasRecording = rec.pcm != null)
         }
     }
 
@@ -1241,6 +1419,7 @@ internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): Se
     )
     val shadowing: StateFlow<ShadowingState> = shadowingController.state
     private var shadowStopMessage: PlayerMessage? = null
+    private var shadowSessionStartedAtMs = 0L
     // Set when the target chunk had no sentences/player item yet; the ticker retries.
     private var shadowPendingPlay = false
 ```
@@ -1252,6 +1431,7 @@ internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): Se
         shadowingController.setEnabled(enabled)
         cancelShadowStop()
         if (!enabled) return
+        shadowSessionStartedAtMs = System.currentTimeMillis()
         player.pause()
         val ref = activeSentenceRef() ?: firstSentenceRefFrom(_state.value.currentChunkIndex) ?: return
         setShadowTarget(ref)
@@ -1261,8 +1441,13 @@ internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): Se
 
     fun shadowNext() {
         val ref = shadowing.value.target ?: return
-        nextSentenceRef(_state.value.chunks, ref)?.let { setShadowTarget(it); playShadowSentence(it) }
+        val next = nextSentenceRef(_state.value.chunks, ref)
+        if (next == null) { finishShadowing(); return }
+        setShadowTarget(next); playShadowSentence(next)
     }
+
+    /** Ends the session. Task 8 extends this to show the per-text summary first. */
+    fun finishShadowing() = setShadowing(false)
 
     fun shadowPrevious() {
         val ref = shadowing.value.target ?: return
@@ -1282,8 +1467,9 @@ internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): Se
 
     private fun setShadowTarget(ref: SentenceRef) {
         val doc = _state.value.textDoc ?: return
-        val text = _state.value.chunks.getOrNull(ref.chunkIndex)?.sentences?.getOrNull(ref.sentenceIndex)?.text.orEmpty()
-        shadowingController.setTarget(doc.id, ref, text)
+        val sentence = _state.value.chunks.getOrNull(ref.chunkIndex)?.sentences?.getOrNull(ref.sentenceIndex)
+        val expectedMs = sentence?.let { (it.durationMs / _state.value.speed).toLong() } ?: 0L
+        shadowingController.setTarget(doc.id, ref, sentence?.text.orEmpty(), expectedMs)
     }
 
     private fun playShadowSentence(ref: SentenceRef) {
@@ -1330,7 +1516,7 @@ Add the imports for `androidx.media3.exoplayer.PlayerMessage` and `com.ziaee.fre
 - [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `./gradlew testDebugUnitTest`
-Expected: PASS (all unit tests, including the 6 ref tests and 6 controller tests)
+Expected: PASS (all unit tests, including the 6 ref tests and 8 controller tests)
 
 - [ ] **Step 7: Commit**
 
@@ -1341,7 +1527,7 @@ git commit -m "feat(shadowing): controller state machine and sentence-targeted p
 
 ---
 
-### Task 6: Shadowing panel, toggle, and mic permission on the reading screen
+### Task 7: Shadowing panel, toggle, and mic permission on the reading screen
 
 **Files:**
 - Create: `app/src/main/java/com/ziaee/frenchreader/ui/ShadowingPanel.kt`
@@ -1349,7 +1535,7 @@ git commit -m "feat(shadowing): controller state machine and sentence-targeted p
 - Modify: `app/src/main/res/values/strings.xml`, `values-fr/strings.xml`, `values-fa/strings.xml`
 
 **Interfaces:**
-- Consumes: `ReadingViewModel.shadowing`, `setShadowing`, `shadowPlayOriginal`, `shadowNext`, `shadowPressStart`, `shadowPressEnd`, `shadowRetry`, `shadowReplayMine` (Task 5); `ShadowPhase`, `ShadowError`, `WordResult`; `ShadowingPrefs`, `VoskModelManager` (Task 3)
+- Consumes: `ReadingViewModel.shadowing`, `setShadowing`, `finishShadowing`, `shadowPlayOriginal`, `shadowNext`, `shadowPressStart`, `shadowPressEnd`, `shadowRetry`, `shadowReplayMine` (Task 6); `ShadowPhase`, `ShadowError`, `WordResult`; `PaceRating` (Task 2); `ShadowingPrefs`, `VoskModelManager` (Task 4)
 - Produces: `@Composable fun ShadowingPanel(state: ShadowingState, isPlaying: Boolean, palette: ReadingPalette, onPlayOriginal: () -> Unit, onReplayMine: () -> Unit, onRetry: () -> Unit, onNext: () -> Unit, onPressStart: () -> Boolean, onPressEnd: () -> Unit)`
 
 - [ ] **Step 1: Add the strings (all three locales)**
@@ -1376,6 +1562,9 @@ git commit -m "feat(shadowing): controller state machine and sentence-targeted p
     <string name="shadowing_model_downloading">Downloading speech model… %1$d%%</string>
     <string name="shadowing_model_failed">Download failed. Check your connection.</string>
     <string name="shadowing_waiting_for_audio">Preparing audio…</string>
+    <string name="shadowing_pace_good">Good pace (%1$s×)</string>
+    <string name="shadowing_pace_slow">A bit slow (%1$s×)</string>
+    <string name="shadowing_pace_fast">A bit fast (%1$s×)</string>
 ```
 
 `values-fr/strings.xml`:
@@ -1400,6 +1589,9 @@ git commit -m "feat(shadowing): controller state machine and sentence-targeted p
     <string name="shadowing_model_downloading">Téléchargement du modèle… %1$d%%</string>
     <string name="shadowing_model_failed">Échec du téléchargement. Vérifiez votre connexion.</string>
     <string name="shadowing_waiting_for_audio">Préparation de l\'audio…</string>
+    <string name="shadowing_pace_good">Bon rythme (%1$s×)</string>
+    <string name="shadowing_pace_slow">Un peu lent (%1$s×)</string>
+    <string name="shadowing_pace_fast">Un peu rapide (%1$s×)</string>
 ```
 
 `values-fa/strings.xml`:
@@ -1424,6 +1616,9 @@ git commit -m "feat(shadowing): controller state machine and sentence-targeted p
     <string name="shadowing_model_downloading">در حال دانلود مدل گفتار… %1$d%%</string>
     <string name="shadowing_model_failed">دانلود ناموفق بود. اتصال را بررسی کنید.</string>
     <string name="shadowing_waiting_for_audio">در حال آماده‌سازی صدا…</string>
+    <string name="shadowing_pace_good">سرعت خوب (%1$s×)</string>
+    <string name="shadowing_pace_slow">کمی کند (%1$s×)</string>
+    <string name="shadowing_pace_fast">کمی تند (%1$s×)</string>
 ```
 
 - [ ] **Step 2: Run the localization test**
@@ -1457,6 +1652,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.CompositionLocalProvider
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.shadowing.PaceRating
 import com.ziaee.frenchreader.shadowing.ShadowError
 import com.ziaee.frenchreader.shadowing.ShadowPhase
 import com.ziaee.frenchreader.shadowing.ShadowingState
@@ -1508,6 +1704,22 @@ fun ShadowingPanel(
         if (status.isNotEmpty()) {
             Text(status, style = MaterialTheme.typography.titleMedium, color = palette.accent,
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp))
+        }
+        (state.phase as? ShadowPhase.Result)?.pace?.let { pace ->
+            val ratio = String.format(java.util.Locale.ROOT, "%.1f", pace.ratio)
+            Text(
+                stringResource(
+                    when (pace.rating) {
+                        PaceRating.FAST -> R.string.shadowing_pace_fast
+                        PaceRating.GOOD -> R.string.shadowing_pace_good
+                        PaceRating.SLOW -> R.string.shadowing_pace_slow
+                    },
+                    ratio
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (pace.rating == PaceRating.GOOD) MatchedColor else palette.inkFaded,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             TextButton(onClick = onPlayOriginal) {
@@ -1574,7 +1786,7 @@ Add `import androidx.compose.material.icons.automirrored.filled.ArrowForward`. I
     }
     val onToggleShadowing: () -> Unit = {
         when {
-            shadowState.enabled -> vm.setShadowing(false)
+            shadowState.enabled -> vm.finishShadowing()
             ContextCompat.checkSelfPermission(settingsContext, Manifest.permission.RECORD_AUDIO) ==
                 PackageManager.PERMISSION_GRANTED -> enableShadowingChecked()
             else -> micPermission.launch(Manifest.permission.RECORD_AUDIO)
@@ -1673,7 +1885,287 @@ git commit -m "feat(shadowing): reading-screen panel, toggle, mic permission and
 
 ---
 
-### Task 7: Settings tab, Statistics card, privacy policy
+### Task 8: Per-text session summary
+
+**Files:**
+- Create: `app/src/main/java/com/ziaee/frenchreader/shadowing/ShadowTextSummary.kt`
+- Create: `app/src/main/java/com/ziaee/frenchreader/ui/ShadowSummaryDialog.kt`
+- Modify: `app/src/main/java/com/ziaee/frenchreader/ui/ReadingViewModel.kt` (replace the placeholder `finishShadowing`)
+- Modify: `app/src/main/java/com/ziaee/frenchreader/ui/ReadingScreen.kt` (show the dialog)
+- Modify: the three `strings.xml`
+- Test: `app/src/test/java/com/ziaee/frenchreader/shadowing/ShadowTextSummaryTest.kt`
+
+**Interfaces:**
+- Consumes: `ShadowAttempt`, `ShadowAttemptDao.getForTextSince` (Task 3); `PaceAnalyzer.rate`, `PaceRating` (Task 2); `SentenceRef`, `ReadingViewModel.setShadowing`, `setShadowTarget`, `playShadowSentence` and the private field `shadowSessionStartedAtMs` (Task 6)
+- Produces:
+  - `data class WeakSentence(val ref: SentenceRef, val accuracyPercent: Int)`
+  - `data class ShadowTextSummary(val sentences: Int, val accuracyPercent: Int, val averagePaceRatio: Float?, val goodPacePercent: Int?, val weakest: List<WeakSentence>)`
+  - `fun shadowTextSummary(attempts: List<ShadowAttempt>): ShadowTextSummary?`: null when there are no attempts
+  - `data class ShadowSummaryUi(val summary: ShadowTextSummary, val weakTexts: Map<SentenceRef, String>)`
+  - `ReadingViewModel`: `val shadowSummary: StateFlow<ShadowSummaryUi?>`, `fun finishShadowing()`, `fun dismissShadowSummary()`, `fun practiceSentence(ref: SentenceRef)`
+
+- [ ] **Step 1: Write the failing tests**
+
+```kotlin
+package com.ziaee.frenchreader.shadowing
+
+import com.ziaee.frenchreader.data.ShadowAttempt
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class ShadowTextSummaryTest {
+    private fun a(chunk: Int, sentence: Int, matched: Int, total: Int, pace: Float?, ts: Long) = ShadowAttempt(
+        textId = 1, chunkIndex = chunk, sentenceIndex = sentence, matched = matched, total = total,
+        paceRatio = pace, engine = "vosk", timestampMs = ts
+    )
+
+    @Test fun emptyIsNull() = assertNull(shadowTextSummary(emptyList()))
+
+    @Test fun latestAttemptPerSentenceWins() {
+        val s = shadowTextSummary(listOf(a(0, 0, 1, 4, 2.0f, 100), a(0, 0, 4, 4, 1.0f, 200)))!!
+        assertEquals(1, s.sentences)
+        assertEquals(100, s.accuracyPercent)
+        assertEquals(1.0f, s.averagePaceRatio!!, 0.001f)
+        assertEquals(100, s.goodPacePercent)
+        assertEquals(emptyList<WeakSentence>(), s.weakest)
+    }
+
+    @Test fun accuracyIsWordWeighted_andPaceShareCounted() {
+        val s = shadowTextSummary(listOf(
+            a(0, 0, 3, 4, 1.0f, 1), a(0, 1, 1, 2, 1.6f, 2), a(1, 0, 5, 5, null, 3)
+        ))!!
+        assertEquals(3, s.sentences)
+        assertEquals(82, s.accuracyPercent) // 9 / 11
+        assertEquals(1.3f, s.averagePaceRatio!!, 0.001f) // (1.0 + 1.6) / 2, nulls skipped
+        assertEquals(50, s.goodPacePercent)
+    }
+
+    @Test fun weakestAreLowestFirst_perfectExcluded_maxThree() {
+        val s = shadowTextSummary(listOf(
+            a(0, 0, 3, 4, null, 1), a(0, 1, 1, 4, null, 2), a(0, 2, 2, 4, null, 3),
+            a(0, 3, 0, 4, null, 4), a(0, 4, 4, 4, null, 5)
+        ))!!
+        assertEquals(listOf(SentenceRef(0, 3), SentenceRef(0, 1), SentenceRef(0, 2)), s.weakest.map { it.ref })
+        assertEquals(listOf(0, 25, 50), s.weakest.map { it.accuracyPercent })
+    }
+
+    @Test fun noPaceData_paceFieldsNull() {
+        val s = shadowTextSummary(listOf(a(0, 0, 2, 4, null, 1)))!!
+        assertNull(s.averagePaceRatio)
+        assertNull(s.goodPacePercent)
+    }
+}
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `./gradlew testDebugUnitTest --tests 'com.ziaee.frenchreader.shadowing.ShadowTextSummaryTest'`
+Expected: compilation FAIL, `Unresolved reference: shadowTextSummary`
+
+- [ ] **Step 3: Implement `ShadowTextSummary.kt`**
+
+```kotlin
+package com.ziaee.frenchreader.shadowing
+
+import com.ziaee.frenchreader.data.ShadowAttempt
+import kotlin.math.roundToInt
+
+data class WeakSentence(val ref: SentenceRef, val accuracyPercent: Int)
+
+data class ShadowTextSummary(
+    val sentences: Int,
+    val accuracyPercent: Int,
+    val averagePaceRatio: Float?,
+    val goodPacePercent: Int?,
+    val weakest: List<WeakSentence>
+)
+
+private const val MAX_WEAKEST = 3
+
+/** End-of-session summary for one text: the latest attempt per sentence counts. */
+fun shadowTextSummary(attempts: List<ShadowAttempt>): ShadowTextSummary? {
+    if (attempts.isEmpty()) return null
+    val latest = attempts
+        .groupBy { SentenceRef(it.chunkIndex, it.sentenceIndex) }
+        .mapValues { (_, list) -> list.maxWith(compareBy({ it.timestampMs }, { it.id })) }
+    val words = latest.values.sumOf { it.total }
+    val accuracy = if (words == 0) 0 else (latest.values.sumOf { it.matched } * 100f / words).roundToInt()
+    val paces = latest.values.mapNotNull { it.paceRatio }
+    val weakest = latest
+        .filter { (_, a) -> a.total > 0 && a.matched < a.total }
+        .map { (ref, a) -> WeakSentence(ref, (a.matched * 100f / a.total).roundToInt()) }
+        .sortedWith(compareBy({ it.accuracyPercent }, { it.ref.chunkIndex }, { it.ref.sentenceIndex }))
+        .take(MAX_WEAKEST)
+    return ShadowTextSummary(
+        sentences = latest.size,
+        accuracyPercent = accuracy,
+        averagePaceRatio = if (paces.isEmpty()) null else paces.average().toFloat(),
+        goodPacePercent = if (paces.isEmpty()) null
+            else (paces.count { PaceAnalyzer.rate(it) == PaceRating.GOOD } * 100f / paces.size).roundToInt(),
+        weakest = weakest
+    )
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `./gradlew testDebugUnitTest --tests 'com.ziaee.frenchreader.shadowing.ShadowTextSummaryTest'`
+Expected: PASS (5 tests)
+
+- [ ] **Step 5: Replace `finishShadowing` in `ReadingViewModel.kt`**
+
+Delete the Task 6 placeholder `fun finishShadowing() = setShadowing(false)` and add:
+
+```kotlin
+    data class ShadowSummaryUi(val summary: ShadowTextSummary, val weakTexts: Map<SentenceRef, String>)
+
+    private val _shadowSummary = MutableStateFlow<ShadowSummaryUi?>(null)
+    val shadowSummary: StateFlow<ShadowSummaryUi?> = _shadowSummary.asStateFlow()
+
+    /** Ends the session and, if anything was saved in it, shows the per-text summary. */
+    fun finishShadowing() {
+        val doc = _state.value.textDoc
+        val since = shadowSessionStartedAtMs
+        setShadowing(false)
+        if (doc == null) return
+        viewModelScope.launch {
+            val summary = shadowTextSummary(db.shadowAttemptDao().getForTextSince(doc.id, since)) ?: return@launch
+            val chunks = _state.value.chunks
+            val texts = summary.weakest.associate { w ->
+                w.ref to chunks.getOrNull(w.ref.chunkIndex)?.sentences?.getOrNull(w.ref.sentenceIndex)?.text.orEmpty()
+            }
+            _shadowSummary.value = ShadowSummaryUi(summary, texts)
+        }
+    }
+
+    fun dismissShadowSummary() { _shadowSummary.value = null }
+
+    /** From the summary: turn shadowing back on at a weak sentence (permission and model already set up). */
+    fun practiceSentence(ref: SentenceRef) {
+        _shadowSummary.value = null
+        setShadowing(true)
+        setShadowTarget(ref)
+        playShadowSentence(ref)
+    }
+```
+
+`ShadowSummaryUi` sits inside `ReadingViewModel`. If you'd rather reference it as `ShadowSummaryUi` from the dialog without the `ReadingViewModel.` prefix, move it to top level in the same file.
+
+- [ ] **Step 6: Create `ShadowSummaryDialog.kt`**
+
+```kotlin
+package com.ziaee.frenchreader.ui
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.shadowing.SentenceRef
+
+@Composable
+fun ShadowSummaryDialog(
+    ui: ReadingViewModel.ShadowSummaryUi,
+    onPractice: (SentenceRef) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val s = ui.summary
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.shadowing_summary_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.shadowing_summary_accuracy, s.sentences, s.accuracyPercent),
+                    style = MaterialTheme.typography.bodyLarge)
+                if (s.averagePaceRatio != null && s.goodPacePercent != null) {
+                    Text(
+                        stringResource(R.string.shadowing_summary_pace,
+                            String.format(java.util.Locale.ROOT, "%.1f", s.averagePaceRatio), s.goodPacePercent),
+                        style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                if (s.weakest.isNotEmpty()) {
+                    Text(stringResource(R.string.shadowing_summary_weakest),
+                        style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                    // French sentences stay LTR in the Persian UI.
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Column {
+                            s.weakest.forEach { w ->
+                                TextButton(onClick = { onPractice(w.ref) }) {
+                                    Text("${w.accuracyPercent}% · ${ui.weakTexts[w.ref].orEmpty()}",
+                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.shadowing_summary_close)) } }
+    )
+}
+```
+
+- [ ] **Step 7: Show the dialog in `ReadingScreen.kt`**
+
+Next to the model prompt dialog:
+
+```kotlin
+    val shadowSummary by vm.shadowSummary.collectAsState()
+    shadowSummary?.let { ui ->
+        ShadowSummaryDialog(ui = ui, onPractice = vm::practiceSentence, onDismiss = vm::dismissShadowSummary)
+    }
+```
+
+- [ ] **Step 8: Add the strings (all three locales)**
+
+```xml
+<!-- values -->
+    <string name="shadowing_summary_title">Shadowing summary</string>
+    <string name="shadowing_summary_accuracy">%1$d sentences · %2$d%% of words correct</string>
+    <string name="shadowing_summary_pace">Average pace %1$s× · %2$d%% at a good pace</string>
+    <string name="shadowing_summary_weakest">Practice these again:</string>
+    <string name="shadowing_summary_close">Close</string>
+<!-- values-fr -->
+    <string name="shadowing_summary_title">Bilan du shadowing</string>
+    <string name="shadowing_summary_accuracy">%1$d phrases · %2$d %% de mots corrects</string>
+    <string name="shadowing_summary_pace">Rythme moyen %1$s× · %2$d %% au bon rythme</string>
+    <string name="shadowing_summary_weakest">À retravailler :</string>
+    <string name="shadowing_summary_close">Fermer</string>
+<!-- values-fa -->
+    <string name="shadowing_summary_title">خلاصه شدوئینگ</string>
+    <string name="shadowing_summary_accuracy">%1$d جمله · %2$d%% کلمات درست</string>
+    <string name="shadowing_summary_pace">سرعت میانگین %1$s× · %2$d%% با سرعت خوب</string>
+    <string name="shadowing_summary_weakest">این‌ها را دوباره تمرین کنید:</string>
+    <string name="shadowing_summary_close">بستن</string>
+```
+
+- [ ] **Step 9: Run all the unit tests and the build**
+
+Run: `./gradlew testDebugUnitTest assembleDebug`
+Expected: PASS and BUILD SUCCESSFUL
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add app/src/main/java/com/ziaee/frenchreader/shadowing/ShadowTextSummary.kt app/src/main/java/com/ziaee/frenchreader/ui/ShadowSummaryDialog.kt app/src/main/java/com/ziaee/frenchreader/ui/ReadingViewModel.kt app/src/main/java/com/ziaee/frenchreader/ui/ReadingScreen.kt app/src/main/res/values*/strings.xml app/src/test/java/com/ziaee/frenchreader/shadowing/ShadowTextSummaryTest.kt
+git commit -m "feat(shadowing): per-text session summary with weakest sentences"
+```
+
+---
+
+### Task 9: Settings tab, Statistics card, privacy policy
 
 **Files:**
 - Modify: `app/src/main/java/com/ziaee/frenchreader/ui/SettingsScreen.kt` (new tab)
@@ -1684,7 +2176,7 @@ git commit -m "feat(shadowing): reading-screen panel, toggle, mic permission and
 - Test: `app/src/test/java/com/ziaee/frenchreader/ui/statistics/ShadowingSummaryTest.kt`
 
 **Interfaces:**
-- Consumes: `ShadowAttemptDao.getSince`, `countAll`, `distinctActiveDates` (Task 2); `ShadowingPrefs`, `SpeechEngineKind`, `VoskModelManager` (Task 3); `AndroidSpeechEngine.isAvailable` (Task 4)
+- Consumes: `ShadowAttemptDao.getSince`, `countAll`, `distinctActiveDates` (Task 3); `ShadowingPrefs`, `SpeechEngineKind`, `VoskModelManager` (Task 4); `AndroidSpeechEngine.isAvailable` (Task 5)
 - Produces:
   - `data class ShadowingSummary(val sentencesPracticed: Int, val averageAccuracyPercent: Int, val last7DaysPercent: List<Int>)`
   - `internal fun shadowingSummary(totalCount: Int, recent: List<ShadowAttempt>, today: LocalDate, zone: ZoneId = ZoneId.systemDefault()): ShadowingSummary`
@@ -1923,7 +2415,7 @@ git commit -m "feat(shadowing): settings tab, statistics card and privacy policy
 
 ---
 
-### Task 8: Release build and on-device verification
+### Task 10: Release build and on-device verification
 
 **Files:** none (verification only; fix anything found in the owning task's files)
 
@@ -1942,15 +2434,18 @@ Expected: `Success`. The install keeps existing data, and the migration 14→15 
 1. Open a text and tap the 🎤 toggle. The permission prompt appears. Deny it: a snackbar explains why, and shadowing stays off.
 2. Toggle again and allow. The model prompt appears. Download it and watch the progress. Shadowing turns on and the panel shows the current sentence.
 3. Tap Original. Exactly one sentence plays and then it pauses.
-4. Hold the mic, repeat the sentence, and release. The words turn green or red and a score shows. Tap Mine: your voice plays back.
+4. Hold the mic, repeat the sentence, and release. The words turn green or red, a score shows, and a pace line appears. Tap Mine: your voice plays back.
+   - Wait about 1 s after pressing before speaking: the pace should still read about the same, not "slow".
+   - Speak deliberately slowly: the line should say "A bit slow".
 5. Tap Next. The **following** sentence plays (not one after it). Repeat this 5 times across a paragraph boundary.
 6. Tap a sentence in the text. It becomes the target and plays.
 7. Mumble or stay silent: "Didn't catch that". Quick tap on the mic: nothing happens.
 8. Leave the screen while holding the mic. The app doesn't crash, and the mic indicator turns off.
 9. In Settings → Shadowing, switch to Android and repeat step 4. Delete the model and check that it shows as not installed.
-10. In Statistics, the Shadowing card shows your sentence count and accuracy, and the streak counts today.
-11. Switch the app language to Persian. The panel sentence stays left-to-right and the labels are Persian.
-12. Turn on airplane mode with the Vosk engine: step 4 still works.
+10. Practice a few sentences, then turn the toggle off. The summary dialog shows the sentence count, word accuracy and pace, and up to 3 weak sentences. Tap one: shadowing turns back on at that sentence. Also check that Next on the last sentence of the text opens the summary.
+11. In Statistics, the Shadowing card shows your sentence count and accuracy, and the streak counts today.
+12. Switch the app language to Persian. The panel sentence stays left-to-right and the labels are Persian.
+13. Turn on airplane mode with the Vosk engine: step 4 still works.
 
 - [ ] **Step 4: Commit any fixes**
 
