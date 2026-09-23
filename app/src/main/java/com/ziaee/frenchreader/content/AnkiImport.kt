@@ -79,7 +79,7 @@ internal fun buildVocabEntry(
             } else {
                 VocabSrs.dueAtMs(box, nowMs, VocabSrs.DEFAULT_INTERVAL_DAYS, zone)
             }
-            base.copy(leitnerBox = box, nextReviewAtMs = dueMs, lastReviewedAtMs = nowMs)
+            base.copy(leitnerBox = box, nextReviewAtMs = dueMs, lastReviewedAtMs = nowMs, learned = box >= 5)
         }
         1, 3 -> base.copy(lastReviewedAtMs = nowMs)
         else -> base

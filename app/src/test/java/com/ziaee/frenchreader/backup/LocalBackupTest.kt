@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.backup
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LocalBackupTest {
@@ -21,9 +22,21 @@ class LocalBackupTest {
 
     @Test
     fun `supported database versions are limited to migratable range`() {
-        assertFalse(isSupportedDatabaseVersion(1, 13))
-        assertTrue(isSupportedDatabaseVersion(2, 13))
-        assertTrue(isSupportedDatabaseVersion(13, 13))
-        assertFalse(isSupportedDatabaseVersion(14, 13))
+        assertFalse(isSupportedDatabaseVersion(1, 14))
+        assertTrue(isSupportedDatabaseVersion(2, 14))
+        assertTrue(isSupportedDatabaseVersion(14, 14))
+        assertFalse(isSupportedDatabaseVersion(15, 14))
+    }
+
+    @Test fun `settings JSON round trips preference value types`() {
+        val settings = mapOf(
+            "vocab_prefs" to mapOf<String, Any?>(
+                "string" to "value", "int" to 3, "long" to 4L,
+                "float" to 1.5f, "boolean" to true, "set" to setOf("a", "b")
+            ),
+            "locale_prefs" to emptyMap()
+        )
+
+        assertEquals(settings, deserializeSettings(serializeSettings(settings)))
     }
 }

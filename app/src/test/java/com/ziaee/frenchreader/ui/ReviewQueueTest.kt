@@ -49,6 +49,38 @@ class ReviewQueueTest {
         assertEquals(1, reviewableCount(entries, now, remainingNew = 0))
     }
 
+    @Test fun `learned queue resumes after cursor in id order`() {
+        val entries = listOf(e(8, 5, 0, learned = true), e(2, 5, 0, learned = true), e(5, 5, 0, learned = true))
+
+        val result = buildLearnedReviewQueue(entries, cursor = 2, scope = VOCAB_SCOPE_ALL)
+
+        assertEquals(listOf(5L, 8L), result.cards.map { it.id })
+        assertEquals(3, result.total)
+        assertEquals(1, result.reviewed)
+        assertEquals(false, result.resetCursor)
+    }
+
+    @Test fun `learned queue wraps when persisted cursor is complete`() {
+        val entries = listOf(e(2, 5, 0, learned = true), e(5, 5, 0, learned = true))
+
+        val result = buildLearnedReviewQueue(entries, cursor = 5, scope = VOCAB_SCOPE_ALL)
+
+        assertEquals(listOf(2L, 5L), result.cards.map { it.id })
+        assertEquals(0, result.reviewed)
+        assertEquals(true, result.resetCursor)
+    }
+
+    @Test fun `learned queue filters scope and excludes active cards`() {
+        val entries = listOf(
+            e(1, 5, 0, learned = true).copy(listId = 7),
+            e(2, 5, 0, learned = true).copy(listId = null),
+            e(3, 4, 0, learned = false).copy(listId = 7)
+        )
+
+        assertEquals(listOf(1L), buildLearnedReviewQueue(entries, 0, 7).cards.map { it.id })
+        assertEquals(listOf(2L), buildLearnedReviewQueue(entries, 0, VOCAB_SCOPE_UNFILED).cards.map { it.id })
+    }
+
     @Test fun `bar fractions scale to the largest count`() {
         assertEquals(listOf(0.5f, 1f, 0f), boxBarFractions(listOf(5, 10, 0)))
         assertEquals(listOf(0f, 0f), boxBarFractions(listOf(0, 0)))

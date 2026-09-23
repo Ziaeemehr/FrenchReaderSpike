@@ -78,7 +78,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun edit(entry: VocabEntry, word: String, meaning: String?, sentence: String) {
-        viewModelScope.launch { db.vocabDao().update(entry.copy(word = word, meaning = meaning, sentence = sentence)) }
+        viewModelScope.launch { db.vocabDao().updateText(entry.id, word, meaning, sentence) }
     }
 
     fun delete(entry: VocabEntry) {

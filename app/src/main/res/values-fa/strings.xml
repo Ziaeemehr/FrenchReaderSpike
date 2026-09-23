@@ -414,6 +414,11 @@
     <string name="anki_import_failed">خواندن فایل خروجی انکی ممکن نشد</string>
     <string name="review_open_settings">تنظیمات مرور</string>
     <string name="review_box_tap_hint">برای مرور فقط یک جعبه، روی آن بزنید</string>
+    <string name="review_learned_words">واژه‌های آموخته‌شده</string>
+    <string name="review_learned_progress">%1$d از %2$d مرور شده</string>
+    <string name="review_learned_start">مرور آموخته‌ها</string>
+    <string name="review_learned_continue">ادامه</string>
+    <string name="review_learned_restart">شروع دوباره</string>
     <string name="review_tap_to_reveal">برای دیدن معنی روی کارت بزنید</string>
     <string name="review_undo">برگرداندن آخرین پاسخ</string>
     <string name="vocab_edit_title">ویرایش کارت</string>

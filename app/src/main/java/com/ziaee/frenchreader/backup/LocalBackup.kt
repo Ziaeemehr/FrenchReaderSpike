@@ -1,8 +1,10 @@
 package com.ziaee.frenchreader.backup
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
+import android.os.Build
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.util.MAX_BACKUP_ARCHIVE_BYTES
 import com.ziaee.frenchreader.util.copyToLimited
@@ -16,10 +18,17 @@ import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import org.json.JSONArray
+import org.json.JSONObject
 
 private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 private const val DATABASE_ENTRY = "database/french_reader.db"
+private const val SETTINGS_ENTRY = "prefs/settings.json"
 private val FILE_DIRECTORIES = listOf("text_bodies", "text_images")
+private val PREFERENCE_FILES = listOf(
+    "vocab_prefs", "appearance_prefs", "locale_prefs", "news_prefs",
+    "highlight_prefs", "tts_cache_prefs", "xtts_prefs"
+)
 private const val MAX_BACKUP_ENTRIES = 20_000
 
 fun isValidSqliteBackup(bytes: ByteArray): Boolean =
@@ -27,6 +36,49 @@ fun isValidSqliteBackup(bytes: ByteArray): Boolean =
 
 internal fun isSupportedDatabaseVersion(version: Int, currentVersion: Int): Boolean =
     version in 2..currentVersion
+
+internal fun serializeSettings(settings: Map<String, Map<String, Any?>>): String {
+    val root = JSONObject()
+    settings.forEach { (file, values) ->
+        val encoded = JSONObject()
+        values.forEach { (key, value) ->
+            val item = JSONObject()
+            when (value) {
+                is String -> item.put("type", "string").put("value", value)
+                is Int -> item.put("type", "int").put("value", value)
+                is Long -> item.put("type", "long").put("value", value)
+                is Float -> item.put("type", "float").put("value", value.toDouble())
+                is Boolean -> item.put("type", "boolean").put("value", value)
+                is Set<*> -> item.put("type", "string_set").put("value", JSONArray(value.filterIsInstance<String>().sorted()))
+                else -> throw IllegalArgumentException("Unsupported preference value for $file/$key")
+            }
+            encoded.put(key, item)
+        }
+        root.put(file, encoded)
+    }
+    return root.toString()
+}
+
+internal fun deserializeSettings(json: String): Map<String, Map<String, Any?>> {
+    val root = JSONObject(json)
+    return root.keys().asSequence().associateWith { file ->
+        val encoded = root.getJSONObject(file)
+        encoded.keys().asSequence().associateWith { key ->
+            val item = encoded.getJSONObject(key)
+            when (item.getString("type")) {
+                "string" -> item.getString("value")
+                "int" -> item.getInt("value")
+                "long" -> item.getLong("value")
+                "float" -> item.getDouble("value").toFloat()
+                "boolean" -> item.getBoolean("value")
+                "string_set" -> item.getJSONArray("value").let { array ->
+                    (0 until array.length()).mapTo(linkedSetOf()) { array.getString(it) }
+                }
+                else -> throw IOException("Unsupported preference type")
+            }
+        }
+    }
+}
 
 object LocalBackup {
     suspend fun exportTo(context: Context, uri: Uri) = withContext(Dispatchers.IO) {
@@ -42,17 +94,31 @@ object LocalBackup {
 
     suspend fun createArchive(context: Context): File = withContext(Dispatchers.IO) {
         val db = AppDatabase.get(context)
-        AppDatabase.checkpointWal(db)
         val archive = File.createTempFile("french_reader_backup_", ".zip", context.cacheDir)
+        val snapshot = File.createTempFile("french_reader_snapshot_", ".db", context.cacheDir).also { it.delete() }
         try {
+            // VACUUM INTO (SQLite 3.27+, Android 11+) gives a consistent snapshot even while the
+            // app keeps writing; older devices fall back to checkpointing and copying the live file.
+            val databaseSource = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val escapedPath = snapshot.absolutePath.replace("'", "''")
+                db.openHelper.writableDatabase.execSQL("VACUUM INTO '$escapedPath'")
+                snapshot
+            } else {
+                AppDatabase.checkpointWal(db)
+                context.getDatabasePath("french_reader.db")
+            }
             ZipOutputStream(FileOutputStream(archive)).use { zip ->
-                addFile(zip, context.getDatabasePath("french_reader.db"), DATABASE_ENTRY)
+                addFile(zip, databaseSource, DATABASE_ENTRY)
+                addText(zip, serializeSettings(readSettings(context)), SETTINGS_ENTRY)
                 FILE_DIRECTORIES.forEach { name -> addDirectory(zip, File(context.filesDir, name), name) }
             }
+            if (archive.length() > MAX_BACKUP_ARCHIVE_BYTES) throw IOException("Backup archive is too large")
             archive
         } catch (error: Exception) {
             archive.delete()
             throw error
+        } finally {
+            snapshot.delete()
         }
     }
 
@@ -92,6 +158,7 @@ object LocalBackup {
             if (!validateDatabase(candidateDb)) return false
             if (includesFiles) FILE_DIRECTORIES.forEach { File(stagingRoot, it).mkdirs() }
             swapIntoPlace(context, candidateDb, stagingRoot, includesFiles)
+            File(stagingRoot, SETTINGS_ENTRY).takeIf(File::isFile)?.let { restoreSettings(context, deserializeSettings(it.readText())) }
             return true
         } finally {
             stagingRoot.deleteRecursively()
@@ -176,6 +243,7 @@ object LocalBackup {
                 if (entryCount > MAX_BACKUP_ENTRIES) throw IOException("Backup contains too many entries")
                 val output = File(canonicalRoot, entry.name).canonicalFile
                 val allowed = output == File(canonicalRoot, DATABASE_ENTRY).canonicalFile ||
+                    output == File(canonicalRoot, SETTINGS_ENTRY).canonicalFile ||
                     FILE_DIRECTORIES.any { name ->
                         val directory = File(canonicalRoot, name).canonicalFile
                         output == directory || output.path.startsWith(directory.path + File.separator)
@@ -206,10 +274,38 @@ object LocalBackup {
         zip.closeEntry()
     }
 
+    private fun addText(zip: ZipOutputStream, text: String, entryName: String) {
+        zip.putNextEntry(ZipEntry(entryName))
+        zip.write(text.toByteArray(Charsets.UTF_8))
+        zip.closeEntry()
+    }
+
+    private fun readSettings(context: Context): Map<String, Map<String, Any?>> =
+        PREFERENCE_FILES.associateWith { name -> context.getSharedPreferences(name, Context.MODE_PRIVATE).all }
+
+    private fun restoreSettings(context: Context, settings: Map<String, Map<String, Any?>>) {
+        PREFERENCE_FILES.forEach { name ->
+            val editor = context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear()
+            settings[name].orEmpty().forEach { (key, value) -> editor.putValue(key, value) }
+            if (!editor.commit()) throw IOException("Unable to restore preferences")
+        }
+    }
+
     private fun isZip(file: File): Boolean = file.inputStream().use { input ->
         val signature = ByteArray(4)
         input.read(signature) == 4 && signature.contentEquals(
             byteArrayOf(0x50.toByte(), 0x4b.toByte(), 0x03.toByte(), 0x04.toByte())
         )
+    }
+}
+
+private fun SharedPreferences.Editor.putValue(key: String, value: Any?) {
+    when (value) {
+        is String -> putString(key, value)
+        is Int -> putInt(key, value)
+        is Long -> putLong(key, value)
+        is Float -> putFloat(key, value)
+        is Boolean -> putBoolean(key, value)
+        is Set<*> -> putStringSet(key, value.filterIsInstance<String>().toSet())
     }
 }

@@ -772,9 +772,8 @@ private fun CloudBackupSection(
                     try {
                         withContext(Dispatchers.IO) {
                             val archive = LocalBackup.createArchive(context)
-                            val existingId = DriveBackupClient.findBackupFileId(token)
                             try {
-                                DriveBackupClient.uploadBackup(token, existingId, archive)
+                                DriveBackupClient.uploadBackup(token, archive)
                             } finally {
                                 archive.delete()
                             }

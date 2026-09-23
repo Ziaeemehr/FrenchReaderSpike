@@ -26,6 +26,7 @@ object VocabPrefs {
     private const val KEY_NEW_COUNT = "new_count"
     private const val KEY_STUDY_TIME_DATE = "study_time_date"
     private const val KEY_STUDY_TIME_MS = "study_time_ms"
+    private const val KEY_LEARNED_CURSOR_PREFIX = "learned_cursor_"
 
     val DEFAULT_INTERVAL_DAYS = listOf(1L, 2L, 4L, 8L, 16L)
     const val DEFAULT_MAX_NEW_CARDS = 10
@@ -107,4 +108,10 @@ object VocabPrefs {
         val current = getStudyTimeMsToday(context, date)
         prefs(context).edit().putString(KEY_STUDY_TIME_DATE, date).putLong(KEY_STUDY_TIME_MS, current + deltaMs).apply()
     }
+
+    fun getLearnedCursor(context: Context, scope: Long): Long =
+        prefs(context).getLong(KEY_LEARNED_CURSOR_PREFIX + scope, 0L)
+
+    fun setLearnedCursor(context: Context, scope: Long, entryId: Long) =
+        prefs(context).edit().putLong(KEY_LEARNED_CURSOR_PREFIX + scope, entryId).apply()
 }

@@ -416,6 +416,11 @@
     <string name="anki_import_failed">Impossible de lire ce fichier d\'export Anki</string>
     <string name="review_open_settings">Paramètres de révision</string>
     <string name="review_box_tap_hint">Touchez une boîte pour ne réviser que ses cartes</string>
+    <string name="review_learned_words">Mots appris</string>
+    <string name="review_learned_progress">%1$d sur %2$d révisés</string>
+    <string name="review_learned_start">Réviser les mots appris</string>
+    <string name="review_learned_continue">Continuer</string>
+    <string name="review_learned_restart">Recommencer</string>
     <string name="review_tap_to_reveal">Touchez la carte pour voir la réponse</string>
     <string name="review_undo">Annuler la dernière réponse</string>
     <string name="vocab_edit_title">Modifier la carte</string>

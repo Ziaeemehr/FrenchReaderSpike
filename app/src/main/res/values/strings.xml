@@ -416,6 +416,11 @@
     <string name="anki_import_failed">Could not read this Anki export file</string>
     <string name="review_open_settings">Review settings</string>
     <string name="review_box_tap_hint">Tap a box to review only its cards</string>
+    <string name="review_learned_words">Learned words</string>
+    <string name="review_learned_progress">%1$d of %2$d reviewed</string>
+    <string name="review_learned_start">Review learned</string>
+    <string name="review_learned_continue">Continue</string>
+    <string name="review_learned_restart">Restart</string>
     <string name="review_tap_to_reveal">Tap the card to reveal</string>
     <string name="review_undo">Undo last answer</string>
     <string name="vocab_edit_title">Edit card</string>

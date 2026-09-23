@@ -11,10 +11,13 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.ziaee.frenchreader.MainActivity
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.ui.reviewableCount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
+import java.time.Instant
+import java.time.ZoneId
 
 object VocabReviewReminder {
     private const val REQUEST_CODE = 4701
@@ -59,8 +62,9 @@ class VocabReviewReminderReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val now = System.currentTimeMillis()
-                val hasWork = AppDatabase.get(app).vocabDao().getAllOnce()
-                    .any { !it.learned && (it.lastReviewedAtMs == null || it.nextReviewAtMs <= now) }
+                val date = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+                val remainingNew = (VocabPrefs.getMaxNewCards(app) - VocabPrefs.getNewReviewedToday(app, date)).coerceAtLeast(0)
+                val hasWork = reviewableCount(AppDatabase.get(app).vocabDao().getAllOnce(), now, remainingNew) > 0
                 if (hasWork) notifyDue(app)
             } finally { pending.finish() }
         }

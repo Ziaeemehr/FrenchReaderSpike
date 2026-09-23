@@ -49,6 +49,7 @@ class AnkiImportTest {
     @Test fun `review card keeps box and due date when keepProgress`() {
         val e = entry(card(type = 2, interval = 20, due = 1050), keep = true)
         assertEquals(5, e.leitnerBox)
+        assertEquals(true, e.learned)
         assertEquals(now, e.lastReviewedAtMs)
         val startOfDay = now - now % 86_400_000L
         assertEquals(startOfDay + 20 * 86_400_000L, e.nextReviewAtMs)

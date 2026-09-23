@@ -78,13 +78,16 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var sessionInProgress = false
     private var scopeId = VOCAB_SCOPE_ALL
     private var stats = ReviewSessionStats()
+    private var learnedReviewMode = false
+    internal val isLearnedReview get() = learnedReviewMode
     private var undoing = false
     private var loadJob: Job? = null
     private var listNames: Map<Long, String> = emptyMap()
 
     private data class UndoRecord(
         val previousEntry: VocabEntry, val logId: Long, val statsBefore: ReviewSessionStats,
-        val wasNewCard: Boolean, val requeued: VocabEntry?, val completedId: Long?, val answeredDate: String
+        val wasNewCard: Boolean, val requeued: VocabEntry?, val completedId: Long?, val answeredDate: String,
+        val learnedCursorBefore: Long?
     )
     private var undoRecord: UndoRecord? = null
     var canUndo by mutableStateOf(false); private set
@@ -107,6 +110,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     var dailyGoal by mutableIntStateOf(20); private set
     var streak by mutableIntStateOf(0); private set
     var boxes by mutableStateOf<List<ReviewBoxSummary>>(emptyList()); private set
+    var learnedCount by mutableIntStateOf(0); private set
+    var learnedReviewed by mutableIntStateOf(0); private set
     var totalCards by mutableIntStateOf(0); private set
     var cardsReviewed by mutableIntStateOf(0); private set
     var cardsReviewedToday by mutableIntStateOf(0); private set
@@ -144,7 +149,9 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             loading = true
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
-            val all = scoped(db.vocabDao().getAllOnce(), requestedScope).filter { !it.learned }
+            val scopedEntries = scoped(db.vocabDao().getAllOnce(), requestedScope)
+            val all = scopedEntries.filter { !it.learned }
+            val learnedQueue = buildLearnedReviewQueue(scopedEntries, VocabPrefs.getLearnedCursor(context, requestedScope), requestedScope)
             val loadedListNames = db.vocabListDao().getAllOnce().associate { it.id to it.name }
             val availableNew = all.count { it.lastReviewedAtMs == null }
             val remainingNew = remainingNewAt(now)
@@ -157,7 +164,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
                 activityLogDates = { db.activityLogDao().activeDates() }
             ), LocalDate.now())
-            val loadedBoxes = (1..5).map { box ->
+            val loadedBoxes = (1..4).map { box ->
                 val entries = all.filter { it.leitnerBox == box }
                 ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.minOfOrNull { it.nextReviewAtMs })
             }
@@ -170,18 +177,42 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             dailyGoal = loadedDailyGoal
             streak = loadedStreak
             boxes = loadedBoxes
+            learnedCount = learnedQueue.total
+            learnedReviewed = learnedQueue.reviewed
             loading = false
         }
     }
 
     fun startReview(box: Int? = null) {
         viewModelScope.launch {
+            learnedReviewMode = false
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
             queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
             cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
             sessionStartedAtMs = now
+            show(queue.removeFirstOrNull())
+            stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
+            sessionInProgress = stage == ReviewStage.REVIEW
+        }
+    }
+
+    fun startLearnedReview(restart: Boolean = false) {
+        viewModelScope.launch {
+            if (restart) VocabPrefs.setLearnedCursor(context, scopeId, 0)
+            val cursor = VocabPrefs.getLearnedCursor(context, scopeId)
+            val result = buildLearnedReviewQueue(db.vocabDao().getAllOnce(), cursor, scopeId)
+            if (result.resetCursor) VocabPrefs.setLearnedCursor(context, scopeId, 0)
+            learnedReviewMode = true
+            queue.clear(); queue.addAll(result.cards)
+            completedIds.clear()
+            scoped(db.vocabDao().getAllOnce()).filter { it.learned && it.id <= if (result.resetCursor) 0 else cursor }
+                .forEach { completedIds.add(it.id) }
+            totalCards = result.total
+            cardsReviewed = completedIds.size
+            applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+            sessionStartedAtMs = System.currentTimeMillis()
             show(queue.removeFirstOrNull())
             stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
             sessionInProgress = stage == ReviewStage.REVIEW
@@ -201,28 +232,34 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         canUndo = false
         player.stop(); sentenceAudioError = false
         val now = System.currentTimeMillis()
-        val updated = VocabSrs.apply(entry, answer, now, intervals)
+        val boxBefore = if (learnedReviewMode) 5 else entry.leitnerBox
+        val updated = if (learnedReviewMode && answer != VocabAnswer.FORGOT) {
+            entry.copy(lastReviewedAtMs = now)
+        } else VocabSrs.apply(entry, answer, now, intervals)
+        val boxAfter = if (learnedReviewMode && answer != VocabAnswer.FORGOT) 5 else updated.leitnerBox
         viewModelScope.launch {
             val logId = db.withTransaction {
                 db.vocabDao().updateSchedule(updated.id, updated.leitnerBox, updated.nextReviewAtMs, updated.lastReviewedAtMs, updated.learned)
-                db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = entry.leitnerBox, boxAfter = updated.leitnerBox))
+                db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = boxBefore, boxAfter = boxAfter))
             }
             val statsBefore = stats
-            applyStats(stats.after(answer, entry.leitnerBox, updated.leitnerBox))
+            applyStats(stats.after(answer, boxBefore, boxAfter))
             val date = localDateFor(now)
-            val wasNew = entry.lastReviewedAtMs == null
+            val wasNew = !learnedReviewMode && entry.lastReviewedAtMs == null
             if (wasNew) VocabPrefs.incrementNewReviewed(context, date)
             moveLabel = when {
-                updated.leitnerBox > entry.leitnerBox -> context.getString(R.string.review_moved_forward, updated.leitnerBox)
-                updated.leitnerBox < entry.leitnerBox -> context.getString(R.string.review_returned_box_one)
-                else -> context.getString(R.string.review_stayed_box, updated.leitnerBox)
+                boxAfter > boxBefore -> context.getString(R.string.review_moved_forward, boxAfter)
+                boxAfter < boxBefore -> context.getString(R.string.review_returned_box_one)
+                else -> context.getString(R.string.review_stayed_box, boxAfter)
             }
-            val requeued = if (answer == VocabAnswer.FORGOT) updated else null
-            val completedId = if (answer == VocabAnswer.FORGOT) null else entry.id
+            val requeued = if (!learnedReviewMode && answer == VocabAnswer.FORGOT) updated else null
+            val completedId = if (requeued == null) entry.id else null
             if (requeued != null) queue.add(3.coerceAtMost(queue.size), requeued)
             else completedIds.add(entry.id)
+            val cursorBefore = if (learnedReviewMode) VocabPrefs.getLearnedCursor(context, scopeId) else null
+            if (learnedReviewMode) VocabPrefs.setLearnedCursor(context, scopeId, entry.id)
             cardsReviewed = completedIds.size
-            undoRecord = UndoRecord(entry, logId, statsBefore, wasNew, requeued, completedId, date)
+            undoRecord = UndoRecord(entry, logId, statsBefore, wasNew, requeued, completedId, date, cursorBefore)
             show(queue.removeFirstOrNull())
             if (current == null) finishSession() else canUndo = true
         }
@@ -240,6 +277,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                     db.reviewLogDao().deleteById(r.logId)
                 }
                 if (r.wasNewCard) VocabPrefs.decrementNewReviewed(context, r.answeredDate)
+                r.learnedCursorBefore?.let { VocabPrefs.setLearnedCursor(context, scopeId, it) }
                 applyStats(r.statsBefore)
                 if (r.requeued == null && r.completedId != null) completedIds.remove(r.completedId)
                 cardsReviewed = completedIds.size
@@ -271,7 +309,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val prev = if (r.previousEntry.id == edited.id) r.previousEntry.copy(word = word, meaning = meaning, sentence = sentence) else r.previousEntry
             undoRecord = r.copy(previousEntry = prev, requeued = requeued)
         }
-        viewModelScope.launch { db.vocabDao().update(edited) }
+        viewModelScope.launch { db.vocabDao().updateText(edited.id, word, meaning, sentence) }
         return edited
     }
 
@@ -288,6 +326,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         cardsReviewedToday = db.reviewLogDao().countSince(dayStart)
         movedForwardToday = db.reviewLogDao().countMovedForwardSince(dayStart)
         returnedToBoxOneToday = db.reviewLogDao().countReturnedToBoxOneSince(dayStart)
+        if (learnedReviewMode) {
+            VocabPrefs.setLearnedCursor(context, scopeId, 0)
+            learnedReviewed = 0
+        }
         stage = ReviewStage.SUMMARY
     }
 
@@ -432,6 +474,31 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
         Text(stringResource(R.string.review_box_tap_hint), style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(4.dp))
         BoxLadder(vm.boxes, onBoxClick = { vm.startReview(it) })
+        LearnedWordsCard(vm)
+    }
+}
+
+@Composable
+private fun LearnedWordsCard(vm: VocabReviewViewModel) {
+    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.EmojiEvents, null, tint = leitnerBoxColor(5))
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.review_learned_words), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.review_learned_progress, vm.learnedReviewed, vm.learnedCount), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = { vm.startLearnedReview(restart = true) }, enabled = vm.learnedCount > 0) {
+                    Text(stringResource(R.string.review_learned_restart))
+                }
+                Button(onClick = { vm.startLearnedReview() }, enabled = vm.learnedCount > 0) {
+                    Text(stringResource(if (vm.learnedReviewed > 0) R.string.review_learned_continue else R.string.review_learned_start))
+                }
+            }
+        }
     }
 }
 
@@ -575,16 +642,16 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
         if (!revealed) Button(onClick = onReveal, enabled = interactive, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ReviewAnswerButton(stringResource(R.string.vocab_answer_again), vm.intervals[0], Modifier.weight(1f), MaterialTheme.colorScheme.error, interactive) { vm.answer(VocabAnswer.FORGOT) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals), Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_good), VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals), Modifier.weight(1f), MaterialTheme.colorScheme.primary, interactive) { vm.answer(VocabAnswer.KNEW) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), if (vm.isLearnedReview) null else VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals), Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_good), if (vm.isLearnedReview) null else VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals), Modifier.weight(1f), MaterialTheme.colorScheme.primary, interactive) { vm.answer(VocabAnswer.KNEW) }
         }
     }
 }
 
-@Composable private fun ReviewAnswerButton(label: String, days: Long, modifier: Modifier, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable private fun ReviewAnswerButton(label: String, days: Long?, modifier: Modifier, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface, enabled: Boolean = true, onClick: () -> Unit) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, color), colors = ButtonDefaults.outlinedButtonColors(contentColor = color)) { Text(label) }
-        Text(stringResource(if (days == 1L) R.string.interval_day else R.string.interval_days, days), style = MaterialTheme.typography.labelSmall)
+        if (days != null) Text(stringResource(if (days == 1L) R.string.interval_day else R.string.interval_days, days), style = MaterialTheme.typography.labelSmall)
     }
 }
 
