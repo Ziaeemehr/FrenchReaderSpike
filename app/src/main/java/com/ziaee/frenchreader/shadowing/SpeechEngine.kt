@@ -61,6 +61,21 @@ internal suspend fun awaitResultWhileWriting(
     }
 }
 
+/** Some recognizers (Google on-device, fed via EXTRA_AUDIO_SOURCE) deliver the text only as
+ * partial results and send an empty final bundle, so the last non-empty partial is the fallback. */
+internal class TranscriptCollector {
+    private var lastPartial = ""
+
+    fun onPartial(hypotheses: List<String>?) {
+        hypotheses?.firstOrNull()?.takeIf { it.isNotBlank() }?.let { lastPartial = it }
+    }
+
+    fun final(hypotheses: List<String>?): String =
+        hypotheses?.firstOrNull()?.takeIf { it.isNotBlank() } ?: lastPartial
+
+    fun onError(): String = lastPartial
+}
+
 class VoskEngine(private val modelDir: File) : SpeechEngine {
     override val kind = SpeechEngineKind.VOSK
     private val recorder = MicRecorder()
@@ -98,23 +113,27 @@ class AndroidSpeechEngine(private val context: Context) : SpeechEngine {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr-FR")
         putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
     }
 
     private fun newRecognizer(): SpeechRecognizer {
         recognizer?.destroy()
         val deferred = CompletableDeferred<String>().also { result = it }
+        val collector = TranscriptCollector()
         return SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
                 override fun onResults(b: Bundle?) {
-                    deferred.complete(b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty())
+                    deferred.complete(collector.final(b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)))
                 }
-                override fun onError(error: Int) { deferred.complete("") }
+                override fun onError(error: Int) { deferred.complete(collector.onError()) }
                 override fun onReadyForSpeech(p: Bundle?) = Unit
                 override fun onBeginningOfSpeech() = Unit
                 override fun onRmsChanged(v: Float) = Unit
                 override fun onBufferReceived(b: ByteArray?) = Unit
                 override fun onEndOfSpeech() = Unit
-                override fun onPartialResults(b: Bundle?) = Unit
+                override fun onPartialResults(b: Bundle?) {
+                    collector.onPartial(b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION))
+                }
                 override fun onEvent(t: Int, b: Bundle?) = Unit
             })
         }.also { recognizer = it }
