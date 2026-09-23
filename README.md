@@ -4,6 +4,23 @@ An Android app for learning French by reading. Import or fetch French texts, lis
 
 The interface is localized in English, French and Persian (with right-to-left layout and the Vazirmatn font for Persian). French reading content always renders left-to-right.
 
+<p align="center">
+  <img src="docs/screenshots/home.jpg" width="260" alt="Home screen with streak, continue reading, news and today's review">
+  <img src="docs/screenshots/reading.jpg" width="260" alt="Reading screen with sentence highlighting and saved words">
+  <img src="docs/screenshots/dictionary.jpg" width="260" alt="Dictionary sheet with Persian meaning and WordReference">
+</p>
+<p align="center">
+  <img src="docs/screenshots/review_card.jpg" width="260" alt="Leitner review card with meaning, example sentence and translation">
+  <img src="docs/screenshots/vocab.jpg" width="260" alt="Saved vocabulary list with status breakdown">
+  <img src="docs/screenshots/stats.jpg" width="260" alt="Learning statistics">
+</p>
+
+## Download
+
+Get the latest APK from the [Releases page](https://github.com/Ziaeemehr/FrenchReaderSpike/releases/latest) and open it on your phone (Android 8.0 or newer). Android will ask you once to allow installing apps from your browser or file manager.
+
+The app is not on Google Play yet. Updates are published as new releases; installing a newer APK over the old one keeps your data.
+
 ## Features
 
 - **Reading** – Markdown-aware rendering (headings, lists, emphasis, EPUB images) with adjustable font size, reading background and highlight color. Text is shown formatted immediately, before audio is synthesized.
@@ -12,10 +29,10 @@ The interface is localized in English, French and Persian (with right-to-left la
   - An optional local **XTTS-v2** server (see [tools/xtts_server](tools/xtts_server/README.md)).
 - **Lookup** – long-press a word for a dictionary sheet (WordReference, Larousse, Linguee, Wiktionary) with translation; select several words to save a whole phrase, copy it, listen to it, or send it to another app (Google Translate is listed first).
 - **Vocabulary** – saved words and phrases are highlighted in the text and organized into lists, with status (new / learning / reviewing / learned).
-- **Leitner review** – five boxes with configurable intervals, daily goal, streak, and review reminders. Words on the card are tappable to open the dictionary.
+- **Leitner review** – four learning boxes with configurable intervals, a daily new-card limit, daily goal, streak, and review reminders. Words reaching box 5 move to **Learned words**, which you can review on demand and resume where you left off. Words on the card are tappable to open the dictionary.
 - **Content sources** – paste text, share from other apps, import files/EPUB, Wikisource, Vikidia, and daily news headlines (RFI Journal en français facile, France Info) with keyword filtering.
 - **Library & statistics** – searchable, sortable library with folders; activity and accuracy stats.
-- **Backup** – local backup and Google Drive backup/restore.
+- **Backup** – local backup and Google Drive backup/restore (database, texts, images and settings; the last five Drive backups are kept).
 
 ## Tech stack
 
@@ -47,7 +64,10 @@ Requirements: Android Studio (or the Android SDK with JDK 17) and a device/emula
 ./gradlew :app:assembleDebug          # build a debug APK
 ./gradlew :app:installDebug           # install on a connected device
 ./gradlew :app:testDebugUnitTest      # run unit tests
+./gradlew :app:assembleRelease        # release APK (signed if a signing config is present)
 ```
+
+Release builds are signed when `~/.android/frenchreader-release.properties` (or the file named by the `frenchreaderSigningProps` Gradle property) exists with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`; otherwise the release APK is unsigned.
 
 Set the SDK path in `local.properties` (`sdk.dir=...`) if Android Studio hasn't done so.
 

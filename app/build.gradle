@@ -12,8 +12,8 @@ android {
         applicationId "com.ziaee.frenchreader"
         minSdk 26
         targetSdk 34
-        versionCode 5
-        versionName "0.5.0"
+        versionCode 6
+        versionName "0.6.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Chaquopy needs at least one ABI. arm64-v8a covers virtually all
@@ -45,8 +45,28 @@ android {
 
     }
 
+    // Release signing reads a properties file kept outside the repo (default
+    // ~/.android/frenchreader-release.properties, overridable with the
+    // frenchreaderSigningProps Gradle property). Without it, release builds
+    // are produced unsigned so anyone can still build from source.
+    def signingPropsFile = file(project.findProperty("frenchreaderSigningProps") ?:
+        "${System.getProperty('user.home')}/.android/frenchreader-release.properties")
+    if (signingPropsFile.exists()) {
+        def signingProps = new Properties()
+        signingPropsFile.withInputStream { signingProps.load(it) }
+        signingConfigs {
+            release {
+                storeFile file(signingProps["storeFile"])
+                storePassword signingProps["storePassword"]
+                keyAlias signingProps["keyAlias"]
+                keyPassword signingProps["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (signingPropsFile.exists()) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
