@@ -19,25 +19,18 @@ internal fun resolveDarkTheme(mode: ThemeMode, systemInDarkTheme: Boolean): Bool
     ThemeMode.DARK -> true
 }
 
+/** The app-wide theme: colors follow [themeMode] (light/dark/system) alone. [ReadingScreen]
+ * intentionally does NOT source its colors from this -- it reads [AppearanceState.readingBackground]
+ * directly via [readingPaletteFor] for its own Scaffold/text colors, so a reading-background choice
+ * only ever affects the reading page, never fights with the light/dark theme everywhere else. */
 @Composable
 fun FrenchReaderTheme(
     themeMode: ThemeMode,
-    readingBackground: ReadingBackground = ReadingBackground.SEPIA,
     content: @Composable () -> Unit
 ) {
     val darkTheme = resolveDarkTheme(themeMode, isSystemInDarkTheme())
     val language = LocalConfiguration.current.locales[0].language
-    val readingPalette = readingPaletteFor(readingBackground)
-    val baseScheme = if (darkTheme) FrenchReaderDarkColorScheme else FrenchReaderLightColorScheme
-    val appScheme = baseScheme.copy(
-        background = readingPalette.background,
-        onBackground = readingPalette.ink,
-        surface = readingPalette.background,
-        onSurface = readingPalette.ink,
-        surfaceVariant = blend(readingPalette.background, readingPalette.ink, 0.08f),
-        onSurfaceVariant = readingPalette.inkFaded,
-        outlineVariant = readingPalette.divider
-    )
+    val appScheme = if (darkTheme) FrenchReaderDarkColorScheme else FrenchReaderLightColorScheme
     CompositionLocalProvider(
         LocalAppSpacing provides AppSpacing(),
         LocalAppSizes provides AppSizes(),

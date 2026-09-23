@@ -92,10 +92,9 @@ fun SettingsScreen(onBack: () -> Unit) {
     ) { padding ->
         val tabTitles = listOf(
             R.string.settings_section_appearance,
-            R.string.settings_section_reading,
+            R.string.settings_section_vocabulary,
             R.string.settings_section_news,
             R.string.settings_section_xtts,
-            R.string.settings_section_vocabulary,
             R.string.settings_section_tts_cache,
             R.string.settings_section_backup
         )
@@ -119,8 +118,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                             AppearanceState.themeMode = mode
                             AppearancePrefs.setThemeMode(context, mode)
                         }
-                    }
-                    1 -> {
                         CompactSettingLabel(R.string.reading_background_title)
                         ColorGrid(
                             entries = ReadingBackground.entries,
@@ -147,9 +144,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                             AppearancePrefs.setFontScale(context, scale)
                         }
                     }
-                    2 -> NewsSettings(context)
-                    3 -> LocalXttsSettings(context, scope, snackbarHostState)
-                    4 -> {
+                    1 -> {
                         SettingsSwitchRow(
                             label = stringResource(R.string.highlight_saved_words),
                             checked = AppearanceState.highlightSavedWords
@@ -159,8 +154,10 @@ fun SettingsScreen(onBack: () -> Unit) {
                         }
                         VocabularyReviewSettings(context)
                     }
-                    5 -> TtsCacheSettings(context, scope, snackbarHostState)
-                    6 -> {
+                    2 -> NewsSettings(context)
+                    3 -> LocalXttsSettings(context, scope, snackbarHostState)
+                    4 -> TtsCacheSettings(context, scope, snackbarHostState)
+                    5 -> {
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
@@ -173,44 +170,45 @@ fun SettingsScreen(onBack: () -> Unit) {
 
 @Composable
 private fun SettingsTabRow(tabTitles: List<Int>, selectedTab: Int, onSelect: (Int) -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        tabTitles.forEachIndexed { index, resource ->
-            val selected = selectedTab == index
-            val background by animateColorAsState(
-                if (selected) MaterialTheme.colorScheme.tertiaryContainer else Color.Transparent,
-                label = "settingsTabBackground"
-            )
-            val contentColor by animateColorAsState(
-                if (selected) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                label = "settingsTabContent"
-            )
-            Box(
-                Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(50))
-                    .background(background)
-                    .border(
-                        width = if (selected) 0.dp else 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = RoundedCornerShape(50)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp)) {
+        tabTitles.chunked(3).forEachIndexed { rowIndex, row ->
+            if (rowIndex > 0) Spacer(Modifier.height(6.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                row.forEachIndexed { columnIndex, resource ->
+                    val index = rowIndex * 3 + columnIndex
+                    val selected = selectedTab == index
+                    val background by animateColorAsState(
+                        if (selected) MaterialTheme.colorScheme.tertiaryContainer else Color.Transparent,
+                        label = "settingsTabBackground"
                     )
-                    .clickable { onSelect(index) }
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    stringResource(resource),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                )
+                    val contentColor by animateColorAsState(
+                        if (selected) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        label = "settingsTabContent"
+                    )
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(50))
+                            .background(background)
+                            .border(
+                                width = if (selected) 0.dp else 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = RoundedCornerShape(50)
+                            )
+                            .clickable { onSelect(index) }
+                            .padding(horizontal = 4.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            stringResource(resource),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = contentColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }

@@ -60,10 +60,7 @@ class MainActivity : AppCompatActivity() {
         AppearanceState.highlightSavedWords = AppearancePrefs.getHighlightSavedWords(this)
 
         setContent {
-            FrenchReaderTheme(
-                themeMode = AppearanceState.themeMode,
-                readingBackground = AppearanceState.readingBackground
-            ) {
+            FrenchReaderTheme(themeMode = AppearanceState.themeMode) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost()
                 }

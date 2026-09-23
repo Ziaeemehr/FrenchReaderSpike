@@ -183,6 +183,8 @@
     <string name="vocab_list_all">Tout</string>
     <string name="vocab_list_uncategorized">Sans catégorie</string>
     <string name="vocab_list_new">Nouvelle liste</string>
+    <string name="vocab_delete_list_title">Supprimer la liste ?</string>
+    <string name="vocab_delete_list_message">« %1$s » sera supprimée. Ses mots ne sont pas supprimés — ils deviennent non classés.</string>
     <string name="vocab_list_name_field">Nom de la liste</string>
     <string name="vocab_due_today">Révision du jour (%1$d prêt(s))</string>
     <string name="vocab_nothing_due">Rien à réviser</string>
@@ -364,7 +366,10 @@
     <string name="review_new_count">Nouvelles</string>
     <string name="review_estimated_time">Durée estimée</string>
     <string name="review_minutes_short">%1$d min</string>
+    <string name="review_lesson_short">Leçon %1$s</string>
     <string name="review_goal_progress">Objectif quotidien : %1$d sur %2$d</string>
+    <string name="review_no_cards_due">Aucune carte à réviser pour le moment — revenez plus tard</string>
+    <string name="review_new_cap_reached">La limite de nouvelles cartes du jour est atteinte — d\'autres mots attendent, augmentez la limite dans les Réglages ou revenez demain</string>
     <string name="review_streak">Série actuelle : %1$d jours</string>
     <string name="review_start">Commencer la révision</string>
     <string name="review_box_label">Boîte %1$d</string>
