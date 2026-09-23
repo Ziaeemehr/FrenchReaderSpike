@@ -299,3 +299,21 @@ interface ResourceDao {
     @Delete
     suspend fun delete(resource: ResourceLink)
 }
+
+@Dao
+interface ShadowAttemptDao {
+    @Insert
+    suspend fun insert(attempt: ShadowAttempt): Long
+
+    @Query("SELECT * FROM shadow_attempts WHERE timestampMs >= :sinceMs ORDER BY timestampMs")
+    suspend fun getSince(sinceMs: Long): List<ShadowAttempt>
+
+    @Query("SELECT * FROM shadow_attempts WHERE textId = :textId AND timestampMs >= :sinceMs ORDER BY timestampMs")
+    suspend fun getForTextSince(textId: Long, sinceMs: Long): List<ShadowAttempt>
+
+    @Query("SELECT COUNT(*) FROM shadow_attempts")
+    suspend fun countAll(): Int
+
+    @Query("SELECT DISTINCT date(timestampMs / 1000, 'unixepoch', 'localtime') FROM shadow_attempts")
+    suspend fun distinctActiveDates(): List<String>
+}

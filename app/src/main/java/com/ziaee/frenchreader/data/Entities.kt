@@ -161,3 +161,18 @@ data class ResourceLink(
     val createdAtMs: Long = System.currentTimeMillis(),
     @ColumnInfo(defaultValue = "other") val category: String = ResourceCategory.OTHER.key
 )
+
+/** One shadowing try on one sentence. Only the score is kept -- never the audio. */
+@Entity(tableName = "shadow_attempts", indices = [Index(value = ["timestampMs"])])
+data class ShadowAttempt(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val textId: Long,
+    val chunkIndex: Int,
+    val sentenceIndex: Int,
+    val matched: Int,
+    val total: Int,
+    /** Speech length / expected TTS length; null when the engine gave no audio to measure. */
+    val paceRatio: Float? = null,
+    val engine: String,
+    val timestampMs: Long
+)
