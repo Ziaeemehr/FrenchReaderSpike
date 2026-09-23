@@ -65,7 +65,9 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
 
             val activeDates = loadActiveDates(
                 reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = { db.activityLogDao().activeDates() }
+                activityLogDates = {
+                    db.activityLogDao().activeDates() + db.shadowAttemptDao().distinctActiveDates()
+                }
             )
 
             uiState = composeStatisticsState(
@@ -81,6 +83,10 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 today = today,
                 reviewLogs = reviewLogs,
                 monthlyListening = monthlyListening
+            )
+            val shadowRecent = db.shadowAttemptDao().getSince(today.minusDays(6).startOfDayMs())
+            uiState = uiState.copy(
+                shadowing = shadowingSummary(db.shadowAttemptDao().countAll(), shadowRecent, today)
             )
             loading = false
         }
@@ -126,11 +132,42 @@ fun StatisticsScreen(onBack: () -> Unit) {
         ) {
             StreakSection(state.streakDays)
             WeeklyListeningSection(state.weeklyListening)
+            ShadowingSection(state.shadowing)
             VocabReviewSection(state)
             NewChartSections(state)
             TotalsSection(state)
         }
     }
+}
+
+@Composable
+private fun ShadowingSection(summary: ShadowingSummary) {
+    if (summary.sentencesPracticed == 0) return
+    Text(
+        stringResource(R.string.statistics_shadowing_title),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 20.dp)
+    )
+    Text(
+        stringResource(
+            R.string.statistics_shadowing_summary,
+            summary.sentencesPracticed,
+            summary.averageAccuracyPercent
+        ),
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(top = 4.dp)
+    )
+    val locale = Locale.getDefault()
+    val today = LocalDate.now()
+    BarChart(
+        values = summary.last7DaysPercent.map { it.toFloat() },
+        labels = (6 downTo 0).map {
+            today.minusDays(it.toLong()).dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
+        },
+        color = MaterialTheme.colorScheme.tertiary,
+        modifier = Modifier.fillMaxWidth().height(120.dp).padding(top = 8.dp),
+        maxValue = 100f
+    )
 }
 
 @Composable

@@ -61,7 +61,12 @@ import com.ziaee.frenchreader.tts.XttsClient
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.news.NEWS_SOURCES
 import com.ziaee.frenchreader.news.NewsCategory
+import com.ziaee.frenchreader.shadowing.AndroidSpeechEngine
+import com.ziaee.frenchreader.shadowing.ShadowingPrefs
+import com.ziaee.frenchreader.shadowing.SpeechEngineKind
+import com.ziaee.frenchreader.shadowing.VoskModelManager
 import com.ziaee.frenchreader.ui.theme.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,6 +101,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
             R.string.settings_section_vocabulary,
             R.string.settings_section_news,
             R.string.settings_section_xtts,
+            R.string.settings_section_shadowing,
             R.string.settings_section_tts_cache,
             R.string.settings_section_backup
         )
@@ -157,8 +163,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
                     }
                     2 -> NewsSettings(context)
                     3 -> LocalXttsSettings(context, scope, snackbarHostState)
-                    4 -> TtsCacheSettings(context, scope, snackbarHostState)
-                    5 -> {
+                    4 -> ShadowingSettings(context, scope, snackbarHostState)
+                    5 -> TtsCacheSettings(context, scope, snackbarHostState)
+                    6 -> {
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
@@ -173,6 +180,75 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
                 }
                 Spacer(Modifier.height(20.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun ShadowingSettings(
+    context: Context,
+    scope: CoroutineScope,
+    snackbarHostState: SnackbarHostState
+) {
+    var engine by remember { mutableStateOf(ShadowingPrefs.getEngine(context)) }
+    val manager = remember { VoskModelManager(context) }
+    var installed by remember { mutableStateOf(manager.isInstalled()) }
+    var progress by remember { mutableStateOf<Float?>(null) }
+    val androidAvailable = remember { AndroidSpeechEngine.isAvailable(context) }
+    val failed = stringResource(R.string.shadowing_model_failed)
+
+    CompactSettingLabel(R.string.shadowing_engine_title)
+    val engines = if (androidAvailable) SpeechEngineKind.entries else listOf(SpeechEngineKind.VOSK)
+    CompactChoiceRow(
+        engines,
+        engine,
+        {
+            stringResource(
+                if (it == SpeechEngineKind.VOSK) {
+                    R.string.shadowing_engine_vosk
+                } else {
+                    R.string.shadowing_engine_android
+                }
+            )
+        }
+    ) { kind ->
+        engine = kind
+        ShadowingPrefs.setEngine(context, kind)
+    }
+
+    CompactSettingLabel(R.string.shadowing_model_title)
+    val p = progress
+    when {
+        p != null -> {
+            Text(
+                stringResource(R.string.shadowing_model_downloading, (p * 100).toInt()),
+                style = MaterialTheme.typography.bodySmall
+            )
+            LinearProgressIndicator(progress = { p }, modifier = Modifier.fillMaxWidth())
+        }
+        installed -> Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.shadowing_model_installed, manager.sizeBytes() / (1024 * 1024)),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = {
+                manager.delete()
+                installed = false
+            }) {
+                Text(stringResource(R.string.shadowing_model_delete))
+            }
+        }
+        else -> OutlinedButton(onClick = {
+            progress = 0f
+            scope.launch {
+                val ok = runCatching { manager.download { progress = it } }.isSuccess
+                progress = null
+                installed = manager.isInstalled()
+                if (!ok) snackbarHostState.showSnackbar(failed)
+            }
+        }) {
+            Text(stringResource(R.string.shadowing_model_download))
         }
     }
 }

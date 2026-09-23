@@ -2,10 +2,12 @@ package com.ziaee.frenchreader.ui.statistics
 
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabEntry
+import com.ziaee.frenchreader.data.ShadowAttempt
 import com.ziaee.frenchreader.text.TextChunker
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
 import com.ziaee.frenchreader.data.ReviewLogEntry
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -14,6 +16,12 @@ internal const val LEITNER_BOX_COUNT = 5
 /** One day's listening time, always present for all 7 days in the chart
  * even when [listeningMs] is 0 -- so the chart never has a missing bar. */
 data class DailyListening(val date: LocalDate, val listeningMs: Long)
+
+data class ShadowingSummary(
+    val sentencesPracticed: Int = 0,
+    val averageAccuracyPercent: Int = 0,
+    val last7DaysPercent: List<Int> = List(7) { 0 }
+)
 
 data class StatisticsUiState(
     val streakDays: Int = 0,
@@ -30,8 +38,25 @@ data class StatisticsUiState(
     val accuracyTrend: List<WeeklyAccuracy> = emptyList(),
     val wordsAddedPerWeek: List<WeeklyCount> = emptyList(),
     val retentionByBox: List<BoxRetention> = emptyList(),
-    val monthlyListening: List<DailyListening> = emptyList()
+    val monthlyListening: List<DailyListening> = emptyList(),
+    val shadowing: ShadowingSummary = ShadowingSummary()
 )
+
+/** [recent] = attempts from the last 7 days; accuracy is word-weighted (sum matched / sum total). */
+internal fun shadowingSummary(
+    totalCount: Int,
+    recent: List<ShadowAttempt>,
+    today: LocalDate,
+    zone: ZoneId = ZoneId.systemDefault()
+): ShadowingSummary {
+    fun pct(list: List<ShadowAttempt>): Int {
+        val total = list.sumOf { it.total }
+        return if (total == 0) 0 else Math.round(list.sumOf { it.matched } * 100f / total)
+    }
+    val byDay = recent.groupBy { Instant.ofEpochMilli(it.timestampMs).atZone(zone).toLocalDate() }
+    val days = (6 downTo 0).map { today.minusDays(it.toLong()) }
+    return ShadowingSummary(totalCount, pct(recent), days.map { pct(byDay[it].orEmpty()) })
+}
 
 /** A text is "completed" once its saved reading position has reached the
  * last chunk at least once. */

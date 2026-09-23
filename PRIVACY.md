@@ -10,7 +10,7 @@ Everything you create in the app stays on your phone:
 
 - texts you import or save, their images, and your reading position
 - saved words and phrases, their meanings, lists and review history
-- highlights, listening and study time, and your settings
+- highlights, listening and study time, shadowing scores (per sentence, never your voice), and your settings
 
 The app's cache (audio, translations, images) is also stored on the phone. Uninstalling the app deletes all of this data unless you have made a backup.
 
@@ -22,6 +22,8 @@ The app connects to outside services only to do things you ask for. Each service
 |---|---|---|
 | Text-to-speech (default engine) | Microsoft Edge online speech service | The sentence being read aloud |
 | Text-to-speech (local XTTS server, optional) | The computer address you enter in settings | The sentence being read aloud |
+| Shadowing, offline engine (default) | alphacephei.com, once, to download the French speech model | A normal download request. Your voice is processed on the phone and never sent anywhere |
+| Shadowing, Android engine (optional) | Your phone's speech recognition service (usually Google) | The sentence you speak, unless offline French recognition is installed on the phone |
 | Translating a word or paragraph | Google Translate's web service; MyMemory (api.mymemory.translated.net) if that fails | The word or text to translate |
 | Dictionary lookup | The dictionary site you choose (WordReference, Larousse, Linguee, Wiktionary, B-amooz) | The word you look up |
 | News, Wikisource, Vikidia, importing an article | The site the content comes from (e.g. RFI, France Info, Wikisource) | A normal page or feed request |
@@ -41,6 +43,7 @@ These requests include standard network information such as your IP address, as 
 - **Notifications:** for the optional daily review reminder.
 - **Run at startup:** to reschedule that reminder after the phone restarts.
 - **Foreground service / media playback:** so read-aloud playback keeps working when the screen is off.
+- **Microphone:** only while you hold the mic button in shadowing mode. Recordings stay in memory and are discarded when you move to the next sentence; they are never saved.
 
 ## Children
 

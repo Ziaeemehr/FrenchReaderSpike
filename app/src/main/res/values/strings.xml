@@ -42,6 +42,7 @@
     <string name="settings_section_vocabulary">Vocabulary and review</string>
     <string name="settings_section_backup">Backup</string>
     <string name="settings_section_xtts">Local voice server (XTTS)</string>
+    <string name="settings_section_shadowing">Shadowing</string>
     <string name="settings_section_tts_cache">Audio cache</string>
     <string name="settings_pin_audio">Pin audio</string>
     <string name="settings_unpin_audio">Unpin audio</string>
@@ -272,6 +273,8 @@
     <string name="statistics_title">Statistics</string>
     <string name="statistics_streak_days">%1$d day streak</string>
     <string name="statistics_weekly_chart_title">Listening time (last 7 days)</string>
+    <string name="statistics_shadowing_title">Shadowing</string>
+    <string name="statistics_shadowing_summary">%1$d sentences practiced · %2$d%% average accuracy</string>
     <string name="statistics_vocab_section_title">Vocabulary review</string>
     <string name="statistics_reviewed_today">Reviewed today: %1$d</string>
     <string name="statistics_reviewed_week">Reviewed this week: %1$d</string>
@@ -466,6 +469,12 @@
     <string name="shadowing_use_android_engine">Use Android recognizer</string>
     <string name="shadowing_model_downloading">Downloading speech model… %1$d%%</string>
     <string name="shadowing_model_failed">Download failed. Check your connection.</string>
+    <string name="shadowing_engine_title">Speech recognition</string>
+    <string name="shadowing_engine_vosk">Offline (Vosk)</string>
+    <string name="shadowing_engine_android">Android</string>
+    <string name="shadowing_model_title">French speech model</string>
+    <string name="shadowing_model_installed">Installed · %1$d MB</string>
+    <string name="shadowing_model_delete">Delete</string>
     <string name="shadowing_waiting_for_audio">Preparing audio…</string>
     <string name="shadowing_pace_good">Good pace (%1$s×)</string>
     <string name="shadowing_pace_slow">A bit slow (%1$s×)</string>

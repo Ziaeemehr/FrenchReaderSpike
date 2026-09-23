@@ -42,6 +42,7 @@
     <string name="settings_section_vocabulary">واژگان و مرور</string>
     <string name="settings_section_backup">پشتیبان‌گیری</string>
     <string name="settings_section_xtts">سرور صوتی محلی (XTTS)</string>
+    <string name="settings_section_shadowing">شدوئینگ</string>
     <string name="settings_section_tts_cache">کش صوتی</string>
     <string name="settings_pin_audio">پین کردن صدا</string>
     <string name="settings_unpin_audio">لغو پین صدا</string>
@@ -270,6 +271,8 @@
     <string name="statistics_title">آمار</string>
     <string name="statistics_streak_days">%1$d روز پشت‌سرهم</string>
     <string name="statistics_weekly_chart_title">زمان گوش‌دادن (۷ روز اخیر)</string>
+    <string name="statistics_shadowing_title">شدوئینگ</string>
+    <string name="statistics_shadowing_summary">%1$d جمله تمرین شده · میانگین دقت %2$d%%</string>
     <string name="statistics_vocab_section_title">مرور لغات</string>
     <string name="statistics_reviewed_today">مرورشده امروز: %1$d</string>
     <string name="statistics_reviewed_week">مرورشده این هفته: %1$d</string>
@@ -464,6 +467,12 @@
     <string name="shadowing_use_android_engine">استفاده از تشخیص‌دهنده اندروید</string>
     <string name="shadowing_model_downloading">در حال دانلود مدل گفتار… %1$d%%</string>
     <string name="shadowing_model_failed">دانلود ناموفق بود. اتصال را بررسی کنید.</string>
+    <string name="shadowing_engine_title">تشخیص گفتار</string>
+    <string name="shadowing_engine_vosk">آفلاین (Vosk)</string>
+    <string name="shadowing_engine_android">اندروید</string>
+    <string name="shadowing_model_title">مدل گفتار فرانسوی</string>
+    <string name="shadowing_model_installed">نصب شده · %1$d مگابایت</string>
+    <string name="shadowing_model_delete">حذف</string>
     <string name="shadowing_waiting_for_audio">در حال آماده‌سازی صدا…</string>
     <string name="shadowing_pace_good">سرعت خوب (%1$s×)</string>
     <string name="shadowing_pace_slow">کمی کند (%1$s×)</string>
