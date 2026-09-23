@@ -364,8 +364,10 @@
     <string name="review_new_count">جدید</string>
     <string name="review_estimated_time">زمان تقریبی</string>
     <string name="review_minutes_short">%1$d دقیقه</string>
+    <string name="review_lesson_short">درس %1$s</string>
     <string name="review_goal_progress">%1$d از %2$d مرور امروز انجام شد</string>
     <string name="review_no_cards_due">در حال حاضر کارتی برای مرور نیست — بعداً دوباره سر بزنید</string>
+    <string name="review_new_cap_reached">سقف کلمات جدید امروز پر شده — کلمات بیشتری منتظرن، سقف رو در تنظیمات زیاد کنید یا فردا دوباره سر بزنید</string>
     <string name="review_streak">روند فعلی: %1$d روز</string>
     <string name="review_start">شروع مرور</string>
     <string name="review_box_label">جعبه %1$d</string>

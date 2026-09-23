@@ -77,17 +77,27 @@ object VocabPrefs {
     fun setReminderTime(context: Context, hour: Int, minute: Int) = prefs(context).edit()
         .putInt(KEY_REMINDER_HOUR, hour).putInt(KEY_REMINDER_MINUTE, minute).apply()
 
+    /** Guards the new-count read-modify-write below: increment/decrement can otherwise race
+     * across ViewModels (e.g. two review sessions, or an answer overlapping an undo) and lose
+     * an update, since SharedPreferences only makes the write itself atomic, not the read that
+     * precedes it. */
+    private val newCountLock = Any()
+
     fun getNewReviewedToday(context: Context, date: String): Int =
         if (prefs(context).getString(KEY_NEW_COUNT_DATE, null) == date) prefs(context).getInt(KEY_NEW_COUNT, 0) else 0
 
     fun incrementNewReviewed(context: Context, date: String) {
-        val current = getNewReviewedToday(context, date)
-        prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current + 1).apply()
+        synchronized(newCountLock) {
+            val current = getNewReviewedToday(context, date)
+            prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current + 1).apply()
+        }
     }
 
     fun decrementNewReviewed(context: Context, date: String) {
-        val current = getNewReviewedToday(context, date)
-        if (current > 0) prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current - 1).apply()
+        synchronized(newCountLock) {
+            val current = getNewReviewedToday(context, date)
+            if (current > 0) prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current - 1).apply()
+        }
     }
 
     fun getStudyTimeMsToday(context: Context, date: String): Long =

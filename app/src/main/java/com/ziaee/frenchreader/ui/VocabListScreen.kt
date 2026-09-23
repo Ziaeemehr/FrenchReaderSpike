@@ -36,6 +36,7 @@ import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
 import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.data.status
+import com.ziaee.frenchreader.data.displayMeaning
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -532,9 +533,10 @@ private fun VocabRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (showMeaning && !entry.meaning.isNullOrBlank()) {
+                val displayMeaning = entry.displayMeaning()
+                if (showMeaning && displayMeaning != null) {
                     Spacer(Modifier.height(4.dp))
-                    Text(entry.meaning, style = MaterialTheme.typography.bodyMedium)
+                    Text(displayMeaning, style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {

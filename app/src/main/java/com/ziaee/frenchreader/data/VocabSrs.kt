@@ -16,6 +16,17 @@ fun VocabEntry.status(): VocabStatus = when {
     else -> VocabStatus.LEARNING
 }
 
+private val LESSON_TAG_REGEX = Regex("(?:^|\\s*—\\s*)Leçon (\\d+(?:\\.\\d+)?)$")
+
+/** Anki-imported decks (see Gram_diag_B1 / Communication progressive imports) stash a
+ * "— Leçon N" suffix in [VocabEntry.meaning] since there's no dedicated column for it.
+ * This pulls just the number back out for a small corner badge. */
+fun VocabEntry.lessonNumber(): String? = meaning?.let { LESSON_TAG_REGEX.find(it)?.groupValues?.get(1) }
+
+/** [VocabEntry.meaning] with the "— Leçon N" tag (see [lessonNumber]) stripped, so the
+ * meaning shown on a card doesn't carry that bookkeeping suffix. Null/blank if nothing's left. */
+fun VocabEntry.displayMeaning(): String? = meaning?.replace(LESSON_TAG_REGEX, "")?.trim()?.takeIf { it.isNotBlank() }
+
 object VocabSrs {
     const val DAY_MS = 86_400_000L
     val DEFAULT_INTERVAL_DAYS = listOf(1L, 2L, 4L, 8L, 16L)

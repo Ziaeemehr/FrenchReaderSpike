@@ -366,8 +366,10 @@
     <string name="review_new_count">New</string>
     <string name="review_estimated_time">Estimated</string>
     <string name="review_minutes_short">%1$d min</string>
+    <string name="review_lesson_short">Lesson %1$s</string>
     <string name="review_goal_progress">%1$d of %2$d reviews done today</string>
     <string name="review_no_cards_due">No cards due right now — check back later</string>
+    <string name="review_new_cap_reached">Today\'s new-card limit is reached — more words are waiting, raise the limit in Settings or come back tomorrow</string>
     <string name="review_streak">Current streak: %1$d days</string>
     <string name="review_start">Start Review</string>
     <string name="review_box_label">Box %1$d</string>

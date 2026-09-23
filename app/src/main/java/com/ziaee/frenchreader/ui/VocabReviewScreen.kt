@@ -100,6 +100,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     }
     var dueCount by mutableIntStateOf(0); private set
     var newCount by mutableIntStateOf(0); private set
+    var newCapReached by mutableStateOf(false); private set
     var reviewedToday by mutableIntStateOf(0); private set
     var dailyGoal by mutableIntStateOf(20); private set
     var streak by mutableIntStateOf(0); private set
@@ -128,6 +129,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     val audioAutoplay get() = VocabPrefs.getAudioAutoplay(context)
     fun listNameFor(entry: VocabEntry): String? = entry.listId?.let { listNames[it] }
 
+    private fun localDateFor(epochMs: Long): String = Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+
+    private fun remainingNewAt(now: Long): Int =
+        (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, localDateFor(now))).coerceAtLeast(0)
+
     fun load(scope: Long) {
         scopeId = scope
         val requestedScope = scope
@@ -139,9 +145,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val all = scoped(db.vocabDao().getAllOnce(), requestedScope).filter { !it.learned }
             val loadedListNames = db.vocabListDao().getAllOnce().associate { it.id to it.name }
             val loadedDueCount = all.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }
-            val date = LocalDate.now().toString()
-            val remainingNew = (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, date)).coerceAtLeast(0)
-            val loadedNewCount = all.count { it.lastReviewedAtMs == null }.coerceAtMost(remainingNew)
+            val availableNew = all.count { it.lastReviewedAtMs == null }
+            val remainingNew = remainingNewAt(now)
+            val loadedNewCount = availableNew.coerceAtMost(remainingNew)
+            val loadedNewCapReached = availableNew > 0 && remainingNew == 0
             val loadedReviewedToday = db.reviewLogDao().countSince(dayStart)
             val loadedDailyGoal = VocabPrefs.getDailyGoal(context)
             val loadedStreak = computeStreak(db.reviewLogDao().distinctActiveDates().map(LocalDate::parse).toSet(), LocalDate.now())
@@ -153,6 +160,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             listNames = loadedListNames
             dueCount = loadedDueCount
             newCount = loadedNewCount
+            newCapReached = loadedNewCapReached
             reviewedToday = loadedReviewedToday
             dailyGoal = loadedDailyGoal
             streak = loadedStreak
@@ -165,7 +173,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
-            queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, newCount, box))
+            queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
             cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
             sessionStartedAtMs = now
@@ -195,7 +203,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             }
             val statsBefore = stats
             applyStats(stats.after(answer, entry.leitnerBox, updated.leitnerBox))
-            val date = LocalDate.now().toString()
+            val date = localDateFor(now)
             val wasNew = entry.lastReviewedAtMs == null
             if (wasNew) VocabPrefs.incrementNewReviewed(context, date)
             moveLabel = when {
@@ -392,7 +400,12 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
             Metric(vm.newCount.toString(), stringResource(R.string.review_new_count))
             Metric(stringResource(R.string.review_minutes_short, vm.estimatedMinutes), stringResource(R.string.review_estimated_time))
         }
-        if (vm.dueCount + vm.newCount == 0) Text(stringResource(R.string.review_no_cards_due), style = MaterialTheme.typography.bodyMedium)
+        if (vm.dueCount + vm.newCount == 0) {
+            Text(
+                stringResource(if (vm.newCapReached) R.string.review_new_cap_reached else R.string.review_no_cards_due),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
         Button(onClick = { vm.startReview() }, enabled = vm.dueCount + vm.newCount > 0, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).height(52.dp)) {
             Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.review_start))
         }
@@ -496,8 +509,9 @@ private fun AccuracyRing(percent: Int) {
 private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, interactive: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onEdit: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
     val wordTap: (String) -> Unit = { w -> if (interactive) onWordTap(w) }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        vm.listNameFor(entry)?.let {
-            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val cornerLabel = listOfNotNull(vm.listNameFor(entry), entry.lessonNumber()?.let { stringResource(R.string.review_lesson_short, it) }).joinToString(" · ")
+        if (cornerLabel.isNotEmpty()) {
+            Text(cornerLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
         }
         BoxDots(entry.leitnerBox)
@@ -521,7 +535,7 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
                         TextButton(onClick = onDictionary, enabled = interactive) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
                         IconButton(onClick = onEdit, enabled = interactive) { Icon(Icons.Default.Edit, stringResource(R.string.action_edit)) }
                     }
-                    if (!entry.meaning.isNullOrBlank()) { Text(entry.meaning, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
+                    entry.displayMeaning()?.let { Text(it, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                         IconButton(onClick = vm::playSentence, enabled = interactive) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
