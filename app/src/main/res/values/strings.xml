@@ -448,4 +448,26 @@
     <string name="vocab_edit_word">Word</string>
     <string name="vocab_edit_meaning">Meaning</string>
     <string name="vocab_edit_sentence">Sentence</string>
+    <string name="shadowing_toggle">Shadowing mode</string>
+    <string name="shadowing_play_original">Original</string>
+    <string name="shadowing_replay_mine">Mine</string>
+    <string name="shadowing_retry">Retry</string>
+    <string name="shadowing_next">Next</string>
+    <string name="shadowing_hold_to_speak">Hold to speak</string>
+    <string name="shadowing_listening">Listening…</string>
+    <string name="shadowing_recognizing">Checking…</string>
+    <string name="shadowing_score">%1$d / %2$d</string>
+    <string name="shadowing_not_heard">Didn\'t catch that — try again</string>
+    <string name="shadowing_engine_failed">Speech recognition failed — try again</string>
+    <string name="shadowing_mic_denied">Shadowing needs the microphone to hear you repeat each sentence.</string>
+    <string name="shadowing_model_prompt_title">Download French speech model?</string>
+    <string name="shadowing_model_prompt_body">Offline recognition needs a one-time download of about 40 MB. Your voice never leaves the phone.</string>
+    <string name="shadowing_model_download">Download</string>
+    <string name="shadowing_use_android_engine">Use Android recognizer</string>
+    <string name="shadowing_model_downloading">Downloading speech model… %1$d%%</string>
+    <string name="shadowing_model_failed">Download failed. Check your connection.</string>
+    <string name="shadowing_waiting_for_audio">Preparing audio…</string>
+    <string name="shadowing_pace_good">Good pace (%1$s×)</string>
+    <string name="shadowing_pace_slow">A bit slow (%1$s×)</string>
+    <string name="shadowing_pace_fast">A bit fast (%1$s×)</string>
 </resources>

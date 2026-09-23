@@ -446,4 +446,26 @@
     <string name="vocab_edit_word">کلمه</string>
     <string name="vocab_edit_meaning">معنی</string>
     <string name="vocab_edit_sentence">جمله</string>
+    <string name="shadowing_toggle">حالت شدوئینگ</string>
+    <string name="shadowing_play_original">اصلی</string>
+    <string name="shadowing_replay_mine">صدای من</string>
+    <string name="shadowing_retry">دوباره</string>
+    <string name="shadowing_next">بعدی</string>
+    <string name="shadowing_hold_to_speak">برای صحبت نگه دارید</string>
+    <string name="shadowing_listening">در حال گوش دادن…</string>
+    <string name="shadowing_recognizing">در حال بررسی…</string>
+    <string name="shadowing_score">%1$d / %2$d</string>
+    <string name="shadowing_not_heard">متوجه نشدم — دوباره امتحان کنید</string>
+    <string name="shadowing_engine_failed">تشخیص گفتار ناموفق بود — دوباره امتحان کنید</string>
+    <string name="shadowing_mic_denied">حالت شدوئینگ برای شنیدن تکرار جمله‌ها به میکروفون نیاز دارد.</string>
+    <string name="shadowing_model_prompt_title">مدل گفتار فرانسوی دانلود شود؟</string>
+    <string name="shadowing_model_prompt_body">تشخیص آفلاین به یک دانلود یک‌باره حدود ۴۰ مگابایت نیاز دارد. صدای شما هرگز از گوشی خارج نمی‌شود.</string>
+    <string name="shadowing_model_download">دانلود</string>
+    <string name="shadowing_use_android_engine">استفاده از تشخیص‌دهنده اندروید</string>
+    <string name="shadowing_model_downloading">در حال دانلود مدل گفتار… %1$d%%</string>
+    <string name="shadowing_model_failed">دانلود ناموفق بود. اتصال را بررسی کنید.</string>
+    <string name="shadowing_waiting_for_audio">در حال آماده‌سازی صدا…</string>
+    <string name="shadowing_pace_good">سرعت خوب (%1$s×)</string>
+    <string name="shadowing_pace_slow">کمی کند (%1$s×)</string>
+    <string name="shadowing_pace_fast">کمی تند (%1$s×)</string>
 </resources>

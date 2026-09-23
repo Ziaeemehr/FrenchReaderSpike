@@ -448,4 +448,26 @@
     <string name="vocab_edit_word">Mot</string>
     <string name="vocab_edit_meaning">Sens</string>
     <string name="vocab_edit_sentence">Phrase</string>
+    <string name="shadowing_toggle">Mode shadowing</string>
+    <string name="shadowing_play_original">Original</string>
+    <string name="shadowing_replay_mine">Moi</string>
+    <string name="shadowing_retry">Réessayer</string>
+    <string name="shadowing_next">Suivant</string>
+    <string name="shadowing_hold_to_speak">Maintenir pour parler</string>
+    <string name="shadowing_listening">J\'écoute…</string>
+    <string name="shadowing_recognizing">Vérification…</string>
+    <string name="shadowing_score">%1$d / %2$d</string>
+    <string name="shadowing_not_heard">Je n\'ai pas compris — réessayez</string>
+    <string name="shadowing_engine_failed">La reconnaissance vocale a échoué — réessayez</string>
+    <string name="shadowing_mic_denied">Le shadowing a besoin du micro pour vous entendre répéter chaque phrase.</string>
+    <string name="shadowing_model_prompt_title">Télécharger le modèle vocal français ?</string>
+    <string name="shadowing_model_prompt_body">La reconnaissance hors ligne nécessite un téléchargement unique d\'environ 40 Mo. Votre voix ne quitte jamais le téléphone.</string>
+    <string name="shadowing_model_download">Télécharger</string>
+    <string name="shadowing_use_android_engine">Utiliser la reconnaissance Android</string>
+    <string name="shadowing_model_downloading">Téléchargement du modèle… %1$d%%</string>
+    <string name="shadowing_model_failed">Échec du téléchargement. Vérifiez votre connexion.</string>
+    <string name="shadowing_waiting_for_audio">Préparation de l\'audio…</string>
+    <string name="shadowing_pace_good">Bon rythme (%1$s×)</string>
+    <string name="shadowing_pace_slow">Un peu lent (%1$s×)</string>
+    <string name="shadowing_pace_fast">Un peu rapide (%1$s×)</string>
 </resources>

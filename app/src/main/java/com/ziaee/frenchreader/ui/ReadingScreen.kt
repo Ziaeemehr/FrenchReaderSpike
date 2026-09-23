@@ -1,7 +1,11 @@
 package com.ziaee.frenchreader.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
@@ -54,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Popup
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
@@ -67,6 +72,7 @@ import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
 import com.ziaee.frenchreader.data.AppearancePrefs
+import com.ziaee.frenchreader.shadowing.*
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FontScale
 import com.ziaee.frenchreader.ui.theme.ReadingPalette
@@ -131,6 +137,28 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     var showContentsSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val shadowState by vm.shadowing.collectAsState()
+    val micDenied = stringResource(R.string.shadowing_mic_denied)
+    var showModelPrompt by remember { mutableStateOf(false) }
+    var modelProgress by remember { mutableStateOf<Float?>(null) }
+    val modelManager = remember { VoskModelManager(settingsContext) }
+
+    fun enableShadowingChecked() {
+        if (ShadowingPrefs.getEngine(settingsContext) == SpeechEngineKind.VOSK && !modelManager.isInstalled()) {
+            showModelPrompt = true
+        } else vm.setShadowing(true)
+    }
+    val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) enableShadowingChecked() else scope.launch { snackbarHostState.showSnackbar(micDenied) }
+    }
+    val onToggleShadowing: () -> Unit = {
+        when {
+            shadowState.enabled -> vm.finishShadowing()
+            ContextCompat.checkSelfPermission(settingsContext, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED -> enableShadowingChecked()
+            else -> micPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
     val headings = remember(state.chunks) {
         state.chunks.mapIndexedNotNull { index, chunk ->
             chunk.takeIf { it.block.type == BlockType.HEADER && it.block.headerLevel in 1..2 }
@@ -405,7 +433,21 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
-            bottomBar = { PlaybackControls(vm, state, palette) }
+            bottomBar = {
+                Column {
+                    if (shadowState.enabled) {
+                        Surface(color = palette.background, tonalElevation = FrenchReaderDesign.elevations.raised) {
+                            ShadowingPanel(
+                                state = shadowState, isPlaying = state.isPlaying, palette = palette,
+                                onPlayOriginal = vm::shadowPlayOriginal, onReplayMine = vm::shadowReplayMine,
+                                onRetry = vm::shadowRetry, onNext = vm::shadowNext,
+                                onPressStart = vm::shadowPressStart, onPressEnd = vm::shadowPressEnd
+                            )
+                        }
+                    }
+                    PlaybackControls(vm, state, palette, shadowState.enabled, onToggleShadowing)
+                }
+            }
         ) { padding ->
             if (state.chunks.isEmpty()) {
                 Box(
@@ -480,6 +522,40 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
             }
             }
         }
+    }
+
+    val modelFailed = stringResource(R.string.shadowing_model_failed)
+    if (showModelPrompt) {
+        AlertDialog(
+            onDismissRequest = { if (modelProgress == null) showModelPrompt = false },
+            title = { Text(stringResource(R.string.shadowing_model_prompt_title)) },
+            text = {
+                val p = modelProgress
+                if (p == null) Text(stringResource(R.string.shadowing_model_prompt_body))
+                else Column {
+                    Text(stringResource(R.string.shadowing_model_downloading, (p * 100).toInt()))
+                    LinearProgressIndicator(progress = { p }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = modelProgress == null, onClick = {
+                    modelProgress = 0f
+                    scope.launch {
+                        val ok = runCatching { modelManager.download { modelProgress = it } }.isSuccess
+                        modelProgress = null
+                        showModelPrompt = false
+                        if (ok) vm.setShadowing(true) else snackbarHostState.showSnackbar(modelFailed)
+                    }
+                }) { Text(stringResource(R.string.shadowing_model_download)) }
+            },
+            dismissButton = {
+                if (AndroidSpeechEngine.isAvailable(settingsContext)) TextButton(enabled = modelProgress == null, onClick = {
+                    ShadowingPrefs.setEngine(settingsContext, SpeechEngineKind.ANDROID)
+                    showModelPrompt = false
+                    vm.setShadowing(true)
+                }) { Text(stringResource(R.string.shadowing_use_android_engine)) }
+            }
+        )
     }
 
     dictionaryTarget?.let { (word, sentence) ->
@@ -1382,7 +1458,13 @@ internal fun classifySelection(text: String, selection: androidx.compose.ui.text
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palette: ReadingPalette) {
+private fun PlaybackControls(
+    vm: ReadingViewModel,
+    state: ReadingUiState,
+    palette: ReadingPalette,
+    shadowingEnabled: Boolean,
+    onToggleShadowing: () -> Unit
+) {
     var speedMenuExpanded by remember { mutableStateOf(false) }
     val isSynthesizing = state.chunks.getOrNull(state.currentChunkIndex)?.status == ChunkStatus.LOADING
 
@@ -1440,6 +1522,14 @@ private fun PlaybackControls(vm: ReadingViewModel, state: ReadingUiState, palett
                 }
                 IconButton(onClick = { vm.nextSentence() }, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.accessibility_next_sentence), modifier = Modifier.size(22.dp), tint = palette.ink.copy(alpha = 0.75f))
+                }
+                IconButton(onClick = onToggleShadowing, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        Icons.Default.Mic,
+                        contentDescription = stringResource(R.string.shadowing_toggle),
+                        modifier = Modifier.size(22.dp),
+                        tint = if (shadowingEnabled) palette.accent else palette.ink.copy(alpha = 0.75f)
+                    )
                 }
                 Box {
                     Surface(
