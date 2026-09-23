@@ -1274,10 +1274,15 @@ private fun SentenceFlowText(
                 val lastLine = layout.getLineForOffset(range.last)
                 for (line in firstLine..lastLine) {
                     val lineStart = maxOf(range.first, layout.getLineStart(line))
-                    val lineEnd = minOf(range.last + 1, layout.getLineEnd(line, visibleEnd = true))
+                    val visibleLineEnd = layout.getLineEnd(line, visibleEnd = true)
+                    val lineEnd = minOf(range.last + 1, visibleLineEnd)
                     if (lineStart >= lineEnd) continue
-                    val left = layout.getHorizontalPosition(lineStart, usePrimaryDirection = true)
-                    val right = layout.getHorizontalPosition(lineEnd, usePrimaryDirection = true)
+                    // Justified/hyphenated lines: a line-end offset resolves to the next line's
+                    // start, so use per-character boxes and the line's own edges instead.
+                    val left = if (lineStart == layout.getLineStart(line)) layout.getLineLeft(line)
+                        else layout.getBoundingBox(lineStart).left
+                    val right = if (lineEnd == visibleLineEnd) layout.getLineRight(line)
+                        else layout.getBoundingBox(lineEnd - 1).right
                     drawRoundRect(
                         color = palette.highlightBg,
                         topLeft = Offset(minOf(left, right) - 3.dp.toPx(), layout.getLineTop(line) + 1.dp.toPx()),
