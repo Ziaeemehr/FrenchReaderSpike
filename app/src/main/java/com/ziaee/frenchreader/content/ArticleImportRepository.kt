@@ -75,6 +75,7 @@ class ArticleImportRepository(
                 textDao.delete(it)
                 bodyStore.delete(it)
             }
+            throw e
         }
     }
 

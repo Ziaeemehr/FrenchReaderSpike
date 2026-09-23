@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ArticleImportRepositoryTest {
@@ -60,6 +61,22 @@ class ArticleImportRepositoryTest {
         val inserted = textDao.inserted.single()
         assertEquals(normalizedKeyFor(headline), inserted.externalKey)
         assertEquals("text_images/1.jpg", textDao.imagePaths[inserted.id])
+    }
+
+    @Test
+    fun `image path database failure rolls back and is reported to caller`() {
+        val textDao = FakeTextDao(mutableListOf(), failImagePathUpdate = true)
+        val source = FakeContentSource {
+            ContentArticle("Titre", "Texte", "https://example.com/article", "RFI", null, null, null)
+        }
+        val imageStorage = FakeImageStorage(storedPath = "text_images/1.jpg")
+        val repository = ArticleImportRepository(textDao, listOf(source), imageStorage, FakeBodyStorage())
+
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking { repository.import(headline()) }
+        }
+        assertTrue(textDao.documents.isEmpty())
+        assertEquals(listOf("text_images/1.jpg"), imageStorage.deleted)
     }
 
     @Test
@@ -124,8 +141,11 @@ class ArticleImportRepositoryTest {
         override suspend fun delete(doc: TextDocument): Boolean = true
     }
 
-    private class FakeTextDao(initial: MutableList<TextDocument>) : TextDao {
-        private val documents = initial
+    private class FakeTextDao(
+        initial: MutableList<TextDocument>,
+        private val failImagePathUpdate: Boolean = false
+    ) : TextDao {
+        val documents = initial
         val inserted = mutableListOf<TextDocument>()
         val imagePaths = mutableMapOf<Long, String>()
         private var nextId = (initial.maxOfOrNull { it.id } ?: 0L) + 1L
@@ -164,6 +184,7 @@ class ArticleImportRepositoryTest {
         override suspend fun markAccessed(id: Long, now: Long) = Unit
 
         override suspend fun updateImagePath(id: Long, imagePath: String) {
+            if (failImagePathUpdate) error("database write failed")
             imagePaths[id] = imagePath
         }
 

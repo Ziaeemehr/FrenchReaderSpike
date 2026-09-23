@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.ContentResult
 import com.ziaee.frenchreader.util.SharedTextHolder
+import com.ziaee.frenchreader.util.MAX_TEXT_IMPORT_BYTES
+import com.ziaee.frenchreader.util.readBytesLimited
 
 /** State of the "find content" search sheet -- see ROADMAP.md section 6.
  * [Importing] tracks which result (by [ContentResult.ref]) is being
@@ -161,7 +163,9 @@ fun rememberFilePickerLauncher(
             return@rememberLauncherForActivityResult
         }
         val body = try {
-            context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
+            context.contentResolver.openInputStream(uri)?.use {
+                it.readBytesLimited(MAX_TEXT_IMPORT_BYTES).toString(Charsets.UTF_8)
+            }
         } catch (e: Exception) {
             null
         }

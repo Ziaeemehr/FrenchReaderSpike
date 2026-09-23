@@ -35,8 +35,13 @@ object XttsClient {
             put("rate_percent", ratePercent)
             put("language", "fr")
         }
-        connection.outputStream.use { it.write(request.toString().toByteArray(Charsets.UTF_8)) }
-        val response = readResponse(connection)
+        val response = try {
+            connection.outputStream.use { it.write(request.toString().toByteArray(Charsets.UTF_8)) }
+            readResponse(connection)
+        } catch (error: Exception) {
+            connection.disconnect()
+            throw error
+        }
         val obj = JSONObject(response)
         val audio = Base64.decode(obj.getString("audio_b64"), Base64.DEFAULT)
         outFile.parentFile?.mkdirs()

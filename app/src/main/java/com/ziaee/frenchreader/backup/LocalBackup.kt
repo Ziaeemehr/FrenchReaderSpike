@@ -4,6 +4,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.util.MAX_BACKUP_ARCHIVE_BYTES
+import com.ziaee.frenchreader.util.copyToLimited
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -18,6 +20,7 @@ import java.util.zip.ZipOutputStream
 private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 private const val DATABASE_ENTRY = "database/french_reader.db"
 private val FILE_DIRECTORIES = listOf("text_bodies", "text_images")
+private const val MAX_BACKUP_ENTRIES = 20_000
 
 fun isValidSqliteBackup(bytes: ByteArray): Boolean =
     bytes.size >= SQLITE_HEADER.size && SQLITE_HEADER.indices.all { bytes[it] == SQLITE_HEADER[it] }
@@ -55,7 +58,7 @@ object LocalBackup {
             ?: throw IOException("Unable to open backup file")
         val archive = File.createTempFile("french_reader_restore_", ".backup", context.cacheDir)
         try {
-            input.use { source -> archive.outputStream().use { source.copyTo(it) } }
+            input.use { source -> archive.outputStream().use { source.copyToLimited(it, MAX_BACKUP_ARCHIVE_BYTES) } }
             restoreArchive(context, archive)
         } finally {
             archive.delete()
@@ -63,6 +66,7 @@ object LocalBackup {
     }
 
     suspend fun importBytes(context: Context, bytes: ByteArray): Boolean = withContext(Dispatchers.IO) {
+        if (bytes.size > MAX_BACKUP_ARCHIVE_BYTES) throw IOException("Backup archive is too large")
         val archive = File.createTempFile("french_reader_drive_restore_", ".backup", context.cacheDir)
         try {
             archive.writeBytes(bytes)
@@ -156,9 +160,13 @@ object LocalBackup {
 
     private fun extractArchive(archive: File, stagingRoot: File) {
         val canonicalRoot = stagingRoot.canonicalFile
+        var entryCount = 0
+        var extractedBytes = 0L
         ZipInputStream(FileInputStream(archive)).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
+                entryCount++
+                if (entryCount > MAX_BACKUP_ENTRIES) throw IOException("Backup contains too many entries")
                 val output = File(canonicalRoot, entry.name).canonicalFile
                 val allowed = output == File(canonicalRoot, DATABASE_ENTRY).canonicalFile ||
                     FILE_DIRECTORIES.any { name ->
@@ -168,7 +176,9 @@ object LocalBackup {
                 if (!allowed) { zip.closeEntry(); continue }
                 if (entry.isDirectory) output.mkdirs() else {
                     output.parentFile?.mkdirs()
-                    output.outputStream().use { zip.copyTo(it) }
+                    output.outputStream().use {
+                        extractedBytes += zip.copyToLimited(it, MAX_BACKUP_ARCHIVE_BYTES - extractedBytes)
+                    }
                 }
                 zip.closeEntry()
             }

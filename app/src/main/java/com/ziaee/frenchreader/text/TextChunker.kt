@@ -78,7 +78,7 @@ object TextChunker {
         // just to bound size -- edge-tts still does the real sentence
         // segmentation for highlighting inside each resulting piece.
         val sentenceEnd = Regex("(?<=[.!?…])\\s+(?=[A-ZÀ-Ü«\"])")
-        val pieces = paragraph.split(sentenceEnd)
+        val pieces = paragraph.split(sentenceEnd).flatMap(::splitOversizedUnit)
         val out = mutableListOf<String>()
         val buf = StringBuilder()
         for (p in pieces) {
@@ -91,5 +91,19 @@ object TextChunker {
         }
         if (buf.isNotEmpty()) out.add(buf.toString().trim())
         return out
+    }
+
+    private fun splitOversizedUnit(unit: String): List<String> {
+        if (unit.length <= MAX_CHUNK_CHARS) return listOf(unit)
+        val result = mutableListOf<String>()
+        var remaining = unit.trim()
+        while (remaining.length > MAX_CHUNK_CHARS) {
+            val whitespace = remaining.lastIndexOf(' ', MAX_CHUNK_CHARS)
+            val cut = whitespace.takeIf { it > 0 } ?: MAX_CHUNK_CHARS
+            result += remaining.substring(0, cut).trimEnd()
+            remaining = remaining.substring(cut).trimStart()
+        }
+        if (remaining.isNotEmpty()) result += remaining
+        return result
     }
 }

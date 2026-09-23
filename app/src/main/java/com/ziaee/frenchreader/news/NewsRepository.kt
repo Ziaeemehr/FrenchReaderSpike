@@ -114,9 +114,12 @@ class NewsRepository(
         val enabledHeadlines = headlineDao.observeRecent(CACHE_SCAN_LIMIT).first()
             .filter { it.sourceId in enabled }
         if (!enabledHeadlines.mapTo(mutableSetOf()) { it.sourceId }.containsAll(enabled)) return true
-        val mostRecentCacheWrite = enabledHeadlines
-            .maxOfOrNull { it.cachedAtMs } ?: return true
-        return clock.nowMs() - mostRecentCacheWrite >= STALE_THRESHOLD_MS
+        val oldestSourceCacheWrite = enabledHeadlines
+            .groupBy { it.sourceId }
+            .values
+            .minOfOrNull { sourceHeadlines -> sourceHeadlines.maxOf { it.cachedAtMs } }
+            ?: return true
+        return clock.nowMs() - oldestSourceCacheWrite >= STALE_THRESHOLD_MS
     }
 }
 

@@ -55,6 +55,33 @@ class NewsRepositoryTest {
     }
 
     @Test
+    fun `refresh fetches when any enabled source cache is stale`() = runBlocking {
+        val dao = FakeHeadlineDao(
+            listOf(
+                headline(sourceId = RFI_FACILE_SOURCE_ID, cachedAtMs = NOW_MS),
+                headline(
+                    sourceId = FRANCE_INFO_SOURCE_ID,
+                    externalId = "stale-fi",
+                    cachedAtMs = NOW_MS - 15 * 60 * 1000L
+                )
+            )
+        )
+        val fetchedUrls = mutableListOf<String>()
+        val repository = NewsRepository(
+            dao,
+            NewsFeedClient { url, _ ->
+                fetchedUrls += url
+                listOf(newsItem(url))
+            },
+            Clock { NOW_MS }
+        )
+
+        repository.refresh(force = false)
+
+        assertEquals(listOf(RFI_FACILE_FEED_URL, FRANCE_INFO_FEED_URL), fetchedUrls)
+    }
+
+    @Test
     fun `refresh fetches and observes only enabled sources`() = runBlocking {
         val dao = FakeHeadlineDao(
             listOf(

@@ -34,7 +34,9 @@ import com.ziaee.frenchreader.ui.statistics.StatisticsScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
+import com.ziaee.frenchreader.util.MAX_TEXT_IMPORT_BYTES
 import com.ziaee.frenchreader.util.SharedTextHolder
+import com.ziaee.frenchreader.util.readBytesLimited
 
 class MainActivity : AppCompatActivity() {
 
@@ -128,7 +130,9 @@ class MainActivity : AppCompatActivity() {
         else intent.getParcelableExtra(Intent.EXTRA_STREAM)
 
     private fun readTextFromUri(uri: Uri): String? = try {
-        contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
+        contentResolver.openInputStream(uri)?.use {
+            it.readBytesLimited(MAX_TEXT_IMPORT_BYTES).toString(Charsets.UTF_8)
+        }
     } catch (e: Exception) {
         null
     }

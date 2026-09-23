@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.backup
 
+import com.ziaee.frenchreader.util.MAX_BACKUP_ARCHIVE_BYTES
+import com.ziaee.frenchreader.util.readBytesLimited
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -86,7 +88,7 @@ object DriveBackupClient {
                 connection.errorStream?.use { it.readBytes() }
                 throw IOException("Drive download failed: HTTP $code")
             }
-            return connection.inputStream.use { it.readBytes() }
+            return connection.inputStream.use { it.readBytesLimited(MAX_BACKUP_ARCHIVE_BYTES) }
         } finally {
             connection.disconnect()
         }

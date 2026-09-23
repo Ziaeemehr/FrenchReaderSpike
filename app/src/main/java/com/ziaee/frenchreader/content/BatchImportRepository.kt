@@ -13,6 +13,8 @@ import com.ziaee.frenchreader.data.insertTextDocument
 import com.ziaee.frenchreader.images.ArticleImageStorage
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.ui.shared.queryDisplayName
+import com.ziaee.frenchreader.util.MAX_TEXT_IMPORT_BYTES
+import com.ziaee.frenchreader.util.readBytesLimited
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
@@ -32,6 +34,7 @@ data class BatchImportResult(
 private val localImageLine = Regex("^!\\[([^]]*)]\\((?!epubimg:|https?:)([^)]+)\\)$")
 
 private val parentDocIds = java.util.concurrent.ConcurrentHashMap<String, String>()
+private const val MAX_IMPORTED_IMAGE_BYTES = 8L * 1024 * 1024
 
 class BatchImportRepository(
     private val context: Context,
@@ -75,7 +78,7 @@ class BatchImportRepository(
     }
 
     private suspend fun importText(uri: Uri, folderId: Long?, treeUri: Uri?): Boolean {
-        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytesLimited(MAX_TEXT_IMPORT_BYTES) }
             ?: error("Unable to open document")
         val content = bytes.toString(Charsets.UTF_8)
         val externalKey = "file:${sha1(bytes)}"
@@ -146,7 +149,9 @@ class BatchImportRepository(
             dirId = dirId?.let { findChild(treeUri, it, part) }
         }
         dirId?.let { id ->
-            context.contentResolver.openInputStream(DocumentsContract.buildDocumentUriUsingTree(treeUri, id))?.use { it.readBytes() }
+            context.contentResolver.openInputStream(DocumentsContract.buildDocumentUriUsingTree(treeUri, id))?.use {
+                it.readBytesLimited(MAX_IMPORTED_IMAGE_BYTES)
+            }
         }
     } catch (_: Exception) { null }
 

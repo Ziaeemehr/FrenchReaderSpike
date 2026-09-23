@@ -497,6 +497,12 @@ fun DictionarySheet(
                         // own current url avoids reloading on every unrelated
                         // recomposition (e.g. typing in the meaning field).
                         if (webView.url != url) webView.loadUrl(url)
+                    },
+                    onRelease = { webView ->
+                        webView.stopLoading()
+                        webView.loadUrl("about:blank")
+                        webView.removeAllViews()
+                        webView.destroy()
                     }
                 )
                 if (webViewFailed) {
