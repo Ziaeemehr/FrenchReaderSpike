@@ -25,6 +25,9 @@ private const val MAX_BACKUP_ENTRIES = 20_000
 fun isValidSqliteBackup(bytes: ByteArray): Boolean =
     bytes.size >= SQLITE_HEADER.size && SQLITE_HEADER.indices.all { bytes[it] == SQLITE_HEADER[it] }
 
+internal fun isSupportedDatabaseVersion(version: Int, currentVersion: Int): Boolean =
+    version in 2..currentVersion
+
 object LocalBackup {
     suspend fun exportTo(context: Context, uri: Uri) = withContext(Dispatchers.IO) {
         val archive = createArchive(context)
@@ -147,10 +150,14 @@ object LocalBackup {
             val integrityOk = database.rawQuery("PRAGMA integrity_check", null).use { cursor ->
                 cursor.moveToFirst() && cursor.getString(0).equals("ok", ignoreCase = true)
             }
+            val userVersion = database.rawQuery("PRAGMA user_version", null).use { cursor ->
+                if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            }
             val tables = database.rawQuery(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('vocab','texts')", null
             ).use { cursor -> buildSet { while (cursor.moveToNext()) add(cursor.getString(0)) } }
-            integrityOk && tables.containsAll(setOf("vocab", "texts"))
+            integrityOk && isSupportedDatabaseVersion(userVersion, AppDatabase.SCHEMA_VERSION) &&
+                tables.containsAll(setOf("vocab", "texts"))
         } catch (_: Exception) {
             false
         } finally {

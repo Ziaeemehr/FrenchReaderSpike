@@ -82,8 +82,10 @@ class HomeStateTest {
         val now = 1_000L
         val entries = listOf(
             vocab(learned = true, nextReviewAtMs = 0L),
-            vocab(learned = false, nextReviewAtMs = 999L),
-            vocab(learned = false, nextReviewAtMs = 1_001L)
+            vocab(learned = false, nextReviewAtMs = 999L, reviewedAt = 1L),
+            vocab(learned = false, nextReviewAtMs = 1_001L, reviewedAt = 1L),
+            vocab(learned = false, nextReviewAtMs = 0L),
+            vocab(learned = false, nextReviewAtMs = 0L)
         )
         val state = composeHomeState(
             headlines = emptyList(),
@@ -93,12 +95,14 @@ class HomeStateTest {
             continueReading = null,
             isRefreshing = false,
             sourceErrors = emptyList(),
-            importingKey = null
+            importingKey = null,
+            remainingNewCards = 1
         )
         assertEquals(2, state.savedTextCount)
-        assertEquals(3, state.savedWordCount)
+        assertEquals(5, state.savedWordCount)
         assertEquals(1, state.learnedWordCount)
-        assertEquals(1, state.dueReviewCount)
+        // One reviewed card is due; two new cards are capped to the remaining daily allowance of one.
+        assertEquals(2, state.dueReviewCount)
     }
 
     @Test
@@ -195,12 +199,13 @@ class HomeStateTest {
 
     private fun textDoc(id: Long) = TextDocument(id = id, title = "Titre $id", rawText = "Texte $id")
 
-    private fun vocab(learned: Boolean, nextReviewAtMs: Long) = VocabEntry(
+    private fun vocab(learned: Boolean, nextReviewAtMs: Long, reviewedAt: Long? = null) = VocabEntry(
         word = "mot",
         sentence = "Une phrase.",
         textId = 1L,
         dictionaryUrl = "https://example.com",
         learned = learned,
-        nextReviewAtMs = nextReviewAtMs
+        nextReviewAtMs = nextReviewAtMs,
+        lastReviewedAtMs = reviewedAt
     )
 }

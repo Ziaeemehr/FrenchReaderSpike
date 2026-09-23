@@ -232,7 +232,7 @@ val ALL_MIGRATIONS = arrayOf(
         ReviewLogEntry::class, ActivityLogEntry::class, ResourceLink::class,
         LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class, HighlightEntry::class
     ],
-    version = 13,
+    version = AppDatabase.SCHEMA_VERSION,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -247,6 +247,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun highlightDao(): HighlightDao
 
     companion object {
+        const val SCHEMA_VERSION = 13
+
         @Volatile private var INSTANCE: AppDatabase? = null
 
         fun get(context: Context): AppDatabase =

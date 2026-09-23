@@ -39,7 +39,7 @@ internal fun VocabEditDialog(entry: VocabEntry, onDismiss: () -> Unit, onSave: (
         confirmButton = {
             TextButton(
                 onClick = { onSave(word.trim(), meaning.trim().ifBlank { null }, sentence.trim()) },
-                enabled = word.isNotBlank() && sentence.isNotBlank()
+                enabled = word.isNotBlank()
             ) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }

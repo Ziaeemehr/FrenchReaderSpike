@@ -2,6 +2,10 @@ package com.ziaee.frenchreader.ui
 
 import com.ziaee.frenchreader.data.VocabEntry
 
+internal fun reviewableCount(entries: List<VocabEntry>, nowMs: Long, remainingNew: Int): Int =
+    entries.count { !it.learned && it.lastReviewedAtMs != null && it.nextReviewAtMs <= nowMs } +
+        entries.count { !it.learned && it.lastReviewedAtMs == null }.coerceAtMost(remainingNew.coerceAtLeast(0))
+
 internal fun buildReviewQueue(
     entries: List<VocabEntry>, nowMs: Long, dayStartMs: Long, newLimit: Int, box: Int? = null
 ): List<VocabEntry> {

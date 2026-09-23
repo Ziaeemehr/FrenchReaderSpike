@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.ui.home
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabEntry
+import com.ziaee.frenchreader.ui.reviewableCount
 import com.ziaee.frenchreader.text.TextChunker
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
@@ -61,7 +62,8 @@ internal fun composeHomeState(
     importingKey: String?,
     activeDates: Set<LocalDate> = emptySet(),
     nowMs: Long = System.currentTimeMillis(),
-    today: LocalDate = LocalDate.now()
+    today: LocalDate = LocalDate.now(),
+    remainingNewCards: Int = Int.MAX_VALUE
 ): HomeUiState = HomeUiState(
     headlines = headlines,
     recentTexts = allTexts.take(MAX_RECENT_TEXTS),
@@ -73,7 +75,7 @@ internal fun composeHomeState(
     savedTextCount = allTexts.size,
     savedWordCount = vocabEntries.size,
     learnedWordCount = vocabEntries.count { it.learned },
-    dueReviewCount = vocabEntries.count { !it.learned && it.nextReviewAtMs <= nowMs },
+    dueReviewCount = reviewableCount(vocabEntries, nowMs, remainingNewCards),
     streakDays = computeStreak(activeDates, today)
 )
 

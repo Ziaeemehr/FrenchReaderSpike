@@ -190,6 +190,9 @@ interface VocabDao {
     @Update
     suspend fun update(entry: VocabEntry)
 
+    @Query("UPDATE vocab SET leitnerBox = :leitnerBox, nextReviewAtMs = :nextReviewAtMs, lastReviewedAtMs = :lastReviewedAtMs, learned = :learned WHERE id = :id")
+    suspend fun updateSchedule(id: Long, leitnerBox: Int, nextReviewAtMs: Long, lastReviewedAtMs: Long?, learned: Boolean)
+
     @Delete
     suspend fun delete(entry: VocabEntry)
 

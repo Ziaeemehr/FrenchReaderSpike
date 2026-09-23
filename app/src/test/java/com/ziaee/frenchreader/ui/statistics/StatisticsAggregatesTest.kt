@@ -14,9 +14,9 @@ class StatisticsAggregatesTest {
     private fun ms(d: LocalDate) = d.atTime(12, 0).toInstant(utc).toEpochMilli()
     private fun log(d: LocalDate, knew: Boolean, boxBefore: Int = 1) =
         ReviewLogEntry(entryId = 1, timestampMs = ms(d), knew = knew, boxBefore = boxBefore, boxAfter = boxBefore)
-    private fun vocab(created: LocalDate, due: LocalDate, learned: Boolean = false) =
+    private fun vocab(created: LocalDate, due: LocalDate, learned: Boolean = false, reviewed: Long? = 1L) =
         VocabEntry(word = "w", sentence = "s", textId = 0, dictionaryUrl = "",
-            createdAtMs = ms(created), nextReviewAtMs = ms(due), learned = learned)
+            createdAtMs = ms(created), nextReviewAtMs = ms(due), learned = learned, lastReviewedAtMs = reviewed)
 
     @Test fun `lastDays returns n days oldest first`() {
         val days = lastDays(today, 3)
@@ -39,7 +39,8 @@ class StatisticsAggregatesTest {
             vocab(today, today),
             vocab(today, today.plusDays(2)),
             vocab(today, today.plusDays(40)),
-            vocab(today, today, learned = true)
+            vocab(today, today, learned = true),
+            vocab(today, today, reviewed = null)
         )
         val f = dueForecast(entries, today, days = 30, zone = utc)
         assertEquals(30, f.size)

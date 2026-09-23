@@ -53,6 +53,7 @@ import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.ui.components.TappableFrenchText
 import com.ziaee.frenchreader.ui.statistics.computeStreak
+import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import java.time.Instant
@@ -74,6 +75,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private val queue = mutableListOf<VocabEntry>()
     private val completedIds = mutableSetOf<Long>()
     private var sessionStartedAtMs = 0L
+    private var sessionInProgress = false
     private var scopeId = VOCAB_SCOPE_ALL
     private var stats = ReviewSessionStats()
     private var undoing = false
@@ -144,14 +146,17 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val dayStart = VocabSrs.startOfDayMs(now)
             val all = scoped(db.vocabDao().getAllOnce(), requestedScope).filter { !it.learned }
             val loadedListNames = db.vocabListDao().getAllOnce().associate { it.id to it.name }
-            val loadedDueCount = all.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }
             val availableNew = all.count { it.lastReviewedAtMs == null }
             val remainingNew = remainingNewAt(now)
             val loadedNewCount = availableNew.coerceAtMost(remainingNew)
+            val loadedDueCount = reviewableCount(all, now, 0)
             val loadedNewCapReached = availableNew > 0 && remainingNew == 0
             val loadedReviewedToday = db.reviewLogDao().countSince(dayStart)
             val loadedDailyGoal = VocabPrefs.getDailyGoal(context)
-            val loadedStreak = computeStreak(db.reviewLogDao().distinctActiveDates().map(LocalDate::parse).toSet(), LocalDate.now())
+            val loadedStreak = computeStreak(loadActiveDates(
+                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
+                activityLogDates = { db.activityLogDao().activeDates() }
+            ), LocalDate.now())
             val loadedBoxes = (1..5).map { box ->
                 val entries = all.filter { it.leitnerBox == box }
                 ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.minOfOrNull { it.nextReviewAtMs })
@@ -179,6 +184,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             sessionStartedAtMs = now
             show(queue.removeFirstOrNull())
             stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
+            sessionInProgress = stage == ReviewStage.REVIEW
         }
     }
 
@@ -198,7 +204,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         val updated = VocabSrs.apply(entry, answer, now, intervals)
         viewModelScope.launch {
             val logId = db.withTransaction {
-                db.vocabDao().update(updated)
+                db.vocabDao().updateSchedule(updated.id, updated.leitnerBox, updated.nextReviewAtMs, updated.lastReviewedAtMs, updated.learned)
                 db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = entry.leitnerBox, boxAfter = updated.leitnerBox))
             }
             val statsBefore = stats
@@ -229,7 +235,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         canUndo = false
         viewModelScope.launch {
             try {
-                db.withTransaction { db.vocabDao().update(r.previousEntry); db.reviewLogDao().deleteById(r.logId) }
+                db.withTransaction {
+                    db.vocabDao().updateSchedule(r.previousEntry.id, r.previousEntry.leitnerBox, r.previousEntry.nextReviewAtMs, r.previousEntry.lastReviewedAtMs, r.previousEntry.learned)
+                    db.reviewLogDao().deleteById(r.logId)
+                }
                 if (r.wasNewCard) VocabPrefs.decrementNewReviewed(context, r.answeredDate)
                 applyStats(r.statsBefore)
                 if (r.requeued == null && r.completedId != null) completedIds.remove(r.completedId)
@@ -272,6 +281,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         val sessionDurationMs = now - sessionStartedAtMs
         val date = LocalDate.now().toString()
         VocabPrefs.addStudyTimeMs(context, date, sessionDurationMs)
+        sessionInProgress = false
         studyTimeMs = VocabPrefs.getStudyTimeMsToday(context, date)
         nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
         val dayStart = VocabSrs.startOfDayMs(now)
@@ -283,6 +293,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     fun playSentence() {
         val entry = current ?: return
+        if (entry.sentence.isBlank()) return
         viewModelScope.launch {
             sentenceAudioError = false; sentenceAudioLoading = true; player.stop()
             val voiceAndRate = voiceCache[entry.textId] ?: db.textDao().getById(entry.textId).let {
@@ -298,6 +309,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     suspend fun translateSentence() {
         val entry = current ?: return
+        if (entry.sentence.isBlank()) return
         sentenceTranslation = null
         sentenceTranslationError = false
         sentenceTranslationLoading = true
@@ -316,7 +328,15 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         VOCAB_SCOPE_UNFILED -> all.filter { it.listId == null }
         else -> all.filter { it.listId == scope }
     }
-    override fun onCleared() { player.release(); super.onCleared() }
+    override fun onCleared() {
+        if (sessionInProgress && stage == ReviewStage.REVIEW && answerCount > 0) {
+            val now = System.currentTimeMillis()
+            VocabPrefs.addStudyTimeMs(context, localDateFor(now), now - sessionStartedAtMs)
+            sessionInProgress = false
+        }
+        player.release()
+        super.onCleared()
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -338,8 +358,8 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     LaunchedEffect(vm.currentSlot) { vm.currentSlot?.let { lastSlot = it } }
     LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastSlot = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
-    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.audioAutoplay) vm.playSentence() }
-    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed) vm.translateSentence() }
+    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.current?.sentence?.isNotBlank() == true && vm.audioAutoplay) vm.playSentence() }
+    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.current?.sentence?.isNotBlank() == true) vm.translateSentence() }
     vm.current?.takeIf { showEdit }?.let { e ->
         VocabEditDialog(e, onDismiss = { showEdit = false }) { w, m, s ->
             val wasRevealed = e === revealedEntry
@@ -536,16 +556,18 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
                         IconButton(onClick = onEdit, enabled = interactive) { Icon(Icons.Default.Edit, stringResource(R.string.action_edit)) }
                     }
                     entry.displayMeaning()?.let { Text(it, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                        IconButton(onClick = vm::playSentence, enabled = interactive) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
+                    if (entry.sentence.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                            IconButton(onClick = vm::playSentence, enabled = interactive) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
+                        }
+                        when {
+                            vm.sentenceTranslationLoading -> Text(stringResource(R.string.translation_loading), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                            vm.sentenceTranslationError -> Text(stringResource(R.string.error_translation_unavailable), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                            vm.sentenceTranslation != null -> Text(vm.sentenceTranslation!!, color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = FontStyle.Italic, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                        }
+                        if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
                     }
-                    when {
-                        vm.sentenceTranslationLoading -> Text(stringResource(R.string.translation_loading), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
-                        vm.sentenceTranslationError -> Text(stringResource(R.string.error_translation_unavailable), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
-                        vm.sentenceTranslation != null -> Text(vm.sentenceTranslation!!, color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = FontStyle.Italic, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-                    }
-                    if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
                 }
             }
         )

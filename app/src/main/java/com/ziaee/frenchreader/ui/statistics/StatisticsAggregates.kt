@@ -36,7 +36,7 @@ internal fun dueForecast(
     entries: List<VocabEntry>, today: LocalDate, days: Int = 30, zone: ZoneId = ZoneId.systemDefault()
 ): List<Int> {
     val buckets = IntArray(days)
-    entries.filter { !it.learned }.forEach { e ->
+    entries.filter { !it.learned && it.lastReviewedAtMs != null }.forEach { e ->
         val offset = ChronoUnit.DAYS.between(today, e.nextReviewAtMs.toLocalDate(zone)).toInt().coerceAtLeast(0)
         if (offset < days) buckets[offset]++
     }

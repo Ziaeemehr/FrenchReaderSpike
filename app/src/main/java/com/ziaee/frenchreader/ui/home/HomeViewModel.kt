@@ -28,6 +28,7 @@ import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.insertTextDocument
 import com.ziaee.frenchreader.data.VocabEntry
+import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.news.NewsRepository
 import com.ziaee.frenchreader.news.normalizeArticleUrl
@@ -141,7 +142,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             importingKey = values[6] as String?,
             activeDates = values[7] as Set<LocalDate>,
             nowMs = System.currentTimeMillis(),
-            today = LocalDate.now()
+            today = LocalDate.now(),
+            remainingNewCards = (VocabPrefs.getMaxNewCards(app) -
+                VocabPrefs.getNewReviewedToday(app, LocalDate.now().toString())).coerceAtLeast(0)
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 

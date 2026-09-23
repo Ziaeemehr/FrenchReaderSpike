@@ -35,6 +35,7 @@ import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
 import com.ziaee.frenchreader.data.VocabStatus
+import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.status
 import com.ziaee.frenchreader.data.displayMeaning
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,6 +50,8 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.room.withTransaction
+import java.time.Instant
+import java.time.ZoneId
 
 /** Scope sentinels for [VocabListScreen]'s filter chips -- real list ids are
  * always >= 1 (Room autoGenerate), so these never collide with one. */
@@ -68,7 +71,10 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setLearned(entry: VocabEntry, learned: Boolean) {
-        viewModelScope.launch { db.vocabDao().update(entry.copy(learned = learned)) }
+        val updated = if (!learned && entry.leitnerBox >= 5) {
+            entry.copy(learned = false, leitnerBox = 4, nextReviewAtMs = System.currentTimeMillis())
+        } else entry.copy(learned = learned)
+        viewModelScope.launch { db.vocabDao().update(updated) }
     }
 
     fun edit(entry: VocabEntry, word: String, meaning: String?, sentence: String) {
@@ -151,7 +157,9 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     }
     val dueCount = remember(scoped) {
         val now = System.currentTimeMillis()
-        scoped.count { !it.learned && it.nextReviewAtMs <= now }
+        val today = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+        val remainingNew = (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, today)).coerceAtLeast(0)
+        reviewableCount(scoped, now, remainingNew)
     }
 
     pendingAnkiUri?.let { uri ->

@@ -35,6 +35,20 @@ class ReviewQueueTest {
         assertEquals(listOf(1L, 2L), buildReviewQueue(entries, now, dayStart, newLimit = 10, box = 2).map { it.id })
     }
 
+    @Test fun `reviewable count includes due reviews and caps new cards`() {
+        val entries = listOf(
+            e(1, 2, now),
+            e(2, 3, now + day),
+            e(3, 1, now, reviewed = null),
+            e(4, 1, now, reviewed = null),
+            e(5, 1, now, reviewed = null),
+            e(6, 2, now, learned = true)
+        )
+
+        assertEquals(3, reviewableCount(entries, now, remainingNew = 2))
+        assertEquals(1, reviewableCount(entries, now, remainingNew = 0))
+    }
+
     @Test fun `bar fractions scale to the largest count`() {
         assertEquals(listOf(0.5f, 1f, 0f), boxBarFractions(listOf(5, 10, 0)))
         assertEquals(listOf(0f, 0f), boxBarFractions(listOf(0, 0)))

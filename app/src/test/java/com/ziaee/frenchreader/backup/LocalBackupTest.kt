@@ -18,4 +18,12 @@ class LocalBackupTest {
         assertFalse(isValidSqliteBackup("Not a SQLite database".toByteArray()))
         assertFalse(isValidSqliteBackup(byteArrayOf()))
     }
+
+    @Test
+    fun `supported database versions are limited to migratable range`() {
+        assertFalse(isSupportedDatabaseVersion(1, 13))
+        assertTrue(isSupportedDatabaseVersion(2, 13))
+        assertTrue(isSupportedDatabaseVersion(13, 13))
+        assertFalse(isSupportedDatabaseVersion(14, 13))
+    }
 }
