@@ -21,6 +21,8 @@ Get the latest APK from the [Releases page](https://github.com/Ziaeemehr/FrenchR
 
 The app is not on Google Play yet. Updates are published as new releases; installing a newer APK over the old one keeps your data.
 
+See the [privacy policy](PRIVACY.md) for what the app stores and which services it contacts.
+
 ## Features
 
 - **Reading** – Markdown-aware rendering (headings, lists, emphasis, EPUB images) with adjustable font size, reading background and highlight color. Text is shown formatted immediately, before audio is synthesized.
