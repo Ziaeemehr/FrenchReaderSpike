@@ -9,12 +9,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.PlayerMessage
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HighlightEntry
 import com.ziaee.frenchreader.data.HighlightRepository
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabStatus
+import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.status
 import com.ziaee.frenchreader.content.SavedVocab
 import com.ziaee.frenchreader.content.buildVocabStatusMap
@@ -22,6 +24,7 @@ import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
 import com.ziaee.frenchreader.text.ParsedBlock
 import com.ziaee.frenchreader.text.TextChunker
+import com.ziaee.frenchreader.shadowing.*
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.TtsChunkRepository
@@ -89,6 +92,19 @@ internal fun previousSpokenChunkIndex(chunks: List<ChunkState>, fromIndex: Int):
         chunks[it].block.type != BlockType.IMAGE
     }
 
+internal fun nextSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): SentenceRef? {
+    val chunk = chunks.getOrNull(ref.chunkIndex) ?: return null
+    if (ref.sentenceIndex < chunk.sentences.size - 1) return ref.copy(sentenceIndex = ref.sentenceIndex + 1)
+    val next = nextSpokenChunkIndex(chunks, ref.chunkIndex + 1) ?: return null
+    return SentenceRef(next, 0)
+}
+
+internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): SentenceRef? {
+    if (ref.sentenceIndex > 0) return ref.copy(sentenceIndex = ref.sentenceIndex - 1)
+    val prev = previousSpokenChunkIndex(chunks, ref.chunkIndex - 1) ?: return null
+    return SentenceRef(prev, (chunks[prev].sentences.size - 1).coerceAtLeast(0))
+}
+
 internal const val AUDIO_LOOKAHEAD = 3
 internal const val TRANSLATION_LOOKAHEAD = 5
 
@@ -139,6 +155,27 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     val player: ExoPlayer = ExoPlayer.Builder(app).build()
     private val selectionPlayer: ExoPlayer = ExoPlayer.Builder(app).build()
     private var selectionPlaybackJob: Job? = null
+
+    private val shadowingController = ShadowingController(
+        scope = viewModelScope,
+        engineFactory = {
+            when (ShadowingPrefs.getEngine(app)) {
+                SpeechEngineKind.VOSK -> VoskEngine(VoskModelManager(app).modelDir)
+                SpeechEngineKind.ANDROID -> AndroidSpeechEngine(app)
+            }
+        },
+        saveAttempt = { db.shadowAttemptDao().insert(it) },
+        addStudyTimeMs = { delta ->
+            VocabPrefs.addStudyTimeMs(app, java.time.LocalDate.now().toString(), delta)
+        },
+        now = System::currentTimeMillis,
+        isPlaying = { player.isPlaying }
+    )
+    val shadowing: StateFlow<ShadowingState> = shadowingController.state
+    private var shadowStopMessage: PlayerMessage? = null
+    private var shadowSessionStartedAtMs = 0L
+    // Set when the target chunk had no sentences/player item yet; the ticker retries.
+    private var shadowPendingPlay = false
 
     private val _state = MutableStateFlow(ReadingUiState())
     val state: StateFlow<ReadingUiState> = _state.asStateFlow()
@@ -584,8 +621,79 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun togglePlayPause() {
+        if (shadowing.value.enabled) { if (player.isPlaying) player.pause() else shadowPlayOriginal(); return }
         if (player.isPlaying) player.pause() else player.play()
     }
+
+    fun setShadowing(enabled: Boolean) {
+        shadowingController.setEnabled(enabled)
+        cancelShadowStop()
+        if (!enabled) return
+        shadowSessionStartedAtMs = System.currentTimeMillis()
+        player.pause()
+        val ref = activeSentenceRef() ?: firstSentenceRefFrom(_state.value.currentChunkIndex) ?: return
+        setShadowTarget(ref)
+    }
+
+    fun shadowPlayOriginal() { shadowing.value.target?.let { playShadowSentence(it) } }
+
+    fun shadowNext() {
+        val ref = shadowing.value.target ?: return
+        val next = nextSentenceRef(_state.value.chunks, ref)
+        if (next == null) { finishShadowing(); return }
+        setShadowTarget(next); playShadowSentence(next)
+    }
+
+    /** Ends the session. Task 8 extends this to show the per-text summary first. */
+    fun finishShadowing() = setShadowing(false)
+
+    fun shadowPrevious() {
+        val ref = shadowing.value.target ?: return
+        previousSentenceRef(_state.value.chunks, ref)?.let { setShadowTarget(it); playShadowSentence(it) }
+    }
+
+    fun shadowPressStart(): Boolean = shadowingController.pressStart()
+    fun shadowPressEnd() = shadowingController.pressEnd()
+    fun shadowRetry() = shadowingController.retry()
+    fun shadowReplayMine() { player.pause(); shadowingController.replayMine() }
+
+    private fun activeSentenceRef(): SentenceRef? =
+        activeSentenceGlobalIndex()?.let { SentenceRef(it.chunkIdx, it.sentenceIdx) }
+
+    private fun firstSentenceRefFrom(chunkIndex: Int): SentenceRef? =
+        nextSpokenChunkIndex(_state.value.chunks, chunkIndex)?.let { SentenceRef(it, 0) }
+
+    private fun setShadowTarget(ref: SentenceRef) {
+        val doc = _state.value.textDoc ?: return
+        val sentence = _state.value.chunks.getOrNull(ref.chunkIndex)?.sentences?.getOrNull(ref.sentenceIndex)
+        val expectedMs = sentence?.let { (it.durationMs / _state.value.speed).toLong() } ?: 0L
+        shadowingController.setTarget(doc.id, ref, sentence?.text.orEmpty(), expectedMs)
+    }
+
+    private fun playShadowSentence(ref: SentenceRef) {
+        shadowingController.cancel()
+        val chunk = _state.value.chunks.getOrNull(ref.chunkIndex) ?: return
+        val sentence = chunk.sentences.getOrNull(ref.sentenceIndex)
+        val itemIndex = chunk.playerItemIndex
+        if (sentence == null || itemIndex == null) {
+            // Not synthesized yet: jump there; the ticker plays once sentences arrive.
+            shadowPendingPlay = true
+            jumpToChunk(ref.chunkIndex)
+            return
+        }
+        shadowPendingPlay = false
+        cancelShadowStop()
+        val endMs = (sentence.offsetMs + sentence.durationMs).toLong()
+        shadowStopMessage = player.createMessage { _, _ -> player.pause() }
+            .setLooper(android.os.Looper.getMainLooper())
+            .setPosition(itemIndex, endMs)
+            .setDeleteAfterDelivery(true)
+            .send()
+        player.seekTo(itemIndex, sentence.offsetMs.toLong())
+        player.play()
+    }
+
+    private fun cancelShadowStop() { shadowStopMessage?.cancel(); shadowStopMessage = null }
 
     fun skipMs(deltaMs: Long) {
         player.seekTo((player.currentPosition + deltaMs).coerceAtLeast(0))
@@ -621,6 +729,15 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun seekToSentence(chunkIndex: Int, sentence: SentenceBoundary) {
+        if (shadowing.value.enabled) {
+            val idx = _state.value.chunks.getOrNull(chunkIndex)?.sentences?.indexOf(sentence) ?: -1
+            if (idx >= 0) {
+                val ref = SentenceRef(chunkIndex, idx)
+                setShadowTarget(ref)
+                playShadowSentence(ref)
+                return
+            }
+        }
         val itemIndex = _state.value.chunks.getOrNull(chunkIndex)?.playerItemIndex
         if (itemIndex == null) {
             jumpToChunk(chunkIndex)
@@ -631,6 +748,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun previousSentence() {
+        if (shadowing.value.enabled) { shadowPrevious(); return }
         val active = activeSentenceGlobalIndex() ?: return
         if (active.sentenceIdx > 0) {
             val chunk = _state.value.chunks[active.chunkIdx]
@@ -647,6 +765,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun nextSentence() {
+        if (shadowing.value.enabled) { shadowNext(); return }
         val active = activeSentenceGlobalIndex() ?: return
         val chunk = _state.value.chunks[active.chunkIdx]
         if (active.sentenceIdx < chunk.sentences.size - 1) {
@@ -681,6 +800,10 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     _state.value = _state.value.copy(currentPositionMs = player.currentPosition)
                     accountListeningUntil(System.currentTimeMillis())
                     schedulePositionSave()
+                }
+                if (shadowPendingPlay) shadowing.value.target?.let { ref ->
+                    val c = _state.value.chunks.getOrNull(ref.chunkIndex)
+                    if (c?.playerItemIndex != null && c.sentences.isNotEmpty()) { setShadowTarget(ref); playShadowSentence(ref) }
                 }
                 delay(150)
             }
@@ -741,6 +864,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         savePositionJob?.cancel()
         runBlocking(NonCancellable) { flushPositionNow() }
+        shadowingController.release()
         player.release()
         selectionPlayer.release()
         super.onCleared()
