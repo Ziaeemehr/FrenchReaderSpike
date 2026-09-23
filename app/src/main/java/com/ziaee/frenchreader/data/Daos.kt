@@ -53,6 +53,9 @@ interface TextDao {
     @Query("UPDATE texts SET folderId = :folderId WHERE id = :id")
     suspend fun setFolder(id: Long, folderId: Long?)
 
+    @Query("UPDATE texts SET pinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: Long, pinned: Boolean)
+
     @Query("UPDATE texts SET folderId = :folderId WHERE id IN (:ids)")
     suspend fun setFolders(ids: List<Long>, folderId: Long?)
 }

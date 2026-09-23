@@ -173,5 +173,7 @@ class ArticleImportRepositoryTest {
         override suspend fun setFolder(id: Long, folderId: Long?) = Unit
 
         override suspend fun setFolders(ids: List<Long>, folderId: Long?) = Unit
+
+        override suspend fun setPinned(id: Long, pinned: Boolean) = Unit
     }
 }

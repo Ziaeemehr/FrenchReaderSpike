@@ -37,7 +37,8 @@ data class TextDocument(
     val externalKey: String? = null,
     val lastAccessedAtMs: Long = 0,
     val folderId: Long? = null,
-    val bodyPath: String? = null
+    val bodyPath: String? = null,
+    val pinned: Boolean = false
 )
 
 @Entity(tableName = "library_folders")

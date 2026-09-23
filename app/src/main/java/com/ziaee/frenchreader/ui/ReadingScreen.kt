@@ -65,6 +65,7 @@ import com.ziaee.frenchreader.data.HighlightPrefs
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
+import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FontScale
@@ -129,6 +130,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     var showSourceInfoSheet by remember { mutableStateOf(false) }
     var showContentsSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val headings = remember(state.chunks) {
         state.chunks.mapIndexedNotNull { index, chunk ->
             chunk.takeIf { it.block.type == BlockType.HEADER && it.block.headerLevel in 1..2 }
@@ -145,6 +147,11 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     }
 
     LaunchedEffect(textId) { vm.load(textId) }
+    LaunchedEffect(state.fullSynthesisError) {
+        val error = state.fullSynthesisError ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(error)
+        vm.clearFullSynthesisError()
+    }
     DisposableEffect(Unit) {
         onDispose { vm.persistPositionNow() }
     }
@@ -293,6 +300,44 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                                         modifier = Modifier.semantics { contentDescription = autoScrollDescription },
                                         onClick = { moreMenuExpanded = false; autoScrollEnabled = !autoScrollEnabled }
                                     )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                stringResource(
+                                                    if (state.textDoc?.pinned == true) {
+                                                        R.string.settings_unpin_audio
+                                                    } else {
+                                                        R.string.settings_pin_audio
+                                                    }
+                                                )
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Box(Modifier.size(24.dp)) {
+                                                Icon(Icons.Default.PushPin, contentDescription = null)
+                                                if (state.textDoc?.pinned == true) {
+                                                    Icon(
+                                                        Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = palette.accent,
+                                                        modifier = Modifier.size(12.dp).align(Alignment.BottomEnd)
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onClick = { moreMenuExpanded = false; vm.togglePinned() }
+                                    )
+                                    if (state.textDoc?.voice?.startsWith(XTTS_VOICE_PREFIX) == true) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.settings_synthesize_full_document)) },
+                                            leadingIcon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                                            enabled = state.fullSynthesisTotal == 0,
+                                            onClick = {
+                                                moreMenuExpanded = false
+                                                vm.synthesizeFullDocument()
+                                            }
+                                        )
+                                    }
                                     if (state.textDoc?.sourceUrl != null) {
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.accessibility_source_info)) },
@@ -333,8 +378,33 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             )
                         }
                     }
+                    if (state.fullSynthesisTotal > 0) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            LinearProgressIndicator(
+                                progress = {
+                                    state.fullSynthesisDone.toFloat() /
+                                        state.fullSynthesisTotal.coerceAtLeast(1).toFloat()
+                                },
+                                modifier = Modifier.weight(1f),
+                                color = palette.accent,
+                                trackColor = palette.divider
+                            )
+                            Text(
+                                "${state.fullSynthesisDone} / ${state.fullSynthesisTotal}",
+                                modifier = Modifier.padding(start = 12.dp),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            IconButton(onClick = vm::cancelFullSynthesis) {
+                                Icon(Icons.Default.Close, contentDescription = null)
+                            }
+                        }
+                    }
                 }
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = { PlaybackControls(vm, state, palette) }
         ) { padding ->
             if (state.chunks.isEmpty()) {

@@ -25,6 +25,8 @@ import com.ziaee.frenchreader.text.TextChunker
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.TtsChunkRepository
+import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -35,6 +37,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -67,8 +70,14 @@ data class ReadingUiState(
     val isPlaying: Boolean = false,
     val speed: Float = 1.0f,
     val ready: Boolean = false,
-    val showTranslations: Boolean = false
+    val showTranslations: Boolean = false,
+    val fullSynthesisTotal: Int = 0,
+    val fullSynthesisDone: Int = 0,
+    val fullSynthesisError: String? = null
 )
+
+internal fun fullSynthesisTargets(chunks: List<ChunkState>): List<String> =
+    chunks.filter { it.block.type != BlockType.IMAGE }.map { it.text }
 
 internal fun nextSpokenChunkIndex(chunks: List<ChunkState>, fromIndex: Int): Int? =
     (fromIndex.coerceAtLeast(0) until chunks.size).firstOrNull {
@@ -143,6 +152,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     private var audioWindowJob: Job? = null
+    private var fullSynthesisJob: Job? = null
     private var translationJob: Job? = null
     private var highlightsJob: Job? = null
     private var loadJob: Job? = null
@@ -271,6 +281,84 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
     fun toggleShowTranslations() {
         _state.value = _state.value.copy(showTranslations = !_state.value.showTranslations)
+    }
+
+    fun togglePinned() {
+        val doc = _state.value.textDoc ?: return
+        val pinned = !doc.pinned
+        _state.value = _state.value.copy(textDoc = doc.copy(pinned = pinned))
+        val chunkTexts = _state.value.chunks.map { it.text }
+        viewModelScope.launch(Dispatchers.IO) {
+            db.textDao().setPinned(doc.id, pinned)
+            ttsRepo.setDocumentPinned(chunkTexts, doc.voice, doc.ratePercent, pinned)
+        }
+    }
+
+    fun synthesizeFullDocument() {
+        val doc = _state.value.textDoc ?: return
+        if (fullSynthesisJob?.isActive == true) return
+        val voice = doc.voice
+        val ratePercent = doc.ratePercent
+        if (!voice.startsWith(XTTS_VOICE_PREFIX)) return
+        val targets = fullSynthesisTargets(_state.value.chunks)
+        _state.value = _state.value.copy(
+            fullSynthesisTotal = targets.size,
+            fullSynthesisDone = 0,
+            fullSynthesisError = null
+        )
+        if (!doc.pinned) {
+            _state.value = _state.value.copy(textDoc = doc.copy(pinned = true))
+        }
+        fullSynthesisJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (!doc.pinned) {
+                    db.textDao().setPinned(doc.id, true)
+                    ttsRepo.setDocumentPinned(targets, voice, ratePercent, true)
+                }
+                for (text in targets) {
+                    if (!isActive) {
+                        _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
+                        return@launch
+                    }
+                    val result = ttsRepo.getOrSynthesize(text, voice, ratePercent)
+                    if (!isActive) {
+                        _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
+                        return@launch
+                    }
+                    if (result.isFailure) {
+                        _state.value = _state.value.copy(
+                            fullSynthesisTotal = 0,
+                            fullSynthesisDone = 0,
+                            fullSynthesisError = result.exceptionOrNull()?.message
+                                ?: result.exceptionOrNull()?.toString()
+                                ?: "Audio synthesis failed"
+                        )
+                        return@launch
+                    }
+                    ttsRepo.pinText(text, voice, ratePercent)
+                    _state.value = _state.value.copy(
+                        fullSynthesisDone = _state.value.fullSynthesisDone + 1
+                    )
+                }
+                _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
+            } catch (_: CancellationException) {
+                _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
+            } catch (error: Exception) {
+                _state.value = _state.value.copy(
+                    fullSynthesisTotal = 0,
+                    fullSynthesisDone = 0,
+                    fullSynthesisError = error.message ?: error.toString()
+                )
+            }
+        }
+    }
+
+    fun cancelFullSynthesis() {
+        fullSynthesisJob?.cancel()
+    }
+
+    fun clearFullSynthesisError() {
+        _state.value = _state.value.copy(fullSynthesisError = null)
     }
 
     private suspend fun resumeFromSavedPosition(doc: TextDocument) {

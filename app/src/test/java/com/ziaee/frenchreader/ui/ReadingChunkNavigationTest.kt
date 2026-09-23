@@ -80,7 +80,24 @@ class ReadingChunkNavigationTest {
         assertTrue(reset.all { it.playerItemIndex == null })
     }
 
-    private fun chunk(type: BlockType) = ChunkState(
-        block = ParsedBlock(type = type, plainText = if (type == BlockType.IMAGE) "" else "Texte")
+    @Test
+    fun `full document synthesis targets exclude images and preserve text order`() {
+        val chunks = listOf(
+            chunk(BlockType.PARAGRAPH, "Premier"),
+            chunk(BlockType.IMAGE, "image-alt"),
+            chunk(BlockType.HEADER, "Titre"),
+            chunk(BlockType.LIST_ITEM, "Dernier")
+        )
+
+        assertEquals(listOf("Premier", "Titre", "Dernier"), fullSynthesisTargets(chunks))
+    }
+
+    @Test
+    fun `full document synthesis has no targets for image-only document`() {
+        assertTrue(fullSynthesisTargets(listOf(chunk(BlockType.IMAGE, "image-alt"))).isEmpty())
+    }
+
+    private fun chunk(type: BlockType, text: String = if (type == BlockType.IMAGE) "" else "Texte") = ChunkState(
+        block = ParsedBlock(type = type, plainText = text)
     )
 }

@@ -11,8 +11,12 @@ import java.security.MessageDigest
  * after a restart, doesn't re-call edge-tts for chunks we already have.
  * Per the design doc: "کش بر اساس متن، صدا و تنظیمات تولید است."
  */
-class TtsCache(context: Context) {
-    private val dir = File(context.filesDir, "tts_cache").apply { mkdirs() }
+class TtsCache(private val dir: File) {
+    constructor(context: Context) : this(File(context.filesDir, "tts_cache"))
+
+    init {
+        dir.mkdirs()
+    }
 
     private fun keyFor(text: String, voice: String, ratePercent: Int): String {
         val raw = "$text|$voice|$ratePercent"
@@ -31,6 +35,7 @@ class TtsCache(context: Context) {
                 val o = arr.getJSONObject(i)
                 SentenceBoundary(o.getString("text"), o.getDouble("offset_ms"), o.getDouble("duration_ms"))
             }
+            audio.setLastModified(System.currentTimeMillis())
             SynthesisResult(audio, sentences)
         } catch (e: Exception) {
             null
@@ -58,9 +63,60 @@ class TtsCache(context: Context) {
         return File(dir, "$key.mp3")
     }
 
+    fun pin(text: String, voice: String, ratePercent: Int) {
+        File(dir, "${keyFor(text, voice, ratePercent)}.pinned").createNewFile()
+    }
+
+    fun unpin(text: String, voice: String, ratePercent: Int) {
+        File(dir, "${keyFor(text, voice, ratePercent)}.pinned").delete()
+    }
+
+    fun isPinned(text: String, voice: String, ratePercent: Int): Boolean =
+        File(dir, "${keyFor(text, voice, ratePercent)}.pinned").exists()
+
+    fun enforceMaxSize(maxBytes: Long) {
+        var totalSize = sizeBytes()
+        if (totalSize <= maxBytes) return
+        entries()
+            .filter { !it.pinned && it.audio != null }
+            .sortedBy { it.audio?.lastModified() }
+            .forEach { entry ->
+                if (totalSize <= maxBytes) return
+                val entrySize = entry.files.sumOf { it.length() }
+                entry.files.forEach { it.delete() }
+                totalSize -= entrySize
+            }
+    }
+
+    fun pruneOlderThan(maxAgeMillis: Long) {
+        val cutoff = System.currentTimeMillis() - maxAgeMillis
+        entries()
+            .filter { !it.pinned && it.audio?.lastModified()?.let { modified -> modified < cutoff } == true }
+            .forEach { entry -> entry.files.forEach { it.delete() } }
+    }
+
     fun clearAll() {
-        dir.listFiles()?.forEach { it.delete() }
+        entries()
+            .filterNot { it.pinned }
+            .forEach { entry -> entry.files.forEach { it.delete() } }
     }
 
     fun sizeBytes(): Long = dir.listFiles()?.sumOf { it.length() } ?: 0L
+
+    private fun entries(): List<CacheEntry> = dir.listFiles()
+        ?.groupBy { it.nameWithoutExtension }
+        ?.map { (_, files) ->
+            CacheEntry(
+                files = files,
+                audio = files.firstOrNull { it.extension == "mp3" },
+                pinned = files.any { it.extension == "pinned" }
+            )
+        }
+        .orEmpty()
+
+    private data class CacheEntry(
+        val files: List<File>,
+        val audio: File?,
+        val pinned: Boolean
+    )
 }

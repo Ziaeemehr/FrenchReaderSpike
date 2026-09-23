@@ -51,11 +51,13 @@ import com.ziaee.frenchreader.data.AppLanguage
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.NewsPrefs
+import com.ziaee.frenchreader.data.TtsCachePrefs
 import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.VocabReviewReminder
 import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.tts.XttsClient
+import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.news.NEWS_SOURCES
 import com.ziaee.frenchreader.news.NewsCategory
 import com.ziaee.frenchreader.ui.theme.*
@@ -94,6 +96,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             R.string.settings_section_news,
             R.string.settings_section_xtts,
             R.string.settings_section_vocabulary,
+            R.string.settings_section_tts_cache,
             R.string.settings_section_backup
         )
         var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -156,7 +159,8 @@ fun SettingsScreen(onBack: () -> Unit) {
                         }
                         VocabularyReviewSettings(context)
                     }
-                    5 -> {
+                    5 -> TtsCacheSettings(context, scope, snackbarHostState)
+                    6 -> {
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
@@ -377,6 +381,71 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
         },
         modifier = Modifier.padding(top = 8.dp)
     ) { Text(stringResource(R.string.xtts_test_connection)) }
+}
+
+@Composable
+private fun TtsCacheSettings(
+    context: Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
+) {
+    val repository = remember(context) { TtsChunkRepository(context) }
+    var cacheSizeBytes by remember { mutableLongStateOf(0L) }
+    var maxSizeMb by remember { mutableIntStateOf(TtsCachePrefs.getMaxSizeMb(context)) }
+    var maxAgeDays by remember { mutableIntStateOf(TtsCachePrefs.getMaxAgeDays(context)) }
+    var showClearConfirm by remember { mutableStateOf(false) }
+
+    LaunchedEffect(repository) {
+        cacheSizeBytes = withContext(Dispatchers.IO) { repository.cacheSizeBytes() }
+    }
+
+    Text(
+        stringResource(R.string.tts_cache_current_size, cacheSizeBytes / (1024.0 * 1024.0)),
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+    StepperSetting(stringResource(R.string.tts_cache_max_size), maxSizeMb, 50, 5000) {
+        maxSizeMb = it
+        TtsCachePrefs.setMaxSizeMb(context, it)
+    }
+    StepperSetting(stringResource(R.string.tts_cache_max_age), maxAgeDays, 1, 365) {
+        maxAgeDays = it
+        TtsCachePrefs.setMaxAgeDays(context, it)
+    }
+    Text(
+        stringResource(R.string.tts_cache_pinned_note),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+    OutlinedButton(onClick = { showClearConfirm = true }) {
+        Text(stringResource(R.string.tts_cache_clear))
+    }
+
+    if (showClearConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirm = false },
+            title = { Text(stringResource(R.string.tts_cache_clear_confirm_title)) },
+            text = { Text(stringResource(R.string.tts_cache_clear_confirm_message)) },
+            confirmButton = {
+                OutlinedButton(onClick = {
+                    showClearConfirm = false
+                    scope.launch {
+                        cacheSizeBytes = withContext(Dispatchers.IO) {
+                            repository.clearCache()
+                            repository.cacheSizeBytes()
+                        }
+                        snackbarHostState.showSnackbar(context.getString(R.string.tts_cache_clear_done))
+                    }
+                }) { Text(stringResource(R.string.tts_cache_clear)) }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showClearConfirm = false }) {
+                    Text(stringResource(R.string.accessibility_back))
+                }
+            }
+        )
+    }
 }
 
 @Composable
