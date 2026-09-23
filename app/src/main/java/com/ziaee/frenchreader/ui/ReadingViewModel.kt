@@ -147,6 +147,8 @@ internal fun resetAudioForJump(chunks: List<ChunkState>): List<ChunkState> = chu
 }
 
 class ReadingViewModel(app: Application) : AndroidViewModel(app) {
+    data class ShadowSummaryUi(val summary: ShadowTextSummary, val weakTexts: Map<SentenceRef, String>)
+
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
     private val ttsRepo = TtsChunkRepository(app)
@@ -172,6 +174,8 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         isPlaying = { player.isPlaying }
     )
     val shadowing: StateFlow<ShadowingState> = shadowingController.state
+    private val _shadowSummary = MutableStateFlow<ShadowSummaryUi?>(null)
+    val shadowSummary: StateFlow<ShadowSummaryUi?> = _shadowSummary.asStateFlow()
     private var shadowStopMessage: PlayerMessage? = null
     private var shadowSessionStartedAtMs = 0L
     // Set when the target chunk had no sentences/player item yet; the ticker retries.
@@ -644,8 +648,31 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         setShadowTarget(next); playShadowSentence(next)
     }
 
-    /** Ends the session. Task 8 extends this to show the per-text summary first. */
-    fun finishShadowing() = setShadowing(false)
+    /** Ends the session and, if anything was saved in it, shows the per-text summary. */
+    fun finishShadowing() {
+        val doc = _state.value.textDoc
+        val since = shadowSessionStartedAtMs
+        setShadowing(false)
+        if (doc == null) return
+        viewModelScope.launch {
+            val summary = shadowTextSummary(db.shadowAttemptDao().getForTextSince(doc.id, since)) ?: return@launch
+            val chunks = _state.value.chunks
+            val texts = summary.weakest.associate { w ->
+                w.ref to chunks.getOrNull(w.ref.chunkIndex)?.sentences?.getOrNull(w.ref.sentenceIndex)?.text.orEmpty()
+            }
+            _shadowSummary.value = ShadowSummaryUi(summary, texts)
+        }
+    }
+
+    fun dismissShadowSummary() { _shadowSummary.value = null }
+
+    /** From the summary: turn shadowing back on at a weak sentence (permission and model already set up). */
+    fun practiceSentence(ref: SentenceRef) {
+        _shadowSummary.value = null
+        setShadowing(true)
+        setShadowTarget(ref)
+        playShadowSentence(ref)
+    }
 
     fun shadowPrevious() {
         val ref = shadowing.value.target ?: return

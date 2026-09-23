@@ -138,6 +138,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val shadowState by vm.shadowing.collectAsState()
+    val shadowSummary by vm.shadowSummary.collectAsState()
     val micDenied = stringResource(R.string.shadowing_mic_denied)
     var showModelPrompt by remember { mutableStateOf(false) }
     var modelProgress by remember { mutableStateOf<Float?>(null) }
@@ -555,6 +556,14 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                     vm.setShadowing(true)
                 }) { Text(stringResource(R.string.shadowing_use_android_engine)) }
             }
+        )
+    }
+
+    shadowSummary?.let { ui ->
+        ShadowSummaryDialog(
+            ui = ui,
+            onPractice = vm::practiceSentence,
+            onDismiss = vm::dismissShadowSummary
         )
     }
 

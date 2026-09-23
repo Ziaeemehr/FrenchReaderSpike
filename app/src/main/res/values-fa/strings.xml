@@ -468,4 +468,9 @@
     <string name="shadowing_pace_good">سرعت خوب (%1$s×)</string>
     <string name="shadowing_pace_slow">کمی کند (%1$s×)</string>
     <string name="shadowing_pace_fast">کمی تند (%1$s×)</string>
+    <string name="shadowing_summary_title">خلاصه شدوئینگ</string>
+    <string name="shadowing_summary_accuracy">%1$d جمله · %2$d%% کلمات درست</string>
+    <string name="shadowing_summary_pace">سرعت میانگین %1$s× · %2$d%% با سرعت خوب</string>
+    <string name="shadowing_summary_weakest">این‌ها را دوباره تمرین کنید:</string>
+    <string name="shadowing_summary_close">بستن</string>
 </resources>

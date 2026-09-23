@@ -470,4 +470,9 @@
     <string name="shadowing_pace_good">Bon rythme (%1$s×)</string>
     <string name="shadowing_pace_slow">Un peu lent (%1$s×)</string>
     <string name="shadowing_pace_fast">Un peu rapide (%1$s×)</string>
+    <string name="shadowing_summary_title">Bilan du shadowing</string>
+    <string name="shadowing_summary_accuracy">%1$d phrases · %2$d %% de mots corrects</string>
+    <string name="shadowing_summary_pace">Rythme moyen %1$s× · %2$d %% au bon rythme</string>
+    <string name="shadowing_summary_weakest">À retravailler :</string>
+    <string name="shadowing_summary_close">Fermer</string>
 </resources>
