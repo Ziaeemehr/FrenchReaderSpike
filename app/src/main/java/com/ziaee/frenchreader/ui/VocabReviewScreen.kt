@@ -78,6 +78,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var stats = ReviewSessionStats()
     private var undoing = false
     private var loadJob: Job? = null
+    private var listNames: Map<Long, String> = emptyMap()
 
     private data class UndoRecord(
         val previousEntry: VocabEntry, val logId: Long, val statsBefore: ReviewSessionStats,
@@ -125,6 +126,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     val estimatedMinutes get() = ((dueCount + newCount) * 12 / 60.0).roundToInt().coerceAtLeast(if (dueCount + newCount > 0) 1 else 0)
     val intervals get() = VocabPrefs.getIntervals(context)
     val audioAutoplay get() = VocabPrefs.getAudioAutoplay(context)
+    fun listNameFor(entry: VocabEntry): String? = entry.listId?.let { listNames[it] }
 
     fun load(scope: Long) {
         scopeId = scope
@@ -135,6 +137,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
             val all = scoped(db.vocabDao().getAllOnce(), requestedScope).filter { !it.learned }
+            val loadedListNames = db.vocabListDao().getAllOnce().associate { it.id to it.name }
             val loadedDueCount = all.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }
             val date = LocalDate.now().toString()
             val remainingNew = (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, date)).coerceAtLeast(0)
@@ -147,6 +150,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.minOfOrNull { it.nextReviewAtMs })
             }
             if (scopeId != requestedScope) return@launch
+            listNames = loadedListNames
             dueCount = loadedDueCount
             newCount = loadedNewCount
             reviewedToday = loadedReviewedToday
@@ -257,7 +261,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     fun consumeMoveLabel() { moveLabel = null }
     private suspend fun finishSession() {
         val now = System.currentTimeMillis()
-        studyTimeMs = now - sessionStartedAtMs
+        val sessionDurationMs = now - sessionStartedAtMs
+        val date = LocalDate.now().toString()
+        VocabPrefs.addStudyTimeMs(context, date, sessionDurationMs)
+        studyTimeMs = VocabPrefs.getStudyTimeMsToday(context, date)
         nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
         val dayStart = VocabSrs.startOfDayMs(now)
         cardsReviewedToday = db.reviewLogDao().countSince(dayStart)
@@ -385,6 +392,7 @@ private fun ReviewOverview(vm: VocabReviewViewModel) {
             Metric(vm.newCount.toString(), stringResource(R.string.review_new_count))
             Metric(stringResource(R.string.review_minutes_short, vm.estimatedMinutes), stringResource(R.string.review_estimated_time))
         }
+        if (vm.dueCount + vm.newCount == 0) Text(stringResource(R.string.review_no_cards_due), style = MaterialTheme.typography.bodyMedium)
         Button(onClick = { vm.startReview() }, enabled = vm.dueCount + vm.newCount > 0, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).height(52.dp)) {
             Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.review_start))
         }
@@ -488,6 +496,10 @@ private fun AccuracyRing(percent: Int) {
 private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, interactive: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onEdit: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
     val wordTap: (String) -> Unit = { w -> if (interactive) onWordTap(w) }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        vm.listNameFor(entry)?.let {
+            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+        }
         BoxDots(entry.leitnerBox)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.review_progress, vm.progressPosition, vm.totalCards), style = MaterialTheme.typography.labelLarge)

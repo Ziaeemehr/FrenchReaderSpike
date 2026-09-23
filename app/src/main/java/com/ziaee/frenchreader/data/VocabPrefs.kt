@@ -24,6 +24,8 @@ object VocabPrefs {
     private const val KEY_REMINDER_MINUTE = "review_reminder_minute"
     private const val KEY_NEW_COUNT_DATE = "new_count_date"
     private const val KEY_NEW_COUNT = "new_count"
+    private const val KEY_STUDY_TIME_DATE = "study_time_date"
+    private const val KEY_STUDY_TIME_MS = "study_time_ms"
 
     val DEFAULT_INTERVAL_DAYS = listOf(1L, 2L, 4L, 8L, 16L)
     const val DEFAULT_MAX_NEW_CARDS = 10
@@ -86,5 +88,13 @@ object VocabPrefs {
     fun decrementNewReviewed(context: Context, date: String) {
         val current = getNewReviewedToday(context, date)
         if (current > 0) prefs(context).edit().putString(KEY_NEW_COUNT_DATE, date).putInt(KEY_NEW_COUNT, current - 1).apply()
+    }
+
+    fun getStudyTimeMsToday(context: Context, date: String): Long =
+        if (prefs(context).getString(KEY_STUDY_TIME_DATE, null) == date) prefs(context).getLong(KEY_STUDY_TIME_MS, 0L) else 0L
+
+    fun addStudyTimeMs(context: Context, date: String, deltaMs: Long) {
+        val current = getStudyTimeMsToday(context, date)
+        prefs(context).edit().putString(KEY_STUDY_TIME_DATE, date).putLong(KEY_STUDY_TIME_MS, current + deltaMs).apply()
     }
 }

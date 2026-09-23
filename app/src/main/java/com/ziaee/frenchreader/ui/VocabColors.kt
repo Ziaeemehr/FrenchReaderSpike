@@ -23,6 +23,20 @@ fun VocabStatus.color(dark: Boolean): Color {
 }
 
 @Composable
+fun VocabStatus.pieColor(): Color = pieColor(MaterialTheme.colorScheme.surface.luminance() < 0.5f)
+
+/** More saturated, mutually distinct palette for chart slices, where [color] alone can look
+ * too close between adjacent statuses (e.g. REVIEWING's teal next to LEARNED's green). */
+fun VocabStatus.pieColor(dark: Boolean): Color {
+    return when (this) {
+        VocabStatus.NEW -> if (dark) Color(0xFFB794F6) else Color(0xFF7C3AED)
+        VocabStatus.LEARNING -> if (dark) Color(0xFFFFB84D) else Color(0xFFF59E0B)
+        VocabStatus.REVIEWING -> if (dark) Color(0xFF5CC8FF) else Color(0xFF0EA5E9)
+        VocabStatus.LEARNED -> if (dark) Color(0xFF6EE7A8) else Color(0xFF22C55E)
+    }
+}
+
+@Composable
 fun VocabStatus.containerColor(): Color = containerColor(MaterialTheme.colorScheme.surface.luminance() < 0.5f)
 
 /** Tint intended to sit behind the theme's on-surface color or reading-page ink. */

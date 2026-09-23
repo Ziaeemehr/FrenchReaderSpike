@@ -2,12 +2,12 @@ package com.ziaee.frenchreader.ui
 
 import android.app.Application
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
@@ -121,6 +122,8 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
     var selectedScope by remember { mutableStateOf(VOCAB_SCOPE_ALL) }
     var selectedStatus by remember { mutableStateOf<VocabStatus?>(null) }
     var showNewListDialog by remember { mutableStateOf(false) }
+    var scopeMenuExpanded by remember { mutableStateOf(false) }
+    var pendingDeleteList by remember { mutableStateOf<VocabList?>(null) }
     var showManualDictionary by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -142,7 +145,7 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
         val statusFiltered = selectedStatus?.let { status -> scoped.filter { it.status() == status } } ?: scoped
         if (query.isBlank()) statusFiltered
         else statusFiltered.filter {
-            it.word.contains(query, ignoreCase = true) || it.sentence.contains(query, ignoreCase = true)
+            it.word.contains(query, ignoreCase = true) || it.sentence.contains(query, ignoreCase = true) || it.meaning?.contains(query, ignoreCase = true) == true
         }
     }
     val dueCount = remember(scoped) {
@@ -229,127 +232,139 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                item {
-                    FilterChip(
-                        selected = selectedScope == VOCAB_SCOPE_ALL,
-                        onClick = { selectedScope = VOCAB_SCOPE_ALL },
-                        label = { Text(stringResource(R.string.vocab_list_all)) }
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+                OutlinedButton(
+                    onClick = { scopeMenuExpanded = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        when (selectedScope) {
+                            VOCAB_SCOPE_ALL -> stringResource(R.string.vocab_list_all)
+                            VOCAB_SCOPE_UNFILED -> stringResource(R.string.vocab_list_uncategorized)
+                            else -> lists.firstOrNull { it.id == selectedScope }?.name
+                                ?: stringResource(R.string.vocab_list_all)
+                        },
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                }
+                DropdownMenu(
+                    expanded = scopeMenuExpanded,
+                    onDismissRequest = { scopeMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.vocab_list_all)) },
+                        onClick = { selectedScope = VOCAB_SCOPE_ALL; scopeMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.vocab_list_uncategorized)) },
+                        onClick = { selectedScope = VOCAB_SCOPE_UNFILED; scopeMenuExpanded = false }
+                    )
+                    lists.forEach { list ->
+                        DropdownMenuItem(
+                            text = { Text(list.name) },
+                            onClick = { selectedScope = list.id; scopeMenuExpanded = false },
+                            trailingIcon = {
+                                IconButton(onClick = {
+                                    scopeMenuExpanded = false
+                                    pendingDeleteList = list
+                                }) {
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_delete_list, list.name))
+                                }
+                            }
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.vocab_list_new)) },
+                        onClick = { showNewListDialog = true; scopeMenuExpanded = false },
+                        leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
                     )
                 }
+            }
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 item {
-                    FilterChip(
-                        selected = selectedScope == VOCAB_SCOPE_UNFILED,
-                        onClick = { selectedScope = VOCAB_SCOPE_UNFILED },
-                        label = { Text(stringResource(R.string.vocab_list_uncategorized)) }
-                    )
-                }
-                items(lists, key = { it.id }) { list ->
-                    InputChip(
-                        selected = selectedScope == list.id,
-                        onClick = { selectedScope = list.id },
-                        label = { Text(list.name) },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    if (selectedScope == list.id) selectedScope = VOCAB_SCOPE_ALL
-                                    vm.deleteList(list)
-                                },
-                                modifier = Modifier.size(18.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (dueCount > 0) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Style, contentDescription = null)
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.vocab_due_now, dueCount), style = MaterialTheme.typography.titleSmall)
+                                if (dueCount == 0) {
+                                    Text(stringResource(R.string.vocab_nothing_due), style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            Button(
+                                onClick = { onOpenReview(selectedScope) },
+                                enabled = dueCount > 0
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_delete_list, list.name))
+                                Text(stringResource(R.string.vocab_review_start))
                             }
                         }
-                    )
+                    }
                 }
-                item {
-                    AssistChip(
-                        onClick = { showNewListDialog = true },
-                        leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        label = { Text(stringResource(R.string.vocab_list_new)) }
-                    )
-                }
-            }
 
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (dueCount > 0) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Style, contentDescription = null)
-                    Spacer(Modifier.width(10.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.vocab_due_now, dueCount), style = MaterialTheme.typography.titleSmall)
-                        if (dueCount == 0) {
-                            Text(stringResource(R.string.vocab_nothing_due), style = MaterialTheme.typography.bodySmall)
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val statuses = VocabStatus.values()
+                        val counts = statuses.associateWith { status -> scoped.count { it.status() == status } }
+                        val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            statuses.take(2).forEach { StatusChip(it, counts.getValue(it), selectedStatus) { selectedStatus = if (selectedStatus == it) null else it } }
+                        }
+                        Box(Modifier.padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+                            if (scoped.isNotEmpty()) {
+                                Canvas(Modifier.size(96.dp)) {
+                                    var startAngle = -90f
+                                    statuses.forEach { status ->
+                                        val sweepAngle = 360f * counts.getValue(status) / scoped.size
+                                        if (sweepAngle > 0f) drawArc(status.pieColor(dark), startAngle, sweepAngle, useCenter = true)
+                                        startAngle += sweepAngle
+                                    }
+                                }
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            statuses.takeLast(2).forEach { StatusChip(it, counts.getValue(it), selectedStatus) { selectedStatus = if (selectedStatus == it) null else it } }
                         }
                     }
-                    Button(
-                        onClick = { onOpenReview(selectedScope) },
-                        enabled = dueCount > 0
-                    ) {
-                        Text(stringResource(R.string.vocab_review_start))
-                    }
                 }
-            }
 
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(VocabStatus.values().toList()) { status ->
-                    val count = scoped.count { it.status() == status }
-                    val statusColor = status.color()
-                    val containerColor = status.containerColor()
-                    FilterChip(
-                        selected = selectedStatus == status,
-                        onClick = { selectedStatus = if (selectedStatus == status) null else status },
-                        leadingIcon = {
-                            Box(
-                                Modifier
-                                    .size(8.dp)
-                                    .background(statusColor, RoundedCornerShape(50))
+                item {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text(stringResource(R.string.vocab_search_hint)) },
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        singleLine = true
+                    )
+                }
+
+                if (filtered.isEmpty()) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                if (entries.isEmpty())
+                                    stringResource(R.string.vocab_empty_hint)
+                                else stringResource(R.string.vocab_search_no_results)
                             )
-                        },
-                        label = { Text("${stringResource(status.labelRes())}  $count") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = containerColor,
-                            labelColor = MaterialTheme.colorScheme.onSurface,
-                            iconColor = statusColor,
-                            selectedContainerColor = containerColor,
-                            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-                            selectedLeadingIconColor = statusColor
-                        )
-                    )
-                }
-            }
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text(stringResource(R.string.vocab_search_hint)) },
-                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                singleLine = true
-            )
-            if (filtered.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        if (entries.isEmpty())
-                            stringResource(R.string.vocab_empty_hint)
-                        else stringResource(R.string.vocab_search_no_results)
-                    )
-                }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        }
+                    }
+                } else {
                     items(filtered, key = { it.id }) { entry ->
                         VocabRow(
                             entry = entry,
@@ -413,6 +428,45 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
             }
         )
     }
+
+    pendingDeleteList?.let { list ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteList = null },
+            title = { Text(stringResource(R.string.vocab_delete_list_title)) },
+            text = { Text(stringResource(R.string.vocab_delete_list_message, list.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (selectedScope == list.id) selectedScope = VOCAB_SCOPE_ALL
+                    vm.deleteList(list)
+                    pendingDeleteList = null
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteList = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+}
+
+@Composable
+private fun StatusChip(status: VocabStatus, count: Int, selectedStatus: VocabStatus?, onClick: () -> Unit) {
+    val statusColor = status.color()
+    val containerColor = status.containerColor()
+    FilterChip(
+        modifier = Modifier.fillMaxWidth(),
+        selected = selectedStatus == status,
+        onClick = onClick,
+        leadingIcon = { Box(Modifier.size(8.dp).background(statusColor, RoundedCornerShape(50))) },
+        label = { Text("${stringResource(status.labelRes())} $count", style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = containerColor,
+            labelColor = MaterialTheme.colorScheme.onSurface,
+            iconColor = statusColor,
+            selectedContainerColor = containerColor,
+            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+            selectedLeadingIconColor = statusColor
+        )
+    )
 }
 
 @Composable
