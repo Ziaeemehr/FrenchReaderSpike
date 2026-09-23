@@ -44,6 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.res.colorResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -100,13 +103,18 @@ fun AboutScreen(onBack: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // The launcher mipmap is an adaptive-icon XML, which painterResource can't load;
-                // draw its vector foreground on the launcher background instead.
-                Image(
-                    painter = painterResource(R.drawable.ic_launcher_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(88.dp).clip(RoundedCornerShape(22.dp))
+                // draw the same foreground layer on the launcher background, scaled 1.5x like the
+                // launcher mask does (adaptive foregrounds keep a safe-zone margin).
+                Box(
+                    Modifier.size(88.dp).clip(RoundedCornerShape(22.dp))
                         .background(colorResource(R.color.ic_launcher_background))
-                )
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_fg),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = 1.5f; scaleY = 1.5f }
+                    )
+                }
                 Spacer(Modifier.height(FrenchReaderDesign.spacing.xSmall))
                 Text(
                     text = stringResource(R.string.app_name),
