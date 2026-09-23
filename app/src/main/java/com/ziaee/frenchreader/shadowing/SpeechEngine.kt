@@ -83,7 +83,7 @@ class VoskEngine(private val modelDir: File) : SpeechEngine {
     override fun start() = recorder.start()
 
     override suspend fun stop(): Recording {
-        val pcm = recorder.stop()
+        val pcm = normalizeGain(recorder.stop())
         val text = withContext(Dispatchers.Default) {
             VoskModels.forDir(modelDir).withModel { model ->
                 Recognizer(model, SAMPLE_RATE.toFloat()).use { rec ->
@@ -150,7 +150,7 @@ class AndroidSpeechEngine(private val context: Context) : SpeechEngine {
             val text = result?.await().orEmpty()
             return Recording(text.trim(), null, System.currentTimeMillis() - startedAtMs)
         }
-        val pcm = recorder.stop()
+        val pcm = normalizeGain(recorder.stop())
         val pipe = ParcelFileDescriptor.createPipe()
         val intent = baseIntent().apply {
             putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, pipe[0])
@@ -172,7 +172,9 @@ class AndroidSpeechEngine(private val context: Context) : SpeechEngine {
                     val bytes = ByteBuffer.allocate(pcm.size * 2).order(ByteOrder.LITTLE_ENDIAN)
                     bytes.asShortBuffer().put(pcm)
                     // Closing signals end-of-audio so the recognizer finalizes instead of waiting for more.
-                    try { output.write(bytes.array()) } finally { runCatching { output.close() } }
+                    // 100 ms chunks every 25 ms (~4x real time) so the recognizer's buffer keeps up.
+                    try { writePaced(bytes.array(), chunkBytes = 3_200, pauseMs = 25) { output.write(it) } }
+                    finally { runCatching { output.close() } }
                 },
                 result = pendingResult,
                 onDone = closePipe
