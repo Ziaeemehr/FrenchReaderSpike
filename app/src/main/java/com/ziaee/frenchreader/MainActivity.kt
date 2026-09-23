@@ -22,6 +22,7 @@ import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.ui.ReadingScreen
+import com.ziaee.frenchreader.ui.AboutScreen
 import com.ziaee.frenchreader.ui.SettingsScreen
 import com.ziaee.frenchreader.ui.VOCAB_SCOPE_ALL
 import com.ziaee.frenchreader.ui.VocabListScreen
@@ -164,6 +165,7 @@ private fun AppNavHost() {
                 onOpenStatistics = { navController.navigate("statistics") },
                 onOpenSettings = { navController.navigate("settings") },
                 onOpenResources = { navigateToTab("resources") },
+                onOpenAbout = { navController.navigate("about") },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
             )
         }
@@ -208,10 +210,16 @@ private fun AppNavHost() {
             VocabReviewScreen(scope = scope, onBack = { navController.popBackStack() }, onOpenSettings = { navController.navigate("settings") })
         }
         composable("settings") {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAbout = { navController.navigate("about") }
+            )
         }
         composable("statistics") {
             StatisticsScreen(onBack = { navController.popBackStack() })
+        }
+        composable("about") {
+            AboutScreen(onBack = { navController.popBackStack() })
         }
     }
 }

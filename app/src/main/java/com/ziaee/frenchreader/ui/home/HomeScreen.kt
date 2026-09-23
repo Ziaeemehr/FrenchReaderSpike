@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -89,6 +90,7 @@ fun HomeScreen(
     onOpenStatistics: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenResources: () -> Unit,
+    onOpenAbout: () -> Unit,
     onStartReview: () -> Unit
 ) {
     val vm: HomeViewModel = viewModel()
@@ -189,6 +191,7 @@ fun HomeScreen(
         onOpenLibrary = onOpenLibrary,
         onAddTextClick = { addTextState.openBlank() },
         onOpenGradedReaders = onOpenResources,
+        onOpenAbout = onOpenAbout,
         onSelectHeadline = { vm.selectHeadline(it) },
         onRetryNews = { vm.refresh(force = true) },
         onPullRefresh = { vm.refresh(force = true) },
@@ -240,6 +243,7 @@ fun HomeContent(
     onOpenLibrary: () -> Unit,
     onAddTextClick: () -> Unit,
     onOpenGradedReaders: () -> Unit,
+    onOpenAbout: () -> Unit = {},
     onSelectHeadline: (HeadlineEntity) -> Unit,
     onRetryNews: () -> Unit,
     onPullRefresh: () -> Unit,
@@ -305,6 +309,11 @@ fun HomeContent(
                             text = { Text(stringResource(R.string.home_action_graded_readers)) },
                             leadingIcon = { Icon(Icons.Default.AutoStories, contentDescription = null) },
                             onClick = { moreMenuExpanded = false; onOpenGradedReaders() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.about_title)) },
+                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onOpenAbout() }
                         )
                     }
                 }

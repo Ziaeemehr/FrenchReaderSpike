@@ -46,6 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.LayoutDirection
@@ -1291,7 +1293,11 @@ private fun SentenceFlowText(
                 color = color,
                 fontWeight = fontWeight,
                 fontFamily = if (fontWeight != null) headingFontFamily else null,
-                textAlign = TextAlign.Start
+                // Body paragraphs are justified like a printed page; French hyphenation keeps
+                // justified lines from opening wide gaps. Headings stay start-aligned.
+                textAlign = if (fontWeight != null) TextAlign.Start else TextAlign.Justify,
+                hyphens = if (fontWeight != null) Hyphens.None else Hyphens.Auto,
+                localeList = LocaleList("fr")
             ),
             cursorBrush = SolidColor(Color.Transparent)
         )

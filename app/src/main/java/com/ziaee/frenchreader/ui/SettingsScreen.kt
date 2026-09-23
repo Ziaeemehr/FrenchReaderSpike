@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -71,7 +72,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
     val context = LocalContext.current
     val appLanguage = LocalePrefs.get(context)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -161,6 +162,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
+                }
+                OutlinedButton(
+                    onClick = onOpenAbout,
+                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.about_title))
                 }
                 Spacer(Modifier.height(20.dp))
             }

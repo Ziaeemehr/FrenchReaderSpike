@@ -89,3 +89,13 @@ Then choose **Local XTTS server** in the app settings and enter `http://<compute
 
 - [ROADMAP.md](ROADMAP.md) – planned and implemented features, design decisions (in Persian)
 - [docs/](docs/) – additional plans and design notes
+
+## Author
+
+Developed by **Abolfazl Ziaeemehr** – [GitHub](https://github.com/Ziaeemehr) · [LinkedIn](https://www.linkedin.com/in/ziaeemehr/) · a.ziaeemehr@gmail.com
+
+Bug reports and suggestions are welcome in [Issues](https://github.com/Ziaeemehr/FrenchReaderSpike/issues).
+
+## License
+
+French Reader is released under the [MIT License](LICENSE). It bundles [edge-tts](https://github.com/rany2/edge-tts) (LGPL-3.0) and the [Vazirmatn](https://github.com/rastikerdar/vazirmatn) font (SIL Open Font License 1.1), which keep their own licenses.
