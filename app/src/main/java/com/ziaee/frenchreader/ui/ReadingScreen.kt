@@ -47,6 +47,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.graphics.luminance
@@ -1297,6 +1298,7 @@ private fun SentenceFlowText(
                 // justified lines from opening wide gaps. Headings stay start-aligned.
                 textAlign = if (fontWeight != null) TextAlign.Start else TextAlign.Justify,
                 hyphens = if (fontWeight != null) Hyphens.None else Hyphens.Auto,
+                lineBreak = LineBreak.Paragraph,
                 localeList = LocaleList("fr")
             ),
             cursorBrush = SolidColor(Color.Transparent)

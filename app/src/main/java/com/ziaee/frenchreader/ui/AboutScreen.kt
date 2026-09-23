@@ -44,6 +44,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -95,10 +99,13 @@ fun AboutScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(vertical = FrenchReaderDesign.spacing.small),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // The launcher mipmap is an adaptive-icon XML, which painterResource can't load;
+                // draw its vector foreground on the launcher background instead.
                 Image(
-                    painter = painterResource(R.mipmap.ic_launcher),
+                    painter = painterResource(R.drawable.ic_launcher_foreground),
                     contentDescription = null,
-                    modifier = Modifier.size(88.dp)
+                    modifier = Modifier.size(88.dp).clip(RoundedCornerShape(22.dp))
+                        .background(colorResource(R.color.ic_launcher_background))
                 )
                 Spacer(Modifier.height(FrenchReaderDesign.spacing.xSmall))
                 Text(
