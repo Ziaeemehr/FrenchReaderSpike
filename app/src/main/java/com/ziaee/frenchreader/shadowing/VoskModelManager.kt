@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -23,9 +24,11 @@ object VoskModelInstaller {
         try {
             tmp.mkdirs()
             val root = tmp.canonicalFile
+            var hadEntry = false
             ZipInputStream(zip).use { z ->
                 while (true) {
                     val entry = z.nextEntry ?: break
+                    hadEntry = true
                     // Strip the single top-level folder the Vosk zips ship with.
                     val relative = entry.name.substringAfter('/', "")
                     if (relative.isEmpty()) continue
@@ -41,6 +44,7 @@ object VoskModelInstaller {
                     }
                 }
             }
+            check(hadEntry && File(tmp, "am/final.mdl").isFile) { "Not a Vosk model" }
             File(tmp, MARKER).writeText("ok")
             targetDir.deleteRecursively()
             check(tmp.renameTo(targetDir)) { "Could not move model into place" }
@@ -65,11 +69,14 @@ class VoskModelManager(context: Context) {
             val conn = URL(VOSK_MODEL_URL).openConnection() as HttpURLConnection
             conn.connectTimeout = 15_000
             conn.readTimeout = 30_000
+            if (conn.responseCode != HttpURLConnection.HTTP_OK) {
+                throw IOException("HTTP ${conn.responseCode}")
+            }
             val total = conn.contentLengthLong
+            var done = 0L
             conn.inputStream.use { input ->
                 zipFile.outputStream().use { out ->
                     val buf = ByteArray(64 * 1024)
-                    var done = 0L
                     while (true) {
                         coroutineContext.ensureActive()
                         val n = input.read(buf)
@@ -80,6 +87,7 @@ class VoskModelManager(context: Context) {
                     }
                 }
             }
+            if (total > 0 && done != total) throw IOException("Incomplete download")
             zipFile.inputStream().use { VoskModelInstaller.installFromZip(it, modelDir) }
         } finally {
             zipFile.delete()
@@ -88,5 +96,10 @@ class VoskModelManager(context: Context) {
 
     fun delete() {
         modelDir.deleteRecursively()
+    }
+
+    suspend fun deleteAndUnload() {
+        VoskModels.forDir(modelDir).invalidate()
+        delete()
     }
 }

@@ -6,8 +6,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.PlayerMessage
 import com.ziaee.frenchreader.data.AppDatabase
@@ -99,6 +101,13 @@ internal fun nextSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): Senten
     return SentenceRef(next, 0)
 }
 
+internal fun shadowStopPositionMs(sentence: SentenceBoundary, itemDurationMs: Long): Long {
+    val start = sentence.offsetMs.toLong()
+    val end = (sentence.offsetMs + sentence.durationMs).toLong()
+    val stop = if (itemDurationMs > 0) minOf(end, itemDurationMs - 50) else end
+    return maxOf(start, stop)
+}
+
 internal fun previousSentenceRef(chunks: List<ChunkState>, ref: SentenceRef): SentenceRef? {
     if (ref.sentenceIndex > 0) return ref.copy(sentenceIndex = ref.sentenceIndex - 1)
     val prev = previousSpokenChunkIndex(chunks, ref.chunkIndex - 1) ?: return null
@@ -171,7 +180,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             VocabPrefs.addStudyTimeMs(app, java.time.LocalDate.now().toString(), delta)
         },
         now = System::currentTimeMillis,
-        isPlaying = { player.isPlaying }
+        isPlaying = { player.isPlaying || player.playWhenReady }
     )
     val shadowing: StateFlow<ShadowingState> = shadowingController.state
     private val _shadowSummary = MutableStateFlow<ShadowSummaryUi?>(null)
@@ -218,6 +227,14 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (
+                    shadowing.value.enabled &&
+                    reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO &&
+                    shadowStopMessage != null
+                ) {
+                    player.pause()
+                    cancelShadowStop()
+                }
                 if (mediaItem == null) return
                 val chunkIdx = playerItemToChunk.getOrNull(player.currentMediaItemIndex)
                 if (chunkIdx != null) {
@@ -681,6 +698,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
     fun shadowPressStart(): Boolean = shadowingController.pressStart()
     fun shadowPressEnd() = shadowingController.pressEnd()
+    fun shadowCancelRecording() = shadowingController.cancel()
     fun shadowRetry() = shadowingController.retry()
     fun shadowReplayMine() { player.pause(); shadowingController.replayMine() }
 
@@ -710,10 +728,21 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         }
         shadowPendingPlay = false
         cancelShadowStop()
-        val endMs = (sentence.offsetMs + sentence.durationMs).toLong()
-        shadowStopMessage = player.createMessage { _, _ -> player.pause() }
+        val timeline = player.currentTimeline
+        val durationOfItem = if (itemIndex in 0 until timeline.windowCount) {
+            timeline.getWindow(itemIndex, Timeline.Window()).durationMs.let {
+                if (it == C.TIME_UNSET) -1L else it
+            }
+        } else {
+            -1L
+        }
+        val stopPositionMs = shadowStopPositionMs(sentence, durationOfItem)
+        shadowStopMessage = player.createMessage { _, _ ->
+            player.pause()
+            shadowStopMessage = null
+        }
             .setLooper(android.os.Looper.getMainLooper())
-            .setPosition(itemIndex, endMs)
+            .setPosition(itemIndex, stopPositionMs)
             .setDeleteAfterDelivery(true)
             .send()
         player.seekTo(itemIndex, sentence.offsetMs.toLong())

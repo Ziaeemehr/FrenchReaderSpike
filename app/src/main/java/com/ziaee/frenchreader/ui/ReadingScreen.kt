@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalTextToolbar
 import androidx.compose.ui.platform.TextToolbarStatus
@@ -61,6 +62,8 @@ import androidx.compose.ui.window.Popup
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.SavedVocab
 import com.ziaee.frenchreader.content.VocabHighlighter
@@ -84,6 +87,7 @@ import com.ziaee.frenchreader.util.queryProcessTextApps
 import java.util.Date
 import java.util.Locale
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
@@ -99,6 +103,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     val savedVocabStatuses = if (AppearanceState.highlightSavedWords) allSavedVocabStatuses else emptyMap()
     val palette = readingPaletteFor(AppearanceState.readingBackground, AppearanceState.highlightColor)
     val settingsContext = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val fontScale = AppearanceState.fontScale.multiplier
     val vocabularyDescription = stringResource(R.string.accessibility_vocabulary)
     val voiceDescription = stringResource(R.string.accessibility_select_voice)
@@ -183,6 +188,13 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     }
     DisposableEffect(Unit) {
         onDispose { vm.persistPositionNow() }
+    }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) vm.shadowCancelRecording()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Follows playback down the page as the current paragraph advances, so
@@ -439,10 +451,13 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                     if (shadowState.enabled) {
                         Surface(color = palette.background, tonalElevation = FrenchReaderDesign.elevations.raised) {
                             ShadowingPanel(
-                                state = shadowState, isPlaying = state.isPlaying, palette = palette,
+                                state = shadowState,
+                                isPlaying = state.isPlaying || vm.player.playWhenReady,
+                                palette = palette,
                                 onPlayOriginal = vm::shadowPlayOriginal, onReplayMine = vm::shadowReplayMine,
                                 onRetry = vm::shadowRetry, onNext = vm::shadowNext,
-                                onPressStart = vm::shadowPressStart, onPressEnd = vm::shadowPressEnd
+                                onPressStart = vm::shadowPressStart, onPressEnd = vm::shadowPressEnd,
+                                onPressCancel = vm::shadowCancelRecording
                             )
                         }
                     }
@@ -542,7 +557,14 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                 TextButton(enabled = modelProgress == null, onClick = {
                     modelProgress = 0f
                     scope.launch {
-                        val ok = runCatching { modelManager.download { modelProgress = it } }.isSuccess
+                        val ok = try {
+                            modelManager.download { modelProgress = it }
+                            true
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (_: Exception) {
+                            false
+                        }
                         modelProgress = null
                         showModelPrompt = false
                         if (ok) vm.setShadowing(true) else snackbarHostState.showSnackbar(modelFailed)

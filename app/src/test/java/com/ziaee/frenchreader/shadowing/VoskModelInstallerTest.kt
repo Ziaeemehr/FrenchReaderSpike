@@ -50,4 +50,24 @@ class VoskModelInstallerTest {
         assertTrue(result.isFailure)
         assertFalse(File(tmp.root.parentFile, "evil.txt").exists())
     }
+
+    @Test fun nonZipResponse_notInstalled() {
+        // A captive portal / proxy answering 200 with HTML instead of the zip.
+        val target = File(tmp.root, "vosk-fr")
+        val result = runCatching {
+            VoskModelInstaller.installFromZip(ByteArrayInputStream("<html>login</html>".toByteArray()), target)
+        }
+        assertTrue(result.isFailure)
+        assertFalse(isModelInstalled(target))
+        assertFalse(File(tmp.root, "vosk-fr.tmp").exists())
+    }
+
+    @Test fun zipWithoutAcousticModel_notInstalled() {
+        val target = File(tmp.root, "vosk-fr")
+        val result = runCatching {
+            VoskModelInstaller.installFromZip(ByteArrayInputStream(zipOf("m/README" to "x", "m/conf/model.conf" to "y")), target)
+        }
+        assertTrue(result.isFailure)
+        assertFalse(isModelInstalled(target))
+    }
 }

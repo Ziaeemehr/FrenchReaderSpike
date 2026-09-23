@@ -10,12 +10,17 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.File
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -32,27 +37,51 @@ interface SpeechEngine {
 internal fun parseVoskText(json: String): String =
     runCatching { JSONObject(json).optString("text", "") }.getOrDefault("").trim()
 
+internal suspend fun awaitResultWhileWriting(
+    write: suspend () -> Unit,
+    result: Deferred<String>,
+    onDone: () -> Unit,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+): String = coroutineScope {
+    val writer = launch(ioDispatcher) {
+        try {
+            write()
+        } catch (_: IOException) {
+            // The recognizer may stop reading before all audio has been written.
+        }
+    }
+    try {
+        result.await()
+    } finally {
+        try {
+            onDone()
+        } finally {
+            writer.cancel()
+        }
+    }
+}
+
 class VoskEngine(private val modelDir: File) : SpeechEngine {
     override val kind = SpeechEngineKind.VOSK
     private val recorder = MicRecorder()
-    private var model: Model? = null
 
     override fun start() = recorder.start()
 
     override suspend fun stop(): Recording {
         val pcm = recorder.stop()
         val text = withContext(Dispatchers.Default) {
-            val m = model ?: Model(modelDir.absolutePath).also { model = it }
-            Recognizer(m, SAMPLE_RATE.toFloat()).use { rec ->
-                rec.acceptWaveForm(pcm, pcm.size)
-                parseVoskText(rec.finalResult)
+            VoskModels.forDir(modelDir).withModel { model ->
+                Recognizer(model, SAMPLE_RATE.toFloat()).use { rec ->
+                    rec.acceptWaveForm(pcm, pcm.size)
+                    parseVoskText(rec.finalResult)
+                }
             }
         }
         return Recording(text, pcm, durationMsOf(pcm.size))
     }
 
     override fun cancel() = recorder.cancel()
-    override fun release() { recorder.cancel(); model?.close(); model = null }
+    override fun release() = recorder.cancel()
 }
 
 /** Android's recognizer. API 33+: we record, then feed our PCM through EXTRA_AUDIO_SOURCE, so
@@ -110,16 +139,28 @@ class AndroidSpeechEngine(private val context: Context) : SpeechEngine {
             putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
             putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, SAMPLE_RATE)
         }
-        newRecognizer().startListening(intent)
-        withContext(Dispatchers.IO) {
-            ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use { out ->
-                val bytes = ByteBuffer.allocate(pcm.size * 2).order(ByteOrder.LITTLE_ENDIAN)
-                bytes.asShortBuffer().put(pcm)
-                out.write(bytes.array())
-            }
+        val output = ParcelFileDescriptor.AutoCloseOutputStream(pipe[1])
+        val closePipe = {
+            runCatching { output.close() }
+            runCatching { pipe[0].close() }
+            Unit
         }
-        pipe[0].close()
-        val text = result?.await().orEmpty()
+        val text = try {
+            newRecognizer().startListening(intent)
+            val pendingResult = checkNotNull(result)
+            awaitResultWhileWriting(
+                write = {
+                    val bytes = ByteBuffer.allocate(pcm.size * 2).order(ByteOrder.LITTLE_ENDIAN)
+                    bytes.asShortBuffer().put(pcm)
+                    // Closing signals end-of-audio so the recognizer finalizes instead of waiting for more.
+                    try { output.write(bytes.array()) } finally { runCatching { output.close() } }
+                },
+                result = pendingResult,
+                onDone = closePipe
+            )
+        } finally {
+            closePipe()
+        }
         return Recording(text.trim(), pcm, durationMsOf(pcm.size))
     }
 

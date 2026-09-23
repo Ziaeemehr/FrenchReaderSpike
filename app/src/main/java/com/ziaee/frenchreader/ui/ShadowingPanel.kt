@@ -43,7 +43,8 @@ fun ShadowingPanel(
     onRetry: () -> Unit,
     onNext: () -> Unit,
     onPressStart: () -> Boolean,
-    onPressEnd: () -> Unit
+    onPressEnd: () -> Unit,
+    onPressCancel: () -> Unit
 ) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         // French sentence always LTR, even in the Persian UI.
@@ -110,12 +111,18 @@ fun ShadowingPanel(
             Surface(
                 shape = CircleShape,
                 color = if (recording) MissedColor else palette.accent.copy(alpha = if (isPlaying) 0.4f else 1f),
-                modifier = Modifier.size(72.dp).pointerInput(isPlaying) {
+                modifier = Modifier.size(72.dp).pointerInput(Unit) {
                     awaitEachGesture {
                         awaitFirstDown()
                         val started = onPressStart()
-                        waitForUpOrCancellation()
-                        if (started) onPressEnd()
+                        var released = false
+                        try {
+                            released = waitForUpOrCancellation() != null
+                        } finally {
+                            if (started) {
+                                if (released) onPressEnd() else onPressCancel()
+                            }
+                        }
                     }
                 }
             ) {

@@ -66,6 +66,7 @@ import com.ziaee.frenchreader.shadowing.ShadowingPrefs
 import com.ziaee.frenchreader.shadowing.SpeechEngineKind
 import com.ziaee.frenchreader.shadowing.VoskModelManager
 import com.ziaee.frenchreader.ui.theme.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -233,8 +234,10 @@ private fun ShadowingSettings(
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = {
-                manager.delete()
-                installed = false
+                scope.launch {
+                    manager.deleteAndUnload()
+                    installed = false
+                }
             }) {
                 Text(stringResource(R.string.shadowing_model_delete))
             }
@@ -242,7 +245,14 @@ private fun ShadowingSettings(
         else -> OutlinedButton(onClick = {
             progress = 0f
             scope.launch {
-                val ok = runCatching { manager.download { progress = it } }.isSuccess
+                val ok = try {
+                    manager.download { progress = it }
+                    true
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (_: Exception) {
+                    false
+                }
                 progress = null
                 installed = manager.isInstalled()
                 if (!ok) snackbarHostState.showSnackbar(failed)
