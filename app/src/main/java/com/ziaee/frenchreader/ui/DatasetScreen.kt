@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.DatasetDeckPack
@@ -63,6 +65,8 @@ class DatasetViewModel(app: Application) : AndroidViewModel(app) {
     var busy by mutableStateOf<String?>(null)
         private set
     var result by mutableStateOf<DatasetInstallResult?>(null)
+        private set
+    var failed by mutableStateOf(false)
         private set
 
     init {
@@ -87,16 +91,26 @@ class DatasetViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun run(id: String, block: suspend () -> DatasetInstallResult) {
+        if (busy != null) return
+        busy = id
         viewModelScope.launch {
-            busy = id
-            result = block()
-            status = repository.status(requireNotNull(manifest))
-            busy = null
+            try {
+                result = block()
+                status = repository.status(requireNotNull(manifest))
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.e("DatasetViewModel", "Dataset install failed", error)
+                failed = true
+            } finally {
+                busy = null
+            }
         }
     }
 
     fun consumeResult() {
         result = null
+        failed = false
     }
 
     private companion object {
@@ -110,6 +124,13 @@ fun DatasetScreen(onBack: () -> Unit) {
     val viewModel: DatasetViewModel = viewModel()
     val snackbarHostState = remember { SnackbarHostState() }
     val resultMessage = stringResource(R.string.dataset_added_result)
+    val errorMessage = stringResource(R.string.error_generic)
+    LaunchedEffect(viewModel.failed) {
+        if (viewModel.failed) {
+            snackbarHostState.showSnackbar(errorMessage)
+            viewModel.consumeResult()
+        }
+    }
     LaunchedEffect(viewModel.result) {
         viewModel.result?.let { result ->
             snackbarHostState.showSnackbar(resultMessage.format(result.added, result.skipped))
@@ -175,6 +196,7 @@ fun DatasetScreen(onBack: () -> Unit) {
                         count = stringResource(R.string.dataset_cards_count, pack.count),
                         status = viewModel.status?.decks?.get(pack.id),
                         busy = viewModel.busy == pack.id,
+                        enabled = viewModel.busy == null,
                         onAdd = { viewModel.addDeck(pack) }
                     )
                 }
@@ -192,6 +214,7 @@ fun DatasetScreen(onBack: () -> Unit) {
                         count = stringResource(R.string.dataset_stories_count, pack.count),
                         status = viewModel.status?.stories?.get(pack.id),
                         busy = viewModel.busy == pack.id,
+                        enabled = viewModel.busy == null,
                         onAdd = { viewModel.addStories(pack) }
                     )
                 }
@@ -207,6 +230,7 @@ private fun DatasetItem(
     count: String,
     status: DatasetPackStatus?,
     busy: Boolean,
+    enabled: Boolean,
     onAdd: () -> Unit
 ) {
     Card {
@@ -221,7 +245,7 @@ private fun DatasetItem(
             if (busy) {
                 CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             } else {
-                Button(onClick = onAdd, enabled = status?.complete != true) {
+                Button(onClick = onAdd, enabled = enabled && status?.complete != true) {
                     val label = when {
                         status?.complete == true -> R.string.dataset_added
                         (status?.installed ?: 0) > 0 -> R.string.dataset_add_missing

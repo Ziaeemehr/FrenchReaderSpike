@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.ziaee.frenchreader.ui.statistics.isTextCompleted
 
 /**
  * Owns Library's local query, sort choice, and deletion. Network state has
@@ -75,12 +74,12 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         val completionByTextId: Map<Long, Boolean>
     )
 
+    private val completionCache = LibraryCompletionCache()
+
     private val documentsWithCompletion = db.textDao().observeAll().mapLatest { documents ->
         DocumentsWithCompletion(
             documents,
-            documents.associate { document ->
-                document.id to isTextCompleted(document, bodyStore.read(document))
-            }
+            completionCache.completionFor(documents, bodyStore::read)
         )
     }
 

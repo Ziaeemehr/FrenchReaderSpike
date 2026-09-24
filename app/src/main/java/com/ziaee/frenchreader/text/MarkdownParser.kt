@@ -46,7 +46,7 @@ data class ParsedBlock(
  */
 object MarkdownParser {
     private val HEADER = Regex("^(#{1,6})\\s+(.*)$")
-    private val LIST_ITEM = Regex("^([-*+]|\\d+\\.)\\s+(.*)$")
+    private val LIST_ITEM = Regex("^([-*+•▪◦‣●■►▶✓✔➤→]|\\d+\\.)\\s+(.*)$")
     private val EPUB_IMAGE = Regex("^!\\[([^]]*)]\\(epubimg:([^)]+)\\)$")
 
     fun parse(rawBlock: String): ParsedBlock {
@@ -63,13 +63,13 @@ object MarkdownParser {
 
         HEADER.find(trimmed)?.let { m ->
             val level = m.groupValues[1].length
-            val (text, spans) = stripInlineEmphasis(m.groupValues[2].trim())
+            val (text, spans) = stripInlineEmphasis(sanitizeForSpeech(m.groupValues[2]))
             return ParsedBlock(BlockType.HEADER, headerLevel = level, plainText = text, emphasisSpans = spans)
         }
 
         LIST_ITEM.find(trimmed)?.let { m ->
             val ordered = m.groupValues[1].firstOrNull()?.isDigit() == true
-            val (text, spans) = stripInlineEmphasis(m.groupValues[2].trim())
+            val (text, spans) = stripInlineEmphasis(sanitizeForSpeech(m.groupValues[2]))
             return ParsedBlock(BlockType.LIST_ITEM, listOrdered = ordered, plainText = text, emphasisSpans = spans)
         }
 
@@ -77,7 +77,7 @@ object MarkdownParser {
         val joined = trimmed.lines().joinToString(" ") { it.trim() }
             .replace(Regex("\\s+"), " ")
             .trim()
-        val (text, spans) = stripInlineEmphasis(joined)
+        val (text, spans) = stripInlineEmphasis(sanitizeForSpeech(joined))
         return ParsedBlock(BlockType.PARAGRAPH, plainText = text, emphasisSpans = spans)
     }
 

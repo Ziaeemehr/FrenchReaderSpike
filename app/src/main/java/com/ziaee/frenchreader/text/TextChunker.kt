@@ -17,6 +17,10 @@ package com.ziaee.frenchreader.text
  *    audio/highlight/translation exactly like a short paragraph would, and
  *    the reading screen can simply prefix it with a bullet.
  *  - An EPUB image marker is always its own block.
+ *  - Decorative separators, bare URLs, URL-only source labels, and blocks
+ *    with no speech text are omitted. This intentionally makes saved chunk
+ *    indices from older chunking rules approximate; callers clamp them, and
+ *    all current progress/read paths use this same deterministic result.
  *  - Anything else accumulates into the current paragraph until a blank
  *    line, a heading, or a list item interrupts it.
  * A paragraph block that's still too long for one TTS/translation call is
@@ -26,6 +30,11 @@ object TextChunker {
     private const val MAX_CHUNK_CHARS = 1200
     private val HEADER_LINE = Regex("^#{1,6}\\s+.*$")
     private val LIST_LINE = Regex("^([-*+]|\\d+\\.)\\s+.*$")
+    private val SYMBOL_BULLET = Regex("^[•▪◦‣●■►▶✓✔➤→]\\s+(.*)$")
+    private val BARE_URL = Regex("(?i)(?:https?://|www\\.)\\S+")
+    private val EMPTY_LABEL = Regex("(?i)^(?:source|lien)\\s*:\\s*$")
+    private val ASCII_SEPARATOR = Regex("^(?:[-*_~=]\\s*){3,}$")
+    private val EM_DASH_SEPARATOR = Regex("^(?:—\\s*){2,}$")
     private val EPUB_IMAGE_LINE = Regex("^!\\[[^]]*]\\(epubimg:[^)]+\\)$")
 
     fun chunk(rawText: String): List<String> {
@@ -41,9 +50,9 @@ object TextChunker {
         }
 
         for (rawLine in lines) {
-            val line = rawLine.trim()
+            val line = cleanLine(rawLine)
             when {
-                line.isEmpty() -> flush()
+                line == null -> flush()
                 HEADER_LINE.matches(line) -> {
                     flush()
                     blocks.add(line)
@@ -70,7 +79,40 @@ object TextChunker {
                 out.add(block)
             }
         }
-        return out
+        return out.filter { block ->
+            val parsed = MarkdownParser.parse(block)
+            parsed.type == BlockType.IMAGE || parsed.plainText.isNotBlank()
+        }
+    }
+
+    private fun cleanLine(rawLine: String): String? {
+        var line = rawLine.trim()
+        if (line.isEmpty() || isSeparatorLine(line)) return null
+
+        SYMBOL_BULLET.matchEntire(line)?.let { match ->
+            line = "- ${match.groupValues[1]}"
+        }
+
+        line = BARE_URL.replace(line) { match ->
+            val start = match.range.first
+            if (start >= 2 && line[start - 2] == ']' && line[start - 1] == '(') match.value else ""
+        }.replace(Regex("[ \\t]+"), " ").trim()
+
+        return line.takeUnless { it.isEmpty() || EMPTY_LABEL.matches(it) }
+    }
+
+    private fun isSeparatorLine(line: String): Boolean {
+        if (ASCII_SEPARATOR.matches(line) || EM_DASH_SEPARATOR.matches(line)) return true
+        var index = 0
+        var foundBoxDrawing = false
+        while (index < line.length) {
+            val codePoint = Character.codePointAt(line, index)
+            index += Character.charCount(codePoint)
+            if (Character.isWhitespace(codePoint)) continue
+            if (codePoint !in 0x2500..0x257F) return false
+            foundBoxDrawing = true
+        }
+        return foundBoxDrawing
     }
 
     private fun splitLongParagraph(paragraph: String): List<String> {

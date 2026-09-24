@@ -169,10 +169,12 @@
     <string name="library_move">انتقال</string>
     <string name="library_edit_tags">ویرایش برچسب‌ها</string>
     <string name="library_filter_all">همه</string>
+    <string name="library_folder_selection_all">همه متن‌ها</string>
     <string name="library_filter_unfiled">بدون پوشه</string>
     <string name="library_row_more_actions">گزینه‌های بیشتر برای «%1$s»</string>
     <string name="library_status_read">خوانده‌شده</string>
     <string name="library_status_in_progress">در حال خواندن</string>
+    <string name="library_status_new">جدید</string>
     <string name="library_delete_confirm_title">این متن حذف شود؟</string>
     <string name="library_delete_confirm_message">تصویر ذخیره‌شدهٔ آن نیز حذف می‌شود. این کار قابل بازگشت نیست.</string>
     <plurals name="library_selection_count">

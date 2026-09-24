@@ -93,7 +93,9 @@ class DatasetRepository(
                         )
                     }
                     val body = if (stored != null) {
-                        "![${story.title}](epubimg:dataset/${stored.substringAfterLast('/')})\n\n${story.body}"
+                        // Brackets in the alt text would break the reader's image-line pattern.
+                        val alt = story.title.replace(Regex("[\\[\\]]"), "")
+                        "![$alt](epubimg:dataset/${stored.substringAfterLast('/')})\n\n${story.body}"
                     } else {
                         story.body
                     }

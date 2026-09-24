@@ -240,6 +240,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         show(null)
         canUndo = false
         audioJob?.cancel()
+        audioJob = null
+        sentenceAudioLoading = false
         player.stop()
         sentenceAudioError = false
         wordAudioError = false
@@ -297,6 +299,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 val restored = restoreQueueAfterUndo(queue.toList(), current, r.requeued)
                 queue.clear(); queue.addAll(restored)
                 audioJob?.cancel()
+                audioJob = null
+                sentenceAudioLoading = false
                 player.stop()
                 sentenceAudioError = false
                 wordAudioError = false
@@ -367,15 +371,19 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                     (text.voice to text.ratePercent).also { voiceCache[entry.textId] = it }
                 }
             }
-            ttsRepo.getOrSynthesize(entry.sentence, voiceAndRate.first, voiceAndRate.second).fold(
-                onSuccess = {
-                    player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
-                    player.prepare()
-                    player.play()
-                },
-                onFailure = { sentenceAudioError = true }
-            )
-            sentenceAudioLoading = false
+            try {
+                ttsRepo.getOrSynthesize(entry.sentence, voiceAndRate.first, voiceAndRate.second).fold(
+                    onSuccess = {
+                        player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
+                        player.prepare()
+                        player.play()
+                    },
+                    onFailure = { sentenceAudioError = true }
+                )
+            } finally {
+                // Also runs when answering/undo cancels this job mid-synthesis; a newer job owns the flag then.
+                if (audioJob == coroutineContext[Job]) sentenceAudioLoading = false
+            }
         }
     }
 
@@ -388,15 +396,18 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             wordAudioError = false
             wordAudioLoading = true
             player.stop()
-            ttsRepo.getOrSynthesize(entry.word, VocabPrefs.getCardVoice(context), 0).fold(
-                onSuccess = {
-                    player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
-                    player.prepare()
-                    player.play()
-                },
-                onFailure = { wordAudioError = true }
-            )
-            wordAudioLoading = false
+            try {
+                ttsRepo.getOrSynthesize(entry.word, VocabPrefs.getCardVoice(context), 0).fold(
+                    onSuccess = {
+                        player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
+                        player.prepare()
+                        player.play()
+                    },
+                    onFailure = { wordAudioError = true }
+                )
+            } finally {
+                if (audioJob == coroutineContext[Job]) wordAudioLoading = false
+            }
         }
     }
 

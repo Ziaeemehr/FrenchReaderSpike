@@ -16,7 +16,8 @@ from pathlib import Path
 
 from PIL import Image
 
-DATASET_VERSION = 1
+DATASET_VERSION = 2
+UNLEVELED = "Divers"  # level folder for stories without a CEFR level
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "app/src/main/assets/dataset"
 STORIES_ROOT = ROOT.parent
@@ -118,6 +119,10 @@ def parse_story(path):
     if lines and lines[0].startswith("# "):
         title = title or lines[0][2:].strip()
         lines = lines[1:]
+    elif not title and len(lines) > 1 and lines[0].strip() and not lines[1].strip():
+        # Plain .txt sources (Lingua, Podcast Français Facile): first line is the title.
+        title = lines[0].strip()
+        lines = lines[1:]
     image = None
     body = []
     for line in lines:
@@ -144,9 +149,14 @@ def build_stories():
     packs = []
     groups = [("fabulang", "Fabulang", f"fabulang/fabulang_{lvl}", lvl) for lvl in ("A1", "A2", "B1", "B2", "C1", "C2")]
     groups += [("fluencydrop", "FluencyDrop", f"fluencydrop/fluencydrop-french-{lvl.lower()}", lvl) for lvl in ("A2", "B1", "B2")]
+    groups += [("lingua", "Lingua", f"lingua_{lvl}", lvl) for lvl in ("A1", "A2", "B1", "B2")]
+    groups += [("podcastfrancaisfacile", "Podcast Français Facile", f"podcastfrancaisfacile_{lvl}", lvl)
+               for lvl in ("A1", "A2", "B1", "B2", "C1")]
+    groups += [("podcastfrancaisfacile", "Podcast Français Facile", "podcastfrancaisfacile_unknown", UNLEVELED)]
     for source_id, source_name, rel, level in groups:
         stories = []
-        for path in sorted((STORIES_ROOT / rel).glob("*.md")):
+        paths = sorted([*(STORIES_ROOT / rel).glob("*.md"), *(STORIES_ROOT / rel).glob("*.txt")])
+        for path in paths:
             title, body, url, image = parse_story(path)
             if not body:
                 continue

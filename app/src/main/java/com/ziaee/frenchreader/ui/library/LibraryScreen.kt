@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
@@ -42,6 +44,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -221,6 +224,7 @@ fun LibraryContent(
     onCreateTagAndAddToSelected: (String, Set<Long>) -> Unit = { _, _ -> }
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var folderMenuExpanded by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<TextDocument?>(null) }
     var pendingEdit by remember { mutableStateOf<TextDocument?>(null) }
     var pendingEditBody by remember { mutableStateOf<String?>(null) }
@@ -232,7 +236,7 @@ fun LibraryContent(
     var showBulkTags by remember { mutableStateOf(false) }
     val selectedFolderId = (state.folderFilter as? FolderFilter.Folder)?.id
     val breadcrumb = selectedFolderId?.let { pathTo(state.folders, it) }.orEmpty()
-    val visibleFolders = childrenOf(state.folders, selectedFolderId)
+    val flattenedFolders = flattenTree(state.folders)
     val visibleIds = state.documents.mapTo(mutableSetOf()) { it.id }
     val allVisibleSelected = visibleIds.isNotEmpty() && visibleIds.all(state.selectedIds::contains)
 
@@ -331,65 +335,62 @@ fun LibraryContent(
                     .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall)
             )
 
-            if (selectedFolderId != null) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().testTag("folderBreadcrumb"),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    item {
-                        TextButton(
-                            onClick = { onFolderFilterChange(FolderFilter.All) },
-                            modifier = Modifier.testTag("folderBreadcrumbAll")
-                        ) { Text(stringResource(R.string.library_breadcrumb_root)) }
-                    }
-                    items(breadcrumb, key = { "breadcrumb_${it.id}" }) { folder ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("›", style = MaterialTheme.typography.labelMedium)
-                            TextButton(
-                                onClick = { onFolderFilterChange(FolderFilter.Folder(folder.id)) },
-                                modifier = Modifier.testTag("folderBreadcrumb_${folder.id}")
-                            ) {
-                                Text(
-                                    folder.name,
-                                    style = if (folder.id == selectedFolderId) {
-                                        MaterialTheme.typography.labelLarge
-                                    } else {
-                                        MaterialTheme.typography.labelMedium
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().testTag("folderFilters"),
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = FrenchReaderDesign.spacing.small)
             ) {
-                item {
-                    FilterChip(
-                        selected = state.folderFilter == FolderFilter.All,
-                        onClick = { onFolderFilterChange(FolderFilter.All) },
-                        label = { Text(stringResource(R.string.library_filter_all)) },
-                        modifier = Modifier.padding(start = 8.dp, end = 4.dp).testTag("folderFilterAll")
-                    )
+                val folderSelectionLabel = when (state.folderFilter) {
+                    FolderFilter.All -> stringResource(R.string.library_folder_selection_all)
+                    FolderFilter.Unfiled -> stringResource(R.string.library_filter_unfiled)
+                    is FolderFilter.Folder -> breadcrumb.joinToString(" › ") { it.name }
+                        .ifBlank { stringResource(R.string.library_folder_selection_all) }
                 }
-                item {
-                    FilterChip(
-                        selected = state.folderFilter == FolderFilter.Unfiled,
-                        onClick = { onFolderFilterChange(FolderFilter.Unfiled) },
-                        label = { Text(stringResource(R.string.library_filter_unfiled)) },
-                        modifier = Modifier.padding(horizontal = 4.dp).testTag("folderFilterUnfiled")
-                    )
+                OutlinedButton(
+                    onClick = { folderMenuExpanded = true },
+                    modifier = Modifier.fillMaxWidth().testTag("folderFilters")
+                ) {
+                    Text(folderSelectionLabel, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
                 }
-                items(visibleFolders, key = { it.id }) { folder ->
-                    FilterChip(
-                        selected = state.folderFilter == FolderFilter.Folder(folder.id),
-                        onClick = { onFolderFilterChange(FolderFilter.Folder(folder.id)) },
-                        label = { Text(folder.name) },
-                        modifier = Modifier.padding(horizontal = 4.dp).testTag("folderFilter_${folder.id}")
+                DropdownMenu(
+                    expanded = folderMenuExpanded,
+                    onDismissRequest = { folderMenuExpanded = false },
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_filter_all)) },
+                        onClick = {
+                            onFolderFilterChange(FolderFilter.All)
+                            folderMenuExpanded = false
+                        },
+                        modifier = Modifier.testTag("folderFilterAll")
                     )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_filter_unfiled)) },
+                        onClick = {
+                            onFolderFilterChange(FolderFilter.Unfiled)
+                            folderMenuExpanded = false
+                        },
+                        modifier = Modifier.testTag("folderFilterUnfiled")
+                    )
+                    flattenedFolders.forEach { (folder, depth) ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Spacer(Modifier.width((depth * 16).dp))
+                                    Icon(Icons.Default.Folder, contentDescription = null)
+                                    Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+                                    Text(folder.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            },
+                            onClick = {
+                                onFolderFilterChange(FolderFilter.Folder(folder.id))
+                                folderMenuExpanded = false
+                            },
+                            modifier = Modifier.testTag("folderFilter_${folder.id}")
+                        )
+                    }
                 }
             }
 
@@ -614,10 +615,10 @@ private fun LibraryRow(
                         modifier = Modifier.weight(1f).padding(end = FrenchReaderDesign.spacing.half)
                     )
                 }
-                val readLabel = if (completed) {
-                    stringResource(R.string.library_status_read)
-                } else {
-                    stringResource(R.string.library_status_in_progress)
+                val readLabel = when (readingStatus(doc, completed)) {
+                    ReadingStatus.NOT_STARTED -> stringResource(R.string.library_status_new)
+                    ReadingStatus.IN_PROGRESS -> stringResource(R.string.library_status_in_progress)
+                    ReadingStatus.READ -> stringResource(R.string.library_status_read)
                 }
                 MetadataBadge(text = readLabel)
                 comprehensionPercent?.let {

@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "decks": [
   {
    "id": "gram-dial-a1-vocab",
@@ -138,6 +138,86 @@
    "source": "FluencyDrop",
    "file": "stories/stories-fluencydrop-b2.json",
    "count": 33
+  },
+  {
+   "id": "stories-lingua-a1",
+   "name": "Lingua A1",
+   "level": "A1",
+   "source": "Lingua",
+   "file": "stories/stories-lingua-a1.json",
+   "count": 7
+  },
+  {
+   "id": "stories-lingua-a2",
+   "name": "Lingua A2",
+   "level": "A2",
+   "source": "Lingua",
+   "file": "stories/stories-lingua-a2.json",
+   "count": 14
+  },
+  {
+   "id": "stories-lingua-b1",
+   "name": "Lingua B1",
+   "level": "B1",
+   "source": "Lingua",
+   "file": "stories/stories-lingua-b1.json",
+   "count": 14
+  },
+  {
+   "id": "stories-lingua-b2",
+   "name": "Lingua B2",
+   "level": "B2",
+   "source": "Lingua",
+   "file": "stories/stories-lingua-b2.json",
+   "count": 6
+  },
+  {
+   "id": "stories-podcastfrancaisfacile-a1",
+   "name": "Podcast Français Facile A1",
+   "level": "A1",
+   "source": "Podcast Français Facile",
+   "file": "stories/stories-podcastfrancaisfacile-a1.json",
+   "count": 4
+  },
+  {
+   "id": "stories-podcastfrancaisfacile-a2",
+   "name": "Podcast Français Facile A2",
+   "level": "A2",
+   "source": "Podcast Français Facile",
+   "file": "stories/stories-podcastfrancaisfacile-a2.json",
+   "count": 16
+  },
+  {
+   "id": "stories-podcastfrancaisfacile-b1",
+   "name": "Podcast Français Facile B1",
+   "level": "B1",
+   "source": "Podcast Français Facile",
+   "file": "stories/stories-podcastfrancaisfacile-b1.json",
+   "count": 84
+  },
+  {
+   "id": "stories-podcastfrancaisfacile-b2",
+   "name": "Podcast Français Facile B2",
+   "level": "B2",
+   "source": "Podcast Français Facile",
+   "file": "stories/stories-podcastfrancaisfacile-b2.json",
+   "count": 39
+  },
+  {
+   "id": "stories-podcastfrancaisfacile-c1",
+   "name": "Podcast Français Facile C1",
+   "level": "C1",
+   "source": "Podcast Français Facile",
+   "file": "stories/stories-podcastfrancaisfacile-c1.json",
+   "count": 4
+  },
+  {
+   "id": "stories-podcastfrancaisfacile-divers",
+   "name": "Podcast Français Facile Divers",
+   "level": "Divers",
+   "source": "Podcast Français Facile",
+   "file": "stories/stories-podcastfrancaisfacile-divers.json",
+   "count": 4
   }
  ]
 }

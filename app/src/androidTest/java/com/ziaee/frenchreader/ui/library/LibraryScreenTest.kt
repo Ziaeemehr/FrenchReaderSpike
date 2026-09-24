@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.ui.theme.ThemeMode
@@ -32,7 +33,8 @@ class LibraryScreenTest {
         title = title,
         rawText = if (completed) "Un court paragraphe." else "Premier paragraphe.\n\nDeuxième paragraphe.",
         sourceName = "France Info",
-        lastChunkIndex = 0
+        lastChunkIndex = 0,
+        lastAccessedAtMs = 1L
     )
 
     private fun setLibraryContent(
@@ -69,6 +71,38 @@ class LibraryScreenTest {
         composeRule.onNodeWithText(string(R.string.library_search_hint)).assertExists()
         composeRule.onNodeWithText(document.title).assertExists()
         composeRule.onNodeWithText(string(R.string.library_status_read)).assertExists()
+    }
+
+    @Test
+    fun untouchedDocumentShowsNewStatus() {
+        val document = TextDocument(id = 7L, title = "Nouveau texte", rawText = "Texte")
+        setLibraryContent(LibraryUiState(documents = listOf(document)))
+
+        composeRule.onNodeWithText(string(R.string.library_status_new)).assertExists()
+        composeRule.onNodeWithText(string(R.string.library_status_in_progress)).assertDoesNotExist()
+    }
+
+    @Test
+    fun folderDropdownListsTheWholeIndentedTreeAndSelectsFolder() {
+        val parent = LibraryFolder(id = 10L, name = "Histoires")
+        val child = LibraryFolder(id = 11L, name = "A2", parentId = parent.id)
+        var selected: FolderFilter? = null
+        composeRule.setContent {
+            FrenchReaderTheme(ThemeMode.LIGHT) {
+                LibraryContent(
+                    state = LibraryUiState(folders = listOf(parent, child)),
+                    onQueryChange = {}, onSortSelect = {}, onOpen = {}, onDelete = {},
+                    onAddText = {}, onFilePickerClick = {}, onOpenHome = {},
+                    onFolderFilterChange = { selected = it }
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("folderFilters").performClick()
+        composeRule.onNodeWithTag("folderFilterAll").assertExists()
+        composeRule.onNodeWithTag("folderFilterUnfiled").assertExists()
+        composeRule.onNodeWithTag("folderFilter_${child.id}").performClick()
+        assertEquals(FolderFilter.Folder(child.id), selected)
     }
 
     @Test
