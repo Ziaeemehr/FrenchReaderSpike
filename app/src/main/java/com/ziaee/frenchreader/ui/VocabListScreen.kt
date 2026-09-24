@@ -38,6 +38,8 @@ import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.status
 import com.ziaee.frenchreader.data.displayMeaning
+import com.ziaee.frenchreader.ui.components.EditorialBottomBar
+import com.ziaee.frenchreader.ui.components.EditorialDestination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -121,7 +123,12 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
 fun VocabListScreen(
     onBack: () -> Unit,
     onOpenReview: (Long) -> Unit,
-    onOpenDataset: () -> Unit
+    onOpenDataset: () -> Unit,
+    asTab: Boolean = false,
+    onHome: () -> Unit = {},
+    onLibrary: () -> Unit = {},
+    onAddText: () -> Unit = {},
+    onResources: () -> Unit = {}
 ) {
     val vm: VocabListViewModel = viewModel()
     val entries by vm.entries.collectAsState()
@@ -216,12 +223,26 @@ fun VocabListScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            if (asTab) {
+                EditorialBottomBar(
+                    selectedDestination = EditorialDestination.WORDS,
+                    onHome = onHome,
+                    onLibrary = onLibrary,
+                    onAddText = onAddText,
+                    onWords = {},
+                    onResources = onResources
+                )
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.vocab_screen_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
+                    if (!asTab) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
+                        }
                     }
                 },
                 actions = {

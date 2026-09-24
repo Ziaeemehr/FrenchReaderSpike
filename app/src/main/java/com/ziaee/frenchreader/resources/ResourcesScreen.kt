@@ -69,7 +69,7 @@ fun ResourcesScreen(
     onOpenHome: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddText: () -> Unit,
-    onReview: () -> Unit = {}
+    onWords: () -> Unit = {}
 ) {
     val vm: ResourcesViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -83,7 +83,7 @@ fun ResourcesScreen(
         onOpenHome = onOpenHome,
         onOpenLibrary = onOpenLibrary,
         onAddText = onAddText,
-        onReview = onReview
+        onWords = onWords
     )
 }
 
@@ -99,7 +99,7 @@ fun ResourcesContent(
     onOpenHome: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddText: () -> Unit,
-    onReview: () -> Unit = {}
+    onWords: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var editing by remember { mutableStateOf<ResourceLink?>(null) }
@@ -124,7 +124,7 @@ fun ResourcesContent(
                 onHome = onOpenHome,
                 onLibrary = onOpenLibrary,
                 onAddText = onAddText,
-                onReview = onReview,
+                onWords = onWords,
                 onResources = {}
             )
         }

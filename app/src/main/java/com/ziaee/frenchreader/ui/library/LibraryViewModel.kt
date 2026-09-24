@@ -9,6 +9,7 @@ import com.ziaee.frenchreader.content.EpubImportRepository
 import com.ziaee.frenchreader.content.EpubImportResult
 import com.ziaee.frenchreader.content.BatchImportRepository
 import com.ziaee.frenchreader.content.BatchImportResult
+import com.ziaee.frenchreader.content.TextExtractionController
 import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.LibraryFolder
@@ -39,6 +40,8 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val epubImportRepository = EpubImportRepository(app, db)
     private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
+    private val textExtraction = TextExtractionController(app)
+    val isExtractingText: Boolean get() = textExtraction.isExtracting
 
     // Library only ever deletes -- it never imports a headline, so no
     // ContentSource needs to be registered here.
@@ -364,5 +367,13 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
             onDone(runCatching { batchImportRepository.importTree(uri) }
                 .getOrElse { BatchImportResult(0, 0, 1, null) })
         }
+    }
+
+    fun extractPdf(uri: Uri, onDone: (Result<String>) -> Unit) {
+        viewModelScope.launch { onDone(textExtraction.extractPdf(uri)) }
+    }
+
+    fun extractImages(uris: List<Uri>, onDone: (Result<String>) -> Unit) {
+        viewModelScope.launch { onDone(textExtraction.extractImages(uris)) }
     }
 }

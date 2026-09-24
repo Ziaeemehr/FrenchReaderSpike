@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 data class IncomingShare(
     val suggestedTitle: String,
     val body: String,
-    val epubUri: Uri? = null
+    val epubUri: Uri? = null,
+    val pdfUri: Uri? = null,
+    val imageUris: List<Uri> = emptyList()
 )
 
 object SharedTextHolder {

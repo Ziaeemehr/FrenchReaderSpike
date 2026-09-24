@@ -12,8 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
@@ -59,10 +57,13 @@ import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.ManualDictionaryHost
 import com.ziaee.frenchreader.ui.shared.AddTextHost
+import com.ziaee.frenchreader.ui.shared.AddSourceSheet
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
 import com.ziaee.frenchreader.ui.shared.FindArticleSheet
 import com.ziaee.frenchreader.ui.shared.rememberAddTextUiState
 import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
+import com.ziaee.frenchreader.ui.shared.TextExtractionProgress
+import com.ziaee.frenchreader.ui.shared.rememberTextExtractionImporter
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 
 /** Lets instrumented tests scroll Home's content list to a node that's
@@ -91,7 +92,9 @@ fun HomeScreen(
     onOpenResources: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
-    onStartReview: () -> Unit
+    onStartReview: () -> Unit,
+    openAddTextSheet: Boolean = false,
+    onAddTextSheetOpened: () -> Unit = {}
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -112,6 +115,7 @@ fun HomeScreen(
     val addTextState = rememberAddTextUiState()
     val context = LocalContext.current
     var showFindArticleSheet by remember { mutableStateOf(false) }
+    var showAddSourceSheet by remember { mutableStateOf(false) }
     var showManualDictionary by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val genericErrorMessage = stringResource(R.string.error_generic)
@@ -121,6 +125,12 @@ fun HomeScreen(
     val epubImportAlready = stringResource(R.string.epub_import_already)
     val epubImportFailed = stringResource(R.string.epub_import_failed)
     val batchImportSummary = stringResource(R.string.batch_import_summary)
+    LaunchedEffect(openAddTextSheet) {
+        if (openAddTextSheet) {
+            showAddSourceSheet = true
+            onAddTextSheetOpened()
+        }
+    }
     val importEpub: (Uri) -> Unit = { uri ->
         Toast.makeText(context, epubImportStarted, Toast.LENGTH_SHORT).show()
         vm.importEpub(
@@ -161,6 +171,11 @@ fun HomeScreen(
             }
         }
     }
+    val extractionImporter = rememberTextExtractionImporter(
+        state = addTextState,
+        extractPdf = vm::extractPdf,
+        extractImages = vm::extractImages
+    )
 
     LaunchedEffect(vm.contentSearchState) {
         if (vm.contentSearchState is ContentSearchUiState.Error) {
@@ -192,7 +207,7 @@ fun HomeScreen(
         onOpenStatistics = onOpenStatistics,
         onOpenSettings = onOpenSettings,
         onOpenLibrary = onOpenLibrary,
-        onAddTextClick = { addTextState.openBlank() },
+        onAddTextClick = { showAddSourceSheet = true },
         onOpenGradedReaders = onOpenResources,
         onOpenAbout = onOpenAbout,
         onSelectHeadline = { vm.selectHeadline(it) },
@@ -205,9 +220,26 @@ fun HomeScreen(
         onOpenDataset = onOpenDataset
     )
 
-    AddTextHost(addTextState, onEpub = importEpub) { title, body ->
+    AddTextHost(
+        addTextState,
+        onEpub = importEpub,
+        onPdf = extractionImporter.importPdf,
+        onImages = extractionImporter.importImages
+    ) { title, body ->
         vm.pasteText(title.ifBlank { untitledFallback }, body) { id -> onOpenText(id) }
     }
+
+    AddSourceSheet(
+        visible = showAddSourceSheet,
+        isLoading = vm.isExtractingText,
+        onDismiss = { showAddSourceSheet = false },
+        onPasteText = addTextState::openBlank,
+        onImportFile = openFilePicker,
+        onImportFolder = { folderPicker.launch(null) },
+        onImportPdf = extractionImporter.launchPdfPicker,
+        onImportImages = extractionImporter.launchImagePicker
+    )
+    TextExtractionProgress(vm.isExtractingText)
 
     ManualDictionaryHost(
         open = showManualDictionary,
@@ -293,21 +325,6 @@ fun HomeContent(
                     }
                     DropdownMenu(expanded = moreMenuExpanded, onDismissRequest = { moreMenuExpanded = false }) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.home_action_import_file)) },
-                            leadingIcon = { Icon(Icons.Default.FileOpen, contentDescription = null) },
-                            onClick = { moreMenuExpanded = false; onFilePickerClick() }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.home_action_import_folder)) },
-                            leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null) },
-                            onClick = { moreMenuExpanded = false; onFolderPickerClick() }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.home_action_vocabulary)) },
-                            leadingIcon = { Icon(Icons.Default.MenuBook, contentDescription = null) },
-                            onClick = { moreMenuExpanded = false; onOpenVocab() }
-                        )
-                        DropdownMenuItem(
                             text = { Text(stringResource(R.string.home_action_statistics)) },
                             leadingIcon = { Icon(Icons.Default.BarChart, contentDescription = null) },
                             onClick = { moreMenuExpanded = false; onOpenStatistics() }
@@ -333,7 +350,7 @@ fun HomeContent(
                 onHome = {},
                 onLibrary = onOpenLibrary,
                 onAddText = onAddTextClick,
-                onReview = onStartReview,
+                onWords = onOpenVocab,
                 onResources = onOpenGradedReaders
             )
         }
@@ -345,6 +362,7 @@ fun HomeContent(
                         streakDays = state.streakDays,
                         learnedWordCount = state.learnedWordCount,
                         savedWordCount = state.savedWordCount,
+                        onSavedWordsClick = onOpenVocab,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)

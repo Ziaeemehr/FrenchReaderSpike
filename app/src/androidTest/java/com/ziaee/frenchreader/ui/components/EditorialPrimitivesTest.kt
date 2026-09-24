@@ -36,20 +36,20 @@ class EditorialPrimitivesTest {
     }
 
     @Test
-    fun bottomBarExposesSelectedDestinationAddAndReviewActions() {
-        var reviewClicks = 0
+    fun bottomBarExposesSelectedDestinationAddAndWordsActions() {
+        var wordsClicks = 0
         composeRule.setContent {
             FrenchReaderTheme(ThemeMode.LIGHT) {
                 EditorialBottomBar(
                     selectedDestination = EditorialDestination.HOME,
                     onHome = {}, onLibrary = {}, onAddText = {},
-                    onReview = { reviewClicks++ }
+                    onWords = { wordsClicks++ }
                 )
             }
         }
         composeRule.onNodeWithText(string(R.string.nav_home)).assertIsSelected()
-        composeRule.onNodeWithText(string(R.string.action_add_text)).assertHasClickAction()
-        composeRule.onNodeWithText(string(R.string.nav_review)).performClick()
-        assertEquals(1, reviewClicks)
+        composeRule.onNodeWithText(string(R.string.nav_import)).assertHasClickAction()
+        composeRule.onNodeWithText(string(R.string.nav_words)).performClick()
+        assertEquals(1, wordsClicks)
     }
 }

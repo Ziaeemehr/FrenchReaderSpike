@@ -5,7 +5,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryBooks
-import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -22,7 +22,7 @@ import com.ziaee.frenchreader.R
  * The destinations shared by the editorial bottom navigation on Home,
  * Library, and Resources.
  */
-enum class EditorialDestination { HOME, LIBRARY, REVIEW, RESOURCES }
+enum class EditorialDestination { HOME, LIBRARY, WORDS, RESOURCES }
 
 /**
  * Ordinary Material selection semantics (selected/Role.Tab), but with the
@@ -36,7 +36,7 @@ fun EditorialBottomBar(
     onHome: () -> Unit,
     onLibrary: () -> Unit,
     onAddText: () -> Unit,
-    onReview: () -> Unit = {},
+    onWords: () -> Unit = {},
     onResources: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -59,14 +59,14 @@ fun EditorialBottomBar(
             selected = false,
             onClick = onAddText,
             icon = { Icon(Icons.Default.Add, contentDescription = null) },
-            label = { Text(stringResource(R.string.action_add_text)) },
+            label = { Text(stringResource(R.string.nav_import)) },
             colors = editorialNavigationItemColors()
         )
         NavigationBarItem(
-            selected = selectedDestination == EditorialDestination.REVIEW,
-            onClick = onReview,
-            icon = { Icon(Icons.Default.Layers, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_review)) },
+            selected = selectedDestination == EditorialDestination.WORDS,
+            onClick = onWords,
+            icon = { Icon(Icons.Default.Style, contentDescription = null) },
+            label = { Text(stringResource(R.string.nav_words)) },
             colors = editorialNavigationItemColors()
         )
         NavigationBarItem(

@@ -5,6 +5,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -169,7 +174,7 @@ class HomeScreenTest {
     }
 
     @Test
-    fun importAndLibraryActionsStayInMoreMenu() {
+    fun vocabularyIsNotInMoreMenu() {
         setHomeContent(HomeUiState())
 
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()
@@ -182,9 +187,26 @@ class HomeScreenTest {
         ).performClick()
 
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertExists()
+    }
+
+    @Test
+    fun savedWordsSummaryInvokesVocabularyCallback() {
+        var clicks = 0
+        setHomeContent(
+            state = HomeUiState(savedWordCount = 7),
+            onOpenVocab = { clicks++ }
+        )
+
+        composeTestRule
+            .onNodeWithText(string(R.string.home_summary_saved_words, 7))
+            .assertHasClickAction()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+
+        assertEquals(1, clicks)
     }
 
     @Test

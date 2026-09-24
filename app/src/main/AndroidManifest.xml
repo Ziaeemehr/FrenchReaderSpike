@@ -29,6 +29,10 @@
         android:theme="@style/Theme.FrenchReader"
         android:usesCleartextTraffic="true">
 
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr" />
+
         <receiver
             android:name=".data.VocabReviewReminderReceiver"
             android:exported="false" />
@@ -59,6 +63,14 @@
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="text/markdown" />
                 <data android:mimeType="application/epub+zip" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
             </intent-filter>
 
             <!-- Open a TXT/MD file directly (e.g. "Open with" from a file
@@ -69,6 +81,7 @@
                 <data android:scheme="content" android:mimeType="text/plain" />
                 <data android:scheme="content" android:mimeType="text/markdown" />
                 <data android:scheme="content" android:mimeType="application/epub+zip" />
+                <data android:scheme="content" android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
 

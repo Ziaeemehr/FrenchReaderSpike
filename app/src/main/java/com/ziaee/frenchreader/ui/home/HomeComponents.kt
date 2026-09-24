@@ -50,6 +50,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -87,6 +88,7 @@ fun LearningSummaryStrip(
     streakDays: Int,
     learnedWordCount: Int,
     savedWordCount: Int,
+    onSavedWordsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -122,6 +124,8 @@ fun LearningSummaryStrip(
                 iconTint = MaterialTheme.colorScheme.primary,
                 value = savedWordCount.toString(),
                 label = stringResource(R.string.home_summary_saved_words, savedWordCount),
+                onClick = onSavedWordsClick,
+                onClickLabel = stringResource(R.string.home_action_vocabulary),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -134,9 +138,20 @@ private fun SummaryCell(
     iconTint: Color,
     value: String,
     label: String,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    val cellModifier = if (onClick != null) {
+        modifier.clickable(
+            onClickLabel = onClickLabel,
+            role = Role.Button,
+            onClick = onClick
+        )
+    } else {
+        modifier
+    }
+    Column(modifier = cellModifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(FrenchReaderDesign.sizes.iconSmall))
             Spacer(Modifier.size(4.dp))

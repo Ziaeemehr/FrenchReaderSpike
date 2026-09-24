@@ -654,6 +654,29 @@ private fun AccuracyRing(percent: Int) {
     }
 }
 
+/** Word pronunciation button shown under the card's word on both faces, so it survives the flip. */
+@Composable
+private fun WordAudioButton(vm: VocabReviewViewModel, entry: VocabEntry, interactive: Boolean) {
+    if (!isLikelyFrench(entry.word)) return
+    IconButton(onClick = vm::playWord, enabled = interactive) {
+        if (vm.wordAudioLoading) {
+            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(
+                Icons.Default.VolumeUp,
+                stringResource(R.string.accessibility_play_word)
+            )
+        }
+    }
+    if (vm.wordAudioError) {
+        Text(
+            stringResource(R.string.error_audio_generation),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.labelSmall
+        )
+    }
+}
+
 @Composable
 private fun ReviewCard(
     vm: VocabReviewViewModel,
@@ -682,25 +705,7 @@ private fun ReviewCard(
             front = {
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                    if (isLikelyFrench(entry.word)) {
-                        IconButton(onClick = vm::playWord, enabled = interactive) {
-                            if (vm.wordAudioLoading) {
-                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(
-                                    Icons.Default.VolumeUp,
-                                    stringResource(R.string.accessibility_play_word)
-                                )
-                            }
-                        }
-                        if (vm.wordAudioError) {
-                            Text(
-                                stringResource(R.string.error_audio_generation),
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
+                    WordAudioButton(vm, entry, interactive)
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.review_tap_to_reveal), style = MaterialTheme.typography.labelSmall)
                 }
@@ -708,6 +713,7 @@ private fun ReviewCard(
             back = {
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     TappableFrenchText(entry.word, wordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    WordAudioButton(vm, entry, interactive)
                     Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(onClick = onDictionary, enabled = interactive) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }

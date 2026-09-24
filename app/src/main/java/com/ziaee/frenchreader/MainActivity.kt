@@ -9,6 +9,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -19,6 +23,7 @@ import androidx.navigation.navArgument
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.ziaee.frenchreader.content.DatasetSeeder
+import com.ziaee.frenchreader.content.ImageTextExtractor
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
@@ -37,9 +42,11 @@ import com.ziaee.frenchreader.ui.statistics.StatisticsScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
+import com.ziaee.frenchreader.util.IncomingContentKind
 import com.ziaee.frenchreader.util.MAX_TEXT_IMPORT_BYTES
 import com.ziaee.frenchreader.util.SharedTextHolder
 import com.ziaee.frenchreader.util.readBytesLimited
+import com.ziaee.frenchreader.util.classifyIncomingContent
 
 class MainActivity : AppCompatActivity() {
 
@@ -81,10 +88,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Accepts a shared text/plain snippet (ACTION_SEND with EXTRA_TEXT), selected text
-     * (ACTION_PROCESS_TEXT), a shared file (ACTION_SEND with EXTRA_STREAM), or a TXT/MD
-     * file opened directly with this app (ACTION_VIEW) -- per the design doc's "receive
-     * text/file from Share" requirement. Reading is UTF-8 only and best-effort: anything
+     * Accepts shared text, EPUB, PDF, and image streams, plus supported files opened
+     * directly with this app. Plain-text decoding is UTF-8 and best-effort: anything
      * that fails to decode is silently ignored rather than crashing the share flow.
      */
     private fun handleIncomingIntent(intent: Intent?) {
@@ -93,14 +98,26 @@ class MainActivity : AppCompatActivity() {
             Intent.ACTION_SEND -> {
                 val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
                 val streamUri = getStreamExtra(intent)
-                if (streamUri != null && isEpub(intent, streamUri)) {
-                    SharedTextHolder.post(IncomingShare("", "", streamUri))
-                    return
+                if (streamUri != null) {
+                    val kind = incomingKind(intent, streamUri)
+                    when (kind) {
+                        IncomingContentKind.EPUB -> SharedTextHolder.post(IncomingShare("", "", epubUri = streamUri))
+                        IncomingContentKind.PDF -> SharedTextHolder.post(IncomingShare("", "", pdfUri = streamUri))
+                        IncomingContentKind.IMAGE -> SharedTextHolder.post(IncomingShare("", "", imageUris = listOf(streamUri)))
+                        IncomingContentKind.TEXT -> Unit
+                    }
+                    if (kind != IncomingContentKind.TEXT) return
                 }
                 val body = sharedText ?: streamUri?.let(::readTextFromUri)
                 if (!body.isNullOrBlank()) {
                     val title = streamUri?.let { queryDisplayName(this, it) } ?: getString(R.string.text_untitled)
                     SharedTextHolder.post(IncomingShare(title, body))
+                }
+            }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val imageUris = getStreamExtras(intent).take(ImageTextExtractor.MAX_IMAGES)
+                if (imageUris.isNotEmpty()) {
+                    SharedTextHolder.post(IncomingShare("", "", imageUris = imageUris))
                 }
             }
             Intent.ACTION_PROCESS_TEXT -> {
@@ -111,10 +128,14 @@ class MainActivity : AppCompatActivity() {
             }
             Intent.ACTION_VIEW -> {
                 intent.data?.let { uri ->
-                    if (isEpub(intent, uri)) {
-                        SharedTextHolder.post(IncomingShare("", "", uri))
-                        return
+                    val kind = incomingKind(intent, uri)
+                    when (kind) {
+                        IncomingContentKind.EPUB -> SharedTextHolder.post(IncomingShare("", "", epubUri = uri))
+                        IncomingContentKind.PDF -> SharedTextHolder.post(IncomingShare("", "", pdfUri = uri))
+                        IncomingContentKind.IMAGE -> SharedTextHolder.post(IncomingShare("", "", imageUris = listOf(uri)))
+                        IncomingContentKind.TEXT -> Unit
                     }
+                    if (kind != IncomingContentKind.TEXT) return
                     val body = readTextFromUri(uri)
                     if (!body.isNullOrBlank()) {
                         val title = queryDisplayName(this, uri) ?: getString(R.string.text_untitled)
@@ -130,6 +151,14 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
         else intent.getParcelableExtra(Intent.EXTRA_STREAM)
 
+    @Suppress("DEPRECATION")
+    private fun getStreamExtras(intent: Intent): List<Uri> =
+        if (Build.VERSION.SDK_INT >= 33) {
+            intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java).orEmpty()
+        } else {
+            intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty()
+        }
+
     private fun readTextFromUri(uri: Uri): String? = try {
         contentResolver.openInputStream(uri)?.use {
             it.readBytesLimited(MAX_TEXT_IMPORT_BYTES).toString(Charsets.UTF_8)
@@ -138,14 +167,17 @@ class MainActivity : AppCompatActivity() {
         null
     }
 
-    private fun isEpub(intent: Intent, uri: Uri): Boolean =
-        intent.type == "application/epub+zip" ||
-            contentResolver.getType(uri) == "application/epub+zip"
+    private fun incomingKind(intent: Intent, uri: Uri): IncomingContentKind =
+        classifyIncomingContent(
+            mimeType = intent.type ?: contentResolver.getType(uri),
+            displayName = queryDisplayName(this, uri, stripExtension = false)
+        )
 }
 
 @Composable
 private fun AppNavHost() {
     val navController = rememberNavController()
+    var openAddTextOnHome by rememberSaveable { mutableStateOf(false) }
 
     // Home <-> Library is bottom-navigation, not a push/pop stack: reusing
     // the start destination's saved state avoids piling up duplicate Home
@@ -159,18 +191,25 @@ private fun AppNavHost() {
         }
     }
 
+    fun navigateToHomeAndAddText() {
+        openAddTextOnHome = true
+        navigateToTab("home")
+    }
+
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
                 onOpenText = { id -> navController.navigate("reading/$id") },
                 onOpenLibrary = { navigateToTab("library") },
-                onOpenVocab = { navController.navigate("vocab") },
+                onOpenVocab = { navigateToTab("vocab") },
                 onOpenStatistics = { navController.navigate("statistics") },
                 onOpenSettings = { navController.navigate("settings") },
                 onOpenResources = { navigateToTab("resources") },
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
-                onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
+                onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
+                openAddTextSheet = openAddTextOnHome,
+                onAddTextSheetOpened = { openAddTextOnHome = false }
             )
         }
         composable("library") {
@@ -178,15 +217,15 @@ private fun AppNavHost() {
                 onOpenText = { id -> navController.navigate("reading/$id") },
                 onOpenHome = { navigateToTab("home") },
                 onOpenResources = { navigateToTab("resources") },
-                onReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
+                onWords = { navigateToTab("vocab") }
             )
         }
         composable("resources") {
             ResourcesScreen(
                 onOpenHome = { navigateToTab("home") },
                 onOpenLibrary = { navigateToTab("library") },
-                onAddText = { navigateToTab("home") },
-                onReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
+                onAddText = ::navigateToHomeAndAddText,
+                onWords = { navigateToTab("vocab") }
             )
         }
         composable(
@@ -197,10 +236,22 @@ private fun AppNavHost() {
             ReadingScreen(
                 textId = textId,
                 onBack = { navController.popBackStack() },
-                onOpenVocab = { navController.navigate("vocab") }
+                onOpenVocab = { navController.navigate("vocab_pushed") }
             )
         }
         composable("vocab") {
+            VocabListScreen(
+                onBack = { navigateToTab("home") },
+                onOpenReview = { scope -> navController.navigate("vocab_review/$scope") },
+                onOpenDataset = { navController.navigate("dataset") },
+                asTab = true,
+                onHome = { navigateToTab("home") },
+                onLibrary = { navigateToTab("library") },
+                onAddText = ::navigateToHomeAndAddText,
+                onResources = { navigateToTab("resources") }
+            )
+        }
+        composable("vocab_pushed") {
             VocabListScreen(
                 onBack = { navController.popBackStack() },
                 onOpenReview = { scope -> navController.navigate("vocab_review/$scope") },

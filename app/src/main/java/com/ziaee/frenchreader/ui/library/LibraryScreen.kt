@@ -22,10 +22,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -78,8 +76,11 @@ import com.ziaee.frenchreader.ui.components.MetadataBadge
 import com.ziaee.frenchreader.ui.home.DocumentThumbnail
 import com.ziaee.frenchreader.ui.shared.AddTextDialog
 import com.ziaee.frenchreader.ui.shared.AddTextHost
+import com.ziaee.frenchreader.ui.shared.AddSourceSheet
+import com.ziaee.frenchreader.ui.shared.TextExtractionProgress
 import com.ziaee.frenchreader.ui.shared.rememberAddTextUiState
 import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
+import com.ziaee.frenchreader.ui.shared.rememberTextExtractionImporter
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 
 /**
@@ -92,13 +93,14 @@ fun LibraryScreen(
     onOpenText: (Long) -> Unit,
     onOpenHome: () -> Unit,
     onOpenResources: () -> Unit = {},
-    onReview: () -> Unit = {}
+    onWords: () -> Unit = {}
 ) {
     val vm: LibraryViewModel = viewModel()
     val state by vm.uiState.collectAsState()
     val comprehensionScores by vm.comprehensionScores.collectAsState()
 
     val addTextState = rememberAddTextUiState()
+    var showAddSourceSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val untitledFallback = stringResource(R.string.text_untitled)
     val epubImportStarted = stringResource(R.string.epub_import_started)
@@ -132,6 +134,11 @@ fun LibraryScreen(
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let { vm.importTree(it, showBatchResult) }
     }
+    val extractionImporter = rememberTextExtractionImporter(
+        state = addTextState,
+        extractPdf = vm::extractPdf,
+        extractImages = vm::extractImages
+    )
 
     LibraryContent(
         state = state,
@@ -157,12 +164,12 @@ fun LibraryScreen(
         onSetTags = vm::setTags,
         onCreateFolderAndMove = { doc, name -> vm.createFolderAndMove(doc, name) },
         onCreateTagAndAssign = vm::createTagAndAssign,
-        onAddText = { addTextState.openBlank() },
+        onAddText = { showAddSourceSheet = true },
         onFilePickerClick = openFilePicker,
         onFolderPickerClick = { folderPicker.launch(null) },
         onOpenHome = onOpenHome,
         onOpenResources = onOpenResources,
-        onReview = onReview,
+        onWords = onWords,
         onToggleSelection = vm::toggleSelection,
         onStartSelection = vm::startSelection,
         onSelectAll = vm::selectAll,
@@ -174,9 +181,25 @@ fun LibraryScreen(
         onCreateTagAndAddToSelected = vm::createTagAndAddToSelected
     )
 
-    AddTextHost(addTextState, onEpub = importEpub) { title, body ->
+    AddTextHost(
+        addTextState,
+        onEpub = importEpub,
+        onPdf = extractionImporter.importPdf,
+        onImages = extractionImporter.importImages
+    ) { title, body ->
         vm.pasteText(title.ifBlank { untitledFallback }, body) { id -> onOpenText(id) }
     }
+    AddSourceSheet(
+        visible = showAddSourceSheet,
+        isLoading = vm.isExtractingText,
+        onDismiss = { showAddSourceSheet = false },
+        onPasteText = addTextState::openBlank,
+        onImportFile = openFilePicker,
+        onImportFolder = { folderPicker.launch(null) },
+        onImportPdf = extractionImporter.launchPdfPicker,
+        onImportImages = extractionImporter.launchImagePicker
+    )
+    TextExtractionProgress(vm.isExtractingText)
 }
 
 /** Stateless Library layout, hoisted out so a UI test can drive it with a
@@ -196,7 +219,7 @@ fun LibraryContent(
     onFolderPickerClick: () -> Unit = {},
     onOpenHome: () -> Unit,
     onOpenResources: () -> Unit = {},
-    onReview: () -> Unit = {},
+    onWords: () -> Unit = {},
     onEdit: (TextDocument, String, String) -> Unit = { _, _, _ -> },
     onLoadBody: (TextDocument, (String) -> Unit) -> Unit = { _, loaded -> loaded("") },
     onFolderFilterChange: (FolderFilter) -> Unit = {},
@@ -278,12 +301,6 @@ fun LibraryContent(
                         ) {
                             Icon(Icons.Default.Folder, contentDescription = stringResource(R.string.library_manage_organizer))
                         }
-                        IconButton(onClick = onFilePickerClick) {
-                            Icon(Icons.Default.FileOpen, contentDescription = stringResource(R.string.accessibility_import_file))
-                        }
-                        IconButton(onClick = onFolderPickerClick) {
-                            Icon(Icons.Default.CreateNewFolder, contentDescription = stringResource(R.string.accessibility_import_folder))
-                        }
                         Box {
                             IconButton(onClick = { sortMenuExpanded = true }) {
                                 Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.accessibility_sort))
@@ -313,7 +330,7 @@ fun LibraryContent(
                 onHome = onOpenHome,
                 onLibrary = {},
                 onAddText = onAddText,
-                onReview = onReview,
+                onWords = onWords,
                 onResources = onOpenResources
             )
         }
