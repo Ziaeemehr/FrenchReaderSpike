@@ -42,7 +42,7 @@ object DatasetSeeder {
         val manifest = repository.loadManifest()
 
         if (pending) {
-            repository.installAll(manifest)
+            repository.installStarter(manifest)
             markComplete(context, manifest.version)
             return
         }
@@ -57,7 +57,7 @@ object DatasetSeeder {
         check(prefs.edit().putBoolean(KEY_SEED_PENDING, true).commit()) {
             "Unable to persist the dataset seed pending state"
         }
-        repository.installAll(manifest)
+        repository.installStarter(manifest)
         markComplete(context, manifest.version)
     }
 

@@ -18,6 +18,15 @@ import kotlinx.coroutines.withContext
 
 private const val GRADED_STORIES_FOLDER = "Histoires graduées"
 
+internal val STARTER_DECK_IDS = setOf(
+    "gram-dial-a1-vocab",
+    "comm-ess-a1-phrases"
+)
+internal val STARTER_STORY_IDS = setOf(
+    "stories-fabulang-a1",
+    "stories-lingua-a1"
+)
+
 data class DatasetPackStatus(val installed: Int, val total: Int) {
     val complete get() = installed >= total && total > 0
 }
@@ -141,15 +150,30 @@ class DatasetRepository(
 
     suspend fun installAll(manifestOrNull: DatasetManifest? = null): DatasetInstallResult {
         val manifest = manifestOrNull ?: loadManifest()
+        return installPacks(manifest.decks, manifest.stories)
+    }
+
+    suspend fun installStarter(manifestOrNull: DatasetManifest? = null): DatasetInstallResult {
+        val manifest = manifestOrNull ?: loadManifest()
+        return installPacks(
+            manifest.decks.filter { it.id in STARTER_DECK_IDS },
+            manifest.stories.filter { it.id in STARTER_STORY_IDS }
+        )
+    }
+
+    private suspend fun installPacks(
+        decks: List<DatasetDeckPack>,
+        stories: List<DatasetStoryPack>
+    ): DatasetInstallResult {
         var added = 0
         var skipped = 0
-        manifest.decks.forEach { pack ->
+        decks.forEach { pack ->
             installDeck(pack).also { result ->
                 added += result.added
                 skipped += result.skipped
             }
         }
-        manifest.stories.forEach { pack ->
+        stories.forEach { pack ->
             installStories(pack).also { result ->
                 added += result.added
                 skipped += result.skipped

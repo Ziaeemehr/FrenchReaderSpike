@@ -3,7 +3,9 @@ package com.ziaee.frenchreader.content
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.displayMeaning
 import com.ziaee.frenchreader.data.lessonNumber
+import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DatasetTest {
@@ -42,5 +44,25 @@ class DatasetTest {
         )
         assertEquals("32.5", entry.lessonNumber())
         assertEquals("first line\nsecond line", entry.displayMeaning())
+    }
+
+    @Test
+    fun starterPacksExistInManifest() {
+        val manifest = parseDatasetManifest(
+            File("src/main/assets/dataset/manifest.json").readText()
+        )
+        val deckIds = manifest.decks.map { it.id }.toSet()
+        val storyIds = manifest.stories.map { it.id }.toSet()
+
+        assertEquals(
+            setOf("gram-dial-a1-vocab", "comm-ess-a1-phrases"),
+            STARTER_DECK_IDS
+        )
+        assertEquals(
+            setOf("stories-fabulang-a1", "stories-lingua-a1"),
+            STARTER_STORY_IDS
+        )
+        assertTrue(deckIds.containsAll(STARTER_DECK_IDS))
+        assertTrue(storyIds.containsAll(STARTER_STORY_IDS))
     }
 }
