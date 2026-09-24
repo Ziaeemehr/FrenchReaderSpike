@@ -1,109 +1,55 @@
+<p align="center">
+  <b>English</b> · <a href="README.fa.md">فارسی</a>
+</p>
+
 # French Reader
 
-An Android app for learning French by reading. Import or fetch French texts, listen to them read aloud with sentence-level highlighting, look up words and phrases, and review saved vocabulary with a Leitner spaced-repetition box.
+An Android app for learning French by reading: read real French texts, listen to them, look up words, and review the words you save.
 
-The interface is localized in English, French and Persian (with right-to-left layout and the Vazirmatn font for Persian). French reading content always renders left-to-right.
-
-## Built-in dataset
-
-The APK bundles eight Anki-derived decks: *Grammaire en dialogues* A1/B1, *Vocabulaire en dialogues* A1, *Vocabulaire progressif* A2–B1, and *Communication essentielle* A1/A2. It also includes graded stories from Fabulang (A1–C2) and FluencyDrop (A2–B2). Manage them from **Settings → Built-in dataset**; adding content again is safe and skips duplicates.
-
-Vocabulary cards can play their French front aloud. Choose the card voice in the vocabulary review settings.
-
-Regenerate the checked-in dataset assets with `tools/build_dataset.py`.
+## ⬇️ Download
 
 <p align="center">
-  <img src="docs/screenshots/home.jpg" width="260" alt="Home screen with streak, continue reading, news and today's review">
-  <img src="docs/screenshots/reading.jpg" width="260" alt="Reading screen with sentence highlighting and saved words">
-  <img src="docs/screenshots/dictionary.jpg" width="260" alt="Dictionary sheet with Persian meaning and WordReference">
+  <a href="https://github.com/Ziaeemehr/FrenchReaderSpike/releases/latest/download/FrenchReader.apk">
+    <img src="https://img.shields.io/badge/Download-FrenchReader.apk-722b36?style=for-the-badge&logo=android&logoColor=white" alt="Download FrenchReader.apk">
+  </a>
+</p>
+
+1. On your Android phone, tap the **Download** button above. It always gets the newest version.
+2. Open the downloaded file **FrenchReader.apk** (from your notifications or the **Downloads** folder).
+3. If Android asks, allow installing apps from your browser or file manager, then tap **Install**.
+
+Requires Android 8.0 or newer. To update later, download and install again: your words and texts are kept.
+
+Older versions are on the [Releases page](https://github.com/Ziaeemehr/FrenchReaderSpike/releases).
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/home.jpg" width="240" alt="Home screen">
+  <img src="docs/screenshots/reading.jpg" width="240" alt="Reading a text">
+  <img src="docs/screenshots/import.jpg" width="240" alt="Import menu">
 </p>
 <p align="center">
-  <img src="docs/screenshots/review_card.jpg" width="260" alt="Leitner review card with meaning, example sentence and translation">
-  <img src="docs/screenshots/vocab.jpg" width="260" alt="Saved vocabulary list with status breakdown">
-  <img src="docs/screenshots/stats.jpg" width="260" alt="Learning statistics">
+  <img src="docs/screenshots/words.jpg" width="240" alt="Saved words">
+  <img src="docs/screenshots/review.jpg" width="240" alt="Today's review">
+  <img src="docs/screenshots/card.jpg" width="240" alt="Review card">
 </p>
-
-## Download
-
-Get the latest APK from the [Releases page](https://github.com/Ziaeemehr/FrenchReaderSpike/releases/latest) and open it on your phone (Android 8.0 or newer). Android will ask you once to allow installing apps from your browser or file manager.
-
-The app is not on Google Play yet. Updates are published as new releases; installing a newer APK over the old one keeps your data.
-
-See the [privacy policy](PRIVACY.md) for what the app stores and which services it contacts.
 
 ## Features
 
-- **Reading** – Markdown-aware rendering (headings, lists, emphasis, EPUB images) with adjustable font size, reading background and highlight color. Text is shown formatted immediately, before audio is synthesized.
-- **Text-to-speech** – sentence-synchronized playback with per-text voice and speed. Two engines:
-  - Microsoft Edge neural voices via [`edge-tts`](https://github.com/rany2/edge-tts), run inside the app through Chaquopy.
-  - An optional local **XTTS-v2** server (see [tools/xtts_server](tools/xtts_server/README.md)).
-- **Lookup** – long-press a word for a dictionary sheet (WordReference, Larousse, Linguee, Wiktionary) with translation; select several words to save a whole phrase, copy it, listen to it, or send it to another app (Google Translate is listed first).
-- **Vocabulary** – saved words and phrases are highlighted in the text and organized into lists, with status (new / learning / reviewing / learned).
-- **Leitner review** – four learning boxes with configurable intervals, a daily new-card limit, daily goal, streak, and review reminders. Words reaching box 5 move to **Learned words**, which you can review on demand and resume where you left off. Words on the card are tappable to open the dictionary.
-- **Content sources** – paste text, share from other apps, import files/EPUB, Wikisource, Vikidia, and daily news headlines (RFI Journal en français facile, France Info) with keyword filtering.
-- **Library & statistics** – searchable, sortable library with folders; activity and accuracy stats.
-- **Backup** – local backup and Google Drive backup/restore (database, texts, images and settings; the last five Drive backups are kept).
+- **Read** French texts, with saved words highlighted.
+- **Listen** with natural voices; each sentence is highlighted as it is read.
+- **Look up** any word or phrase with a long press, and save it with its sentence.
+- **Review** saved words with flashcards and spaced repetition (Leitner boxes).
+- **Import** texts from anywhere: paste, TXT/EPUB files, PDF, photos (text recognition), or share from another app.
+- **Find content**: daily French news, graded stories and ready-made vocabulary decks.
+- **Back up** to your phone or Google Drive.
+- App in English, French or Persian.
 
-## Tech stack
+## Privacy
 
-- Kotlin, Jetpack Compose (Material 3), Room, Media3/ExoPlayer, Coil, jsoup
-- [Chaquopy](https://chaquo.com/chaquopy/) for embedding Python (`app/src/main/python/tts_engine.py`)
-- Gradle (Groovy DSL), Java 17, `minSdk 26`, `targetSdk 34`
+See the [privacy policy](PRIVACY.md).
 
-## Project layout
+## For developers
 
-```
-app/src/main/java/com/ziaee/frenchreader/
-  ui/          Compose screens (reading, vocab list/review, home, library, statistics, settings)
-  data/        Room entities/DAOs and SharedPreferences wrappers (SRS logic in VocabSrs.kt)
-  tts/         TTS engines, chunk repository and audio cache
-  text/        Markdown parsing into blocks
-  content/     Vocab highlighting and content helpers
-  news/        Headline fetching and merging
-  wikisource/  vikidia/  translate/  backup/  images/  util/
-app/src/main/python/   Python TTS bridge (Chaquopy)
-tools/xtts_server/     Optional local XTTS-v2 server (FastAPI)
-docs/  ROADMAP.md      Design notes and plans
-```
-
-## Build and run
-
-Requirements: Android Studio (or the Android SDK with JDK 17) and a device/emulator running Android 8.0+.
-
-```bash
-./gradlew :app:assembleDebug          # build a debug APK
-./gradlew :app:installDebug           # install on a connected device
-./gradlew :app:testDebugUnitTest      # run unit tests
-./gradlew :app:assembleRelease        # release APK (signed if a signing config is present)
-```
-
-Release builds are signed when `~/.android/frenchreader-release.properties` (or the file named by the `frenchreaderSigningProps` Gradle property) exists with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`; otherwise the release APK is unsigned.
-
-Set the SDK path in `local.properties` (`sdk.dir=...`) if Android Studio hasn't done so.
-
-## Local XTTS server (optional)
-
-For higher-quality synthesis you can run XTTS-v2 on a computer on the same network:
-
-```bash
-cd tools/xtts_server
-pip install coqui-tts fastapi uvicorn numpy   # plus ffmpeg
-COQUI_TOS_AGREED=1 python server.py --host 0.0.0.0 --port 8020
-```
-
-Then choose **Local XTTS server** in the app settings and enter `http://<computer-ip>:8020`. Set `XTTS_TOKEN` to require a token, and `XTTS_THREADS` to control the number of CPU threads PyTorch uses. Full instructions are in [tools/xtts_server/README.md](tools/xtts_server/README.md).
-
-## Documentation
-
-- [ROADMAP.md](ROADMAP.md) – planned and implemented features, design decisions (in Persian)
-- [docs/](docs/) – additional plans and design notes
-
-## Author
-
-Developed by **Abolfazl Ziaeemehr** – [GitHub](https://github.com/Ziaeemehr) · [LinkedIn](https://www.linkedin.com/in/ziaeemehr/) · a.ziaeemehr@gmail.com
-
-Bug reports and suggestions are welcome in [Issues](https://github.com/Ziaeemehr/FrenchReaderSpike/issues).
-
-## License
-
-French Reader is released under the [MIT License](LICENSE). It bundles [edge-tts](https://github.com/rany2/edge-tts) (LGPL-3.0) and the [Vazirmatn](https://github.com/rastikerdar/vazirmatn) font (SIL Open Font License 1.1), which keep their own licenses. French lemma and frequency data comes from Lexique 3.83 and is licensed under CC BY-SA 4.0.
+Kotlin + Jetpack Compose. Build with `./gradlew :app:assembleRelease` (JDK 17, Android SDK).

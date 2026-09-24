@@ -1,0 +1,65 @@
+<p align="center">
+  <a href="README.md">English</a> · <b>فارسی</b>
+</p>
+
+<div dir="rtl">
+
+# French Reader
+
+اپلیکیشن اندروید برای یادگیری زبان فرانسه با خواندن: متن‌های واقعی فرانسوی را بخوانید، به آن‌ها گوش دهید، معنی کلمه‌ها را پیدا کنید و کلمه‌های ذخیره‌شده را مرور کنید.
+
+## ⬇️ دانلود
+
+</div>
+
+<p align="center">
+  <a href="https://github.com/Ziaeemehr/FrenchReaderSpike/releases/latest/download/FrenchReader.apk">
+    <img src="https://img.shields.io/badge/Download-FrenchReader.apk-722b36?style=for-the-badge&logo=android&logoColor=white" alt="دانلود FrenchReader.apk">
+  </a>
+</p>
+
+<div dir="rtl">
+
+۱. روی گوشی اندرویدتان دکمهٔ **Download** بالا را بزنید. همیشه جدیدترین نسخه دانلود می‌شود.
+
+۲. فایل دانلودشدهٔ **FrenchReader.apk** را باز کنید (از اعلان‌ها یا پوشهٔ **Downloads**).
+
+۳. اگر اندروید اجازه خواست، نصب برنامه از مرورگر یا فایل‌منیجر را مجاز کنید و بعد **Install** را بزنید.
+
+به اندروید ۸ یا جدیدتر نیاز دارد. برای به‌روزرسانی، کافی است دوباره دانلود و نصب کنید؛ کلمه‌ها و متن‌هایتان حفظ می‌شوند.
+
+نسخه‌های قبلی در [صفحهٔ Releases](https://github.com/Ziaeemehr/FrenchReaderSpike/releases) هستند.
+
+## تصاویر
+
+</div>
+
+<p align="center">
+  <img src="docs/screenshots/home.jpg" width="240" alt="صفحهٔ اصلی">
+  <img src="docs/screenshots/reading.jpg" width="240" alt="خواندن متن">
+  <img src="docs/screenshots/import.jpg" width="240" alt="منوی افزودن">
+</p>
+<p align="center">
+  <img src="docs/screenshots/words.jpg" width="240" alt="کلمه‌های ذخیره‌شده">
+  <img src="docs/screenshots/review.jpg" width="240" alt="مرور امروز">
+  <img src="docs/screenshots/card.jpg" width="240" alt="کارت مرور">
+</p>
+
+<div dir="rtl">
+
+## ویژگی‌ها
+
+- **خواندن** متن‌های فرانسوی، با برجسته شدن کلمه‌های ذخیره‌شده.
+- **شنیدن** متن با صدای طبیعی؛ هر جمله هنگام خوانده شدن مشخص می‌شود.
+- **پیدا کردن معنی** هر کلمه یا عبارت با لمس طولانی، و ذخیرهٔ آن همراه با جمله‌اش.
+- **مرور** کلمه‌ها با فلش‌کارت و تکرار فاصله‌دار (جعبهٔ لایتنر).
+- **افزودن متن** از هر جا: چسباندن، فایل TXT/EPUB، ‏PDF، عکس (تشخیص متن)، یا اشتراک‌گذاری از اپ‌های دیگر.
+- **محتوای آماده**: اخبار روزانهٔ فرانسوی، داستان‌های سطح‌بندی‌شده و مجموعه‌های واژگان.
+- **پشتیبان‌گیری** روی گوشی یا Google Drive.
+- زبان برنامه: انگلیسی، فرانسوی یا فارسی.
+
+## حریم خصوصی
+
+[سیاست حریم خصوصی](PRIVACY.md) را ببینید.
+
+</div>
