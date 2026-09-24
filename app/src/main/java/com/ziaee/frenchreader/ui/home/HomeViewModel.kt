@@ -21,6 +21,7 @@ import com.ziaee.frenchreader.content.BatchImportResult
 import com.ziaee.frenchreader.content.RfiFacileContentSource
 import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.content.WikisourceContentSource
+import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.NewsPrefs
@@ -56,6 +57,8 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
+    private val comprehensionRepository = ComprehensionRepository.get(app)
+    val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val newsRepository = NewsRepository(
         db.headlineDao(),
         enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app) }
@@ -165,6 +168,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         refresh(force = false)
+    }
+
+    fun requestComprehension(document: TextDocument) {
+        comprehensionRepository.request(document)
     }
 
     /** Pull-to-refresh always passes true; the initial load passes false so

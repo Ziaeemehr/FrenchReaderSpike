@@ -35,11 +35,14 @@
     <string name="about_vazirmatn_credit">Persian and Arabic typeface</string>
     <string name="about_software_credits">Jetpack Compose, Room, Media3, Coil, jsoup (Apache-2.0/MIT)</string>
     <string name="about_content_credits">Content and dictionaries: RFI, France Info, Wikisource, Vikidia, WordReference, Larousse, Linguee, Wiktionary, B-amooz. All content belongs to its respective owners.</string>
+    <string name="about_lexique_credit">French lemma and frequency data: Lexique 3.83 (CC BY-SA 4.0).</string>
     <string name="about_footer">© 2026 Abolfazl Ziaeemehr</string>
     <string name="about_open_link_failed">No app is available to open this link.</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_reading">Reading</string>
     <string name="settings_section_vocabulary">Vocabulary and review</string>
+    <string name="home_dataset_support">Ready-made vocabulary decks and graded stories to add</string>
+    <string name="settings_section_dataset">Dataset</string>
     <string name="settings_section_backup">Backup</string>
     <string name="settings_section_xtts">Local voice server (XTTS)</string>
     <string name="settings_section_shadowing">Shadowing</string>
@@ -484,4 +487,21 @@
     <string name="shadowing_summary_pace">Average pace %1$s× · %2$d%% at a good pace</string>
     <string name="shadowing_summary_weakest">Practice these again:</string>
     <string name="shadowing_summary_close">Close</string>
+    <!-- Built-in dataset and card audio -->
+    <string name="dataset_title">Dataset</string>
+    <string name="dataset_settings_entry">Built-in dataset</string>
+    <string name="dataset_subtitle">Bundled vocabulary and graded stories. You can safely add them again; duplicates are skipped.</string>
+    <string name="dataset_decks">Decks</string>
+    <string name="dataset_stories">Stories</string>
+    <string name="dataset_cards_count">%1$d cards</string>
+    <string name="dataset_stories_count">%1$d stories</string>
+    <string name="dataset_add">Add</string>
+    <string name="dataset_added">Added</string>
+    <string name="dataset_add_missing">Add missing</string>
+    <string name="dataset_add_all">Add all</string>
+    <string name="dataset_added_result">Added %1$d; skipped %2$d</string>
+    <string name="card_voice_title">Card voice</string>
+    <string name="accessibility_play_word">Play word pronunciation</string>
+    <string name="comprehension_percent">%1$d%%</string>
+    <string name="comprehension_known_description">%1$d%% of words known</string>
 </resources>

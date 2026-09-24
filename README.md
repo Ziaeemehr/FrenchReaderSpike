@@ -4,6 +4,14 @@ An Android app for learning French by reading. Import or fetch French texts, lis
 
 The interface is localized in English, French and Persian (with right-to-left layout and the Vazirmatn font for Persian). French reading content always renders left-to-right.
 
+## Built-in dataset
+
+The APK bundles eight Anki-derived decks: *Grammaire en dialogues* A1/B1, *Vocabulaire en dialogues* A1, *Vocabulaire progressif* A2–B1, and *Communication essentielle* A1/A2. It also includes graded stories from Fabulang (A1–C2) and FluencyDrop (A2–B2). Manage them from **Settings → Built-in dataset**; adding content again is safe and skips duplicates.
+
+Vocabulary cards can play their French front aloud. Choose the card voice in the vocabulary review settings.
+
+Regenerate the checked-in dataset assets with `tools/build_dataset.py`.
+
 <p align="center">
   <img src="docs/screenshots/home.jpg" width="260" alt="Home screen with streak, continue reading, news and today's review">
   <img src="docs/screenshots/reading.jpg" width="260" alt="Reading screen with sentence highlighting and saved words">
@@ -98,4 +106,4 @@ Bug reports and suggestions are welcome in [Issues](https://github.com/Ziaeemehr
 
 ## License
 
-French Reader is released under the [MIT License](LICENSE). It bundles [edge-tts](https://github.com/rany2/edge-tts) (LGPL-3.0) and the [Vazirmatn](https://github.com/rastikerdar/vazirmatn) font (SIL Open Font License 1.1), which keep their own licenses.
+French Reader is released under the [MIT License](LICENSE). It bundles [edge-tts](https://github.com/rany2/edge-tts) (LGPL-3.0) and the [Vazirmatn](https://github.com/rastikerdar/vazirmatn) font (SIL Open Font License 1.1), which keep their own licenses. French lemma and frequency data comes from Lexique 3.83 and is licensed under CC BY-SA 4.0.

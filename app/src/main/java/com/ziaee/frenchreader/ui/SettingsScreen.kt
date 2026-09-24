@@ -59,6 +59,8 @@ import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.tts.XttsClient
 import com.ziaee.frenchreader.tts.TtsChunkRepository
+import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
+import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
 import com.ziaee.frenchreader.news.NEWS_SOURCES
 import com.ziaee.frenchreader.news.NewsCategory
 import com.ziaee.frenchreader.shadowing.AndroidSpeechEngine
@@ -78,7 +80,11 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onOpenAbout: () -> Unit,
+    onOpenDataset: () -> Unit
+) {
     val context = LocalContext.current
     val appLanguage = LocalePrefs.get(context)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -104,7 +110,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
             R.string.settings_section_xtts,
             R.string.settings_section_shadowing,
             R.string.settings_section_tts_cache,
-            R.string.settings_section_backup
+            R.string.settings_section_backup,
+            R.string.settings_section_dataset
         )
         var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
@@ -169,6 +176,13 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit) {
                     6 -> {
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
+                    }
+                    7 -> {
+                        Text(stringResource(R.string.dataset_subtitle), style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = onOpenDataset, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.dataset_settings_entry))
+                        }
                     }
                 }
                 OutlinedButton(
@@ -549,6 +563,8 @@ private fun VocabularyReviewSettings(context: Context) {
     var maxNew by remember { mutableIntStateOf(VocabPrefs.getMaxNewCards(context)) }
     var dailyGoal by remember { mutableIntStateOf(VocabPrefs.getDailyGoal(context)) }
     var autoplay by remember { mutableStateOf(VocabPrefs.getAudioAutoplay(context)) }
+    var cardVoice by remember { mutableStateOf(VocabPrefs.getCardVoice(context)) }
+    var cardVoiceMenu by remember { mutableStateOf(false) }
     var meaningLanguage by remember { mutableStateOf(VocabPrefs.getMeaningLanguage(context)) }
     var intervals by remember { mutableStateOf(VocabPrefs.getIntervals(context)) }
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -579,7 +595,34 @@ private fun VocabularyReviewSettings(context: Context) {
         dailyGoal = it; VocabPrefs.setDailyGoal(context, it)
     }
     SettingsSwitchRow(stringResource(R.string.review_audio_autoplay), autoplay) {
-        autoplay = it; VocabPrefs.setAudioAutoplay(context, it)
+        autoplay = it
+        VocabPrefs.setAudioAutoplay(context, it)
+    }
+    CompactSettingLabel(R.string.card_voice_title)
+    Box {
+        val voices = AVAILABLE_VOICES.filterNot { it.id.startsWith(XTTS_VOICE_PREFIX) }
+        OutlinedButton(onClick = { cardVoiceMenu = true }, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(
+                    voices.firstOrNull { it.id == cardVoice }?.labelRes
+                        ?: voices.first().labelRes
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            Text("▾")
+        }
+        DropdownMenu(expanded = cardVoiceMenu, onDismissRequest = { cardVoiceMenu = false }) {
+            voices.forEach { voice ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(voice.labelRes)) },
+                    onClick = {
+                        cardVoice = voice.id
+                        VocabPrefs.setCardVoice(context, voice.id)
+                        cardVoiceMenu = false
+                    }
+                )
+            }
+        }
     }
     CompactSettingLabel(R.string.review_meaning_language)
     CompactChoiceRow(

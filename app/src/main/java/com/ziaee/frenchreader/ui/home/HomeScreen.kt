@@ -56,7 +56,6 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
-import com.ziaee.frenchreader.ui.components.EditorialSearchEntry
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.ManualDictionaryHost
 import com.ziaee.frenchreader.ui.shared.AddTextHost
@@ -91,10 +90,12 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onOpenResources: () -> Unit,
     onOpenAbout: () -> Unit,
+    onOpenDataset: () -> Unit,
     onStartReview: () -> Unit
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
+    val comprehensionScores by vm.comprehensionScores.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, vm) {
@@ -176,6 +177,8 @@ fun HomeScreen(
 
     HomeContent(
         state = state,
+        comprehensionScores = comprehensionScores,
+        onRequestComprehension = vm::requestComprehension,
         selectedHeadline = vm.selectedHeadline,
         isPreviewImporting = vm.selectedHeadline?.let { state.importingKey == it.articleUrl } ?: false,
         previewHasError = vm.previewImportError,
@@ -198,7 +201,8 @@ fun HomeScreen(
         onOpenText = onOpenText,
         onDownloadOrOpen = { vm.importSelected { id -> onOpenText(id) } },
         onDismissPreview = { vm.dismissPreview() },
-        onStartReview = onStartReview
+        onStartReview = onStartReview,
+        onOpenDataset = onOpenDataset
     )
 
     AddTextHost(addTextState, onEpub = importEpub) { title, body ->
@@ -228,6 +232,8 @@ fun HomeScreen(
 @Composable
 fun HomeContent(
     state: HomeUiState,
+    comprehensionScores: Map<Long, Int?> = emptyMap(),
+    onRequestComprehension: (com.ziaee.frenchreader.data.TextDocument) -> Unit = {},
     selectedHeadline: HeadlineEntity?,
     isPreviewImporting: Boolean,
     previewHasError: Boolean,
@@ -250,7 +256,8 @@ fun HomeContent(
     onOpenText: (Long) -> Unit,
     onDownloadOrOpen: () -> Unit,
     onDismissPreview: () -> Unit,
-    onStartReview: () -> Unit
+    onStartReview: () -> Unit,
+    onOpenDataset: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -334,15 +341,6 @@ fun HomeContent(
         Box(modifier = Modifier.padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
             LazyColumn(modifier = Modifier.fillMaxSize().testTag(HOME_LAZY_COLUMN_TEST_TAG)) {
                 item {
-                    EditorialSearchEntry(
-                        text = stringResource(R.string.home_search_hint),
-                        onClick = onSearchClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
-                    )
-                }
-                item {
                     LearningSummaryStrip(
                         streakDays = state.streakDays,
                         learnedWordCount = state.learnedWordCount,
@@ -352,15 +350,6 @@ fun HomeContent(
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
                 }
-                state.continueReading?.let { doc ->
-                    item {
-                        ContinueReadingCard(
-                            doc = doc,
-                            body = state.bodyByTextId[doc.id].orEmpty(),
-                            onClick = { onOpenText(doc.id) }
-                        )
-                    }
-                }
                 item {
                     TodayNewsSection(
                         headlines = state.headlines,
@@ -369,6 +358,19 @@ fun HomeContent(
                         onSelect = onSelectHeadline,
                         onRetry = onRetryNews
                     )
+                }
+                state.continueReading?.let { doc ->
+                    item {
+                        LaunchedEffect(doc.id, doc.bodyPath, doc.rawText.length) {
+                            onRequestComprehension(doc)
+                        }
+                        ContinueReadingCard(
+                            doc = doc,
+                            body = state.bodyByTextId[doc.id].orEmpty(),
+                            comprehensionPercent = comprehensionScores[doc.id],
+                            onClick = { onOpenText(doc.id) }
+                        )
+                    }
                 }
                 item {
                     DailyReviewCard(
@@ -380,9 +382,19 @@ fun HomeContent(
                     )
                 }
                 item {
+                    DatasetCard(
+                        onOpen = onOpenDataset,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
                     RecentTextsSection(
                         documents = state.recentTexts,
                         bodyByTextId = state.bodyByTextId,
+                        comprehensionScores = comprehensionScores,
+                        onRequestComprehension = onRequestComprehension,
                         onOpen = { onOpenText(it.id) },
                         onSeeAll = onOpenLibrary,
                         onAddText = onAddTextClick

@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.Card
@@ -57,6 +59,7 @@ import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
 import com.ziaee.frenchreader.ui.components.EditorialEmptyState
+import com.ziaee.frenchreader.ui.ComprehensionBadge
 import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
 import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
@@ -212,6 +215,39 @@ fun DailyReviewCard(
     }
 }
 
+/** Entry point to the bundled starter decks and graded stories (see DatasetScreen). */
+@Composable
+fun DatasetCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(FrenchReaderDesign.spacing.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.LibraryBooks,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
+            )
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.dataset_settings_entry),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = stringResource(R.string.home_dataset_support),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TodayNewsSection(
@@ -254,7 +290,7 @@ fun TodayNewsSection(
                         NewsCard(
                             headline,
                             onClick = { onSelect(headline) },
-                            modifier = Modifier.fillParentMaxWidth(0.42f)
+                            modifier = Modifier.fillParentMaxWidth(0.30f)
                         )
                     }
                 }
@@ -303,8 +339,8 @@ fun NewsCard(headline: HeadlineEntity, onClick: () -> Unit, modifier: Modifier =
                     Text(
                         headline.title,
                         style = FrenchReaderDesign.editorialTypography.articleHeadline.copy(
-                            fontSize = 15.sp,
-                            lineHeight = 20.sp
+                            fontSize = 13.sp,
+                            lineHeight = 17.sp
                         ),
                         color = Color.White,
                         maxLines = 3,
@@ -365,7 +401,13 @@ private fun NewsSourcePlaceholder(sourceId: String, modifier: Modifier) {
 }
 
 @Composable
-fun ContinueReadingCard(doc: TextDocument, body: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ContinueReadingCard(
+    doc: TextDocument,
+    body: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    comprehensionPercent: Int? = null
+) {
     val metrics = remember(doc.id, body, doc.lastChunkIndex) { homeReadingMetrics(doc, body) }
     Column(modifier = modifier) {
         EditorialSectionHeader(
@@ -390,8 +432,19 @@ fun ContinueReadingCard(doc: TextDocument, body: String, onClick: () -> Unit, mo
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    doc.sourceName?.let {
-                        Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        doc.sourceName?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
+                        }
+                        comprehensionPercent?.let { ComprehensionBadge(it) }
                     }
                     Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
                     EditorialProgressIndicator(
@@ -419,6 +472,8 @@ fun ContinueReadingCard(doc: TextDocument, body: String, onClick: () -> Unit, mo
 fun RecentTextsSection(
     documents: List<TextDocument>,
     bodyByTextId: Map<Long, String> = emptyMap(),
+    comprehensionScores: Map<Long, Int?> = emptyMap(),
+    onRequestComprehension: (TextDocument) -> Unit = {},
     onOpen: (TextDocument) -> Unit,
     onSeeAll: () -> Unit,
     onAddText: () -> Unit,
@@ -440,14 +495,22 @@ fun RecentTextsSection(
             )
         } else {
             documents.forEach { doc ->
-                RecentTextRow(doc, bodyByTextId[doc.id].orEmpty(), onClick = { onOpen(doc) })
+                androidx.compose.runtime.LaunchedEffect(doc.id, doc.bodyPath, doc.rawText.length) {
+                    onRequestComprehension(doc)
+                }
+                RecentTextRow(
+                    doc,
+                    bodyByTextId[doc.id].orEmpty(),
+                    comprehensionScores[doc.id],
+                    onClick = { onOpen(doc) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun RecentTextRow(doc: TextDocument, body: String, onClick: () -> Unit) {
+private fun RecentTextRow(doc: TextDocument, body: String, comprehensionPercent: Int?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -464,11 +527,20 @@ private fun RecentTextRow(doc: TextDocument, body: String, onClick: () -> Unit) 
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(doc.createdAtMs))
             val minutes = remember(doc.id, body) { estimatedReadingMinutes(body) }
             val metadata = doc.sourceName?.let { "$it · $date" } ?: date
-            Text(
-                text = if (minutes > 0) "$metadata · " + stringResource(R.string.home_estimated_minutes, minutes) else metadata,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (minutes > 0) "$metadata · " + stringResource(R.string.home_estimated_minutes, minutes) else metadata,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                comprehensionPercent?.let {
+                    Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
+                    ComprehensionBadge(it)
+                }
+            }
         }
     }
 }

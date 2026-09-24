@@ -1,0 +1,143 @@
+{
+ "version": 1,
+ "decks": [
+  {
+   "id": "gram-dial-a1-vocab",
+   "name": "Grammaire en dialogues A1 · Mots",
+   "level": "A1",
+   "kind": "words",
+   "file": "decks/gram-dial-a1-vocab.json",
+   "count": 372
+  },
+  {
+   "id": "gram-dial-b1-vocab",
+   "name": "Grammaire en dialogues B1 · Mots",
+   "level": "B1",
+   "kind": "words",
+   "file": "decks/gram-dial-b1-vocab.json",
+   "count": 734
+  },
+  {
+   "id": "gram-dial-b1-phrases",
+   "name": "Grammaire en dialogues B1 · Phrases",
+   "level": "B1",
+   "kind": "phrases",
+   "file": "decks/gram-dial-b1-phrases.json",
+   "count": 732
+  },
+  {
+   "id": "voc-dial-a1-vocab",
+   "name": "Vocabulaire en dialogues A1 · Mots",
+   "level": "A1",
+   "kind": "words",
+   "file": "decks/voc-dial-a1-vocab.json",
+   "count": 660
+  },
+  {
+   "id": "voc-prog-a2b1-vocab",
+   "name": "Vocabulaire progressif A2-B1 · Mots",
+   "level": "A2-B1",
+   "kind": "words",
+   "file": "decks/voc-prog-a2b1-vocab.json",
+   "count": 1111
+  },
+  {
+   "id": "voc-prog-a2b1-phrases",
+   "name": "Vocabulaire progressif A2-B1 · Phrases",
+   "level": "A2-B1",
+   "kind": "phrases",
+   "file": "decks/voc-prog-a2b1-phrases.json",
+   "count": 1123
+  },
+  {
+   "id": "comm-ess-a1-phrases",
+   "name": "Communication essentielle A1 · Phrases",
+   "level": "A1",
+   "kind": "phrases",
+   "file": "decks/comm-ess-a1-phrases.json",
+   "count": 495
+  },
+  {
+   "id": "comm-ess-a2-phrases",
+   "name": "Communication essentielle A2 · Phrases",
+   "level": "A2",
+   "kind": "phrases",
+   "file": "decks/comm-ess-a2-phrases.json",
+   "count": 569
+  }
+ ],
+ "stories": [
+  {
+   "id": "stories-fabulang-a1",
+   "name": "Fabulang A1",
+   "level": "A1",
+   "source": "Fabulang",
+   "file": "stories/stories-fabulang-a1.json",
+   "count": 13
+  },
+  {
+   "id": "stories-fabulang-a2",
+   "name": "Fabulang A2",
+   "level": "A2",
+   "source": "Fabulang",
+   "file": "stories/stories-fabulang-a2.json",
+   "count": 13
+  },
+  {
+   "id": "stories-fabulang-b1",
+   "name": "Fabulang B1",
+   "level": "B1",
+   "source": "Fabulang",
+   "file": "stories/stories-fabulang-b1.json",
+   "count": 13
+  },
+  {
+   "id": "stories-fabulang-b2",
+   "name": "Fabulang B2",
+   "level": "B2",
+   "source": "Fabulang",
+   "file": "stories/stories-fabulang-b2.json",
+   "count": 13
+  },
+  {
+   "id": "stories-fabulang-c1",
+   "name": "Fabulang C1",
+   "level": "C1",
+   "source": "Fabulang",
+   "file": "stories/stories-fabulang-c1.json",
+   "count": 13
+  },
+  {
+   "id": "stories-fabulang-c2",
+   "name": "Fabulang C2",
+   "level": "C2",
+   "source": "Fabulang",
+   "file": "stories/stories-fabulang-c2.json",
+   "count": 13
+  },
+  {
+   "id": "stories-fluencydrop-a2",
+   "name": "FluencyDrop A2",
+   "level": "A2",
+   "source": "FluencyDrop",
+   "file": "stories/stories-fluencydrop-a2.json",
+   "count": 33
+  },
+  {
+   "id": "stories-fluencydrop-b1",
+   "name": "FluencyDrop B1",
+   "level": "B1",
+   "source": "FluencyDrop",
+   "file": "stories/stories-fluencydrop-b1.json",
+   "count": 33
+  },
+  {
+   "id": "stories-fluencydrop-b2",
+   "name": "FluencyDrop B2",
+   "level": "B2",
+   "source": "FluencyDrop",
+   "file": "stories/stories-fluencydrop-b2.json",
+   "count": 33
+  }
+ ]
+}

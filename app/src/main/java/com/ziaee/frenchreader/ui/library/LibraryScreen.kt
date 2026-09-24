@@ -46,6 +46,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +66,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.ui.ComprehensionBadge
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialEmptyState
@@ -91,6 +93,7 @@ fun LibraryScreen(
 ) {
     val vm: LibraryViewModel = viewModel()
     val state by vm.uiState.collectAsState()
+    val comprehensionScores by vm.comprehensionScores.collectAsState()
 
     val addTextState = rememberAddTextUiState()
     val context = LocalContext.current
@@ -129,6 +132,8 @@ fun LibraryScreen(
 
     LibraryContent(
         state = state,
+        comprehensionScores = comprehensionScores,
+        onRequestComprehension = vm::requestComprehension,
         onQueryChange = { vm.setQuery(it) },
         onSortSelect = { vm.setSort(it) },
         onOpen = { onOpenText(it.id) },
@@ -177,6 +182,8 @@ fun LibraryScreen(
 @Composable
 fun LibraryContent(
     state: LibraryUiState,
+    comprehensionScores: Map<Long, Int?> = emptyMap(),
+    onRequestComprehension: (TextDocument) -> Unit = {},
     onQueryChange: (String) -> Unit,
     onSortSelect: (LibrarySort) -> Unit,
     onOpen: (TextDocument) -> Unit,
@@ -419,6 +426,9 @@ fun LibraryContent(
                 }
                 else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(state.documents, key = { it.id }) { doc ->
+                        LaunchedEffect(doc.id, doc.bodyPath, doc.rawText.length) {
+                            onRequestComprehension(doc)
+                        }
                         LibraryRow(
                             doc,
                             onClick = { if (state.isSelecting) onToggleSelection(doc.id) else onOpen(doc) },
@@ -439,6 +449,7 @@ fun LibraryContent(
                             },
                             tagNames = state.tags.filter { it.id in state.tagIdsByText[doc.id].orEmpty() }.map { it.name },
                             completed = state.completionByTextId[doc.id] == true,
+                            comprehensionPercent = comprehensionScores[doc.id],
                             onDeleteRequest = { pendingDelete = doc }
                         )
                         HorizontalDivider()
@@ -565,6 +576,7 @@ private fun LibraryRow(
     folderName: String?,
     tagNames: List<String>,
     completed: Boolean,
+    comprehensionPercent: Int?,
     onDeleteRequest: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -608,6 +620,10 @@ private fun LibraryRow(
                     stringResource(R.string.library_status_in_progress)
                 }
                 MetadataBadge(text = readLabel)
+                comprehensionPercent?.let {
+                    Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
+                    ComprehensionBadge(it)
+                }
             }
         }
         if (!selectionMode) Box {

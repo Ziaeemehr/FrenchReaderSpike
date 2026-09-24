@@ -18,11 +18,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.ziaee.frenchreader.content.DatasetSeeder
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
-import com.ziaee.frenchreader.ui.ReadingScreen
 import com.ziaee.frenchreader.ui.AboutScreen
+import com.ziaee.frenchreader.ui.DatasetScreen
+import com.ziaee.frenchreader.ui.ReadingScreen
 import com.ziaee.frenchreader.ui.SettingsScreen
 import com.ziaee.frenchreader.ui.VOCAB_SCOPE_ALL
 import com.ziaee.frenchreader.ui.VocabListScreen
@@ -51,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         handleIncomingIntent(intent)
+        DatasetSeeder.seedIfNeeded(applicationContext)
 
         // One-time load from persisted prefs into the live state object;
         // SettingsScreen keeps both in sync on every change after this.
@@ -166,6 +169,7 @@ private fun AppNavHost() {
                 onOpenSettings = { navController.navigate("settings") },
                 onOpenResources = { navigateToTab("resources") },
                 onOpenAbout = { navController.navigate("about") },
+                onOpenDataset = { navController.navigate("dataset") },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") }
             )
         }
@@ -199,7 +203,8 @@ private fun AppNavHost() {
         composable("vocab") {
             VocabListScreen(
                 onBack = { navController.popBackStack() },
-                onOpenReview = { scope -> navController.navigate("vocab_review/$scope") }
+                onOpenReview = { scope -> navController.navigate("vocab_review/$scope") },
+                onOpenDataset = { navController.navigate("dataset") }
             )
         }
         composable(
@@ -212,9 +217,11 @@ private fun AppNavHost() {
         composable("settings") {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
-                onOpenAbout = { navController.navigate("about") }
+                onOpenAbout = { navController.navigate("about") },
+                onOpenDataset = { navController.navigate("dataset") }
             )
         }
+        composable("dataset") { DatasetScreen { navController.popBackStack() } }
         composable("statistics") {
             StatisticsScreen(onBack = { navController.popBackStack() })
         }

@@ -9,6 +9,7 @@ import com.ziaee.frenchreader.content.EpubImportRepository
 import com.ziaee.frenchreader.content.EpubImportResult
 import com.ziaee.frenchreader.content.BatchImportRepository
 import com.ziaee.frenchreader.content.BatchImportResult
+import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.LibraryTag
@@ -35,6 +36,8 @@ import com.ziaee.frenchreader.ui.statistics.isTextCompleted
 class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
+    private val comprehensionRepository = ComprehensionRepository.get(app)
+    val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val epubImportRepository = EpubImportRepository(app, db)
     private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
 
@@ -130,6 +133,10 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setQuery(value: String) {
         query.value = value
+    }
+
+    fun requestComprehension(document: TextDocument) {
+        comprehensionRepository.request(document)
     }
 
     fun setSort(value: LibrarySort) {

@@ -118,7 +118,11 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
+fun VocabListScreen(
+    onBack: () -> Unit,
+    onOpenReview: (Long) -> Unit,
+    onOpenDataset: () -> Unit
+) {
     val vm: VocabListViewModel = viewModel()
     val entries by vm.entries.collectAsState()
     val lists by vm.lists.collectAsState()
@@ -229,6 +233,12 @@ fun VocabListScreen(onBack: () -> Unit, onOpenReview: (Long) -> Unit) {
                     }
                     IconButton(onClick = { ankiPicker.launch(arrayOf("application/json", "*/*")) }) {
                         Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.anki_import_action))
+                    }
+                    IconButton(onClick = onOpenDataset) {
+                        Icon(
+                            Icons.Default.MenuBook,
+                            contentDescription = stringResource(R.string.dataset_title)
+                        )
                     }
                     IconButton(onClick = { meaningsVisible = !meaningsVisible }) {
                         Icon(

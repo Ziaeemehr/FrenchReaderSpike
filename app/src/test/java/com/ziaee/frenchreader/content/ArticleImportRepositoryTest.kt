@@ -162,6 +162,9 @@ class ArticleImportRepositoryTest {
         override suspend fun findByExternalKey(externalKey: String): TextDocument? =
             documents.find { it.externalKey == externalKey }
 
+        override suspend fun getDatasetExternalKeys(): List<String> =
+            documents.mapNotNull { it.externalKey?.takeIf { key -> key.startsWith("dataset:") } }
+
         override suspend fun insert(text: TextDocument): Long {
             val id = nextId++
             val stored = text.copy(id = id)

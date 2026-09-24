@@ -35,11 +35,14 @@
     <string name="about_vazirmatn_credit">قلم فارسی و عربی</string>
     <string name="about_software_credits">Jetpack Compose، Room، Media3، Coil و jsoup (Apache-2.0/MIT)</string>
     <string name="about_content_credits">محتوا و فرهنگ‌ها: RFI، France Info، Wikisource، Vikidia، WordReference، Larousse، Linguee، Wiktionary و B-amooz. همهٔ محتواها متعلق به صاحبان آن‌هاست.</string>
+    <string name="about_lexique_credit">داده‌های بن‌واژه و بسامد فرانسوی: Lexique 3.83 ‏(CC BY-SA 4.0).</string>
     <string name="about_footer">© 2026 Abolfazl Ziaeemehr</string>
     <string name="about_open_link_failed">برنامه‌ای برای باز کردن این پیوند در دسترس نیست.</string>
     <string name="settings_section_appearance">ظاهر</string>
     <string name="settings_section_reading">مطالعه</string>
     <string name="settings_section_vocabulary">واژگان و مرور</string>
+    <string name="home_dataset_support">دسته‌های واژگان و داستان‌های سطح‌بندی‌شدهٔ آماده برای افزودن</string>
+    <string name="settings_section_dataset">مجموعه‌داده</string>
     <string name="settings_section_backup">پشتیبان‌گیری</string>
     <string name="settings_section_xtts">سرور صوتی محلی (XTTS)</string>
     <string name="settings_section_shadowing">شدوئینگ</string>
@@ -482,4 +485,21 @@
     <string name="shadowing_summary_pace">سرعت میانگین %1$s× · %2$d%% با سرعت خوب</string>
     <string name="shadowing_summary_weakest">این‌ها را دوباره تمرین کنید:</string>
     <string name="shadowing_summary_close">بستن</string>
+    <!-- مجموعه‌دادهٔ داخلی و صدای کارت -->
+    <string name="dataset_title">مجموعه‌داده</string>
+    <string name="dataset_settings_entry">مجموعه‌دادهٔ داخلی</string>
+    <string name="dataset_subtitle">واژگان و داستان‌های سطح‌بندی‌شدهٔ داخلی. افزودن دوباره بی‌خطر است و موارد تکراری نادیده گرفته می‌شوند.</string>
+    <string name="dataset_decks">دسته‌ها</string>
+    <string name="dataset_stories">داستان‌ها</string>
+    <string name="dataset_cards_count">%1$d کارت</string>
+    <string name="dataset_stories_count">%1$d داستان</string>
+    <string name="dataset_add">افزودن</string>
+    <string name="dataset_added">افزوده شد</string>
+    <string name="dataset_add_missing">افزودن موارد باقی‌مانده</string>
+    <string name="dataset_add_all">افزودن همه</string>
+    <string name="dataset_added_result">%1$d مورد افزوده و %2$d مورد رد شد</string>
+    <string name="card_voice_title">صدای کارت</string>
+    <string name="accessibility_play_word">پخش تلفظ واژه</string>
+    <string name="comprehension_percent">٪%1$d</string>
+    <string name="comprehension_known_description">٪%1$d از واژه‌ها شناخته‌شده‌اند</string>
 </resources>

@@ -18,6 +18,8 @@ object VocabPrefs {
     private const val KEY_MAX_NEW = "max_new_cards"
     private const val KEY_DAILY_GOAL = "daily_review_goal"
     private const val KEY_AUDIO_AUTOPLAY = "review_audio_autoplay"
+    private const val KEY_CARD_VOICE = "review_card_voice"
+    const val DEFAULT_CARD_VOICE = "fr-FR-HenriNeural"
     private const val KEY_MEANING_LANGUAGE = "meaning_language"
     private const val KEY_REMINDER_ENABLED = "review_reminder_enabled"
     private const val KEY_REMINDER_HOUR = "review_reminder_hour"
@@ -67,6 +69,11 @@ object VocabPrefs {
     fun setDailyGoal(context: Context, value: Int) = prefs(context).edit().putInt(KEY_DAILY_GOAL, value.coerceAtLeast(1)).apply()
     fun getAudioAutoplay(context: Context) = prefs(context).getBoolean(KEY_AUDIO_AUTOPLAY, false)
     fun setAudioAutoplay(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEY_AUDIO_AUTOPLAY, value).apply()
+    fun getCardVoice(context: Context) =
+        prefs(context).getString(KEY_CARD_VOICE, DEFAULT_CARD_VOICE) ?: DEFAULT_CARD_VOICE
+
+    fun setCardVoice(context: Context, value: String) =
+        prefs(context).edit().putString(KEY_CARD_VOICE, value).apply()
     fun getMeaningLanguage(context: Context) = runCatching {
         MeaningLanguage.valueOf(prefs(context).getString(KEY_MEANING_LANGUAGE, null) ?: MeaningLanguage.PERSIAN.name)
     }.getOrDefault(MeaningLanguage.PERSIAN)

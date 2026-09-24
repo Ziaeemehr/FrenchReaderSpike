@@ -7,6 +7,13 @@ import org.junit.Test
 import java.time.ZoneId
 
 class VocabSrsTest {
+    @Test fun likelyFrenchRejectsArabicAndNonLatinFronts() {
+        assertTrue(isLikelyFrench("bonjour"))
+        assertTrue(isLikelyFrench("C'est déjà l'été."))
+        assertFalse(isLikelyFrench("سلام"))
+        assertFalse(isLikelyFrench("bonjour سلام"))
+        assertFalse(isLikelyFrench("12345"))
+    }
     private val now = 1_000_000L
     private val utc = ZoneId.of("UTC")
 

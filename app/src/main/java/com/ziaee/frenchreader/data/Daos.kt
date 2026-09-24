@@ -29,6 +29,9 @@ interface TextDao {
     @Query("SELECT * FROM texts WHERE externalKey = :externalKey LIMIT 1")
     suspend fun findByExternalKey(externalKey: String): TextDocument?
 
+    @Query("SELECT externalKey FROM texts WHERE externalKey LIKE 'dataset:%'")
+    suspend fun getDatasetExternalKeys(): List<String>
+
     @Insert
     suspend fun insert(text: TextDocument): Long
 

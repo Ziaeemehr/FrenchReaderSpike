@@ -82,6 +82,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     internal val isLearnedReview get() = learnedReviewMode
     private var undoing = false
     private var loadJob: Job? = null
+    private var audioJob: Job? = null
     private var listNames: Map<Long, String> = emptyMap()
 
     private data class UndoRecord(
@@ -101,6 +102,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         sentenceTranslation = null
         sentenceTranslationLoading = false
         sentenceTranslationError = false
+        wordAudioLoading = false
+        wordAudioError = false
         slot = entry?.let { CardSlot(it) }
     }
     var dueCount by mutableIntStateOf(0); private set
@@ -124,8 +127,14 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     var studyTimeMs by mutableLongStateOf(0L); private set
     var nextScheduledAtMs by mutableStateOf<Long?>(null); private set
     var moveLabel by mutableStateOf<String?>(null); private set
-    var sentenceAudioLoading by mutableStateOf(false); private set
-    var sentenceAudioError by mutableStateOf(false); private set
+    var sentenceAudioLoading by mutableStateOf(false)
+        private set
+    var sentenceAudioError by mutableStateOf(false)
+        private set
+    var wordAudioLoading by mutableStateOf(false)
+        private set
+    var wordAudioError by mutableStateOf(false)
+        private set
     var sentenceTranslation by mutableStateOf<String?>(null); private set
     var sentenceTranslationLoading by mutableStateOf(false); private set
     var sentenceTranslationError by mutableStateOf(false); private set
@@ -230,7 +239,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         val entry = current ?: return
         show(null)
         canUndo = false
-        player.stop(); sentenceAudioError = false
+        audioJob?.cancel()
+        player.stop()
+        sentenceAudioError = false
+        wordAudioError = false
+        wordAudioLoading = false
         val now = System.currentTimeMillis()
         val boxBefore = if (learnedReviewMode) 5 else entry.leitnerBox
         val updated = if (learnedReviewMode && answer != VocabAnswer.FORGOT) {
@@ -283,7 +296,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 cardsReviewed = completedIds.size
                 val restored = restoreQueueAfterUndo(queue.toList(), current, r.requeued)
                 queue.clear(); queue.addAll(restored)
-                player.stop(); sentenceAudioError = false
+                audioJob?.cancel()
+                player.stop()
+                sentenceAudioError = false
+                wordAudioError = false
+                wordAudioLoading = false
                 moveLabel = null
                 show(r.previousEntry.copy())
                 undoRecord = null
@@ -336,16 +353,50 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     fun playSentence() {
         val entry = current ?: return
         if (entry.sentence.isBlank()) return
-        viewModelScope.launch {
-            sentenceAudioError = false; sentenceAudioLoading = true; player.stop()
-            val voiceAndRate = voiceCache[entry.textId] ?: db.textDao().getById(entry.textId).let {
-                ((it?.voice ?: "fr-FR-HenriNeural") to (it?.ratePercent ?: 0)).also { pair -> voiceCache[entry.textId] = pair }
+        audioJob?.cancel()
+        audioJob = viewModelScope.launch {
+            wordAudioLoading = false
+            sentenceAudioError = false
+            sentenceAudioLoading = true
+            player.stop()
+            val voiceAndRate = voiceCache[entry.textId] ?: run {
+                val text = if (entry.textId == 0L) null else db.textDao().getById(entry.textId)
+                if (text == null) {
+                    VocabPrefs.getCardVoice(context) to 0
+                } else {
+                    (text.voice to text.ratePercent).also { voiceCache[entry.textId] = it }
+                }
             }
             ttsRepo.getOrSynthesize(entry.sentence, voiceAndRate.first, voiceAndRate.second).fold(
-                onSuccess = { player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString())); player.prepare(); player.play() },
+                onSuccess = {
+                    player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
+                    player.prepare()
+                    player.play()
+                },
                 onFailure = { sentenceAudioError = true }
             )
             sentenceAudioLoading = false
+        }
+    }
+
+    fun playWord() {
+        val entry = current ?: return
+        if (!isLikelyFrench(entry.word)) return
+        audioJob?.cancel()
+        audioJob = viewModelScope.launch {
+            sentenceAudioLoading = false
+            wordAudioError = false
+            wordAudioLoading = true
+            player.stop()
+            ttsRepo.getOrSynthesize(entry.word, VocabPrefs.getCardVoice(context), 0).fold(
+                onSuccess = {
+                    player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
+                    player.prepare()
+                    player.play()
+                },
+                onFailure = { wordAudioError = true }
+            )
+            wordAudioLoading = false
         }
     }
 
@@ -593,7 +644,17 @@ private fun AccuracyRing(percent: Int) {
 }
 
 @Composable
-private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Boolean, interactive: Boolean, onReveal: () -> Unit, onDictionary: () -> Unit, onEdit: () -> Unit, onWordTap: (String) -> Unit, modifier: Modifier) {
+private fun ReviewCard(
+    vm: VocabReviewViewModel,
+    entry: VocabEntry,
+    revealed: Boolean,
+    interactive: Boolean,
+    onReveal: () -> Unit,
+    onDictionary: () -> Unit,
+    onEdit: () -> Unit,
+    onWordTap: (String) -> Unit,
+    modifier: Modifier
+) {
     val wordTap: (String) -> Unit = { w -> if (interactive) onWordTap(w) }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         val cornerLabel = listOfNotNull(vm.listNameFor(entry), entry.lessonNumber()?.let { stringResource(R.string.review_lesson_short, it) }).joinToString(" · ")
@@ -610,6 +671,25 @@ private fun ReviewCard(vm: VocabReviewViewModel, entry: VocabEntry, revealed: Bo
             front = {
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    if (isLikelyFrench(entry.word)) {
+                        IconButton(onClick = vm::playWord, enabled = interactive) {
+                            if (vm.wordAudioLoading) {
+                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(
+                                    Icons.Default.VolumeUp,
+                                    stringResource(R.string.accessibility_play_word)
+                                )
+                            }
+                        }
+                        if (vm.wordAudioError) {
+                            Text(
+                                stringResource(R.string.error_audio_generation),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.review_tap_to_reveal), style = MaterialTheme.typography.labelSmall)
                 }

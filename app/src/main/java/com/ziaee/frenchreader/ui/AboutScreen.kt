@@ -172,6 +172,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
                 CreditText(stringResource(R.string.about_software_credits))
                 CreditText(stringResource(R.string.about_content_credits))
+                CreditText(stringResource(R.string.about_lexique_credit))
             }
 
             Text(
