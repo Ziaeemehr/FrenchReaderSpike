@@ -16,7 +16,7 @@ The app's cache (audio, translations, images) is also stored on the phone. Unins
 
 ## When the app goes online
 
-The app connects to outside services only to do things you ask for. Each service handles what it receives under its own privacy policy.
+The app connects to outside services only to do things you ask for, plus a once-a-day update check that you can turn off in Settings. Each service handles what it receives under its own privacy policy.
 
 | Feature | Sent to | What is sent |
 |---|---|---|
@@ -28,6 +28,7 @@ The app connects to outside services only to do things you ask for. Each service
 | Dictionary lookup | The dictionary site you choose (WordReference, Larousse, Linguee, Wiktionary, B-amooz) | The word you look up |
 | News, Wikisource, Vikidia, importing an article | The site the content comes from (e.g. RFI, France Info, Wikisource) | A normal page or feed request |
 | Google Drive backup (optional) | Google | Your backup file (see below) |
+| Update check (once a day, can be turned off in Settings; also "Check for updates" in About) | GitHub (api.github.com) | A request for the latest release of this app. Nothing about you or your data |
 
 These requests include standard network information such as your IP address, as any web request does. Nothing is sent to the developer.
 

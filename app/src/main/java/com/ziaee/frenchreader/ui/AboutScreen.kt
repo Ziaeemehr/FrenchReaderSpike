@@ -7,6 +7,14 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import com.ziaee.frenchreader.update.isNewerVersion
+import com.ziaee.frenchreader.update.fetchLatestRelease
+import com.ziaee.frenchreader.update.ReleaseInfo
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -72,6 +80,13 @@ fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val version = remember(context) { readAppVersion(context) }
     val openFailedMessage = stringResource(R.string.about_open_link_failed)
+    val scope = rememberCoroutineScope()
+    var checkingUpdate by remember { mutableStateOf(false) }
+    var foundUpdate by remember { mutableStateOf<ReleaseInfo?>(null) }
+    val upToDate = stringResource(R.string.update_up_to_date)
+    val checkFailed = stringResource(R.string.update_check_failed)
+    // Asked for explicitly here, so offer it even if this version was skipped before.
+    foundUpdate?.let { UpdateDialog(it, onDismiss = { foundUpdate = null }, showSkip = false) }
     val openUrl: (String) -> Unit = { url ->
         launchIntent(context, Intent(Intent.ACTION_VIEW, Uri.parse(url)), openFailedMessage)
     }
@@ -156,7 +171,23 @@ fun AboutScreen(onBack: () -> Unit) {
             AboutSection(stringResource(R.string.about_project_section)) {
                 AboutLinkRow(Icons.Default.Star, stringResource(R.string.about_star), stringResource(R.string.about_star_detail)) { openUrl(PROJECT_URL) }
                 AboutLinkRow(Icons.Default.Code, stringResource(R.string.about_source_code), PROJECT_URL) { openUrl(PROJECT_URL) }
-                AboutLinkRow(Icons.Default.Update, stringResource(R.string.about_check_updates), "$PROJECT_URL/releases/latest") { openUrl("$PROJECT_URL/releases/latest") }
+                AboutLinkRow(
+                    Icons.Default.Update,
+                    stringResource(R.string.about_check_updates),
+                    if (checkingUpdate) stringResource(R.string.update_checking) else "v${version.name}"
+                ) {
+                    if (checkingUpdate) return@AboutLinkRow
+                    checkingUpdate = true
+                    scope.launch {
+                        val latest = fetchLatestRelease()
+                        checkingUpdate = false
+                        when {
+                            latest == null -> Toast.makeText(context, checkFailed, Toast.LENGTH_SHORT).show()
+                            isNewerVersion(latest.version, version.name) -> foundUpdate = latest
+                            else -> Toast.makeText(context, upToDate, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
                 AboutLinkRow(Icons.Default.BugReport, stringResource(R.string.about_report_bug), "$PROJECT_URL/issues/new") { openUrl("$PROJECT_URL/issues/new") }
                 AboutLinkRow(Icons.Default.Policy, stringResource(R.string.about_privacy_policy), "PRIVACY.md") { openUrl("$PROJECT_URL/blob/main/PRIVACY.md") }
                 AboutLinkRow(Icons.Default.Description, stringResource(R.string.about_license), "MIT License") { openUrl("$PROJECT_URL/blob/main/LICENSE") }

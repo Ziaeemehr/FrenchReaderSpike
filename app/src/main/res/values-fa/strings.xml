@@ -600,4 +600,14 @@
     <string name="resource_category_telegram">کانال‌های تلگرام</string>
     <string name="about_star">ستاره دادن در گیت‌هاب</string>
     <string name="about_star_detail">اگر برنامه به کارتان آمده، با یک ستاره به دیده شدنش کمک کنید</string>
+    <string name="update_available_title">نسخهٔ %1$s آماده است</string>
+    <string name="update_available_body">نسخهٔ جدید French Reader آماده است. آن را دانلود کنید و سپس برای نصب، فایل را باز کنید. کلمه‌ها و متن‌های شما حفظ می‌شوند.</string>
+    <string name="update_whats_new">تازه‌ها</string>
+    <string name="update_download">دانلود</string>
+    <string name="update_later">بعداً</string>
+    <string name="update_skip">رد کردن این نسخه</string>
+    <string name="update_up_to_date">آخرین نسخه را دارید</string>
+    <string name="update_check_failed">بررسی به‌روزرسانی انجام نشد. اتصال اینترنت را بررسی کنید.</string>
+    <string name="update_checking">در حال بررسی…</string>
+    <string name="update_auto_check">بررسی خودکار به‌روزرسانی برنامه</string>
 </resources>

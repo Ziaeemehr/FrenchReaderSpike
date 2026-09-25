@@ -44,6 +44,7 @@ import android.content.pm.PackageManager
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.backup.AuthorizationOutcome
 import com.ziaee.frenchreader.backup.BackupPrefs
+import com.ziaee.frenchreader.update.UpdatePrefs
 import com.ziaee.frenchreader.backup.DriveBackupClient
 import com.ziaee.frenchreader.backup.GoogleAuthManager
 import com.ziaee.frenchreader.backup.LocalBackup
@@ -123,6 +124,11 @@ fun SettingsScreen(
             ) {
                 when (selectedTab) {
                     0 -> {
+                        var autoUpdate by remember { mutableStateOf(UpdatePrefs.isAutoCheckEnabled(context)) }
+                        SettingsSwitchRow(stringResource(R.string.update_auto_check), autoUpdate) {
+                            autoUpdate = it
+                            UpdatePrefs.setAutoCheckEnabled(context, it)
+                        }
                         CompactSettingLabel(R.string.language_title)
                         CompactChoiceRow(AppLanguage.entries, appLanguage, { stringResource(it.labelResource()) }) { language ->
                             LocalePrefs.set(context, language)

@@ -602,4 +602,14 @@
     <string name="resource_category_telegram">Telegram channels</string>
     <string name="about_star">Star on GitHub</string>
     <string name="about_star_detail">If the app helps you, a star helps others find it</string>
+    <string name="update_available_title">Version %1$s is available</string>
+    <string name="update_available_body">A new version of French Reader is ready. Download it, then open the file to install. Your words and texts are kept.</string>
+    <string name="update_whats_new">What\'s new</string>
+    <string name="update_download">Download</string>
+    <string name="update_later">Later</string>
+    <string name="update_skip">Skip this version</string>
+    <string name="update_up_to_date">You have the latest version</string>
+    <string name="update_check_failed">Couldn\'t check for updates. Check your connection.</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_auto_check">Check for app updates automatically</string>
 </resources>

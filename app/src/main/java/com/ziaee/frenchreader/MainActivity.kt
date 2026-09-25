@@ -40,6 +40,7 @@ import com.ziaee.frenchreader.ui.shared.queryDisplayName
 import com.ziaee.frenchreader.resources.ResourcesScreen
 import com.ziaee.frenchreader.ui.statistics.StatisticsScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
+import com.ziaee.frenchreader.ui.AutoUpdatePrompt
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
 import com.ziaee.frenchreader.util.IncomingContentKind
@@ -74,6 +75,7 @@ class MainActivity : AppCompatActivity() {
             FrenchReaderTheme(themeMode = AppearanceState.themeMode) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost()
+                    AutoUpdatePrompt()
                 }
             }
         }
