@@ -31,6 +31,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -58,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.LayoutDirection
@@ -243,6 +246,17 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // With translations shown, translate the paragraphs on screen once scrolling settles.
+    LaunchedEffect(state.showTranslations, state.chunks.isNotEmpty()) {
+        if (!state.showTranslations || state.chunks.isEmpty()) return@LaunchedEffect
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.layoutInfo.visibleItemsInfo.size
+        }
+            .distinctUntilChanged()
+            .debounce(300)
+            .collect { (first, count) -> vm.translateVisible(first, count.coerceAtLeast(1)) }
     }
 
     // Follows playback down the page as the current paragraph advances, so
@@ -1147,16 +1161,20 @@ private fun ChunkParagraph(
                         }
                     }
 
-                    if (showTranslation && chunk.block.type != BlockType.HEADER) {
+                    if (showTranslation) {
                         Spacer(Modifier.height(6.dp))
                         when (chunk.translationStatus) {
                             ChunkStatus.READY -> chunk.translation?.let {
+                                // The block is forced LTR for the French text; let the translation
+                                // take its own direction so Persian lays out right-to-left.
                                 Text(
                                     it,
                                     fontSize = (14f * fontScale).sp,
                                     lineHeight = (21f * fontScale).sp,
                                     fontStyle = FontStyle.Italic,
-                                    color = palette.inkFaded
+                                    color = palette.inkFaded,
+                                    style = LocalTextStyle.current.copy(textDirection = TextDirection.Content),
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                             ChunkStatus.LOADING -> Text(

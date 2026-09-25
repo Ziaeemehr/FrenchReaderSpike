@@ -308,16 +308,21 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { highlightRepository.delete(ids) }
     }
 
-    private fun restartTranslationWindow(currentIndex: Int) {
+    /** Translates what's on screen (from [firstVisible], [count] paragraphs plus a few ahead), so
+     * translations appear wherever the reader scrolls, not only around the playback position. */
+    fun translateVisible(firstVisible: Int, count: Int) {
+        restartTranslationWindow(firstVisible, count + TRANSLATION_LOOKAHEAD)
+    }
+
+    private fun restartTranslationWindow(currentIndex: Int, lookahead: Int = TRANSLATION_LOOKAHEAD) {
         val targetLang = _state.value.textDoc?.translationLang ?: return
         val generation = ++translationGeneration
         translationJob?.cancel()
         translationJob = viewModelScope.launch {
-            for (i in translationWindowIndices(_state.value.chunks.size, currentIndex)) {
+            for (i in translationWindowIndices(_state.value.chunks.size, currentIndex, lookahead)) {
                 val chunk = _state.value.chunks.getOrNull(i) ?: continue
-                if (chunk.block.type == BlockType.HEADER || chunk.block.type == BlockType.IMAGE) {
-                    // Headings read fine on their own, while images have no
-                    // text. Neither needs a translation request.
+                if (chunk.block.type == BlockType.IMAGE) {
+                    // Images have no text, so no translation request.
                     updateChunk(i) { it.copy(translationStatus = ChunkStatus.READY, translation = null) }
                     continue
                 }
