@@ -6,8 +6,6 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.ziaee.frenchreader.resources.DEFAULT_RESOURCES
-import com.ziaee.frenchreader.resources.ResourceCategory
 
 // v2 -> v3: adds multi-list support (vocab_lists table + vocab.listId) and
 // the Leitner spaced-repetition fields on vocab. Written as a real
@@ -176,15 +174,21 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
                 "url LIKE '%fabulang.com%'"
         )
         db.execSQL("UPDATE resources SET category = 'books' WHERE url LIKE '%gutenberg.org%'")
-        DEFAULT_RESOURCES
-            .filter { it.category == ResourceCategory.PODCASTS }
-            .forEach { resource ->
-                db.execSQL(
-                    "INSERT OR IGNORE INTO resources " +
-                        "(title, url, imageUrl, createdAtMs, category) VALUES (?, ?, NULL, ?, ?)",
-                    arrayOf(resource.title, resource.url, resource.createdAtMs, resource.category.key)
-                )
-            }
+        // Frozen: the podcasts that shipped with v10. Newer built-ins are added by the Resources
+        // screen, so this migration must not follow the evolving DEFAULT_RESOURCES list.
+        listOf(
+            "InnerFrench" to "https://innerfrench.com/podcast/",
+            "Journal en français facile (RFI)" to
+                "https://francaisfacile.rfi.fr/fr/podcasts/journal-en-fran%C3%A7ais-facile/",
+            "Coffee Break French" to "https://coffeebreakfrench.com/",
+            "Français Authentique" to "https://www.francaisauthentique.com/podcast/"
+        ).forEach { (title, url) ->
+            db.execSQL(
+                "INSERT OR IGNORE INTO resources " +
+                    "(title, url, imageUrl, createdAtMs, category) VALUES (?, ?, NULL, 1, 'podcasts')",
+                arrayOf(title, url)
+            )
+        }
     }
 }
 

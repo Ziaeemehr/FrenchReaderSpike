@@ -61,11 +61,13 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            // Built-ins ship with the app. Each catalog version is added once, so an update brings
-            // new ones without re-adding any the user deleted before it; existing URLs are kept.
-            if (prefs.getInt(KEY_CATALOG_VERSION, 0) < CATALOG_VERSION) {
+            // Built-ins ship with the app. Each is added once (its URL is remembered), so an update
+            // brings only new ones and a built-in the user deleted never comes back.
+            val seeded = prefs.getStringSet(KEY_SEEDED_URLS, emptySet()).orEmpty()
+            val toSeed = catalogEntriesToSeed(seeded)
+            if (toSeed.isNotEmpty()) {
                 dao.insertIgnoringExisting(
-                    DEFAULT_RESOURCES.map { resource ->
+                    toSeed.map { resource ->
                         ResourceLink(
                             title = resource.title,
                             url = resource.url,
@@ -75,13 +77,19 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
                         )
                     }
                 )
-                prefs.edit().putInt(KEY_CATALOG_VERSION, CATALOG_VERSION).apply()
+                prefs.edit().putStringSet(KEY_SEEDED_URLS, seeded + toSeed.map { it.url }).apply()
             }
-            dao.getWithoutImages().forEach { resource ->
+            // Look up a page image once per URL (not on every visit), and never for search links.
+            val tried = prefs.getStringSet(KEY_IMAGE_TRIED, emptySet()).orEmpty()
+            val pending = dao.getWithoutImages().filter { it.url !in tried && wantsImageLookup(it.url) }
+            pending.forEach { resource ->
                 val metadata = withContext(Dispatchers.IO) {
                     runCatching { fetchResourceMetadata(resource.url) }.getOrNull()
                 }
                 metadata?.imageUrl?.let { dao.update(resource.copy(imageUrl = it)) }
+            }
+            if (pending.isNotEmpty()) {
+                prefs.edit().putStringSet(KEY_IMAGE_TRIED, tried + pending.map { it.url }).apply()
             }
         }
     }
@@ -147,9 +155,8 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val PREFS_NAME = "resources"
-        const val KEY_CATALOG_VERSION = "catalog_version"
+        const val KEY_SEEDED_URLS = "seeded_urls"
+        const val KEY_IMAGE_TRIED = "image_tried_urls"
         const val KEY_TILE_VIEW = "tile_view"
-        /** Bump when DEFAULT_RESOURCES gains entries so existing installs receive them. */
-        const val CATALOG_VERSION = 4
     }
 }

@@ -91,3 +91,14 @@ fun fetchResourceMetadata(pageUrl: String): ResourceMetadata {
         connection.disconnect()
     }
 }
+
+/** Built-in resources not added to this install yet. */
+fun catalogEntriesToSeed(seededUrls: Set<String>): List<DefaultResource> =
+    DEFAULT_RESOURCES.filter { it.url !in seededUrls }
+
+/** Search-result links (web, YouTube) have no page image worth fetching. */
+fun wantsImageLookup(url: String): Boolean {
+    val uri = runCatching { URI(url) }.getOrNull() ?: return false
+    val host = uri.host?.removePrefix("www.") ?: return false
+    return !(host.startsWith("google.") && uri.path == "/search") && !(host == "youtube.com" && uri.path == "/results")
+}

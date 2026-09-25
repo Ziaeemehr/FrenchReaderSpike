@@ -100,4 +100,21 @@ class ResourceMetadataTest {
         assertEquals(ResourceCategory.OTHER, ResourceCategory.fromKey("future-category"))
         assertEquals(ResourceCategory.OTHER, ResourceCategory.fromKey(null))
     }
+
+    @Test
+    fun catalogSeedsOnlyUrlsNotAddedBefore() {
+        val all = catalogEntriesToSeed(emptySet())
+        assertEquals(DEFAULT_RESOURCES.size, all.size)
+        val seeded = DEFAULT_RESOURCES.drop(1).map { it.url }.toSet()
+        assertEquals(listOf(DEFAULT_RESOURCES[0]), catalogEntriesToSeed(seeded))
+    }
+
+    @Test
+    fun catalogUrlsAreUniqueAndImageLookupSkipsSearchLinks() {
+        assertEquals(DEFAULT_RESOURCES.size, DEFAULT_RESOURCES.map { it.url.lowercase() }.toSet().size)
+        assertEquals(false, wantsImageLookup("https://www.google.com/search?q=Bescherelle"))
+        assertEquals(false, wantsImageLookup("https://www.youtube.com/results?search_query=class+zaban"))
+        assertEquals(true, wantsImageLookup("https://www.youtube.com/@mlle_zeinab"))
+        assertEquals(true, wantsImageLookup("https://t.me/sorbonne_fr"))
+    }
 }
