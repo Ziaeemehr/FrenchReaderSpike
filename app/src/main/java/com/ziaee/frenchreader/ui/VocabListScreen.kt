@@ -8,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -30,12 +31,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.AnkiImportRepository
 import com.ziaee.frenchreader.content.AnkiImportResult
+import com.ziaee.frenchreader.content.parseCsvWords
+import com.ziaee.frenchreader.content.CsvWordFile
+import com.ziaee.frenchreader.content.CsvImportTarget
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.SQL_ID_CHUNK
 import com.ziaee.frenchreader.data.VocabEntry
@@ -243,6 +250,19 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun importCsv(file: CsvWordFile, target: CsvImportTarget, onDone: (AnkiImportResult?) -> Unit) {
+        viewModelScope.launch {
+            val result = try {
+                AnkiImportRepository(db).importCsv(file, target)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            onDone(result)
+        }
+    }
+
     fun deleteList(list: VocabList, deleteCards: Boolean) {
         viewModelScope.launch {
             db.withTransaction {
@@ -295,8 +315,44 @@ fun VocabListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingAnkiUri by remember { mutableStateOf<Uri?>(null) }
     var keepAnkiProgress by remember { mutableStateOf(true) }
+    var showImportHelp by remember { mutableStateOf(false) }
+    val sampleSaver = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = runCatching {
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.use { it.write(CSV_SAMPLE.toByteArray()) } != null
+                }
+            }.getOrDefault(false)
+            snackbarHostState.showSnackbar(
+                context.getString(if (saved) R.string.csv_import_sample_saved else R.string.csv_import_failed)
+            )
+        }
+    }
+    // Spreadsheet (CSV/TSV) picked from the same import button: file name + parsed words.
+    var pendingCsv by remember { mutableStateOf<Pair<String, CsvWordFile>?>(null) }
     val ankiPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) { keepAnkiProgress = true; pendingAnkiUri = uri }
+        if (uri == null) return@rememberLauncherForActivityResult
+        val name = displayName(context, uri)
+        val isAnki = name.endsWith(".json", ignoreCase = true) ||
+            context.contentResolver.getType(uri) == "application/json"
+        if (isAnki) { keepAnkiProgress = true; pendingAnkiUri = uri; return@rememberLauncherForActivityResult }
+        scope.launch {
+            val file = try {
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { parseCsvWords(it.readText()) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            when {
+                file == null -> snackbarHostState.showSnackbar(context.getString(R.string.csv_import_failed))
+                file.words.isEmpty() -> snackbarHostState.showSnackbar(context.getString(R.string.csv_import_empty))
+                else -> pendingCsv = name.substringBeforeLast('.').ifBlank { name } to file
+            }
+        }
     }
 
     val scoped = remember(entries, selectedScope) {
@@ -334,6 +390,78 @@ fun VocabListScreen(
         }
     }
     BackHandler(enabled = isSelecting) { selectedIds = emptySet() }
+
+    if (showImportHelp) {
+        AlertDialog(
+            onDismissRequest = { showImportHelp = false },
+            title = { Text(stringResource(R.string.csv_import_help_title)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(stringResource(R.string.csv_import_help_body))
+                    Spacer(Modifier.height(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        // Left-to-right even in the Persian UI: it's a file's contents.
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                            // One row per line (scroll sideways) so the columns stay readable.
+                            Text(
+                                CSV_SAMPLE.trim(),
+                                fontFamily = FontFamily.Monospace,
+                                style = MaterialTheme.typography.bodySmall,
+                                softWrap = false,
+                                modifier = Modifier.horizontalScroll(rememberScrollState()).padding(8.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.csv_import_help_excel),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    TextButton(onClick = { sampleSaver.launch("french_reader_words.csv") }) {
+                        Text(stringResource(R.string.csv_import_save_sample))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showImportHelp = false
+                    ankiPicker.launch(
+                        arrayOf(
+                            "application/json", "text/csv", "text/comma-separated-values",
+                            "text/tab-separated-values", "text/plain", "*/*"
+                        )
+                    )
+                }) { Text(stringResource(R.string.csv_import_choose_file)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportHelp = false }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
+    pendingCsv?.let { (fileName, file) ->
+        CsvImportDialog(
+            fileName = fileName,
+            file = file,
+            lists = lists,
+            onDismiss = { pendingCsv = null },
+            onImport = { target ->
+                pendingCsv = null
+                vm.importCsv(file, target) { r ->
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            if (r == null) context.getString(R.string.csv_import_failed)
+                            else context.getString(R.string.anki_import_done, r.added, r.skipped, r.lists)
+                        )
+                    }
+                }
+            }
+        )
+    }
 
     pendingAnkiUri?.let { uri ->
         AlertDialog(
@@ -434,7 +562,7 @@ fun VocabListScreen(
                         IconButton(onClick = { showManualDictionary = true }) {
                             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.manual_dictionary_action))
                         }
-                        IconButton(onClick = { ankiPicker.launch(arrayOf("application/json", "*/*")) }) {
+                        IconButton(onClick = { showImportHelp = true }) {
                             Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.anki_import_action))
                         }
                         IconButton(onClick = onOpenDataset) {
@@ -1018,4 +1146,115 @@ private fun nextReviewText(entry: VocabEntry): String = when (
     } else {
         stringResource(R.string.vocab_next_review_in_days, bucket.days)
     }
+}
+
+/** Shown in the import help and saved by "Save sample file"; also documents the format. */
+private const val CSV_SAMPLE = """word,meaning,sentence,deck
+bonjour,hello / سلام,"Bonjour, comment ça va ?",Basics
+merci,thank you / مرسی,Merci beaucoup !,Basics
+la gare,train station / ایستگاه قطار,Je vais à la gare.,Voyage
+"""
+
+private fun displayName(context: android.content.Context, uri: Uri): String =
+    runCatching {
+        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+    }.getOrNull() ?: uri.lastPathSegment.orEmpty().substringAfterLast('/')
+
+private enum class CsvTargetChoice { COLUMN, EXISTING, NEW }
+
+/** Choose where spreadsheet words go: the file's deck column, an existing deck, or a new one. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CsvImportDialog(
+    fileName: String,
+    file: CsvWordFile,
+    lists: List<VocabList>,
+    onDismiss: () -> Unit,
+    onImport: (CsvImportTarget) -> Unit
+) {
+    var choice by remember {
+        mutableStateOf(
+            when {
+                file.hasDeckColumn -> CsvTargetChoice.COLUMN
+                lists.isNotEmpty() -> CsvTargetChoice.EXISTING
+                else -> CsvTargetChoice.NEW
+            }
+        )
+    }
+    var existing by remember { mutableStateOf(lists.firstOrNull()) }
+    var newName by remember { mutableStateOf(fileName) }
+    var menuOpen by remember { mutableStateOf(false) }
+    val target: CsvImportTarget? = when (choice) {
+        CsvTargetChoice.COLUMN -> CsvImportTarget.DeckColumn(fallbackDeck = fileName)
+        CsvTargetChoice.EXISTING -> existing?.let { CsvImportTarget.Deck(it.name) }
+        CsvTargetChoice.NEW -> newName.trim().takeIf { it.isNotEmpty() }?.let(CsvImportTarget::Deck)
+    }
+
+    @Composable
+    fun ChoiceRow(value: CsvTargetChoice, label: String) {
+        Row(
+            Modifier.fillMaxWidth().clickable { choice = value },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(selected = choice == value, onClick = { choice = value })
+            Text(label)
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.csv_import_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(pluralStringResource(R.plurals.csv_import_found, file.words.size, file.words.size))
+                Spacer(Modifier.height(8.dp))
+                if (file.hasDeckColumn) ChoiceRow(CsvTargetChoice.COLUMN, stringResource(R.string.csv_import_target_column))
+                if (lists.isNotEmpty()) {
+                    ChoiceRow(CsvTargetChoice.EXISTING, stringResource(R.string.csv_import_target_existing))
+                    if (choice == CsvTargetChoice.EXISTING) {
+                        ExposedDropdownMenuBox(expanded = menuOpen, onExpandedChange = { menuOpen = it }) {
+                            OutlinedTextField(
+                                value = existing?.name.orEmpty(),
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuOpen) },
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                lists.forEach { list ->
+                                    DropdownMenuItem(
+                                        text = { Text(list.name) },
+                                        onClick = { existing = list; menuOpen = false }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                ChoiceRow(CsvTargetChoice.NEW, stringResource(R.string.csv_import_target_new))
+                if (choice == CsvTargetChoice.NEW) {
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.csv_import_new_name)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.csv_import_duplicates_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { target?.let(onImport) }, enabled = target != null) {
+                Text(stringResource(R.string.anki_import_confirm))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
+    )
 }

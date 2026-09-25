@@ -42,7 +42,7 @@ Older versions are on the [Releases page](https://github.com/Ziaeemehr/FrenchRea
 - **Shadowing**: hear a sentence, hold the button and repeat it. The app checks how many words you said correctly and your pace, then shows a summary. Works offline, or with Android's speech recognition.
 - **Look up** any word or phrase with a long press, and save it with its sentence.
 - **Review** saved words with flashcards and spaced repetition (Leitner boxes), with audio for each card, a daily goal and a reminder.
-- **Organize words** into decks: select several words to move or delete at once, tap a word to see its card, or import decks from Anki.
+- **Organize words** into decks: select several words to move or delete at once, tap a word to see its card, or import words from Anki or from a spreadsheet (CSV: word, meaning, sentence, deck; a sample file is available in the app).
 - **Library** with folders and tags. Search looks inside the text itself (accents ignored) and opens the text at the match. Each text shows how much of its vocabulary you already know.
 - **Import** texts from anywhere: paste, TXT/Markdown/EPUB files, a whole folder (with images), PDF, photos (text recognition), or share from another app.
 - **Find content**: daily French news, graded stories and ready-made vocabulary decks.

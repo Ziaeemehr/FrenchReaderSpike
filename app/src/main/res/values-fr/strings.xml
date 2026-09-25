@@ -484,7 +484,7 @@
     <string name="statistics_retention_title">Rétention par boîte de Leitner</string>
     <string name="statistics_listening_month_title">Temps d\'écoute (30 derniers jours, min)</string>
     <string name="statistics_no_data">Pas encore assez de données</string>
-    <string name="anki_import_action">Importer depuis Anki</string>
+    <string name="anki_import_action">Importer des mots (Anki ou CSV)</string>
     <string name="anki_import_title">Importer un paquet Anki</string>
     <string name="anki_import_keep_progress">Conserver la progression Anki</string>
     <string name="anki_import_confirm">Importer</string>
@@ -563,4 +563,22 @@
     <string name="reading_find_previous">Résultat précédent</string>
     <string name="reading_find_next">Résultat suivant</string>
     <string name="reading_find_close">Fermer la recherche</string>
+    <string name="csv_import_title">Importer des mots depuis un tableur</string>
+    <string name="csv_import_target_column">Utiliser la colonne « paquet » du fichier</string>
+    <string name="csv_import_target_existing">Ajouter à un paquet existant</string>
+    <string name="csv_import_target_new">Créer un nouveau paquet</string>
+    <string name="csv_import_new_name">Nom du paquet</string>
+    <string name="csv_import_duplicates_note">Les mots déjà présents dans le paquet, ou répétés dans le fichier, sont ignorés.</string>
+    <string name="csv_import_failed">Impossible de lire ce fichier</string>
+    <string name="csv_import_empty">Aucun mot trouvé dans ce fichier. Un mot par ligne : mot, sens, phrase, paquet.</string>
+    <plurals name="csv_import_found">
+        <item quantity="one">%1$d mot trouvé</item>
+        <item quantity="other">%1$d mots trouvés</item>
+    </plurals>
+    <string name="csv_import_help_title">Importer des mots</string>
+    <string name="csv_import_help_body">Choisissez un export Anki (.json) ou un tableur enregistré en CSV. Un mot par ligne, dans ces colonnes : mot (recto de la carte), sens, phrase (lue à voix haute), paquet. Seul le mot est obligatoire. Une première ligne avec les noms des colonnes est facultative ; elle permet de les mettre dans n\'importe quel ordre.</string>
+    <string name="csv_import_help_excel">Excel : Fichier › Enregistrer sous › « CSV UTF-8 ». Google Sheets : Fichier › Télécharger › CSV. Les fichiers séparés par des points-virgules ou des tabulations fonctionnent aussi.</string>
+    <string name="csv_import_save_sample">Enregistrer un exemple</string>
+    <string name="csv_import_choose_file">Choisir un fichier</string>
+    <string name="csv_import_sample_saved">Fichier d\'exemple enregistré</string>
 </resources>

@@ -482,7 +482,7 @@
     <string name="statistics_retention_title">ماندگاری در هر جعبهٔ لایتنر</string>
     <string name="statistics_listening_month_title">زمان گوش دادن (۳۰ روز اخیر، دقیقه)</string>
     <string name="statistics_no_data">هنوز داده کافی نیست</string>
-    <string name="anki_import_action">ایمپورت از انکی</string>
+    <string name="anki_import_action">وارد کردن کلمه‌ها (Anki یا CSV)</string>
     <string name="anki_import_title">ایمپورت دک انکی</string>
     <string name="anki_import_keep_progress">نگه‌داشتن پیشرفت انکی</string>
     <string name="anki_import_confirm">ایمپورت</string>
@@ -561,4 +561,22 @@
     <string name="reading_find_previous">مورد قبلی</string>
     <string name="reading_find_next">مورد بعدی</string>
     <string name="reading_find_close">بستن جستجو</string>
+    <string name="csv_import_title">وارد کردن کلمه‌ها از فایل جدول</string>
+    <string name="csv_import_target_column">استفاده از ستون دک در فایل</string>
+    <string name="csv_import_target_existing">افزودن به یک دک موجود</string>
+    <string name="csv_import_target_new">ساختن دک جدید</string>
+    <string name="csv_import_new_name">نام دک</string>
+    <string name="csv_import_duplicates_note">کلمه‌هایی که از قبل در دک هستند یا در فایل تکرار شده‌اند، رد می‌شوند.</string>
+    <string name="csv_import_failed">این فایل خوانده نشد</string>
+    <string name="csv_import_empty">کلمه‌ای در این فایل پیدا نشد. هر ردیف یک کلمه: کلمه، معنی، جمله، دک.</string>
+    <plurals name="csv_import_found">
+        <item quantity="one">%1$d کلمه پیدا شد</item>
+        <item quantity="other">%1$d کلمه پیدا شد</item>
+    </plurals>
+    <string name="csv_import_help_title">وارد کردن کلمه‌ها</string>
+    <string name="csv_import_help_body">یک خروجی Anki ‏(‎.json‎) یا یک فایل جدول با فرمت CSV انتخاب کنید. هر ردیف یک کلمه، با این ستون‌ها: کلمه (روی کارت)، معنی، جمله (خوانده می‌شود)، دک. فقط ستون کلمه لازم است. ردیف اول می‌تواند نام ستون‌ها باشد (اختیاری)؛ در این صورت ترتیب ستون‌ها مهم نیست.</string>
+    <string name="csv_import_help_excel">در Excel: ‏File › Save As › «CSV UTF-8». در Google Sheets: ‏File › Download › CSV. فایل‌هایی که با نقطه‌ویرگول یا Tab جدا شده‌اند هم قبول می‌شوند.</string>
+    <string name="csv_import_save_sample">ذخیرهٔ فایل نمونه</string>
+    <string name="csv_import_choose_file">انتخاب فایل</string>
+    <string name="csv_import_sample_saved">فایل نمونه ذخیره شد</string>
 </resources>

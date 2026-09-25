@@ -484,7 +484,7 @@
     <string name="statistics_retention_title">Retention by Leitner box</string>
     <string name="statistics_listening_month_title">Listening time (last 30 days, min)</string>
     <string name="statistics_no_data">Not enough data yet</string>
-    <string name="anki_import_action">Import from Anki</string>
+    <string name="anki_import_action">Import words (Anki or CSV)</string>
     <string name="anki_import_title">Import Anki deck</string>
     <string name="anki_import_keep_progress">Keep Anki progress</string>
     <string name="anki_import_confirm">Import</string>
@@ -563,4 +563,22 @@
     <string name="reading_find_previous">Previous match</string>
     <string name="reading_find_next">Next match</string>
     <string name="reading_find_close">Close find</string>
+    <string name="csv_import_title">Import words from a spreadsheet</string>
+    <string name="csv_import_target_column">Use the deck column in the file</string>
+    <string name="csv_import_target_existing">Add to an existing deck</string>
+    <string name="csv_import_target_new">Create a new deck</string>
+    <string name="csv_import_new_name">Deck name</string>
+    <string name="csv_import_duplicates_note">Words already in the deck, or repeated in the file, are skipped.</string>
+    <string name="csv_import_failed">Could not read this file</string>
+    <string name="csv_import_empty">No words found in this file. Put one word per row: word, meaning, sentence, deck.</string>
+    <plurals name="csv_import_found">
+        <item quantity="one">%1$d word found</item>
+        <item quantity="other">%1$d words found</item>
+    </plurals>
+    <string name="csv_import_help_title">Import words</string>
+    <string name="csv_import_help_body">Choose an Anki export (.json) or a spreadsheet saved as CSV. One word per row, in these columns: word (card front), meaning, sentence (read aloud), deck. Only the word is required. A first row with the column names is optional, and columns can be in any order when it is there.</string>
+    <string name="csv_import_help_excel">Excel: File › Save As › "CSV UTF-8". Google Sheets: File › Download › CSV. Semicolon or tab separated files work too.</string>
+    <string name="csv_import_save_sample">Save sample file</string>
+    <string name="csv_import_choose_file">Choose file</string>
+    <string name="csv_import_sample_saved">Sample file saved</string>
 </resources>
