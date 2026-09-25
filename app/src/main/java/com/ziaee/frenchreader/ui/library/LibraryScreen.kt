@@ -59,6 +59,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -468,6 +469,9 @@ fun LibraryContent(
                             tagNames = state.tags.filter { it.id in state.tagIdsByText[doc.id].orEmpty() }.map { it.name },
                             completed = state.completionByTextId[doc.id] == true,
                             comprehensionPercent = comprehensionScores[doc.id],
+                            bodySnippet = state.bodySnippets[doc.id]?.takeIf {
+                                !doc.title.contains(state.query.trim(), ignoreCase = true)
+                            },
                             onDeleteRequest = { pendingDelete = doc }
                         )
                         HorizontalDivider()
@@ -596,7 +600,8 @@ private fun LibraryRow(
     tagNames: List<String>,
     completed: Boolean,
     comprehensionPercent: Int?,
-    onDeleteRequest: () -> Unit
+    onDeleteRequest: () -> Unit,
+    bodySnippet: String? = null
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Row(
@@ -616,6 +621,17 @@ private fun LibraryRow(
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(doc.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            bodySnippet?.takeIf { it.isNotBlank() }?.let { snippet ->
+                Text(
+                    snippet.replace(Regex("\\s+"), " ").trim(),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag("librarySnippet_${doc.id}")
+                )
+            }
             Spacer(Modifier.height(4.dp))
             Row {
                 val organizerMetadata = buildList {

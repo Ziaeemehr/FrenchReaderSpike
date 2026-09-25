@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.ui.library
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ziaee.frenchreader.content.ArticleImportRepository
@@ -16,13 +17,18 @@ import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.LibraryTag
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStore
+import com.ziaee.frenchreader.data.indexTextBodyFiles
 import com.ziaee.frenchreader.data.insertTextDocument
 import com.ziaee.frenchreader.data.updateTextDocumentBody
 import com.ziaee.frenchreader.images.ArticleImageStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -57,6 +63,15 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     val selectedIds = MutableStateFlow<Set<Long>>(emptySet())
 
     init {
+        viewModelScope.launch {
+            try {
+                indexTextBodyFiles(db.textDao(), bodyStore)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.w("LibraryViewModel", "Indexing file-stored text bodies failed", error)
+            }
+        }
         viewModelScope.launch {
             db.textDao().observeAll().collectLatest { documents ->
                 selectedIds.value = prunedSelection(selectedIds.value, documents.mapTo(mutableSetOf()) { it.id })
@@ -109,7 +124,23 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         FilterSettings(currentQuery, currentSort, currentFolder, currentTags)
     }
 
-    val uiState: StateFlow<LibraryUiState> = combine(libraryData, filterSettings, selectedIds) { data, filters, selection ->
+    /** Full-text body matches for the current query (id -> snippet); re-run when texts change. */
+    private val bodySnippets = combine(
+        query.map { textSearchMatch(it) }.distinctUntilChanged().debounce(250),
+        db.textDao().observeAll()
+    ) { match, _ -> match }.mapLatest { match ->
+        if (match == null) emptyMap()
+        else try {
+            db.textDao().searchText(match).associate { it.id to it.snippet }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Log.w("LibraryViewModel", "Full-text search failed", error)
+            emptyMap()
+        }
+    }
+
+    val uiState: StateFlow<LibraryUiState> = combine(libraryData, filterSettings, selectedIds, bodySnippets) { data, filters, selection, snippets ->
         LibraryUiState(
             query = filters.query,
             sort = filters.sort,
@@ -120,7 +151,8 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
                 folderFilter = filters.folder,
                 selectedTagIds = filters.tagIds,
                 tagIdsByText = data.tagIdsByText,
-                folders = data.folders
+                folders = data.folders,
+                bodyMatchIds = if (filters.query.isBlank()) emptySet() else snippets.keys
             ),
             allDocuments = data.documents,
             folders = data.folders,
@@ -130,7 +162,8 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
             folderFilter = filters.folder,
             selectedTagIds = filters.tagIds,
             selectedIds = selection,
-            totalDocumentCount = data.documents.size
+            totalDocumentCount = data.documents.size,
+            bodySnippets = if (filters.query.isBlank()) emptyMap() else snippets
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryUiState())
 

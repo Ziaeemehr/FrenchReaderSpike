@@ -169,7 +169,7 @@
     <string name="library_sort_newest">Newest</string>
     <string name="library_sort_title">Title</string>
     <string name="library_sort_last_read">Last read</string>
-    <string name="library_search_hint">Search by title or source</string>
+    <string name="library_search_hint">Search titles and text</string>
     <string name="library_empty_title">No texts yet</string>
     <string name="library_empty_body">Save an article or paste your own text to build your library.</string>
     <string name="library_no_results">No texts match “%1$s”.</string>

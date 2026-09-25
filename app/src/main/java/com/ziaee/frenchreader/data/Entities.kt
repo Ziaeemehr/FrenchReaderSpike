@@ -2,6 +2,8 @@ package com.ziaee.frenchreader.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Fts4
+import androidx.room.FtsOptions
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.ziaee.frenchreader.resources.ResourceCategory
@@ -40,6 +42,22 @@ data class TextDocument(
     val bodyPath: String? = null,
     val pinned: Boolean = false
 )
+
+/**
+ * Full-text index over each text's title and body (rowid = [TextDocument.id]). SQLite triggers
+ * (see [createTextSearchTriggers]) keep it in sync with `texts` for inline bodies; bodies stored
+ * as files are indexed from Kotlin (see [indexTextBodyFile]). unicode61 folds case and accents,
+ * so "ecole" finds "école".
+ */
+@Fts4(tokenizer = FtsOptions.TOKENIZER_UNICODE61)
+@Entity(tableName = "texts_fts")
+data class TextSearchEntry(
+    @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long,
+    val title: String,
+    val body: String
+)
+
+data class TextSearchHit(val id: Long, val snippet: String)
 
 @Entity(tableName = "library_folders")
 data class LibraryFolder(

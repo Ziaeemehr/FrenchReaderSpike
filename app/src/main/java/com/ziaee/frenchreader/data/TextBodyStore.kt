@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.data
 
 import android.content.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -84,6 +85,7 @@ suspend fun insertTextDocument(
         textDao.getById(id)?.let { textDao.delete(it) }
         throw error
     }
+    indexFileBody(textDao, id, body)
     return id
 }
 
@@ -109,5 +111,26 @@ suspend fun updateTextDocumentBody(
     } else {
         val path = bodyStore.writeBody(document.id, body)
         textDao.update(base.copy(rawText = "", bodyPath = path))
+        indexFileBody(textDao, document.id, body)
+    }
+}
+
+/** Triggers index inline bodies; a body stored as a file has to be indexed here. Best effort:
+ * a failure only leaves the text unsearchable by body until [indexTextBodyFiles] retries it. */
+private suspend fun indexFileBody(textDao: TextDao, id: Long, body: String) {
+    try {
+        textDao.setSearchBody(id, body)
+    } catch (error: CancellationException) {
+        throw error
+    } catch (_: Exception) {
+    }
+}
+
+/** Indexes file-stored bodies the index hasn't seen yet (after the v16 migration, a restored
+ * backup, or a failed [indexFileBody]). */
+suspend fun indexTextBodyFiles(textDao: TextDao, bodyStore: TextBodyStorage) {
+    textDao.getUnindexedFileBodies().forEach { doc ->
+        val body = bodyStore.read(doc)
+        if (body.isNotEmpty()) textDao.setSearchBody(doc.id, body)
     }
 }

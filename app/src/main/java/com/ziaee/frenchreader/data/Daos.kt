@@ -38,6 +38,19 @@ interface TextDao {
     @Insert
     suspend fun insert(text: TextDocument): Long
 
+    // Body column is 1; ntokens 12 gives roughly a line of context around the match.
+    @Query(
+        "SELECT rowid AS id, snippet(texts_fts, '', '', '…', 1, 12) AS snippet " +
+            "FROM texts_fts WHERE texts_fts MATCH :match LIMIT 1000"
+    )
+    suspend fun searchText(match: String): List<TextSearchHit>
+
+    @Query("UPDATE texts_fts SET body = :body WHERE rowid = :id")
+    suspend fun setSearchBody(id: Long, body: String)
+
+    @Query("SELECT * FROM texts WHERE bodyPath IS NOT NULL AND id IN (SELECT rowid FROM texts_fts WHERE body = '')")
+    suspend fun getUnindexedFileBodies(): List<TextDocument>
+
     @Update
     suspend fun update(text: TextDocument)
 

@@ -249,10 +249,56 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
     }
 }
 
+// v15 -> v16: full-text index over text titles and bodies (TextSearchEntry). The CREATE
+// statement must match Room's generated one exactly or schema validation fails. Inline bodies
+// are copied here; bodies stored as files are indexed from Kotlin (indexTextBodyFiles).
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS `texts_fts` USING FTS4(" +
+                "`title` TEXT NOT NULL, `body` TEXT NOT NULL, tokenize=unicode61)"
+        )
+        db.execSQL("INSERT INTO texts_fts(rowid, title, body) SELECT id, title, rawText FROM texts")
+    }
+}
+
+/**
+ * Triggers that mirror `texts` into `texts_fts`. A file-backed text has rawText = "", so on update
+ * its indexed body is left alone (Kotlin writes it). Created on every open (IF NOT EXISTS) so fresh
+ * installs, migrations and restored backups all get them; the two statements after them repair
+ * any drift, e.g. a backup made before the triggers existed.
+ */
+internal fun createTextSearchTriggers(db: SupportSQLiteDatabase) {
+    db.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS texts_fts_ai AFTER INSERT ON texts BEGIN " +
+            "DELETE FROM texts_fts WHERE rowid = new.id; " +
+            "INSERT INTO texts_fts(rowid, title, body) VALUES (new.id, new.title, new.rawText); END"
+    )
+    db.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS texts_fts_ad AFTER DELETE ON texts BEGIN " +
+            "DELETE FROM texts_fts WHERE rowid = old.id; END"
+    )
+    db.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS texts_fts_au AFTER UPDATE OF title, rawText, bodyPath ON texts BEGIN " +
+            "UPDATE texts_fts SET title = new.title, " +
+            "body = CASE WHEN new.bodyPath IS NULL THEN new.rawText ELSE body END " +
+            "WHERE rowid = new.id; END"
+    )
+    db.execSQL(
+        "INSERT INTO texts_fts(rowid, title, body) SELECT id, title, rawText FROM texts " +
+            "WHERE id NOT IN (SELECT rowid FROM texts_fts)"
+    )
+    db.execSQL("DELETE FROM texts_fts WHERE rowid NOT IN (SELECT id FROM texts)")
+}
+
+val TEXT_SEARCH_CALLBACK = object : RoomDatabase.Callback() {
+    override fun onOpen(db: SupportSQLiteDatabase) = createTextSearchTriggers(db)
+}
+
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
     MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
-    MIGRATION_14_15
+    MIGRATION_14_15, MIGRATION_15_16
 )
 
 @Database(
@@ -260,7 +306,7 @@ val ALL_MIGRATIONS = arrayOf(
         TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class,
         ReviewLogEntry::class, ActivityLogEntry::class, ResourceLink::class,
         LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class, HighlightEntry::class,
-        ShadowAttempt::class
+        ShadowAttempt::class, TextSearchEntry::class
     ],
     version = AppDatabase.SCHEMA_VERSION,
     exportSchema = false
@@ -278,7 +324,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shadowAttemptDao(): ShadowAttemptDao
 
     companion object {
-        const val SCHEMA_VERSION = 15
+        const val SCHEMA_VERSION = 16
 
         @Volatile private var INSTANCE: AppDatabase? = null
 
@@ -295,6 +341,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // much older schema); the normal v2->v3 path above
                     // never falls back to this.
                     .fallbackToDestructiveMigration()
+                    .addCallback(TEXT_SEARCH_CALLBACK)
                     .build().also { INSTANCE = it }
             }
 

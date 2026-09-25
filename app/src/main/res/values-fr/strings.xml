@@ -169,7 +169,7 @@
     <string name="library_sort_newest">Plus récent</string>
     <string name="library_sort_title">Titre</string>
     <string name="library_sort_last_read">Dernière lecture</string>
-    <string name="library_search_hint">Rechercher par titre ou source</string>
+    <string name="library_search_hint">Rechercher dans les titres et le texte</string>
     <string name="library_empty_title">Aucun texte pour l\'instant</string>
     <string name="library_empty_body">Enregistrez un article ou collez votre propre texte pour créer votre bibliothèque.</string>
     <string name="library_no_results">Aucun texte ne correspond à « %1$s ».</string>

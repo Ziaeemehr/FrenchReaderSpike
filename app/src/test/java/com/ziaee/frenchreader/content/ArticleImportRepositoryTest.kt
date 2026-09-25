@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.content
 
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDao
+import com.ziaee.frenchreader.data.TextSearchHit
 import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.images.ArticleImageStorage
@@ -181,6 +182,10 @@ class ArticleImportRepositoryTest {
         override suspend fun delete(text: TextDocument) {
             documents.removeAll { it.id == text.id }
         }
+
+        override suspend fun searchText(match: String): List<TextSearchHit> = emptyList()
+        override suspend fun setSearchBody(id: Long, body: String) = Unit
+        override suspend fun getUnindexedFileBodies(): List<TextDocument> = emptyList()
 
         override suspend fun savePosition(id: Long, chunkIndex: Int, positionMs: Long) = Unit
 

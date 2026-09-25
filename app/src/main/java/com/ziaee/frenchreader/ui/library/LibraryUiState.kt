@@ -25,7 +25,9 @@ data class LibraryUiState(
     val folderFilter: FolderFilter = FolderFilter.All,
     val selectedTagIds: Set<Long> = emptySet(),
     val selectedIds: Set<Long> = emptySet(),
-    val totalDocumentCount: Int = documents.size
+    val totalDocumentCount: Int = documents.size,
+    /** Text id -> context around the match, for texts whose body matches the search. */
+    val bodySnippets: Map<Long, String> = emptyMap()
 ) {
     /** Distinguishes "the library has zero saved texts" from "the current
      * search has zero matches" so the empty state can show the right copy. */
@@ -52,7 +54,8 @@ internal fun projectLibrary(
     folderFilter: FolderFilter = FolderFilter.All,
     selectedTagIds: Set<Long> = emptySet(),
     tagIdsByText: Map<Long, Set<Long>> = emptyMap(),
-    folders: List<LibraryFolder> = emptyList()
+    folders: List<LibraryFolder> = emptyList(),
+    bodyMatchIds: Set<Long> = emptySet()
 ): List<TextDocument> {
     val normalizedQuery = query.trim().lowercase(Locale.ROOT)
     val includedFolderIds = (folderFilter as? FolderFilter.Folder)?.let {
@@ -61,7 +64,8 @@ internal fun projectLibrary(
     val filtered = documents.filter { doc ->
         val matchesQuery = normalizedQuery.isBlank() ||
             doc.title.lowercase(Locale.ROOT).contains(normalizedQuery) ||
-            doc.sourceName?.lowercase(Locale.ROOT)?.contains(normalizedQuery) == true
+            doc.sourceName?.lowercase(Locale.ROOT)?.contains(normalizedQuery) == true ||
+            doc.id in bodyMatchIds
         val matchesFolder = when (folderFilter) {
             FolderFilter.All -> true
             FolderFilter.Unfiled -> doc.folderId == null
@@ -77,3 +81,11 @@ internal fun projectLibrary(
     }
     return filtered.sortedWith(comparator.thenBy { it.id })
 }
+
+/** Turns what the user typed into an FTS4 MATCH expression: every word must appear, each as a
+ * prefix so results update while typing ("eco" finds "école"). Only letters and digits reach
+ * the query, so FTS syntax in the input can't break it. Null when there is nothing to search. */
+internal fun textSearchMatch(query: String): String? =
+    Regex("[\\p{L}\\p{N}]+").findAll(query.lowercase(Locale.ROOT))
+        .joinToString(" ") { "${it.value}*" }
+        .ifBlank { null }
