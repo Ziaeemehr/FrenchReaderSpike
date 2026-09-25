@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontFamily
@@ -349,7 +350,8 @@ fun VocabListScreen(
             }
             when {
                 file == null -> snackbarHostState.showSnackbar(context.getString(R.string.csv_import_failed))
-                file.words.isEmpty() -> snackbarHostState.showSnackbar(context.getString(R.string.csv_import_empty))
+                file.words.isEmpty() && file.malformedRows == 0 ->
+                    snackbarHostState.showSnackbar(context.getString(R.string.csv_import_empty))
                 else -> pendingCsv = name.substringBeforeLast('.').ifBlank { name } to file
             }
         }
@@ -1208,6 +1210,15 @@ private fun CsvImportDialog(
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(pluralStringResource(R.plurals.csv_import_found, file.words.size, file.words.size))
+                if (file.malformedRows > 0) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        pluralStringResource(R.plurals.csv_import_malformed, file.malformedRows, file.malformedRows),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("csvMalformedWarning")
+                    )
+                }
                 Spacer(Modifier.height(8.dp))
                 if (file.hasDeckColumn) ChoiceRow(CsvTargetChoice.COLUMN, stringResource(R.string.csv_import_target_column))
                 if (lists.isNotEmpty()) {

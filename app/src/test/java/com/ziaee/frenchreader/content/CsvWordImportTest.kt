@@ -37,6 +37,18 @@ class CsvWordImportTest {
     }
 
     @Test
+    fun rowsWithMoreCellsThanColumnsAreLeftOutAndCounted() {
+        val withHeader = parseCsvWords("word,meaning,sentence\nchat,cat,Le chat, noir, dort.\nchien,dog,\"Le chien, lui, joue.\"\nbleu,blue,,\n")
+        assertEquals(listOf("chien", "bleu"), withHeader.words.map { it.word })
+        assertEquals("Le chien, lui, joue.", withHeader.words[0].sentence)
+        assertEquals(1, withHeader.malformedRows)
+
+        val noHeader = parseCsvWords("chat,cat,Le chat, noir, dort.,Deck\nchien,dog,Il joue.,Deck\n")
+        assertEquals(listOf("chien"), noHeader.words.map { it.word })
+        assertEquals(1, noHeader.malformedRows)
+    }
+
+    @Test
     fun planSkipsWordsAlreadyInTheDeckAndRepeatsInTheFile() {
         val file = parseCsvWords("word,deck\nChat,Animaux\nchien,Animaux\nchat,Animaux\nbleu,\n")
         val existing = setOf("animaux" to "chien")

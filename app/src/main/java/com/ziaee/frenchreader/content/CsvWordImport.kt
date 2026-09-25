@@ -3,7 +3,9 @@ package com.ziaee.frenchreader.content
 /** One card from a user's spreadsheet: `word` is the card front, `sentence` gets TTS audio. */
 data class CsvWord(val word: String, val meaning: String?, val sentence: String, val deck: String?)
 
-data class CsvWordFile(val words: List<CsvWord>, val hasDeckColumn: Boolean)
+/** [malformedRows]: rows with more cells than the columns (usually an unquoted comma inside a
+ * sentence); they're left out rather than imported with shifted columns. */
+data class CsvWordFile(val words: List<CsvWord>, val hasDeckColumn: Boolean, val malformedRows: Int = 0)
 
 /** Where imported words go: the file's own deck column (rows without one use [fallbackDeck]),
  * or a single deck by name (existing or new). */
@@ -71,7 +73,13 @@ internal fun parseCsvWords(text: String): CsvWordFile {
     val sentenceCol = if (hasHeader) column(SENTENCE_HEADERS) else 2
     val deckCol = if (hasHeader) column(DECK_HEADERS) else 3
     fun List<String>.cell(index: Int) = getOrNull(index)?.trim().orEmpty()
+    val columnCount = if (hasHeader) header.dropLastWhile { it.isEmpty() }.size else 4
+    var malformed = 0
     val words = rows.drop(if (hasHeader) 1 else 0).mapNotNull { cells ->
+        if (cells.dropLastWhile { it.isBlank() }.size > columnCount) {
+            malformed++
+            return@mapNotNull null
+        }
         val word = cells.cell(wordCol).replace(Regex("\\s+"), " ")
         if (word.isEmpty()) null
         else CsvWord(
@@ -81,7 +89,7 @@ internal fun parseCsvWords(text: String): CsvWordFile {
             deck = cells.cell(deckCol).ifEmpty { null }
         )
     }
-    return CsvWordFile(words, hasDeckColumn = deckCol >= 0 && words.any { it.deck != null })
+    return CsvWordFile(words, hasDeckColumn = deckCol >= 0 && words.any { it.deck != null }, malformedRows = malformed)
 }
 
 /** Assigns each word its deck and skips duplicates: a word already in that deck

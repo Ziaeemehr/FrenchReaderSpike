@@ -575,8 +575,12 @@
     </plurals>
     <string name="csv_import_help_title">وارد کردن کلمه‌ها</string>
     <string name="csv_import_help_body">یک خروجی Anki ‏(‎.json‎) یا یک فایل جدول با فرمت CSV انتخاب کنید. هر ردیف یک کلمه، با این ستون‌ها: کلمه (روی کارت)، معنی، جمله (خوانده می‌شود)، دک. فقط ستون کلمه لازم است. ردیف اول می‌تواند نام ستون‌ها باشد (اختیاری)؛ در این صورت ترتیب ستون‌ها مهم نیست.</string>
-    <string name="csv_import_help_excel">در Excel: ‏File › Save As › «CSV UTF-8». در Google Sheets: ‏File › Download › CSV. فایل‌هایی که با نقطه‌ویرگول یا Tab جدا شده‌اند هم قبول می‌شوند.</string>
+    <string name="csv_import_help_excel">در Excel: ‏File › Save As › «CSV UTF-8». در Google Sheets: ‏File › Download › CSV. فایل‌هایی که با نقطه‌ویرگول یا Tab جدا شده‌اند هم قبول می‌شوند. اگر جمله‌ای ویرگول دارد، آن را داخل گیومهٔ انگلیسی (\") بگذارید (Excel و Sheets این کار را خودکار انجام می‌دهند).</string>
     <string name="csv_import_save_sample">ذخیرهٔ فایل نمونه</string>
     <string name="csv_import_choose_file">انتخاب فایل</string>
     <string name="csv_import_sample_saved">فایل نمونه ذخیره شد</string>
+    <plurals name="csv_import_malformed">
+        <item quantity="one">%1$d ردیف بیشتر از ستون‌های مورد انتظار خانه دارد؛ احتمالاً ویرگولی داخل جمله بدون گیومه آمده است. این ردیف‌ها وارد نمی‌شوند. چنین جمله‌هایی را داخل گیومهٔ انگلیسی (\") بگذارید، یا از Tab یا نقطه‌ویرگول به‌عنوان جداکننده استفاده کنید.</item>
+        <item quantity="other">%1$d ردیف بیشتر از ستون‌های مورد انتظار خانه دارند؛ احتمالاً ویرگولی داخل جمله بدون گیومه آمده است. این ردیف‌ها وارد نمی‌شوند. چنین جمله‌هایی را داخل گیومهٔ انگلیسی (\") بگذارید، یا از Tab یا نقطه‌ویرگول به‌عنوان جداکننده استفاده کنید.</item>
+    </plurals>
 </resources>

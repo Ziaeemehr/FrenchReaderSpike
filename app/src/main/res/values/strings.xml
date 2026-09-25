@@ -577,8 +577,12 @@
     </plurals>
     <string name="csv_import_help_title">Import words</string>
     <string name="csv_import_help_body">Choose an Anki export (.json) or a spreadsheet saved as CSV. One word per row, in these columns: word (card front), meaning, sentence (read aloud), deck. Only the word is required. A first row with the column names is optional, and columns can be in any order when it is there.</string>
-    <string name="csv_import_help_excel">Excel: File › Save As › "CSV UTF-8". Google Sheets: File › Download › CSV. Semicolon or tab separated files work too.</string>
+    <string name="csv_import_help_excel">Excel: File › Save As › "CSV UTF-8". Google Sheets: File › Download › CSV. Semicolon or tab separated files work too. If a sentence contains a comma, put it in double quotes (Excel and Sheets do this automatically).</string>
     <string name="csv_import_save_sample">Save sample file</string>
     <string name="csv_import_choose_file">Choose file</string>
     <string name="csv_import_sample_saved">Sample file saved</string>
+    <plurals name="csv_import_malformed">
+        <item quantity="one">%1$d row has more columns than expected, probably a comma inside a sentence without quotes. It will be skipped. Put such sentences in double quotes, or use tab or semicolon as the separator.</item>
+        <item quantity="other">%1$d rows have more columns than expected, probably a comma inside a sentence without quotes. They will be skipped. Put such sentences in double quotes, or use tab or semicolon as the separator.</item>
+    </plurals>
 </resources>

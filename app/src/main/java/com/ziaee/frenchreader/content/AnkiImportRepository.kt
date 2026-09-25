@@ -51,7 +51,7 @@ class AnkiImportRepository(private val db: AppDatabase) {
                 )
             )
         }
-        AnkiImportResult(added = plan.words.size, skipped = plan.skipped, lists = newLists)
+        AnkiImportResult(added = plan.words.size, skipped = plan.skipped + file.malformedRows, lists = newLists)
     }
 
     /** Vocab lists by lowercase name, plus (list name, word) keys of the cards already in them. */

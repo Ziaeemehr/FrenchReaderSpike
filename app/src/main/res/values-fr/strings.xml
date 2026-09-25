@@ -577,8 +577,12 @@
     </plurals>
     <string name="csv_import_help_title">Importer des mots</string>
     <string name="csv_import_help_body">Choisissez un export Anki (.json) ou un tableur enregistré en CSV. Un mot par ligne, dans ces colonnes : mot (recto de la carte), sens, phrase (lue à voix haute), paquet. Seul le mot est obligatoire. Une première ligne avec les noms des colonnes est facultative ; elle permet de les mettre dans n\'importe quel ordre.</string>
-    <string name="csv_import_help_excel">Excel : Fichier › Enregistrer sous › « CSV UTF-8 ». Google Sheets : Fichier › Télécharger › CSV. Les fichiers séparés par des points-virgules ou des tabulations fonctionnent aussi.</string>
+    <string name="csv_import_help_excel">Excel : Fichier › Enregistrer sous › « CSV UTF-8 ». Google Sheets : Fichier › Télécharger › CSV. Les fichiers séparés par des points-virgules ou des tabulations fonctionnent aussi. Si une phrase contient une virgule, mettez-la entre guillemets (Excel et Sheets le font automatiquement).</string>
     <string name="csv_import_save_sample">Enregistrer un exemple</string>
     <string name="csv_import_choose_file">Choisir un fichier</string>
     <string name="csv_import_sample_saved">Fichier d\'exemple enregistré</string>
+    <plurals name="csv_import_malformed">
+        <item quantity="one">%1$d ligne a plus de colonnes que prévu, sans doute une virgule dans une phrase sans guillemets. Elle sera ignorée. Mettez ces phrases entre guillemets, ou utilisez la tabulation ou le point-virgule comme séparateur.</item>
+        <item quantity="other">%1$d lignes ont plus de colonnes que prévu, sans doute une virgule dans une phrase sans guillemets. Elles seront ignorées. Mettez ces phrases entre guillemets, ou utilisez la tabulation ou le point-virgule comme séparateur.</item>
+    </plurals>
 </resources>
