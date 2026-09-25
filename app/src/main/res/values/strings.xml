@@ -585,4 +585,19 @@
         <item quantity="one">%1$d row has more columns than expected, probably a comma inside a sentence without quotes. It will be skipped. Put such sentences in double quotes, or use tab or semicolon as the separator.</item>
         <item quantity="other">%1$d rows have more columns than expected, probably a comma inside a sentence without quotes. They will be skipped. Put such sentences in double quotes, or use tab or semicolon as the separator.</item>
     </plurals>
+    <string name="resource_category_news">News</string>
+    <string name="resource_category_grammar">Grammar &amp; exercises</string>
+    <string name="resource_category_dictionaries">Dictionaries</string>
+    <string name="resource_category_exams">Exams (TCF, DELF)</string>
+    <string name="resource_category_courses">Courses</string>
+    <string name="resource_category_persian">Persian-language channels</string>
+    <string name="resources_view_list">Show as list</string>
+    <string name="resources_view_tiles">Show as tiles</string>
+    <string name="resources_level_optional">Level (optional)</string>
+    <string name="resources_description_optional">Description (optional)</string>
+    <string name="resources_description_hint">Filled in from the website if left empty</string>
+    <string name="resource_category_textbooks">French textbooks</string>
+    <string name="resources_web_search">Web search</string>
+    <string name="resources_youtube_search">YouTube search</string>
+    <string name="resource_category_telegram">Telegram channels</string>
 </resources>

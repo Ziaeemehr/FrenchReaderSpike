@@ -585,4 +585,19 @@
         <item quantity="one">%1$d ligne a plus de colonnes que prévu, sans doute une virgule dans une phrase sans guillemets. Elle sera ignorée. Mettez ces phrases entre guillemets, ou utilisez la tabulation ou le point-virgule comme séparateur.</item>
         <item quantity="other">%1$d lignes ont plus de colonnes que prévu, sans doute une virgule dans une phrase sans guillemets. Elles seront ignorées. Mettez ces phrases entre guillemets, ou utilisez la tabulation ou le point-virgule comme séparateur.</item>
     </plurals>
+    <string name="resource_category_news">Actualités</string>
+    <string name="resource_category_grammar">Grammaire et exercices</string>
+    <string name="resource_category_dictionaries">Dictionnaires</string>
+    <string name="resource_category_exams">Examens (TCF, DELF)</string>
+    <string name="resource_category_courses">Cours</string>
+    <string name="resource_category_persian">Chaînes en persan</string>
+    <string name="resources_view_list">Afficher en liste</string>
+    <string name="resources_view_tiles">Afficher en tuiles</string>
+    <string name="resources_level_optional">Niveau (facultatif)</string>
+    <string name="resources_description_optional">Description (facultative)</string>
+    <string name="resources_description_hint">Reprise du site si vide</string>
+    <string name="resource_category_textbooks">Manuels de français</string>
+    <string name="resources_web_search">Recherche web</string>
+    <string name="resources_youtube_search">Recherche YouTube</string>
+    <string name="resource_category_telegram">Chaînes Telegram</string>
 </resources>

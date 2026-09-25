@@ -6,7 +6,7 @@ import java.net.URI
 import java.net.URL
 import org.jsoup.Jsoup
 
-data class ResourceMetadata(val title: String?, val imageUrl: String?)
+data class ResourceMetadata(val title: String?, val imageUrl: String?, val description: String? = null)
 
 fun normalizeResourceUrl(raw: String): String? {
     val value = raw.trim()
@@ -32,21 +32,47 @@ fun parseResourceMetadata(html: String, pageUrl: String): ResourceMetadata {
         ?.absUrl("content")
         ?.trim()
         ?.takeIf(String::isNotBlank)
-    return ResourceMetadata(title = title, imageUrl = image)
+    val description = (document.selectFirst("meta[property=og:description]")?.attr("content")
+        ?: document.selectFirst("meta[name=description]")?.attr("content"))
+        ?.trim()?.takeIf(String::isNotBlank)?.take(300)
+    return ResourceMetadata(title = title, imageUrl = image, description = description)
 }
 
+/** Description to show: the user's own, else the built-in one in [language] (English fallback). */
+fun resourceDescription(resource: ResourceLink, language: String): String? =
+    resource.description?.takeIf(String::isNotBlank)
+        ?: defaultResourceFor(resource.url)?.description?.let { it[language] ?: it["en"] }
+
+fun resourceLevel(resource: ResourceLink): String? =
+    resource.level?.takeIf(String::isNotBlank) ?: defaultResourceFor(resource.url)?.level
+
+/** Built-ins have createdAtMs = their catalog position; anything real is a timestamp. */
+private const val BUILT_IN_MAX_CREATED_AT = 10_000L
+
+/**
+ * Filters by category and by [query] (title, URL, level, or any description), then orders the
+ * user's own links newest first, followed by built-ins in catalog order.
+ */
 fun filterResources(
     items: List<ResourceLink>,
     query: String,
     category: ResourceCategory? = null
 ): List<ResourceLink> {
     val needle = query.trim()
-    return items.filter {
-        (category == null || ResourceCategory.fromKey(it.category) == category) &&
-            (needle.isBlank() ||
-                it.title.contains(needle, ignoreCase = true) ||
-                it.url.contains(needle, ignoreCase = true))
+    fun matches(it: ResourceLink): Boolean {
+        if (needle.isBlank()) return true
+        val builtIn = defaultResourceFor(it.url)
+        return sequenceOf(it.title, it.url, it.description, resourceLevel(it))
+            .plus(builtIn?.description?.values.orEmpty())
+            .any { text -> text?.contains(needle, ignoreCase = true) == true }
     }
+    return items
+        .filter { (category == null || ResourceCategory.fromKey(it.category) == category) && matches(it) }
+        .sortedWith(
+            compareBy<ResourceLink> { it.createdAtMs < BUILT_IN_MAX_CREATED_AT }
+                .thenBy { if (it.createdAtMs < BUILT_IN_MAX_CREATED_AT) it.createdAtMs else -it.createdAtMs }
+                .thenBy { it.id }
+        )
 }
 
 fun fetchResourceMetadata(pageUrl: String): ResourceMetadata {

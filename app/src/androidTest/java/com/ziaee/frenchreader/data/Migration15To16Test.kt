@@ -37,6 +37,9 @@ class Migration15To16Test {
                 execSQL("DROP TRIGGER IF EXISTS texts_fts_ad")
                 execSQL("DROP TRIGGER IF EXISTS texts_fts_au")
                 execSQL("DROP TABLE texts_fts")
+                // v17 columns, so the chain 15 -> 16 -> 17 runs from a true v15 shape.
+                execSQL("ALTER TABLE resources DROP COLUMN description")
+                execSQL("ALTER TABLE resources DROP COLUMN level")
                 version = 15
             }
             close()
@@ -69,6 +72,26 @@ class Migration15To16Test {
         assertEquals(listOf(2L), dao.searchText("dragon*").map { it.id })
         dao.delete(dao.getById(3)!!)
         assertTrue(dao.searchText("gateau*").isEmpty())
+        db.close()
+    }
+
+    @Test
+    fun migration16To17AddsResourceDetailsAndKeepsResources() = runBlocking {
+        open().apply {
+            resourceDao().insert(ResourceLink(title = "Mine", url = "https://example.org/", category = "reading"))
+            openHelper.writableDatabase.apply {
+                execSQL("ALTER TABLE resources DROP COLUMN description")
+                execSQL("ALTER TABLE resources DROP COLUMN level")
+                version = 16
+            }
+            close()
+        }
+        val db = open()
+        val stored = db.resourceDao().getAllOnce().single()
+        assertEquals("Mine", stored.title)
+        assertEquals(null, stored.description)
+        db.resourceDao().update(stored.copy(description = "Notes", level = "B1"))
+        assertEquals("B1", db.resourceDao().getAllOnce().single().level)
         db.close()
     }
 }

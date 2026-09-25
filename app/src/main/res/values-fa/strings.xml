@@ -583,4 +583,19 @@
         <item quantity="one">%1$d ردیف بیشتر از ستون‌های مورد انتظار خانه دارد؛ احتمالاً ویرگولی داخل جمله بدون گیومه آمده است. این ردیف‌ها وارد نمی‌شوند. چنین جمله‌هایی را داخل گیومهٔ انگلیسی (\") بگذارید، یا از Tab یا نقطه‌ویرگول به‌عنوان جداکننده استفاده کنید.</item>
         <item quantity="other">%1$d ردیف بیشتر از ستون‌های مورد انتظار خانه دارند؛ احتمالاً ویرگولی داخل جمله بدون گیومه آمده است. این ردیف‌ها وارد نمی‌شوند. چنین جمله‌هایی را داخل گیومهٔ انگلیسی (\") بگذارید، یا از Tab یا نقطه‌ویرگول به‌عنوان جداکننده استفاده کنید.</item>
     </plurals>
+    <string name="resource_category_news">خبر</string>
+    <string name="resource_category_grammar">دستور زبان و تمرین</string>
+    <string name="resource_category_dictionaries">فرهنگ لغت</string>
+    <string name="resource_category_exams">آزمون‌ها (TCF، DELF)</string>
+    <string name="resource_category_courses">دوره‌های آموزشی</string>
+    <string name="resource_category_persian">کانال‌های فارسی‌زبان</string>
+    <string name="resources_view_list">نمایش فهرستی</string>
+    <string name="resources_view_tiles">نمایش کاشی</string>
+    <string name="resources_level_optional">سطح (اختیاری)</string>
+    <string name="resources_description_optional">توضیح (اختیاری)</string>
+    <string name="resources_description_hint">اگر خالی بماند، از وب‌سایت برداشته می‌شود</string>
+    <string name="resource_category_textbooks">کتاب‌های آموزشی فرانسه</string>
+    <string name="resources_web_search">جستجوی وب</string>
+    <string name="resources_youtube_search">جستجو در یوتیوب</string>
+    <string name="resource_category_telegram">کانال‌های تلگرام</string>
 </resources>

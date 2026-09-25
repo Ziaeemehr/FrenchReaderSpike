@@ -318,11 +318,18 @@ interface ResourceDao {
     @Query("SELECT COUNT(*) FROM resources")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM resources ORDER BY createdAtMs DESC, id DESC")
+    suspend fun getAllOnce(): List<ResourceLink>
+
     @Query("SELECT * FROM resources WHERE imageUrl IS NULL")
     suspend fun getWithoutImages(): List<ResourceLink>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(resource: ResourceLink): Long
+
+    /** For seeding built-ins: a URL the user already has is left untouched. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIgnoringExisting(resources: List<ResourceLink>)
 
     @Update
     suspend fun update(resource: ResourceLink)

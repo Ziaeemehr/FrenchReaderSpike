@@ -177,7 +177,10 @@ data class ResourceLink(
     val url: String,
     val imageUrl: String? = null,
     val createdAtMs: Long = System.currentTimeMillis(),
-    @ColumnInfo(defaultValue = "other") val category: String = ResourceCategory.OTHER.key
+    @ColumnInfo(defaultValue = "other") val category: String = ResourceCategory.OTHER.key,
+    /** User-written; built-in resources leave these null and show their catalog text instead. */
+    val description: String? = null,
+    val level: String? = null
 )
 
 /** One shadowing try on one sentence. Only the score is kept -- never the audio. */

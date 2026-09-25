@@ -44,13 +44,27 @@ class ResourceMetadataTest {
     @Test
     fun filterResources_matchesTitleAndDomainIgnoringCase() {
         val items = listOf(
-            ResourceLink(id = 1, title = "Fabulang", url = "https://fabulang.com"),
-            ResourceLink(id = 2, title = "RFI Savoirs", url = "https://francaisfacile.rfi.fr")
+            ResourceLink(id = 1, title = "Fabulang", url = "https://fabulang.com", createdAtMs = 1_000_000),
+            ResourceLink(id = 2, title = "RFI Savoirs", url = "https://francaisfacile.rfi.fr", createdAtMs = 2_000_000)
         )
 
         assertEquals(listOf(items[0]), filterResources(items, "FABU"))
         assertEquals(listOf(items[1]), filterResources(items, "francaisfacile"))
-        assertEquals(items, filterResources(items, "  "))
+        // The user's own links come newest first.
+        assertEquals(listOf(items[1], items[0]), filterResources(items, "  "))
+    }
+
+    @Test
+    fun filterResources_searchesBuiltInDescriptionsAndListsBuiltInsAfterOwnLinksInCatalogOrder() {
+        val own = ResourceLink(id = 9, title = "Mine", url = "https://example.org", createdAtMs = 5_000_000)
+        val rfi = ResourceLink(id = 2, title = "RFI", url = DEFAULT_RESOURCES[1].url, createdAtMs = DEFAULT_RESOURCES[1].createdAtMs)
+        val inner = ResourceLink(id = 3, title = "Inner", url = DEFAULT_RESOURCES[0].url, createdAtMs = DEFAULT_RESOURCES[0].createdAtMs)
+        assertEquals(listOf(own, inner, rfi), filterResources(listOf(rfi, own, inner), ""))
+        // Matches the catalog description ("transcripts"), not just title or URL.
+        assertEquals(listOf(rfi), filterResources(listOf(rfi, own, inner), "transcripts"))
+        assertEquals("A2–B1", resourceLevel(rfi))
+        assertEquals(DEFAULT_RESOURCES[1].description["fa"], resourceDescription(rfi, "fa"))
+        assertEquals(DEFAULT_RESOURCES[1].description["en"], resourceDescription(rfi, "de"))
     }
 
     @Test

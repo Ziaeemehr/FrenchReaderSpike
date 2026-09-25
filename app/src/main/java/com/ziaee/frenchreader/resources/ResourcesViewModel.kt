@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.resources
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ziaee.frenchreader.data.AppDatabase
@@ -19,7 +20,10 @@ data class ResourcesUiState(
     val query: String = "",
     val isSaving: Boolean = false,
     val error: ResourceSaveError? = null,
-    val category: ResourceCategory? = null
+    val category: ResourceCategory? = null,
+    val countsByCategory: Map<ResourceCategory, Int> = emptyMap(),
+    val totalCount: Int = 0,
+    val tileView: Boolean = true
 )
 
 enum class ResourceSaveError { INVALID_URL, DUPLICATE_OR_DATABASE }
@@ -30,24 +34,48 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
     private val saving = MutableStateFlow(false)
     private val error = MutableStateFlow<ResourceSaveError?>(null)
     private val category = MutableStateFlow<ResourceCategory?>(null)
+    private val prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val tileView = MutableStateFlow(prefs.getBoolean(KEY_TILE_VIEW, true))
 
-    val uiState = combine(dao.observeAll(), query, saving, error, category) { items, text, busy, problem, selected ->
-        ResourcesUiState(filterResources(items, text, selected), text, busy, problem, selected)
+    private data class Controls(
+        val query: String, val saving: Boolean, val error: ResourceSaveError?,
+        val category: ResourceCategory?, val tileView: Boolean
+    )
+
+    private val controls = combine(query, saving, error, category, tileView) { text, busy, problem, selected, tiles ->
+        Controls(text, busy, problem, selected, tiles)
+    }
+
+    val uiState = combine(dao.observeAll(), controls) { items, c ->
+        ResourcesUiState(
+            resources = filterResources(items, c.query, c.category),
+            query = c.query,
+            isSaving = c.saving,
+            error = c.error,
+            category = c.category,
+            countsByCategory = items.groupingBy { ResourceCategory.fromKey(it.category) }.eachCount(),
+            totalCount = items.size,
+            tileView = c.tileView
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ResourcesUiState())
 
     init {
         viewModelScope.launch {
-            if (dao.count() == 0) {
-                DEFAULT_RESOURCES.forEach { resource ->
-                    dao.insert(
+            // Built-ins ship with the app. Each catalog version is added once, so an update brings
+            // new ones without re-adding any the user deleted before it; existing URLs are kept.
+            if (prefs.getInt(KEY_CATALOG_VERSION, 0) < CATALOG_VERSION) {
+                dao.insertIgnoringExisting(
+                    DEFAULT_RESOURCES.map { resource ->
                         ResourceLink(
                             title = resource.title,
                             url = resource.url,
                             createdAtMs = resource.createdAtMs,
-                            category = resource.category.key
+                            category = resource.category.key,
+                            imageUrl = resource.imageUrl
                         )
-                    )
-                }
+                    }
+                )
+                prefs.edit().putInt(KEY_CATALOG_VERSION, CATALOG_VERSION).apply()
             }
             dao.getWithoutImages().forEach { resource ->
                 val metadata = withContext(Dispatchers.IO) {
@@ -60,6 +88,10 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setQuery(value: String) { query.value = value }
     fun setCategory(value: ResourceCategory?) { category.value = value }
+    fun setTileView(value: Boolean) {
+        tileView.value = value
+        prefs.edit().putBoolean(KEY_TILE_VIEW, value).apply()
+    }
     fun dismissError() { error.value = null }
 
     fun save(
@@ -68,7 +100,9 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
         urlInput: String,
         imageInput: String,
         onSaved: () -> Unit,
-        category: ResourceCategory = ResourceCategory.OTHER
+        category: ResourceCategory = ResourceCategory.OTHER,
+        descriptionInput: String = "",
+        levelInput: String = ""
     ) {
         val url = normalizeResourceUrl(urlInput)
         if (url == null) {
@@ -89,7 +123,13 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
                     url = url,
                     imageUrl = normalizeResourceUrl(imageInput) ?: metadata.imageUrl ?: existing?.imageUrl,
                     createdAtMs = existing?.createdAtMs ?: System.currentTimeMillis(),
-                    category = category.key
+                    category = category.key,
+                    // A new link gets the page's own description unless one was typed; built-ins
+                    // keep showing their catalog text while the field stays empty.
+                    description = descriptionInput.trim().ifBlank {
+                        if (existing == null && defaultResourceFor(url) == null) metadata.description.orEmpty() else ""
+                    }.ifBlank { null },
+                    level = levelInput.trim().ifBlank { null }
                 )
                 if (existing == null) dao.insert(resource) else dao.update(resource)
                 onSaved()
@@ -103,5 +143,13 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun delete(resource: ResourceLink) {
         viewModelScope.launch { dao.delete(resource) }
+    }
+
+    private companion object {
+        const val PREFS_NAME = "resources"
+        const val KEY_CATALOG_VERSION = "catalog_version"
+        const val KEY_TILE_VIEW = "tile_view"
+        /** Bump when DEFAULT_RESOURCES gains entries so existing installs receive them. */
+        const val CATALOG_VERSION = 4
     }
 }
