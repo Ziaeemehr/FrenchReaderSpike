@@ -215,6 +215,7 @@ private fun AppNavHost() {
         composable("library") {
             LibraryScreen(
                 onOpenText = { id -> navController.navigate("reading/$id") },
+                onOpenTextAt = { id, find -> navController.navigate("reading/$id?find=${Uri.encode(find)}") },
                 onOpenHome = { navigateToTab("home") },
                 onOpenResources = { navigateToTab("resources") },
                 onWords = { navigateToTab("vocab") }
@@ -229,12 +230,16 @@ private fun AppNavHost() {
             )
         }
         composable(
-            "reading/{textId}",
-            arguments = listOf(navArgument("textId") { type = NavType.LongType })
+            "reading/{textId}?find={find}",
+            arguments = listOf(
+                navArgument("textId") { type = NavType.LongType },
+                navArgument("find") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
         ) { backStackEntry ->
             val textId = backStackEntry.arguments?.getLong("textId") ?: return@composable
             ReadingScreen(
                 textId = textId,
+                initialFind = backStackEntry.arguments?.getString("find"),
                 onBack = { navController.popBackStack() },
                 onOpenVocab = { navController.navigate("vocab_pushed") }
             )

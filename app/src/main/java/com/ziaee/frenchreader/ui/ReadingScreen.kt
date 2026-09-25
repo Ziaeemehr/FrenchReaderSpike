@@ -17,6 +17,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -95,7 +102,7 @@ private val EPUB_IMAGE_REF = Regex("^[0-9a-f]+/[A-Za-z0-9][A-Za-z0-9_-]*\\.jpg$"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
+fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, initialFind: String? = null) {
     val vm: ReadingViewModel = viewModel()
     val state by vm.state.collectAsState()
     val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
@@ -175,6 +182,36 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
         state.chunks.indices.filter { state.chunks[it].block.type != BlockType.IMAGE }
     }
     val chunkDocumentOffsets = remember(state.chunks) { documentOffsets(state.chunks) }
+
+    // Find in text. Opened from the menu, or pre-filled when the text is opened from a Library
+    // search; matches stay highlighted until the bar is closed.
+    var findOpen by rememberSaveable { mutableStateOf(false) }
+    var findQuery by rememberSaveable { mutableStateOf("") }
+    var findIndex by rememberSaveable { mutableIntStateOf(0) }
+    var findFocusRequest by remember { mutableStateOf(false) }
+    var initialFindApplied by rememberSaveable { mutableStateOf(false) }
+    val chunkTexts = remember(state.chunks) { state.chunks.map(::chunkDisplayText) }
+    val findResults = remember(chunkTexts, findQuery) {
+        if (findQuery.isBlank()) emptyList() else findMatches(chunkTexts, findQuery)
+    }
+    val findRangesByChunk = remember(findResults) { findResults.groupBy({ it.chunkIndex }, { it.range }) }
+    val activeFindMatch = findResults.getOrNull(findIndex.coerceAtMost(findResults.lastIndex))
+    LaunchedEffect(chunkTexts.isNotEmpty(), initialFind) {
+        if (!initialFindApplied && !initialFind.isNullOrBlank() && chunkTexts.isNotEmpty()) {
+            findQuery = bestFindQuery(chunkTexts, initialFind)
+            findIndex = 0
+            findOpen = true
+            initialFindApplied = true
+        }
+    }
+    LaunchedEffect(findOpen, findQuery, findIndex, activeFindMatch?.chunkIndex, state.ready) {
+        val match = activeFindMatch ?: return@LaunchedEffect
+        if (findOpen && state.ready) listState.animateScrollToItem(match.chunkIndex)
+    }
+    fun stepFind(delta: Int) {
+        if (findResults.isEmpty()) return
+        findIndex = Math.floorMod(findIndex + delta, findResults.size)
+    }
     val spokenProgress = remember(spokenChunkIndices, state.currentChunkIndex) {
         val reached = spokenChunkIndices.count { it <= state.currentChunkIndex }
         reached to spokenChunkIndices.size
@@ -201,7 +238,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
     // reading along doesn't require manually dragging the screen up every
     // few sentences. Toggled off, the person scrolls entirely by hand.
     LaunchedEffect(state.currentChunkIndex, state.ready, autoScrollEnabled) {
-        if (autoScrollEnabled && state.ready && state.chunks.isNotEmpty()) {
+        // While find is showing a match, don't jump back to the reading position (it runs once
+        // when the text loads); playback still takes over as soon as it starts.
+        val findHoldsScroll = findOpen && findQuery.isNotBlank() && !state.isPlaying
+        if (autoScrollEnabled && state.ready && state.chunks.isNotEmpty() && !findHoldsScroll) {
             listState.animateScrollToItem(state.currentChunkIndex)
         }
     }
@@ -297,6 +337,15 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                                     expanded = moreMenuExpanded,
                                     onDismissRequest = { moreMenuExpanded = false }
                                 ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.reading_find)) },
+                                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                                        onClick = {
+                                            moreMenuExpanded = false
+                                            findOpen = true
+                                            findFocusRequest = true
+                                        }
+                                    )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.accessibility_vocabulary)) },
                                         leadingIcon = { Icon(Icons.Default.MenuBook, contentDescription = null) },
@@ -443,6 +492,20 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                             }
                         }
                     }
+                    if (findOpen) {
+                        ReadingFindBar(
+                            query = findQuery,
+                            onQueryChange = { findQuery = it; findIndex = 0 },
+                            current = if (activeFindMatch == null) 0 else findIndex.coerceAtMost(findResults.lastIndex) + 1,
+                            total = findResults.size,
+                            onPrevious = { stepFind(-1) },
+                            onNext = { stepFind(1) },
+                            onClose = { findOpen = false; findQuery = ""; findIndex = 0 },
+                            palette = palette,
+                            requestFocus = findFocusRequest,
+                            onFocusRequested = { findFocusRequest = false }
+                        )
+                    }
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -496,6 +559,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit) {
                         documentStartOffset = chunkDocumentOffsets.getOrElse(chunkIndex) { 0 },
                         palette = palette,
                         fontScale = fontScale,
+                        findRanges = if (findOpen) findRangesByChunk[chunkIndex].orEmpty() else emptyList(),
+                        activeFindRange = activeFindMatch?.takeIf { findOpen && it.chunkIndex == chunkIndex }?.range,
                         onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
                         onPendingClick = { vm.jumpToChunk(chunkIndex) },
                         onRetry = { vm.retryChunk(chunkIndex) },
@@ -948,6 +1013,8 @@ private fun ChunkParagraph(
     documentStartOffset: Int,
     palette: ReadingPalette,
     fontScale: Float,
+    findRanges: List<IntRange>,
+    activeFindRange: IntRange?,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onPendingClick: () -> Unit,
     onRetry: () -> Unit,
@@ -992,6 +1059,8 @@ private fun ChunkParagraph(
                                 savedVocabStatuses = savedVocabStatuses,
                                 highlights = highlights,
                                 documentStartOffset = documentStartOffset,
+                                findRanges = findRanges,
+                                activeFindRange = activeFindRange,
                                 onSentenceClick = onSentenceClick,
                                 onWordLookup = onWordLookup,
                                 onPhraseSelected = onPhraseSelected,
@@ -1025,6 +1094,8 @@ private fun ChunkParagraph(
                                     savedVocabStatuses = savedVocabStatuses,
                                     highlights = highlights,
                                     documentStartOffset = documentStartOffset,
+                                    findRanges = findRanges,
+                                    activeFindRange = activeFindRange,
                                     onSentenceClick = onSentenceClick,
                                     onWordLookup = onWordLookup,
                                     onPhraseSelected = onPhraseSelected,
@@ -1045,6 +1116,8 @@ private fun ChunkParagraph(
                             savedVocabStatuses = savedVocabStatuses,
                             highlights = highlights,
                             documentStartOffset = documentStartOffset,
+                            findRanges = findRanges,
+                            activeFindRange = activeFindRange,
                             onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup,
                             onPhraseSelected = onPhraseSelected,
@@ -1191,6 +1264,8 @@ private fun SentenceFlowText(
     savedVocabStatuses: Map<String, VocabStatus>,
     highlights: List<HighlightEntry>,
     documentStartOffset: Int,
+    findRanges: List<IntRange>,
+    activeFindRange: IntRange?,
     onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
@@ -1236,7 +1311,9 @@ private fun SentenceFlowText(
         savedVocabStatuses,
         vocabStyles,
         highlights,
-        documentStartOffset
+        documentStartOffset,
+        findRanges,
+        activeFindRange
     ) {
         buildAnnotatedString {
             ranges.clear()
@@ -1268,6 +1345,20 @@ private fun SentenceFlowText(
             }
             applyHighlights(full, localHighlights).spanStyles.forEach { span ->
                 addStyle(span.item, span.start, span.end)
+            }
+            // Find-in-text matches sit on top of manual highlights so they stay visible; the
+            // current match is stronger than the rest.
+            for (range in findRanges) {
+                if (range.first < 0 || range.last >= full.length) continue
+                val active = range == activeFindRange
+                addStyle(
+                    SpanStyle(
+                        background = palette.accent.copy(alpha = if (active) 0.55f else 0.22f),
+                        fontWeight = if (active) FontWeight.SemiBold else null
+                    ),
+                    range.first,
+                    range.last + 1
+                )
             }
             chunk.sentences.forEachIndexed { index, sentence ->
                 val isActive = isCurrentChunk &&
@@ -1587,6 +1678,61 @@ private fun PlaybackControls(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ReadingFindBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    current: Int,
+    total: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onClose: () -> Unit,
+    palette: ReadingPalette,
+    requestFocus: Boolean,
+    onFocusRequested: () -> Unit
+) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(requestFocus) {
+        if (requestFocus) {
+            focusRequester.requestFocus()
+            onFocusRequested()
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.weight(1f).focusRequester(focusRequester).testTag("readingFindField"),
+            singleLine = true,
+            placeholder = { Text(stringResource(R.string.reading_find_hint)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onNext() })
+        )
+        if (query.isNotBlank()) {
+            Text(
+                if (total == 0) stringResource(R.string.reading_find_none)
+                else stringResource(R.string.reading_find_count, current, total),
+                style = MaterialTheme.typography.labelMedium,
+                color = palette.inkFaded,
+                modifier = Modifier.padding(horizontal = 8.dp).testTag("readingFindCount")
+            )
+        }
+        IconButton(onClick = onPrevious, enabled = total > 0) {
+            Icon(Icons.Default.KeyboardArrowUp, contentDescription = stringResource(R.string.reading_find_previous))
+        }
+        IconButton(onClick = onNext, enabled = total > 0) {
+            Icon(Icons.Default.KeyboardArrowDown, contentDescription = stringResource(R.string.reading_find_next))
+        }
+        IconButton(onClick = onClose) {
+            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.reading_find_close))
         }
     }
 }

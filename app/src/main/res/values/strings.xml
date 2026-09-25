@@ -556,4 +556,11 @@
     <string name="accessibility_play_word">Play word pronunciation</string>
     <string name="comprehension_percent">%1$d%%</string>
     <string name="comprehension_known_description">%1$d%% of words known</string>
+    <string name="reading_find">Find in text</string>
+    <string name="reading_find_hint">Find in text</string>
+    <string name="reading_find_count">%1$d/%2$d</string>
+    <string name="reading_find_none">No matches</string>
+    <string name="reading_find_previous">Previous match</string>
+    <string name="reading_find_next">Next match</string>
+    <string name="reading_find_close">Close find</string>
 </resources>

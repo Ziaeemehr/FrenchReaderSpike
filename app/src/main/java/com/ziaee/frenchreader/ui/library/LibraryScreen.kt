@@ -92,6 +92,8 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 @Composable
 fun LibraryScreen(
     onOpenText: (Long) -> Unit,
+    /** Opens a text at a search term (find-in-text pre-filled); used when the body matched. */
+    onOpenTextAt: (Long, String) -> Unit = { id, _ -> onOpenText(id) },
     onOpenHome: () -> Unit,
     onOpenResources: () -> Unit = {},
     onWords: () -> Unit = {}
@@ -147,7 +149,10 @@ fun LibraryScreen(
         onRequestComprehension = vm::requestComprehension,
         onQueryChange = { vm.setQuery(it) },
         onSortSelect = { vm.setSort(it) },
-        onOpen = { onOpenText(it.id) },
+        onOpen = { doc ->
+            if (state.isSearching && doc.id in state.bodySnippets) onOpenTextAt(doc.id, state.query.trim())
+            else onOpenText(doc.id)
+        },
         onDelete = { vm.delete(it) },
         onEdit = { doc, title, body -> vm.updateText(doc, title, body) },
         onLoadBody = { doc, loaded -> vm.loadBody(doc, loaded) },

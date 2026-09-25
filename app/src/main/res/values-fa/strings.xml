@@ -554,4 +554,11 @@
     <string name="accessibility_play_word">پخش تلفظ واژه</string>
     <string name="comprehension_percent">٪%1$d</string>
     <string name="comprehension_known_description">٪%1$d از واژه‌ها شناخته‌شده‌اند</string>
+    <string name="reading_find">جستجو در متن</string>
+    <string name="reading_find_hint">جستجو در متن</string>
+    <string name="reading_find_count">%1$d/%2$d</string>
+    <string name="reading_find_none">موردی پیدا نشد</string>
+    <string name="reading_find_previous">مورد قبلی</string>
+    <string name="reading_find_next">مورد بعدی</string>
+    <string name="reading_find_close">بستن جستجو</string>
 </resources>
