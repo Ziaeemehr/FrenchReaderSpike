@@ -44,11 +44,12 @@ import com.ziaee.frenchreader.data.TextDocument
 @Composable
 internal fun LibraryOrganizerDialog(
     folders: List<LibraryFolder>,
+    documents: List<TextDocument>,
     tags: List<LibraryTag>,
     onDismiss: () -> Unit,
     onCreateFolder: (String) -> Unit,
     onRenameFolder: (Long, String) -> Unit,
-    onDeleteFolder: (Long) -> Unit,
+    onDeleteFolder: (Long, Boolean) -> Unit,
     onCreateTag: (String) -> Unit,
     onRenameTag: (Long, String) -> Unit,
     onDeleteTag: (Long) -> Unit,
@@ -62,6 +63,7 @@ internal fun LibraryOrganizerDialog(
     var moveFolder by remember { mutableStateOf<LibraryFolder?>(null) }
     var renameTag by remember { mutableStateOf<LibraryTag?>(null) }
     var deleteFolder by remember { mutableStateOf<LibraryFolder?>(null) }
+    var confirmDeleteFolderWithFiles by remember { mutableStateOf<LibraryFolder?>(null) }
     var deleteTag by remember { mutableStateOf<LibraryTag?>(null) }
 
     AlertDialog(
@@ -133,9 +135,50 @@ internal fun LibraryOrganizerDialog(
         }) { renameTag = null }
     }
     deleteFolder?.let { item ->
-        DeleteOrganizerDialog(R.string.library_delete_folder_confirm, {
-            onDeleteFolder(item.id); deleteFolder = null
-        }) { deleteFolder = null }
+        var deleteFiles by remember(item.id) { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { deleteFolder = null },
+            title = { Text(stringResource(R.string.library_delete_folder_confirm)) },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = deleteFiles, onCheckedChange = { deleteFiles = it })
+                    Text(stringResource(R.string.library_delete_folder_files))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (deleteFiles) {
+                        confirmDeleteFolderWithFiles = item
+                    } else {
+                        onDeleteFolder(item.id, false)
+                    }
+                    deleteFolder = null
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteFolder = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+    confirmDeleteFolderWithFiles?.let { item ->
+        val folderIds = remember(folders, item.id) { descendantIds(folders, item.id) }
+        val textCount = documents.count { it.folderId in folderIds }
+        AlertDialog(
+            onDismissRequest = { confirmDeleteFolderWithFiles = null },
+            title = { Text(stringResource(R.string.library_delete_folder_with_files_title)) },
+            text = { Text(stringResource(R.string.library_delete_folder_with_files_confirm, textCount)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeleteFolder(item.id, true)
+                    confirmDeleteFolderWithFiles = null
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteFolderWithFiles = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
     deleteTag?.let { item ->
         DeleteOrganizerDialog(R.string.library_delete_tag_confirm, {

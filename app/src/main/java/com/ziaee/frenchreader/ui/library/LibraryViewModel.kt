@@ -122,6 +122,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
                 tagIdsByText = data.tagIdsByText,
                 folders = data.folders
             ),
+            allDocuments = data.documents,
             folders = data.folders,
             tags = data.tags,
             tagIdsByText = data.tagIdsByText,
@@ -250,12 +251,25 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun deleteFolder(id: Long) {
-        if (folderFilter.value == FolderFilter.Folder(id)) {
-            val parentId = uiState.value.folders.firstOrNull { it.id == id }?.parentId
+    fun deleteFolder(id: Long, deleteFiles: Boolean = false) {
+        val folders = uiState.value.folders
+        // With files, the whole subtree goes, so also leave any open subfolder of it.
+        val removed = if (deleteFiles) descendantIds(folders, id) else setOf(id)
+        if (removed.any { folderFilter.value == FolderFilter.Folder(it) }) {
+            val parentId = folders.firstOrNull { it.id == id }?.parentId
             folderFilter.value = parentId?.let(FolderFilter::Folder) ?: FolderFilter.All
         }
-        viewModelScope.launch { organizerDao.deleteFolder(id) }
+        viewModelScope.launch {
+            if (deleteFiles) {
+                val folderIds = removed
+                db.textDao().getAllOnce()
+                    .filter { it.folderId in folderIds }
+                    .forEach { importRepository.deleteWithImage(it) }
+                organizerDao.deleteFolderRows(folderIds.toList())
+            } else {
+                organizerDao.deleteFolder(id)
+            }
+        }
     }
 
     fun createTag(name: String) {

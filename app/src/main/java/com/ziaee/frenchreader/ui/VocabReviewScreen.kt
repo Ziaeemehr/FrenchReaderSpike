@@ -4,9 +4,7 @@ import android.app.Application
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.ui.semantics.Role
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,9 +12,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.ziaee.frenchreader.ui.statistics.computeAccuracyPercent
@@ -38,8 +33,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,7 +44,6 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.*
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.TtsChunkRepository
-import com.ziaee.frenchreader.ui.components.TappableFrenchText
 import com.ziaee.frenchreader.ui.statistics.computeStreak
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.launch
@@ -356,7 +348,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     fun playSentence() {
         val entry = current ?: return
-        if (entry.sentence.isBlank()) return
+        val text = flashcardSentenceAudioText(entry) ?: return
         audioJob?.cancel()
         audioJob = viewModelScope.launch {
             wordAudioLoading = false
@@ -372,7 +364,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             try {
-                ttsRepo.getOrSynthesize(entry.sentence, voiceAndRate.first, voiceAndRate.second).fold(
+                ttsRepo.getOrSynthesize(text, voiceAndRate.first, voiceAndRate.second).fold(
                     onSuccess = {
                         player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
                         player.prepare()
@@ -389,7 +381,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     fun playWord() {
         val entry = current ?: return
-        if (!isLikelyFrench(entry.word)) return
+        val text = flashcardWordAudioText(entry) ?: return
         audioJob?.cancel()
         audioJob = viewModelScope.launch {
             sentenceAudioLoading = false
@@ -397,7 +389,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             wordAudioLoading = true
             player.stop()
             try {
-                ttsRepo.getOrSynthesize(entry.word, VocabPrefs.getCardVoice(context), 0).fold(
+                ttsRepo.getOrSynthesize(text, VocabPrefs.getCardVoice(context), 0).fold(
                     onSuccess = {
                         player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
                         player.prepare()
@@ -462,7 +454,13 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     LaunchedEffect(vm.currentSlot) { vm.currentSlot?.let { lastSlot = it } }
     LaunchedEffect(vm.stage) { if (vm.stage != ReviewStage.REVIEW) lastSlot = null }
     LaunchedEffect(vm.moveLabel) { vm.moveLabel?.let { snackbar.showSnackbar(it); vm.consumeMoveLabel() } }
-    LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.current?.sentence?.isNotBlank() == true && vm.audioAutoplay) vm.playSentence() }
+    LaunchedEffect(currentRevealed, vm.current) {
+        val autoplay = vm.audioAutoplay
+        when {
+            currentRevealed && vm.current?.sentence?.isNotBlank() == true && autoplay.back -> vm.playSentence()
+            !currentRevealed && vm.current != null && autoplay.front -> vm.playWord() // skips non-French fronts
+        }
+    }
     LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.current?.sentence?.isNotBlank() == true) vm.translateSentence() }
     vm.current?.takeIf { showEdit }?.let { e ->
         VocabEditDialog(e, onDismiss = { showEdit = false }) { w, m, s ->
@@ -617,19 +615,6 @@ private fun BoxLadder(boxes: List<ReviewBoxSummary>, onBoxClick: (Int) -> Unit) 
 }
 
 @Composable
-private fun FlipCard(revealed: Boolean, onFlip: () -> Unit, interactive: Boolean = true, front: @Composable () -> Unit, back: @Composable () -> Unit) {
-    val rotation by animateFloatAsState(if (revealed) 180f else 0f, tween(350), label = "flip")
-    val density = LocalDensity.current.density
-    Card(
-        Modifier.fillMaxWidth().graphicsLayer { rotationY = rotation; cameraDistance = 12f * density }
-            .clickable(enabled = !revealed && interactive, role = Role.Button, onClick = onFlip)
-    ) {
-        if (rotation <= 90f) front()
-        else Box(Modifier.graphicsLayer { rotationY = 180f }) { back() }
-    }
-}
-
-@Composable
 private fun BoxDots(box: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         for (i in 1..5) {
@@ -654,29 +639,6 @@ private fun AccuracyRing(percent: Int) {
     }
 }
 
-/** Word pronunciation button shown under the card's word on both faces, so it survives the flip. */
-@Composable
-private fun WordAudioButton(vm: VocabReviewViewModel, entry: VocabEntry, interactive: Boolean) {
-    if (!isLikelyFrench(entry.word)) return
-    IconButton(onClick = vm::playWord, enabled = interactive) {
-        if (vm.wordAudioLoading) {
-            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-        } else {
-            Icon(
-                Icons.Default.VolumeUp,
-                stringResource(R.string.accessibility_play_word)
-            )
-        }
-    }
-    if (vm.wordAudioError) {
-        Text(
-            stringResource(R.string.error_audio_generation),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.labelSmall
-        )
-    }
-}
-
 @Composable
 private fun ReviewCard(
     vm: VocabReviewViewModel,
@@ -689,7 +651,6 @@ private fun ReviewCard(
     onWordTap: (String) -> Unit,
     modifier: Modifier
 ) {
-    val wordTap: (String) -> Unit = { w -> if (interactive) onWordTap(w) }
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         val cornerLabel = listOfNotNull(vm.listNameFor(entry), entry.lessonNumber()?.let { stringResource(R.string.review_lesson_short, it) }).joinToString(" · ")
         if (cornerLabel.isNotEmpty()) {
@@ -700,40 +661,23 @@ private fun ReviewCard(
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.review_progress, vm.progressPosition, vm.totalCards), style = MaterialTheme.typography.labelLarge)
         LinearProgressIndicator(progress = { if (vm.totalCards == 0) 0f else vm.progressPosition.toFloat() / vm.totalCards }, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp))
-        FlipCard(
-            revealed, onReveal, interactive,
-            front = {
-                Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(entry.word, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                    WordAudioButton(vm, entry, interactive)
-                    Spacer(Modifier.height(12.dp))
-                    Text(stringResource(R.string.review_tap_to_reveal), style = MaterialTheme.typography.labelSmall)
-                }
-            },
-            back = {
-                Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    TappableFrenchText(entry.word, wordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                    WordAudioButton(vm, entry, interactive)
-                    Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = onDictionary, enabled = interactive) { Icon(Icons.Default.Translate, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.vocab_open_dictionary)) }
-                        IconButton(onClick = onEdit, enabled = interactive) { Icon(Icons.Default.Edit, stringResource(R.string.action_edit)) }
-                    }
-                    entry.displayMeaning()?.let { Text(it, style = MaterialTheme.typography.titleMedium); Spacer(Modifier.height(8.dp)) }
-                    if (entry.sentence.isNotBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TappableFrenchText(entry.sentence, wordTap, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                            IconButton(onClick = vm::playSentence, enabled = interactive) { if (vm.sentenceAudioLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.VolumeUp, stringResource(R.string.accessibility_play_sentence)) }
-                        }
-                        when {
-                            vm.sentenceTranslationLoading -> Text(stringResource(R.string.translation_loading), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
-                            vm.sentenceTranslationError -> Text(stringResource(R.string.error_translation_unavailable), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
-                            vm.sentenceTranslation != null -> Text(vm.sentenceTranslation!!, color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = FontStyle.Italic, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-                        }
-                        if (vm.sentenceAudioError) Text(stringResource(R.string.error_audio_generation), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-            }
+        EntryFlashcard(
+            entry = entry,
+            revealed = revealed,
+            interactive = interactive,
+            onFlip = onReveal,
+            onPlayWord = vm::playWord,
+            onPlaySentence = vm::playSentence,
+            wordAudioLoading = vm.wordAudioLoading,
+            wordAudioError = vm.wordAudioError,
+            sentenceAudioLoading = vm.sentenceAudioLoading,
+            sentenceAudioError = vm.sentenceAudioError,
+            sentenceTranslation = vm.sentenceTranslation,
+            sentenceTranslationLoading = vm.sentenceTranslationLoading,
+            sentenceTranslationError = vm.sentenceTranslationError,
+            onWordTap = onWordTap,
+            onDictionary = onDictionary,
+            onEdit = onEdit
         )
         Spacer(Modifier.height(14.dp))
         if (!revealed) Button(onClick = onReveal, enabled = interactive, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }

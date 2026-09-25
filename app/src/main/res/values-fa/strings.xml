@@ -186,6 +186,9 @@
     <string name="top_level">سطح اصلی</string>
     <string name="library_breadcrumb_root">همه</string>
     <string name="library_delete_folder_confirm">این پوشه حذف شود؟ زیرپوشه‌ها و متن‌های آن یک سطح بالاتر منتقل می‌شوند.</string>
+    <string name="library_delete_folder_files">فایل‌هایش هم حذف شوند</string>
+    <string name="library_delete_folder_with_files_title">پوشه برای همیشه حذف شود؟</string>
+    <string name="library_delete_folder_with_files_confirm">این پوشه، همهٔ زیرپوشه‌هایش و %1$d متن داخل آن‌ها برای همیشه حذف می‌شوند.</string>
     <string name="library_delete_tag_confirm">این برچسب حذف شود؟ از همهٔ متن‌ها برداشته خواهد شد.</string>
     <string name="library_move_to_folder">انتقال به پوشه</string>
     <string name="library_no_folder">بدون پوشه</string>
@@ -231,8 +234,25 @@
     <string name="vocab_list_all">همه</string>
     <string name="vocab_list_uncategorized">بدون دسته</string>
     <string name="vocab_list_new">لیست جدید</string>
+    <string name="vocab_list_new_ellipsis">لیست جدید…</string>
+    <plurals name="vocab_selection_count">
+        <item quantity="one">%d مورد انتخاب شده</item>
+        <item quantity="other">%d مورد انتخاب شده</item>
+    </plurals>
+    <string name="vocab_selection_close">بستن حالت انتخاب</string>
+    <string name="vocab_select_all">انتخاب همهٔ واژه‌های نمایش‌داده‌شده</string>
+    <string name="vocab_bulk_move">انتقال واژه‌های انتخاب‌شده به لیست</string>
+    <string name="vocab_move_to_list_title">انتقال به لیست</string>
+    <string name="vocab_bulk_delete">حذف واژه‌های انتخاب‌شده</string>
+    <plurals name="vocab_bulk_delete_title">
+        <item quantity="one">%d واژه حذف شود؟</item>
+        <item quantity="other">%d واژه حذف شود؟</item>
+    </plurals>
+    <string name="vocab_bulk_delete_message">واژه‌های انتخاب‌شده برای همیشه حذف می‌شوند. این کار قابل بازگشت نیست.</string>
     <string name="vocab_delete_list_title">حذف لیست؟</string>
     <string name="vocab_delete_list_message">«%1$s» حذف می‌شود. کلمات آن پاک نمی‌شوند — فقط دسته‌بندی‌شان حذف می‌شود.</string>
+    <string name="vocab_delete_list_cards">کارت‌هایش هم حذف شوند</string>
+    <string name="vocab_delete_list_with_cards_message">«%1$s» و همه‌ی کارت‌هایش برای همیشه حذف می‌شوند.</string>
     <string name="vocab_list_name_field">نام لیست</string>
     <string name="vocab_due_today">مرور امروز (%1$d کلمه آمادهٔ مرور)</string>
     <string name="vocab_nothing_due">چیزی برای مرور نیست</string>
@@ -442,6 +462,10 @@
     <string name="review_max_new">حداکثر کارت جدید در روز</string>
     <string name="review_daily_goal">هدف مرور روزانه</string>
     <string name="review_audio_autoplay">پخش خودکار تلفظ</string>
+    <string name="review_autoplay_off">خاموش</string>
+    <string name="review_autoplay_front">رو</string>
+    <string name="review_autoplay_back">پشت</string>
+    <string name="review_autoplay_both">هر دو</string>
     <string name="review_meaning_language">زبان معنی</string>
     <string name="review_intervals">فاصله جعبه‌ها (روز)</string>
     <string name="review_box_interval">جعبه %1$d</string>
@@ -523,6 +547,9 @@
     <string name="dataset_add_missing">افزودن موارد باقی‌مانده</string>
     <string name="dataset_add_all">افزودن همه</string>
     <string name="dataset_added_result">%1$d مورد افزوده و %2$d مورد رد شد</string>
+    <string name="dataset_remove_deleted_deck_cards">حذف کارت‌های دک‌های پاک‌شده</string>
+    <string name="dataset_remove_deleted_deck_cards_confirm">کارت‌های دسته‌بندی‌نشدهٔ دک‌های داخلی پاک‌سازی شوند؟ کارت‌های دک‌های پاک‌شده حذف می‌شوند. اگر دک دوباره اضافه شده باشد، کارت‌ها با آن ادغام می‌شوند و نسخه‌ای که سابقهٔ مرور دارد نگه داشته می‌شود. کلمات خودتان دست نمی‌خورند.</string>
+    <string name="dataset_removed_result">%1$d کارت حذف شد</string>
     <string name="card_voice_title">صدای کارت</string>
     <string name="accessibility_play_word">پخش تلفظ واژه</string>
     <string name="comprehension_percent">٪%1$d</string>

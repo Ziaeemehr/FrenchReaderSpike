@@ -186,6 +186,9 @@
     <string name="top_level">Top level</string>
     <string name="library_breadcrumb_root">All</string>
     <string name="library_delete_folder_confirm">Delete this folder? Its subfolders and texts will move up one level.</string>
+    <string name="library_delete_folder_files">Also delete its files</string>
+    <string name="library_delete_folder_with_files_title">Permanently delete folder?</string>
+    <string name="library_delete_folder_with_files_confirm">This folder, all its subfolders, and %1$d texts inside them will be permanently deleted.</string>
     <string name="library_delete_tag_confirm">Delete this tag? It will be removed from every text.</string>
     <string name="library_move_to_folder">Move to folder</string>
     <string name="library_no_folder">No folder</string>
@@ -233,8 +236,25 @@
     <string name="vocab_list_all">All</string>
     <string name="vocab_list_uncategorized">Uncategorized</string>
     <string name="vocab_list_new">New list</string>
+    <string name="vocab_list_new_ellipsis">New list…</string>
+    <plurals name="vocab_selection_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="vocab_selection_close">Close selection</string>
+    <string name="vocab_select_all">Select all visible words</string>
+    <string name="vocab_bulk_move">Move selected words to list</string>
+    <string name="vocab_move_to_list_title">Move to list</string>
+    <string name="vocab_bulk_delete">Delete selected words</string>
+    <plurals name="vocab_bulk_delete_title">
+        <item quantity="one">Delete %d word?</item>
+        <item quantity="other">Delete %d words?</item>
+    </plurals>
+    <string name="vocab_bulk_delete_message">The selected words will be permanently deleted. This can’t be undone.</string>
     <string name="vocab_delete_list_title">Delete list?</string>
     <string name="vocab_delete_list_message">“%1$s” will be deleted. Its words are not deleted — they become uncategorized.</string>
+    <string name="vocab_delete_list_cards">Also delete its cards</string>
+    <string name="vocab_delete_list_with_cards_message">“%1$s” and all of its cards will be permanently deleted.</string>
     <string name="vocab_list_name_field">List name</string>
     <string name="vocab_due_today">Today\'s review (%1$d ready)</string>
     <string name="vocab_nothing_due">Nothing to review</string>
@@ -444,6 +464,10 @@
     <string name="review_max_new">Maximum new cards per day</string>
     <string name="review_daily_goal">Daily review goal</string>
     <string name="review_audio_autoplay">Autoplay pronunciation audio</string>
+    <string name="review_autoplay_off">Off</string>
+    <string name="review_autoplay_front">Front</string>
+    <string name="review_autoplay_back">Back</string>
+    <string name="review_autoplay_both">Both</string>
     <string name="review_meaning_language">Meaning language</string>
     <string name="review_intervals">Box intervals (days)</string>
     <string name="review_box_interval">Box %1$d</string>
@@ -525,6 +549,9 @@
     <string name="dataset_add_missing">Add missing</string>
     <string name="dataset_add_all">Add all</string>
     <string name="dataset_added_result">Added %1$d; skipped %2$d</string>
+    <string name="dataset_remove_deleted_deck_cards">Remove cards of deleted decks</string>
+    <string name="dataset_remove_deleted_deck_cards_confirm">Clean up uncategorized cards from built-in decks? Copies from deleted decks are removed. Copies of decks you added again are merged back into the deck, keeping whichever copy has review progress. Your own words are not touched.</string>
+    <string name="dataset_removed_result">Removed %1$d cards</string>
     <string name="card_voice_title">Card voice</string>
     <string name="accessibility_play_word">Play word pronunciation</string>
     <string name="comprehension_percent">%1$d%%</string>

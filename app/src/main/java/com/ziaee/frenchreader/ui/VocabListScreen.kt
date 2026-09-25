@@ -4,8 +4,12 @@ import android.app.Application
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +27,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
@@ -32,6 +37,7 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.AnkiImportRepository
 import com.ziaee.frenchreader.content.AnkiImportResult
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.SQL_ID_CHUNK
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
 import com.ziaee.frenchreader.data.VocabStatus
@@ -46,10 +52,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import com.ziaee.frenchreader.translate.TranslationRepository
+import com.ziaee.frenchreader.tts.TtsChunkRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import androidx.room.withTransaction
 import java.time.Instant
@@ -62,10 +75,24 @@ const val VOCAB_SCOPE_UNFILED = -2L
 
 class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val context = app.applicationContext
+    private val ttsRepo = TtsChunkRepository(app)
+    private val translationRepo = TranslationRepository(app)
+    private val player = ExoPlayer.Builder(app).build()
+    private val voiceCache = HashMap<Long, Pair<String, Int>>()
+    private var previewAudioJob: Job? = null
+    private var previewEntryId: Long? = null
     private val _entries = MutableStateFlow<List<VocabEntry>>(emptyList())
     val entries: StateFlow<List<VocabEntry>> = _entries.asStateFlow()
     private val _lists = MutableStateFlow<List<VocabList>>(emptyList())
     val lists: StateFlow<List<VocabList>> = _lists.asStateFlow()
+    var previewSentenceAudioLoading by mutableStateOf(false); private set
+    var previewSentenceAudioError by mutableStateOf(false); private set
+    var previewWordAudioLoading by mutableStateOf(false); private set
+    var previewWordAudioError by mutableStateOf(false); private set
+    var previewSentenceTranslation by mutableStateOf<String?>(null); private set
+    var previewSentenceTranslationLoading by mutableStateOf(false); private set
+    var previewSentenceTranslationError by mutableStateOf(false); private set
 
     init {
         viewModelScope.launch { db.vocabDao().observeAll().collect { _entries.value = it } }
@@ -79,12 +106,120 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { db.vocabDao().update(updated) }
     }
 
+    fun startPreview(entry: VocabEntry) {
+        stopPreviewMedia()
+        previewEntryId = entry.id
+        previewSentenceTranslation = null
+        previewSentenceTranslationLoading = false
+        previewSentenceTranslationError = false
+    }
+
+    fun closePreview() {
+        previewEntryId = null
+        stopPreviewMedia()
+        previewSentenceTranslation = null
+        previewSentenceTranslationLoading = false
+        previewSentenceTranslationError = false
+    }
+
+    fun playPreviewWord(entry: VocabEntry) {
+        val text = flashcardWordAudioText(entry) ?: return
+        previewAudioJob?.cancel()
+        previewAudioJob = viewModelScope.launch {
+            previewSentenceAudioLoading = false
+            previewWordAudioError = false
+            previewWordAudioLoading = true
+            player.stop()
+            try {
+                ttsRepo.getOrSynthesize(text, VocabPrefs.getCardVoice(context), 0).fold(
+                    onSuccess = {
+                        if (previewEntryId != entry.id) return@fold
+                        player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
+                        player.prepare()
+                        player.play()
+                    },
+                    onFailure = { if (previewEntryId == entry.id) previewWordAudioError = true }
+                )
+            } finally {
+                if (previewAudioJob == coroutineContext[Job]) previewWordAudioLoading = false
+            }
+        }
+    }
+
+    fun playPreviewSentence(entry: VocabEntry) {
+        val text = flashcardSentenceAudioText(entry) ?: return
+        previewAudioJob?.cancel()
+        previewAudioJob = viewModelScope.launch {
+            previewWordAudioLoading = false
+            previewSentenceAudioError = false
+            previewSentenceAudioLoading = true
+            player.stop()
+            val voiceAndRate = voiceCache[entry.textId] ?: run {
+                val source = if (entry.textId == 0L) null else db.textDao().getById(entry.textId)
+                if (source == null) VocabPrefs.getCardVoice(context) to 0
+                else (source.voice to source.ratePercent).also { voiceCache[entry.textId] = it }
+            }
+            try {
+                ttsRepo.getOrSynthesize(text, voiceAndRate.first, voiceAndRate.second).fold(
+                    onSuccess = {
+                        if (previewEntryId != entry.id) return@fold
+                        player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
+                        player.prepare()
+                        player.play()
+                    },
+                    onFailure = { if (previewEntryId == entry.id) previewSentenceAudioError = true }
+                )
+            } finally {
+                if (previewAudioJob == coroutineContext[Job]) previewSentenceAudioLoading = false
+            }
+        }
+    }
+
+    fun translatePreviewSentence(entry: VocabEntry) {
+        val text = flashcardSentenceAudioText(entry) ?: return
+        viewModelScope.launch {
+            previewSentenceTranslation = null
+            previewSentenceTranslationError = false
+            previewSentenceTranslationLoading = true
+            val result = translationRepositoryResult(text)
+            if (previewEntryId != entry.id) return@launch
+            result.fold(
+                onSuccess = { previewSentenceTranslation = it },
+                onFailure = { previewSentenceTranslationError = true }
+            )
+            previewSentenceTranslationLoading = false
+        }
+    }
+
+    private suspend fun translationRepositoryResult(text: String) =
+        translationRepo.getOrTranslate(text, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)))
+
+    private fun stopPreviewMedia() {
+        previewAudioJob?.cancel()
+        previewAudioJob = null
+        player.stop()
+        previewSentenceAudioLoading = false
+        previewSentenceAudioError = false
+        previewWordAudioLoading = false
+        previewWordAudioError = false
+    }
+
     fun edit(entry: VocabEntry, word: String, meaning: String?, sentence: String) {
         viewModelScope.launch { db.vocabDao().updateText(entry.id, word, meaning, sentence) }
     }
 
     fun delete(entry: VocabEntry) {
         viewModelScope.launch { db.vocabDao().delete(entry) }
+    }
+
+    fun delete(ids: List<Long>) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch { db.withTransaction { ids.chunked(SQL_ID_CHUNK).forEach { db.vocabDao().deleteByIds(it) } } }
+    }
+
+    fun moveToList(ids: List<Long>, listId: Long?) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch { db.withTransaction { ids.chunked(SQL_ID_CHUNK).forEach { db.vocabDao().setListId(it, listId) } } }
     }
 
     fun createList(name: String, onCreated: (Long) -> Unit) {
@@ -108,13 +243,19 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun deleteList(list: VocabList) {
+    fun deleteList(list: VocabList, deleteCards: Boolean) {
         viewModelScope.launch {
             db.withTransaction {
-                db.vocabDao().clearListId(list.id)
+                if (deleteCards) db.vocabDao().deleteByListId(list.id) else db.vocabDao().clearListId(list.id)
                 db.vocabListDao().delete(list)
             }
         }
+    }
+
+    override fun onCleared() {
+        previewAudioJob?.cancel()
+        player.release()
+        super.onCleared()
     }
 }
 
@@ -135,13 +276,19 @@ fun VocabListScreen(
     val lists by vm.lists.collectAsState()
     var query by remember { mutableStateOf("") }
     var meaningsVisible by remember { mutableStateOf(true) }
-    var editing by remember { mutableStateOf<VocabEntry?>(null) }
+    var previewEntryId by remember { mutableStateOf<Long?>(null) }
+    var dictionaryEntry by remember { mutableStateOf<VocabEntry?>(null) }
+    var dictionaryTappedWord by remember { mutableStateOf<String?>(null) }
     var editingText by remember { mutableStateOf<VocabEntry?>(null) }
     var selectedScope by remember { mutableStateOf(VOCAB_SCOPE_ALL) }
     var selectedStatus by remember { mutableStateOf<VocabStatus?>(null) }
     var showNewListDialog by remember { mutableStateOf(false) }
     var scopeMenuExpanded by remember { mutableStateOf(false) }
     var pendingDeleteList by remember { mutableStateOf<VocabList?>(null) }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var showMoveToListDialog by remember { mutableStateOf(false) }
+    var pendingBulkDelete by remember { mutableStateOf(false) }
+    var createListForSelection by remember { mutableStateOf(false) }
     var showManualDictionary by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -172,6 +319,21 @@ fun VocabListScreen(
         val remainingNew = (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, today)).coerceAtLeast(0)
         reviewableCount(scoped, now, remainingNew)
     }
+    val visibleIds = remember(filtered) { filtered.mapTo(mutableSetOf()) { it.id } }
+    val isSelecting = selectedIds.isNotEmpty()
+
+    LaunchedEffect(visibleIds) {
+        selectedIds = selectedIds.intersect(visibleIds)
+    }
+    LaunchedEffect(selectedIds) {
+        if (selectedIds.isEmpty()) {
+            showMoveToListDialog = false
+            pendingBulkDelete = false
+            if (createListForSelection) showNewListDialog = false
+            createListForSelection = false
+        }
+    }
+    BackHandler(enabled = isSelecting) { selectedIds = emptySet() }
 
     pendingAnkiUri?.let { uri ->
         AlertDialog(
@@ -236,39 +398,57 @@ fun VocabListScreen(
             }
         },
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.vocab_screen_title)) },
-                navigationIcon = {
-                    if (!asTab) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
+            if (isSelecting) {
+                TopAppBar(
+                    title = {
+                        Text(pluralStringResource(R.plurals.vocab_selection_count, selectedIds.size, selectedIds.size))
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { selectedIds = emptySet() }) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.vocab_selection_close))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { selectedIds = visibleIds }) {
+                            Icon(Icons.Default.SelectAll, contentDescription = stringResource(R.string.vocab_select_all))
+                        }
+                        IconButton(onClick = { showMoveToListDialog = true }) {
+                            Icon(Icons.Default.Folder, contentDescription = stringResource(R.string.vocab_bulk_move))
+                        }
+                        IconButton(onClick = { pendingBulkDelete = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.vocab_bulk_delete))
                         }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { showManualDictionary = true }) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = stringResource(R.string.manual_dictionary_action)
-                        )
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.vocab_screen_title)) },
+                    navigationIcon = {
+                        if (!asTab) {
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
+                            }
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showManualDictionary = true }) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.manual_dictionary_action))
+                        }
+                        IconButton(onClick = { ankiPicker.launch(arrayOf("application/json", "*/*")) }) {
+                            Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.anki_import_action))
+                        }
+                        IconButton(onClick = onOpenDataset) {
+                            Icon(Icons.Default.MenuBook, contentDescription = stringResource(R.string.dataset_title))
+                        }
+                        IconButton(onClick = { meaningsVisible = !meaningsVisible }) {
+                            Icon(
+                                if (meaningsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = stringResource(R.string.accessibility_hide_meaning)
+                            )
+                        }
                     }
-                    IconButton(onClick = { ankiPicker.launch(arrayOf("application/json", "*/*")) }) {
-                        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.anki_import_action))
-                    }
-                    IconButton(onClick = onOpenDataset) {
-                        Icon(
-                            Icons.Default.MenuBook,
-                            contentDescription = stringResource(R.string.dataset_title)
-                        )
-                    }
-                    IconButton(onClick = { meaningsVisible = !meaningsVisible }) {
-                        Icon(
-                            if (meaningsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = stringResource(R.string.accessibility_hide_meaning)
-                        )
-                    }
-                }
-            )
+                )
+            }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -409,7 +589,16 @@ fun VocabListScreen(
                         VocabRow(
                             entry = entry,
                             showMeaning = meaningsVisible,
-                            onClick = { editing = entry },
+                            selected = entry.id in selectedIds,
+                            selectionMode = isSelecting,
+                            onClick = {
+                                if (isSelecting) selectedIds = selectedIds.toggle(entry.id)
+                                else {
+                                    previewEntryId = entry.id
+                                    vm.startPreview(entry)
+                                }
+                            },
+                            onLongClick = { selectedIds = selectedIds + entry.id },
                             onEdit = { editingText = entry },
                             onToggleLearned = { vm.setLearned(entry, !entry.learned) },
                             onDelete = { vm.delete(entry) }
@@ -426,15 +615,91 @@ fun VocabListScreen(
         }
     }
 
-    editing?.let { entry ->
+    val previewEntry = previewEntryId?.let { id -> entries.firstOrNull { it.id == id } }
+    previewEntry?.let { entry ->
+        var revealed by remember(entry.id) { mutableStateOf(false) }
+        LaunchedEffect(revealed, entry.id) {
+            val autoplay = VocabPrefs.getAudioAutoplay(context)
+            if (revealed && entry.sentence.isNotBlank()) {
+                vm.translatePreviewSentence(entry)
+                if (autoplay.back) vm.playPreviewSentence(entry)
+            } else if (!revealed && autoplay.front) {
+                vm.playPreviewWord(entry) // skips non-French fronts
+            }
+        }
+        Dialog(onDismissRequest = {
+            previewEntryId = null
+            vm.closePreview()
+        }) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 560.dp),
+                shape = RoundedCornerShape(28.dp),
+                tonalElevation = 6.dp
+            ) {
+                Column(
+                    Modifier.padding(20.dp).verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    EntryFlashcard(
+                        entry = entry,
+                        revealed = revealed,
+                        interactive = true,
+                        onFlip = { revealed = !revealed },
+                        onPlayWord = { vm.playPreviewWord(entry) },
+                        onPlaySentence = { vm.playPreviewSentence(entry) },
+                        wordAudioLoading = vm.previewWordAudioLoading,
+                        wordAudioError = vm.previewWordAudioError,
+                        sentenceAudioLoading = vm.previewSentenceAudioLoading,
+                        sentenceAudioError = vm.previewSentenceAudioError,
+                        sentenceTranslation = vm.previewSentenceTranslation,
+                        sentenceTranslationLoading = vm.previewSentenceTranslationLoading,
+                        sentenceTranslationError = vm.previewSentenceTranslationError,
+                        onWordTap = { word ->
+                            dictionaryEntry = entry
+                            dictionaryTappedWord = word
+                            previewEntryId = null
+                            vm.closePreview()
+                        },
+                        flipBackEnabled = true
+                    )
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = {
+                            dictionaryEntry = entry
+                            dictionaryTappedWord = null
+                            previewEntryId = null
+                            vm.closePreview()
+                        }) { Text(stringResource(R.string.vocab_open_dictionary)) }
+                        TextButton(onClick = {
+                            editingText = entry
+                            previewEntryId = null
+                            vm.closePreview()
+                        }) { Text(stringResource(R.string.action_edit)) }
+                        TextButton(onClick = {
+                            previewEntryId = null
+                            vm.closePreview()
+                        }) { Text(stringResource(R.string.action_close)) }
+                    }
+                }
+            }
+        }
+    }
+
+    dictionaryEntry?.let { entry ->
+        val tappedWord = dictionaryTappedWord
         DictionarySheet(
             textId = entry.textId,
-            word = entry.word,
+            word = tappedWord ?: entry.word,
             sentence = entry.sentence,
-            initialMeaning = entry.meaning,
-            initialListId = entry.listId,
-            isNew = false,
-            onDismiss = { editing = null }
+            initialMeaning = if (tappedWord == null) entry.meaning else null,
+            initialListId = if (tappedWord == null) entry.listId else null,
+            isNew = tappedWord != null,
+            onDismiss = {
+                dictionaryEntry = null
+                dictionaryTappedWord = null
+            }
         )
     }
 
@@ -446,7 +711,10 @@ fun VocabListScreen(
     if (showNewListDialog) {
         var newListName by remember { mutableStateOf("") }
         AlertDialog(
-            onDismissRequest = { showNewListDialog = false },
+            onDismissRequest = {
+                showNewListDialog = false
+                createListForSelection = false
+            },
             title = { Text(stringResource(R.string.vocab_list_new)) },
             text = {
                 OutlinedTextField(
@@ -459,25 +727,54 @@ fun VocabListScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.createList(newListName) { newId -> selectedScope = newId }
+                    val ids = selectedIds.toList()
+                    vm.createList(newListName) { newId ->
+                        if (createListForSelection) {
+                            vm.moveToList(ids, newId)
+                            selectedIds = emptySet()
+                        } else {
+                            selectedScope = newId
+                        }
+                        createListForSelection = false
+                    }
                     showNewListDialog = false
-                }) { Text(stringResource(R.string.action_create)) }
+                }, enabled = newListName.isNotBlank()) { Text(stringResource(R.string.action_create)) }
             },
             dismissButton = {
-                TextButton(onClick = { showNewListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = {
+                    showNewListDialog = false
+                    createListForSelection = false
+                }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
 
     pendingDeleteList?.let { list ->
+        var deleteCards by remember(list.id) { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { pendingDeleteList = null },
             title = { Text(stringResource(R.string.vocab_delete_list_title)) },
-            text = { Text(stringResource(R.string.vocab_delete_list_message, list.name)) },
+            text = {
+                Column {
+                    Text(
+                        stringResource(
+                            if (deleteCards) R.string.vocab_delete_list_with_cards_message else R.string.vocab_delete_list_message,
+                            list.name
+                        )
+                    )
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = deleteCards, onCheckedChange = { deleteCards = it })
+                        Text(stringResource(R.string.vocab_delete_list_cards))
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     if (selectedScope == list.id) selectedScope = VOCAB_SCOPE_ALL
-                    vm.deleteList(list)
+                    vm.deleteList(list, deleteCards)
                     pendingDeleteList = null
                 }) { Text(stringResource(R.string.action_delete)) }
             },
@@ -486,7 +783,78 @@ fun VocabListScreen(
             }
         )
     }
+
+    if (showMoveToListDialog) {
+        AlertDialog(
+            onDismissRequest = { showMoveToListDialog = false },
+            title = { Text(stringResource(R.string.vocab_move_to_list_title)) },
+            text = {
+                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                    item {
+                        TextButton(
+                            onClick = {
+                                vm.moveToList(selectedIds.toList(), null)
+                                selectedIds = emptySet()
+                                showMoveToListDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(stringResource(R.string.vocab_list_uncategorized)) }
+                    }
+                    items(lists, key = { it.id }) { list ->
+                        TextButton(
+                            onClick = {
+                                vm.moveToList(selectedIds.toList(), list.id)
+                                selectedIds = emptySet()
+                                showMoveToListDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(list.name) }
+                    }
+                    item {
+                        TextButton(
+                            onClick = {
+                                createListForSelection = true
+                                showMoveToListDialog = false
+                                showNewListDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(stringResource(R.string.vocab_list_new_ellipsis)) }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showMoveToListDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
+    if (pendingBulkDelete) {
+        AlertDialog(
+            onDismissRequest = { pendingBulkDelete = false },
+            title = {
+                Text(pluralStringResource(R.plurals.vocab_bulk_delete_title, selectedIds.size, selectedIds.size))
+            },
+            text = { Text(stringResource(R.string.vocab_bulk_delete_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.delete(selectedIds.toList())
+                    selectedIds = emptySet()
+                    pendingBulkDelete = false
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingBulkDelete = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
 }
+
+private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
 
 @Composable
 private fun StatusChip(status: VocabStatus, count: Int, selectedStatus: VocabStatus?, onClick: () -> Unit) {
@@ -509,11 +877,15 @@ private fun StatusChip(status: VocabStatus, count: Int, selectedStatus: VocabSta
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VocabRow(
     entry: VocabEntry,
     showMeaning: Boolean,
+    selected: Boolean,
+    selectionMode: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onEdit: () -> Unit,
     onToggleLearned: () -> Unit,
     onDelete: () -> Unit
@@ -523,7 +895,8 @@ private fun VocabRow(
     val surface = MaterialTheme.colorScheme.surface
     // Very light status tint over the theme surface, so text always keeps the
     // theme's own on-surface contrast (whatever the app/system theme is).
-    val cardColor = statusColor.copy(alpha = 0.08f).compositeOver(surface)
+    val cardColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+    else statusColor.copy(alpha = 0.08f).compositeOver(surface)
     val shape = RoundedCornerShape(16.dp)
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp),
@@ -532,9 +905,17 @@ private fun VocabRow(
         border = BorderStroke(1.dp, statusColor.copy(alpha = 0.28f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).clickable(onClick = onClick),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (selectionMode) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = { onClick() },
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
             Box(
                 Modifier.padding(vertical = 12.dp, horizontal = 10.dp).width(4.dp).fillMaxHeight()
                     .background(statusColor, RoundedCornerShape(2.dp))
@@ -597,7 +978,7 @@ private fun VocabRow(
                     )
                 }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (!selectionMode) Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(onClick = onToggleLearned) {
                     Icon(
                         if (entry.learned) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,

@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,6 +67,8 @@ class DatasetViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var result by mutableStateOf<DatasetInstallResult?>(null)
         private set
+    var removedCards by mutableStateOf<Int?>(null)
+        private set
     var failed by mutableStateOf(false)
         private set
 
@@ -90,6 +93,24 @@ class DatasetViewModel(app: Application) : AndroidViewModel(app) {
         repository.installAll(requireNotNull(manifest))
     }
 
+    fun removeOrphanedCards() {
+        if (busy != null) return
+        busy = CLEANUP_ID
+        viewModelScope.launch {
+            try {
+                removedCards = repository.removeOrphanedDatasetCards()
+                status = repository.status(requireNotNull(manifest))
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.e("DatasetViewModel", "Dataset cleanup failed", error)
+                failed = true
+            } finally {
+                busy = null
+            }
+        }
+    }
+
     private fun run(id: String, block: suspend () -> DatasetInstallResult) {
         if (busy != null) return
         busy = id
@@ -110,11 +131,13 @@ class DatasetViewModel(app: Application) : AndroidViewModel(app) {
 
     fun consumeResult() {
         result = null
+        removedCards = null
         failed = false
     }
 
     private companion object {
         const val ALL_PACKS_ID = "all"
+        const val CLEANUP_ID = "cleanup"
     }
 }
 
@@ -124,7 +147,9 @@ fun DatasetScreen(onBack: () -> Unit) {
     val viewModel: DatasetViewModel = viewModel()
     val snackbarHostState = remember { SnackbarHostState() }
     val resultMessage = stringResource(R.string.dataset_added_result)
+    val removedMessage = stringResource(R.string.dataset_removed_result)
     val errorMessage = stringResource(R.string.error_generic)
+    var confirmCleanup by remember { mutableStateOf(false) }
     LaunchedEffect(viewModel.failed) {
         if (viewModel.failed) {
             snackbarHostState.showSnackbar(errorMessage)
@@ -134,6 +159,12 @@ fun DatasetScreen(onBack: () -> Unit) {
     LaunchedEffect(viewModel.result) {
         viewModel.result?.let { result ->
             snackbarHostState.showSnackbar(resultMessage.format(result.added, result.skipped))
+            viewModel.consumeResult()
+        }
+    }
+    LaunchedEffect(viewModel.removedCards) {
+        viewModel.removedCards?.let { count ->
+            snackbarHostState.showSnackbar(removedMessage.format(count))
             viewModel.consumeResult()
         }
     }
@@ -184,6 +215,14 @@ fun DatasetScreen(onBack: () -> Unit) {
                     )
                 }
                 item {
+                    TextButton(
+                        onClick = { confirmCleanup = true },
+                        enabled = viewModel.busy == null
+                    ) {
+                        Text(stringResource(R.string.dataset_remove_deleted_deck_cards))
+                    }
+                }
+                item {
                     Text(
                         stringResource(R.string.dataset_decks),
                         style = MaterialTheme.typography.titleLarge
@@ -220,6 +259,25 @@ fun DatasetScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (confirmCleanup) {
+        AlertDialog(
+            onDismissRequest = { confirmCleanup = false },
+            title = { Text(stringResource(R.string.dataset_remove_deleted_deck_cards)) },
+            text = { Text(stringResource(R.string.dataset_remove_deleted_deck_cards_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmCleanup = false
+                    viewModel.removeOrphanedCards()
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmCleanup = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
 }
 

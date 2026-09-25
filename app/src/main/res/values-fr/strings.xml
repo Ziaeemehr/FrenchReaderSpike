@@ -186,6 +186,9 @@
     <string name="top_level">Niveau supérieur</string>
     <string name="library_breadcrumb_root">Tous</string>
     <string name="library_delete_folder_confirm">Supprimer ce dossier ? Ses sous-dossiers et ses textes remonteront d’un niveau.</string>
+    <string name="library_delete_folder_files">Supprimer aussi ses fichiers</string>
+    <string name="library_delete_folder_with_files_title">Supprimer définitivement le dossier ?</string>
+    <string name="library_delete_folder_with_files_confirm">Ce dossier, tous ses sous-dossiers et les %1$d textes qu’ils contiennent seront définitivement supprimés.</string>
     <string name="library_delete_tag_confirm">Supprimer cette étiquette ? Elle sera retirée de tous les textes.</string>
     <string name="library_move_to_folder">Déplacer vers un dossier</string>
     <string name="library_no_folder">Aucun dossier</string>
@@ -233,8 +236,25 @@
     <string name="vocab_list_all">Tout</string>
     <string name="vocab_list_uncategorized">Sans catégorie</string>
     <string name="vocab_list_new">Nouvelle liste</string>
+    <string name="vocab_list_new_ellipsis">Nouvelle liste…</string>
+    <plurals name="vocab_selection_count">
+        <item quantity="one">%d sélectionné</item>
+        <item quantity="other">%d sélectionnés</item>
+    </plurals>
+    <string name="vocab_selection_close">Fermer la sélection</string>
+    <string name="vocab_select_all">Sélectionner tous les mots affichés</string>
+    <string name="vocab_bulk_move">Déplacer les mots sélectionnés vers une liste</string>
+    <string name="vocab_move_to_list_title">Déplacer vers une liste</string>
+    <string name="vocab_bulk_delete">Supprimer les mots sélectionnés</string>
+    <plurals name="vocab_bulk_delete_title">
+        <item quantity="one">Supprimer %d mot ?</item>
+        <item quantity="other">Supprimer %d mots ?</item>
+    </plurals>
+    <string name="vocab_bulk_delete_message">Les mots sélectionnés seront définitivement supprimés. Cette action est irréversible.</string>
     <string name="vocab_delete_list_title">Supprimer la liste ?</string>
     <string name="vocab_delete_list_message">« %1$s » sera supprimée. Ses mots ne sont pas supprimés — ils deviennent non classés.</string>
+    <string name="vocab_delete_list_cards">Supprimer aussi ses cartes</string>
+    <string name="vocab_delete_list_with_cards_message">« %1$s » et toutes ses cartes seront définitivement supprimées.</string>
     <string name="vocab_list_name_field">Nom de la liste</string>
     <string name="vocab_due_today">Révision du jour (%1$d prêt(s))</string>
     <string name="vocab_nothing_due">Rien à réviser</string>
@@ -444,6 +464,10 @@
     <string name="review_max_new">Maximum de nouvelles cartes par jour</string>
     <string name="review_daily_goal">Objectif quotidien</string>
     <string name="review_audio_autoplay">Lire automatiquement la prononciation</string>
+    <string name="review_autoplay_off">Non</string>
+    <string name="review_autoplay_front">Recto</string>
+    <string name="review_autoplay_back">Verso</string>
+    <string name="review_autoplay_both">Les deux</string>
     <string name="review_meaning_language">Langue des définitions</string>
     <string name="review_intervals">Intervalles des boîtes (jours)</string>
     <string name="review_box_interval">Boîte %1$d</string>
@@ -525,6 +549,9 @@
     <string name="dataset_add_missing">Ajouter les éléments manquants</string>
     <string name="dataset_add_all">Tout ajouter</string>
     <string name="dataset_added_result">%1$d ajoutés ; %2$d ignorés</string>
+    <string name="dataset_remove_deleted_deck_cards">Supprimer les cartes des paquets supprimés</string>
+    <string name="dataset_remove_deleted_deck_cards_confirm">Nettoyer les cartes non classées issues des paquets intégrés ? Les copies des paquets supprimés sont effacées. Les copies des paquets ajoutés à nouveau sont fusionnées dans le paquet, en gardant celle qui a une progression. Vos propres mots ne sont pas touchés.</string>
+    <string name="dataset_removed_result">%1$d cartes supprimées</string>
     <string name="card_voice_title">Voix des cartes</string>
     <string name="accessibility_play_word">Écouter la prononciation du mot</string>
     <string name="comprehension_percent">%1$d%%</string>

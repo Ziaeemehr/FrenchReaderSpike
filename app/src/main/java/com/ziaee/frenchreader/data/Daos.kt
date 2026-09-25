@@ -3,6 +3,9 @@ package com.ziaee.frenchreader.data
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
+/** Max ids per `IN (:ids)` query: older SQLite caps bound variables at 999. */
+const val SQL_ID_CHUNK = 500
+
 @Dao
 interface TextDao {
     @Query("SELECT * FROM texts ORDER BY createdAtMs DESC")
@@ -97,6 +100,9 @@ interface LibraryOrganizerDao {
 
     @Query("DELETE FROM library_folders WHERE id = :id")
     suspend fun deleteFolderRow(id: Long)
+
+    @Query("DELETE FROM library_folders WHERE id IN (:ids)")
+    suspend fun deleteFolderRows(ids: List<Long>)
 
     @Transaction
     suspend fun deleteFolder(id: Long) {
@@ -206,6 +212,15 @@ interface VocabDao {
     // themselves.
     @Query("UPDATE vocab SET listId = NULL WHERE listId = :listId")
     suspend fun clearListId(listId: Long)
+
+    @Query("UPDATE vocab SET listId = :listId WHERE id IN (:ids)")
+    suspend fun setListId(ids: List<Long>, listId: Long?)
+
+    @Query("DELETE FROM vocab WHERE listId = :listId")
+    suspend fun deleteByListId(listId: Long)
+
+    @Query("DELETE FROM vocab WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 }
 
 @Dao

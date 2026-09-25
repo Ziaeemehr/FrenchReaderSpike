@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.content
 import android.content.Context
 import androidx.room.withTransaction
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.SQL_ID_CHUNK
 import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextBodyStore
@@ -80,6 +81,23 @@ class DatasetRepository(
                 }
             }
             DatasetInstallResult(added, rows.size - added)
+        }
+    }
+
+    suspend fun removeOrphanedDatasetCards(): Int = withContext(Dispatchers.IO) {
+        val manifest = loadManifest()
+        val rowsByPack = manifest.decks.associateWith { parseDatasetDeck(asset(it.file)) }
+        db.withTransaction {
+            val lists = db.vocabListDao().getAllOnce()
+            val packs = rowsByPack.map { (pack, rows) ->
+                rows to lists.firstOrNull { it.name.equals(pack.name, ignoreCase = true) }?.id
+            }
+            val plan = planDatasetCardCleanup(packs, db.vocabDao().getAllOnce())
+            plan.deleteIds.chunked(SQL_ID_CHUNK).forEach { db.vocabDao().deleteByIds(it) }
+            plan.moveToList.entries.groupBy({ it.value }, { it.key }).forEach { (listId, ids) ->
+                ids.chunked(SQL_ID_CHUNK).forEach { db.vocabDao().setListId(it, listId) }
+            }
+            plan.removed
         }
     }
 

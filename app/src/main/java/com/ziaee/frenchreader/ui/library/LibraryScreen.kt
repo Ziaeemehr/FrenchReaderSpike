@@ -226,7 +226,7 @@ fun LibraryContent(
     onTagFilterToggle: (Long) -> Unit = {},
     onCreateFolder: (String) -> Unit = {},
     onRenameFolder: (Long, String) -> Unit = { _, _ -> },
-    onDeleteFolder: (Long) -> Unit = {},
+    onDeleteFolder: (Long, Boolean) -> Unit = { _, _ -> },
     onCreateTag: (String) -> Unit = {},
     onRenameTag: (Long, String) -> Unit = { _, _ -> },
     onDeleteTag: (Long) -> Unit = {},
@@ -543,6 +543,7 @@ fun LibraryContent(
     if (showOrganizer) {
         LibraryOrganizerDialog(
             folders = state.folders,
+            documents = state.allDocuments,
             tags = state.tags,
             onDismiss = { showOrganizer = false },
             onCreateFolder = onCreateFolder,

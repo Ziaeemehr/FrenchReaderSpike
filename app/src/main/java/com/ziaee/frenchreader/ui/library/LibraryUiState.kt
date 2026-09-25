@@ -17,6 +17,7 @@ data class LibraryUiState(
     val query: String = "",
     val sort: LibrarySort = LibrarySort.NEWEST,
     val documents: List<TextDocument> = emptyList(),
+    val allDocuments: List<TextDocument> = documents,
     val folders: List<LibraryFolder> = emptyList(),
     val tags: List<LibraryTag> = emptyList(),
     val tagIdsByText: Map<Long, Set<Long>> = emptyMap(),

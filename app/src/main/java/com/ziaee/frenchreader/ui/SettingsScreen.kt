@@ -594,10 +594,21 @@ private fun VocabularyReviewSettings(context: Context) {
     StepperSetting(stringResource(R.string.review_daily_goal), dailyGoal, 1, 200) {
         dailyGoal = it; VocabPrefs.setDailyGoal(context, it)
     }
-    SettingsSwitchRow(stringResource(R.string.review_audio_autoplay), autoplay) {
-        autoplay = it
-        VocabPrefs.setAudioAutoplay(context, it)
-    }
+    CompactSettingLabel(R.string.review_audio_autoplay)
+    CompactChoiceRow(
+        VocabPrefs.AudioAutoplay.entries,
+        autoplay,
+        {
+            stringResource(
+                when (it) {
+                    VocabPrefs.AudioAutoplay.OFF -> R.string.review_autoplay_off
+                    VocabPrefs.AudioAutoplay.FRONT -> R.string.review_autoplay_front
+                    VocabPrefs.AudioAutoplay.BACK -> R.string.review_autoplay_back
+                    VocabPrefs.AudioAutoplay.BOTH -> R.string.review_autoplay_both
+                }
+            )
+        }
+    ) { autoplay = it; VocabPrefs.setAudioAutoplay(context, it) }
     CompactSettingLabel(R.string.card_voice_title)
     Box {
         val voices = AVAILABLE_VOICES.filterNot { it.id.startsWith(XTTS_VOICE_PREFIX) }

@@ -34,6 +34,10 @@ DECKS = [
     ("Communication essentielle A2", "comm-ess-a2-phrases", "Communication essentielle A2 · Phrases", "A2", "phrases"),
 ]
 
+# Phrase decks studied Persian -> French: the Persian prompt is the card front and the French line
+# goes in the sentence field (so it gets TTS audio); meaning stays empty.
+PERSIAN_FRONT = {"gram-dial-b1-phrases"}
+
 SOUND = re.compile(r"\[sound:[^\]]*]")
 BREAKS = re.compile(r"<\s*(br|/div|/p)\s*/?>", re.I)
 TAGS = re.compile(r"<[^>]+>")
@@ -69,7 +73,7 @@ def lesson_of(deck_name, root):
     return m.group(1) if m else None
 
 
-def export_deck(deck, kind):
+def export_deck(deck, pack_id, kind):
     ids = call("findCards", query=f'deck:"{deck}"')
     cards, seen = [], set()
     for i in range(0, len(ids), 500):
@@ -77,7 +81,9 @@ def export_deck(deck, kind):
             fields = sorted(card["fields"].values(), key=lambda f: f["order"])
             front, back = clean(fields[0]["value"]), clean(fields[1]["value"]) if len(fields) > 1 else []
             lesson = lesson_of(card["deckName"], deck)
-            if kind == "phrases":
+            if kind == "phrases" and pack_id in PERSIAN_FRONT:
+                word, meaning, sentence = " ".join(front), "", " ".join(back)
+            elif kind == "phrases":
                 # Anki side is Persian -> French; the app shows French on the front.
                 word, meaning, sentence = " ".join(back), " ".join(front), ""
             else:
@@ -86,7 +92,7 @@ def export_deck(deck, kind):
                 meaning = "\n".join(gloss) if gloss else "\n".join(back)
                 sentence = " ".join(l for l in back if not GLOSS.match(l)) if gloss else ""
             key = word.lower()  # the app dedupes by word within a list
-            if not word or not meaning or key in seen:
+            if not word or not (meaning or sentence) or key in seen:
                 continue
             seen.add(key)
             row = {"w": word, "m": meaning}
@@ -189,7 +195,7 @@ def main():
     for deck, pack_id, name, level, kind in DECKS:
         path = OUT / "decks" / f"{pack_id}.json"
         if anki:
-            cards = export_deck(deck, kind)
+            cards = export_deck(deck, pack_id, kind)
             path.write_text(json.dumps(cards, ensure_ascii=False), encoding="utf-8")
         else:
             cards = json.loads(path.read_text(encoding="utf-8"))

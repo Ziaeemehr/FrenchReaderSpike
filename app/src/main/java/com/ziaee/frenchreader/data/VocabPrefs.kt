@@ -17,7 +17,8 @@ object VocabPrefs {
     private const val KEY_INTERVALS = "review_intervals"
     private const val KEY_MAX_NEW = "max_new_cards"
     private const val KEY_DAILY_GOAL = "daily_review_goal"
-    private const val KEY_AUDIO_AUTOPLAY = "review_audio_autoplay"
+    private const val KEY_AUDIO_AUTOPLAY = "review_audio_autoplay" // legacy boolean: true = back
+    private const val KEY_AUDIO_AUTOPLAY_SIDES = "review_audio_autoplay_sides"
     private const val KEY_CARD_VOICE = "review_card_voice"
     const val DEFAULT_CARD_VOICE = "fr-FR-HenriNeural"
     private const val KEY_MEANING_LANGUAGE = "meaning_language"
@@ -35,6 +36,10 @@ object VocabPrefs {
     const val DEFAULT_DAILY_GOAL = 20
 
     enum class MeaningLanguage { PERSIAN, ENGLISH }
+
+    enum class AudioAutoplay(val front: Boolean, val back: Boolean) {
+        OFF(false, false), FRONT(true, false), BACK(false, true), BOTH(true, true)
+    }
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -67,8 +72,15 @@ object VocabPrefs {
     fun setMaxNewCards(context: Context, value: Int) = prefs(context).edit().putInt(KEY_MAX_NEW, value.coerceAtLeast(0)).apply()
     fun getDailyGoal(context: Context) = prefs(context).getInt(KEY_DAILY_GOAL, DEFAULT_DAILY_GOAL)
     fun setDailyGoal(context: Context, value: Int) = prefs(context).edit().putInt(KEY_DAILY_GOAL, value.coerceAtLeast(1)).apply()
-    fun getAudioAutoplay(context: Context) = prefs(context).getBoolean(KEY_AUDIO_AUTOPLAY, false)
-    fun setAudioAutoplay(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEY_AUDIO_AUTOPLAY, value).apply()
+    fun getAudioAutoplay(context: Context): AudioAutoplay {
+        val prefs = prefs(context)
+        prefs.getString(KEY_AUDIO_AUTOPLAY_SIDES, null)
+            ?.let { name -> AudioAutoplay.entries.firstOrNull { it.name == name } }
+            ?.let { return it }
+        return if (prefs.getBoolean(KEY_AUDIO_AUTOPLAY, false)) AudioAutoplay.BACK else AudioAutoplay.OFF
+    }
+    fun setAudioAutoplay(context: Context, value: AudioAutoplay) =
+        prefs(context).edit().putString(KEY_AUDIO_AUTOPLAY_SIDES, value.name).apply()
     fun getCardVoice(context: Context) =
         prefs(context).getString(KEY_CARD_VOICE, DEFAULT_CARD_VOICE) ?: DEFAULT_CARD_VOICE
 
