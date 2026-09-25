@@ -98,7 +98,18 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 private val SPEED_OPTIONS = listOf(0.75f, 1.0f, 1.25f, 1.5f)
-private val EPUB_IMAGE_REF = Regex("^[0-9a-f]+/[A-Za-z0-9][A-Za-z0-9_-]*\\.jpg$")
+// `<folder>/<file>` under text_images/epub_<folder>: EPUB and folder imports use a content hash as
+// the folder, bundled stories use "dataset". resolveEpubImage() also checks the resolved path.
+private val EPUB_IMAGE_REF = Regex("^[A-Za-z0-9_-]+/[^/\\\\]+\\.(jpe?g|png|gif|webp)$", RegexOption.IGNORE_CASE)
+
+/** The stored image for an `epubimg:` reference, or null if it's malformed, missing, or would
+ * resolve outside the app's text_images directory. */
+internal fun resolveEpubImage(filesDir: File, ref: String): File? {
+    if (!EPUB_IMAGE_REF.matches(ref) || ".." in ref) return null
+    val root = File(filesDir, "text_images").canonicalFile
+    val file = File(root, "epub_$ref").canonicalFile
+    return file.takeIf { it.isFile && it.parentFile?.parentFile == root }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1186,10 +1197,8 @@ private fun EpubImage(
     fontScale: Float
 ) {
     val context = LocalContext.current
-    val ref = block.imageRef?.takeIf(EPUB_IMAGE_REF::matches) ?: return
-    val file = remember(context.filesDir, ref) {
-        File(context.filesDir, "text_images/epub_$ref").takeIf { it.isFile }
-    } ?: return
+    val ref = block.imageRef ?: return
+    val file = remember(context.filesDir, ref) { resolveEpubImage(context.filesDir, ref) } ?: return
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = FrenchReaderDesign.spacing.xSmall),
