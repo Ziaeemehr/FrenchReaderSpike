@@ -62,6 +62,12 @@
 - **پشتیبان‌گیری** روی گوشی یا Google Drive.
 - زبان برنامه: انگلیسی، فرانسوی یا فارسی.
 
+## ⭐ حمایت
+
+اگر French Reader در یادگیری فرانسه به شما کمک کرده، لطفاً در گیت‌هاب به آن ستاره بدهید؛ رایگان است و کمک می‌کند زبان‌آموزان دیگر هم برنامه را پیدا کنند.
+
+<a href="https://github.com/Ziaeemehr/FrenchReaderSpike"><img src="https://img.shields.io/github/stars/Ziaeemehr/FrenchReaderSpike?style=social" alt="GitHub stars"></a>
+
 ## حریم خصوصی
 
 [سیاست حریم خصوصی](PRIVACY.md) را ببینید.

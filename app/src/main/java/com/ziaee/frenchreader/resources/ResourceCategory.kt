@@ -229,6 +229,12 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
             "L'actualité nationale par le service public.",
             "خبرهای فرانسه از رسانهٔ عمومی این کشور.")
     ),
+    DefaultResource(
+        "MotsActu", "https://motsactu.com/stories/", ResourceCategory.NEWS, 33, "A1–B2",
+        d("News rewritten in simplified French, with each article adapted to levels A1 to B2.",
+            "L'actualité en français simplifié, chaque article adapté aux niveaux A1 à B2.",
+            "خبرها به فرانسوی ساده‌شده، هر خبر در سطح‌های A1 تا B2.")
+    ),
     // Grammar
     DefaultResource(
         "Le Conjugueur", "https://leconjugueur.lefigaro.fr/", ResourceCategory.GRAMMAR, 40, "A1–C2",

@@ -598,4 +598,6 @@
     <string name="resources_web_search">جستجوی وب</string>
     <string name="resources_youtube_search">جستجو در یوتیوب</string>
     <string name="resource_category_telegram">کانال‌های تلگرام</string>
+    <string name="about_star">ستاره دادن در گیت‌هاب</string>
+    <string name="about_star_detail">اگر برنامه به کارتان آمده، با یک ستاره به دیده شدنش کمک کنید</string>
 </resources>

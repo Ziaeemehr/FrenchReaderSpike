@@ -600,4 +600,6 @@
     <string name="resources_web_search">Web search</string>
     <string name="resources_youtube_search">YouTube search</string>
     <string name="resource_category_telegram">Telegram channels</string>
+    <string name="about_star">Star on GitHub</string>
+    <string name="about_star_detail">If the app helps you, a star helps others find it</string>
 </resources>

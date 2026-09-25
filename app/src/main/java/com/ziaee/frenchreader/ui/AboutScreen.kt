@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Code
@@ -153,6 +154,7 @@ fun AboutScreen(onBack: () -> Unit) {
             }
 
             AboutSection(stringResource(R.string.about_project_section)) {
+                AboutLinkRow(Icons.Default.Star, stringResource(R.string.about_star), stringResource(R.string.about_star_detail)) { openUrl(PROJECT_URL) }
                 AboutLinkRow(Icons.Default.Code, stringResource(R.string.about_source_code), PROJECT_URL) { openUrl(PROJECT_URL) }
                 AboutLinkRow(Icons.Default.Update, stringResource(R.string.about_check_updates), "$PROJECT_URL/releases/latest") { openUrl("$PROJECT_URL/releases/latest") }
                 AboutLinkRow(Icons.Default.BugReport, stringResource(R.string.about_report_bug), "$PROJECT_URL/issues/new") { openUrl("$PROJECT_URL/issues/new") }

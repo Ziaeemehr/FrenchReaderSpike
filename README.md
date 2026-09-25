@@ -50,6 +50,12 @@ Older versions are on the [Releases page](https://github.com/Ziaeemehr/FrenchRea
 - **Back up** to your phone or Google Drive.
 - App in English, French or Persian.
 
+## ⭐ Support
+
+If French Reader helps you learn French, please give it a star on GitHub: it's free, and it helps other learners find the app.
+
+<a href="https://github.com/Ziaeemehr/FrenchReaderSpike"><img src="https://img.shields.io/github/stars/Ziaeemehr/FrenchReaderSpike?style=social" alt="GitHub stars"></a>
+
 ## Privacy
 
 See the [privacy policy](PRIVACY.md).
