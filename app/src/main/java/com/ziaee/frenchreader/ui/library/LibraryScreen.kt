@@ -75,7 +75,7 @@ import com.ziaee.frenchreader.ui.components.EditorialEmptyState
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.components.MetadataBadge
 import com.ziaee.frenchreader.ui.home.DocumentThumbnail
-import com.ziaee.frenchreader.ui.shared.AddTextDialog
+import com.ziaee.frenchreader.ui.shared.AddTextEditor
 import com.ziaee.frenchreader.ui.shared.AddTextHost
 import com.ziaee.frenchreader.ui.shared.AddSourceSheet
 import com.ziaee.frenchreader.ui.shared.TextExtractionProgress
@@ -461,8 +461,9 @@ fun LibraryContent(
                             selectionMode = state.isSelecting,
                             onEditRequest = {
                                 pendingEdit = doc
-                                if (doc.bodyPath != null) pendingEditBody = ""
-                                else onLoadBody(doc) { body -> pendingEditBody = body }
+                                // File-stored (long) bodies are read-only in the editor but still
+                                // loaded, for the preview and so saving never sees an empty body.
+                                onLoadBody(doc) { body -> pendingEditBody = body }
                             },
                             onMoveRequest = { pendingMove = doc },
                             onTagsRequest = { pendingTags = doc },
@@ -533,7 +534,7 @@ fun LibraryContent(
     }
 
     pendingEdit?.let { doc -> pendingEditBody?.let { body ->
-        AddTextDialog(
+        AddTextEditor(
             initialTitle = doc.title,
             initialBody = body,
             bodyEditable = doc.bodyPath == null,

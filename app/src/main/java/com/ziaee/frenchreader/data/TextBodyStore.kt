@@ -97,7 +97,9 @@ suspend fun updateTextDocumentBody(
     body: String
 ) {
     val oldBody = bodyStore.read(document)
-    val changed = body != oldBody
+    // A blank body never replaces a stored one: editors that only rename (e.g. file-stored
+    // bodies, which aren't editable) must not be able to wipe the text.
+    val changed = body.isNotBlank() && body != oldBody
     val base = document.copy(
         title = title.ifBlank { document.title },
         lastChunkIndex = if (changed) 0 else document.lastChunkIndex,

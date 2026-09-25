@@ -465,6 +465,8 @@ fun AddTextEditor(
     initialTitle: String = "",
     initialBody: String = "",
     bodyEditable: Boolean = true,
+    dialogTitle: String? = null,
+    confirmLabel: String? = null,
     onDismiss: () -> Unit,
     onSave: (String, String) -> Unit
 ) {
@@ -481,7 +483,8 @@ fun AddTextEditor(
             modifier = Modifier.fillMaxSize().imePadding(),
             topBar = {
                 EditorialTopAppBar(
-                    title = stringResource(if (initialBody.isBlank()) R.string.add_text_title_new else R.string.add_text_title_review),
+                    title = dialogTitle
+                        ?: stringResource(if (initialBody.isBlank()) R.string.add_text_title_new else R.string.add_text_title_review),
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
                             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
@@ -492,7 +495,7 @@ fun AddTextEditor(
                             onClick = { onSave(title, body) },
                             enabled = !bodyEditable || body.isNotBlank(),
                             modifier = Modifier.padding(end = FrenchReaderDesign.spacing.xSmall)
-                        ) { Text(stringResource(R.string.add_text_save_open)) }
+                        ) { Text(confirmLabel ?: stringResource(R.string.add_text_save_open)) }
                     }
                 )
             }
