@@ -470,7 +470,14 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
         }
     }
     vm.current?.takeIf { showDictionary }?.let { e ->
-        DictionarySheet(e.textId, e.word, e.sentence, e.meaning, e.listId, false, onDismiss = { showDictionary = false })
+        DictionarySheet(
+            e.textId, e.word, e.sentence, e.meaning, e.listId, false,
+            onCardRenamed = { w, m ->
+                val wasRevealed = e === revealedEntry
+                vm.editCurrent(w, m, e.sentence)?.let { if (wasRevealed) revealedEntry = it }
+            },
+            onDismiss = { showDictionary = false }
+        )
     }
     vm.current?.let { e -> tappedWord?.let { w ->
         DictionarySheet(e.textId, w, e.sentence, null, null, true, onDismiss = { tappedWord = null })

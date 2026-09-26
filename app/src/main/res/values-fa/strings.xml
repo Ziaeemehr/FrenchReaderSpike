@@ -610,4 +610,6 @@
     <string name="update_check_failed">بررسی به‌روزرسانی انجام نشد. اتصال اینترنت را بررسی کنید.</string>
     <string name="update_checking">در حال بررسی…</string>
     <string name="update_auto_check">بررسی خودکار به‌روزرسانی برنامه</string>
+    <string name="dictionary_apply_word">جست‌وجو</string>
+    <string name="dictionary_reset_word">بازگردانی</string>
 </resources>

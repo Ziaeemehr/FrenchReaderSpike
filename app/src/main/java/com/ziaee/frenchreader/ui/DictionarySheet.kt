@@ -18,9 +18,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -35,6 +48,9 @@ import com.ziaee.frenchreader.data.VocabRepository
 import com.ziaee.frenchreader.data.MANUAL_VOCAB_TEXT_ID
 import com.ziaee.frenchreader.data.DictionarySavedState
 import com.ziaee.frenchreader.data.dictionarySavedState
+import com.ziaee.frenchreader.comprehension.FrenchLemmaLexicon
+import com.ziaee.frenchreader.comprehension.LemmaLexicon
+import com.ziaee.frenchreader.comprehension.normalizeFrench
 import com.ziaee.frenchreader.translate.TranslationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +61,13 @@ import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
 internal fun manualDictionaryWord(raw: String): String? = raw.trim().takeIf { it.isNotEmpty() }
+
+/** Dictionary forms (e.g. the infinitive) of a looked-up form, offered as one-tap replacements. */
+internal fun lemmaSuggestions(word: String, lexicon: FrenchLemmaLexicon): List<String> {
+    val form = normalizeFrench(word.trim())
+    if (form.isEmpty() || form.any(Char::isWhitespace)) return emptyList()
+    return lexicon.lemmas(form).filter { it != form }.distinct().take(3)
+}
 
 /** Primary dictionary source per the design doc: WordReference French->English. */
 internal fun wordReferenceUrl(word: String): String =
@@ -180,6 +203,27 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Changes the word of a saved card in place, keeping its review progress. */
+    fun rename(
+        entry: com.ziaee.frenchreader.data.VocabEntry,
+        word: String,
+        meaning: String?,
+        listId: Long?,
+        onDone: (com.ziaee.frenchreader.data.VocabEntry) -> Unit
+    ) {
+        val normalizedWord = manualDictionaryWord(word) ?: return
+        val renamed = entry.copy(
+            word = normalizedWord,
+            dictionaryUrl = wordReferenceUrl(normalizedWord),
+            meaning = meaning?.ifBlank { entry.meaning } ?: entry.meaning,
+            listId = listId
+        )
+        viewModelScope.launch {
+            db.vocabDao().update(renamed)
+            onDone(renamed)
+        }
+    }
+
     fun delete(entry: com.ziaee.frenchreader.data.VocabEntry, onDone: () -> Unit) {
         viewModelScope.launch {
             db.vocabDao().delete(entry)
@@ -213,21 +257,38 @@ fun DictionarySheet(
     initialMeaning: String? = null,
     initialListId: Long? = null,
     isNew: Boolean = true,
+    onCardRenamed: (word: String, meaning: String?) -> Unit = { _, _ -> },
     onDismiss: () -> Unit
 ) {
     val vm: DictionaryViewModel = viewModel()
     val context = LocalContext.current
+    // A new lookup can be edited (e.g. a conjugated form to its infinitive, or into a phrase);
+    // everything below looks up and saves the edited word.
+    val originalWord = word
+    var currentWord by rememberSaveable(originalWord) { mutableStateOf(originalWord) }
+    var lemmas by remember(originalWord) { mutableStateOf(emptyList<String>()) }
+    LaunchedEffect(originalWord) {
+        lemmas = runCatching { lemmaSuggestions(originalWord, LemmaLexicon.get(context).get()) }
+            .getOrDefault(emptyList())
+    }
+    val word = currentWord
+    val isOriginal = word == originalWord
+    val initialMeaning = initialMeaning.takeIf { isOriginal }
+    val initialListId = initialListId.takeIf { isOriginal }
     val lists by vm.lists.collectAsState()
     val savedStateFlow = remember(vm, textId, word, sentence) {
         vm.observeSavedState(textId, word, sentence)
     }
     val savedState by savedStateFlow.collectAsState(initial = DictionarySavedState())
+    // Reopening a saved card: editing its word renames that card instead of adding another.
+    var editedEntry by remember(originalWord) { mutableStateOf<com.ziaee.frenchreader.data.VocabEntry?>(null) }
+    if (!isNew && isOriginal && editedEntry == null) savedState.exactEntry?.let { editedEntry = it }
 
     var meaning by remember(word, sentence) { mutableStateOf(initialMeaning.orEmpty()) }
     var selectedListId by remember(word, sentence) {
         mutableStateOf(initialListId ?: if (isNew) VocabPrefs.getLastListId(context) else null)
     }
-    var saved by remember(word, sentence, isNew) { mutableStateOf(!isNew) }
+    var saved by remember(word, sentence, isNew) { mutableStateOf(!isNew && isOriginal) }
     var autoTranslating by remember(word) { mutableStateOf(false) }
     var webViewFailed by remember(word) { mutableStateOf(false) }
     var listMenuExpanded by remember { mutableStateOf(false) }
@@ -270,7 +331,19 @@ fun DictionarySheet(
     }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, windowInsets = WindowInsets(0)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        windowInsets = WindowInsets(0),
+        // A slim handle: the default one pads 22dp above and below.
+        dragHandle = {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp).size(width = 32.dp, height = 4.dp)
+            ) {}
+        }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -278,8 +351,48 @@ fun DictionarySheet(
                 .padding(bottom = 24.dp)
                 .imePadding()
         ) {
+            // The word itself is the editable field: type a base form or a whole structure, then
+            // Done (or ✓) looks it up and makes it what gets saved.
+            val focusManager = LocalFocusManager.current
+            var draft by remember(word) { mutableStateOf(TextFieldValue(word, TextRange(word.length))) }
+            val draftWord = manualDictionaryWord(draft.text)
+            val applyDraft = {
+                draftWord?.let { currentWord = it }
+                focusManager.clearFocus()
+            }
+            val wordInteraction = remember { MutableInteractionSource() }
+            val wordFocused by wordInteraction.collectIsFocusedAsState()
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(word, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                BasicTextField(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { applyDraft() }),
+                    interactionSource = wordInteraction,
+                    modifier = Modifier.weight(1f),
+                    decorationBox = { inner ->
+                        Column {
+                            Box(Modifier.padding(vertical = 6.dp)) { inner() }
+                            HorizontalDivider(
+                                thickness = if (wordFocused) 2.dp else 1.dp,
+                                color = if (wordFocused) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+                    }
+                )
+                if (draftWord != null && draftWord != word) {
+                    IconButton(onClick = applyDraft) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = stringResource(R.string.dictionary_apply_word),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
                 IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
                     Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
                 }
@@ -288,55 +401,85 @@ fun DictionarySheet(
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
-
-            OutlinedTextField(
-                value = meaning,
-                onValueChange = { meaning = it; saved = false },
-                label = { Text(stringResource(if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) R.string.dictionary_meaning_persian else R.string.dictionary_meaning_english)) },
-                trailingIcon = {
-                    if (autoTranslating) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(Modifier.height(10.dp))
-
-            if (savedState.otherContextCount > 0) {
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
+            // Base-form suggestions and the way back to the tapped form, as small pills.
+            val shownLemmas = lemmas.filter { it != word }
+            if (shownLemmas.isNotEmpty() || !isOriginal) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(Icons.Default.BookmarkAdded, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(
-                                R.string.dictionary_saved_elsewhere,
-                                savedState.otherContextCount
-                            ),
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    shownLemmas.forEach { lemma ->
+                        WordPill("→ $lemma") { currentWord = lemma }
+                    }
+                    if (!isOriginal) {
+                        val resetLabel = stringResource(R.string.dictionary_reset_word)
+                        WordPill("↺ $originalWord", Modifier.semantics { contentDescription = "$resetLabel: $originalWord" }) {
+                            currentWord = originalWord
+                        }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
             }
 
+            Spacer(Modifier.height(12.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.weight(1f)) {
-                    AssistChip(
-                        onClick = { listMenuExpanded = true },
-                        leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        label = { Text(lists.find { it.id == selectedListId }?.name ?: stringResource(R.string.vocab_list_uncategorized)) }
+                OutlinedTextField(
+                    value = meaning,
+                    onValueChange = { meaning = it; saved = false },
+                    placeholder = { Text(stringResource(if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) R.string.dictionary_meaning_persian else R.string.dictionary_meaning_english)) },
+                    trailingIcon = {
+                        if (autoTranslating) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                Spacer(Modifier.width(10.dp))
+                FilledIconButton(
+                    onClick = {
+                        val onSaved = {
+                            saved = true
+                            VocabPrefs.setLastListId(context, selectedListId)
+                        }
+                        val card = editedEntry
+                        if (card != null && !isOriginal) vm.rename(card, word, meaning, selectedListId) {
+                            onSaved()
+                            onCardRenamed(it.word, it.meaning)
+                        }
+                        else vm.save(textId, word, sentence, meaning, selectedListId, onSaved)
+                    },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        if (saved) Icons.Default.Check else Icons.Default.Save,
+                        contentDescription = stringResource(
+                            if (saved) R.string.accessibility_vocabulary_saved
+                            else R.string.accessibility_save_vocabulary
+                        )
                     )
+                }
+            }
+
+            // One quiet line of details: the list it's filed in, where else it was saved, delete.
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Box {
+                    TextButton(
+                        onClick = { listMenuExpanded = true },
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                    ) {
+                        Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            lists.find { it.id == selectedListId }?.name ?: stringResource(R.string.vocab_list_uncategorized),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
                     DropdownMenu(expanded = listMenuExpanded, onDismissRequest = { listMenuExpanded = false }) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.vocab_list_uncategorized)) },
@@ -355,7 +498,29 @@ fun DictionarySheet(
                         )
                     }
                 }
-                Spacer(Modifier.width(8.dp))
+                if (savedState.otherContextCount > 0) {
+                    val savedElsewhere = stringResource(R.string.dictionary_saved_elsewhere, savedState.otherContextCount)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .semantics(mergeDescendants = true) { contentDescription = savedElsewhere }
+                    ) {
+                        Icon(
+                            Icons.Default.BookmarkAdded,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(Modifier.width(3.dp))
+                        Text(
+                            savedState.otherContextCount.toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
                 if (saved && savedState.exactEntry != null) {
                     IconButton(
                         onClick = {
@@ -364,62 +529,37 @@ fun DictionarySheet(
                                     saved = false
                                 }
                             }
-                        }
+                        },
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.accessibility_delete)
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    FilledIconButton(
-                        onClick = {
-                            vm.save(textId, word, sentence, meaning, selectedListId) {
-                                saved = true
-                                VocabPrefs.setLastListId(context, selectedListId)
-                            }
-                        }
-                    ) {
-                        Icon(
-                            if (saved) Icons.Default.Check else Icons.Default.Save,
-                            contentDescription = stringResource(
-                                if (saved) R.string.accessibility_vocabulary_saved
-                                else R.string.accessibility_save_vocabulary
-                            )
-                        )
-                    }
-                    if (saved) {
-                        Text(
-                            stringResource(R.string.dictionary_saved_exact),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            Icons.Default.DeleteOutline,
+                            contentDescription = stringResource(R.string.accessibility_delete),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(14.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Dictionaries as tabs sitting directly on the page they switch.
+            ScrollableTabRow(
+                selectedTabIndex = DICTIONARY_PROVIDERS.indexOfFirst { it.id == selectedProvider.id }.coerceAtLeast(0),
+                edgePadding = 0.dp,
+                containerColor = Color.Transparent,
+                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
             ) {
                 DICTIONARY_PROVIDERS.forEach { provider ->
-                    FilterChip(
+                    Tab(
                         selected = selectedProvider.id == provider.id,
                         onClick = { selectedProvider = provider; webViewFailed = false },
-                        label = { Text(provider.label) }
+                        text = { Text(provider.label, style = MaterialTheme.typography.labelLarge) },
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
-
-            Box(modifier = Modifier.fillMaxWidth().height(340.dp)) {
+            Box(modifier = Modifier.fillMaxWidth().height(420.dp)) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = { ctx ->
@@ -542,6 +682,23 @@ fun DictionarySheet(
             dismissButton = {
                 TextButton(onClick = { showNewListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
+        )
+    }
+}
+
+@Composable
+private fun WordPill(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = modifier
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
         )
     }
 }

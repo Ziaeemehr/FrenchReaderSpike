@@ -612,4 +612,6 @@
     <string name="update_check_failed">Couldn\'t check for updates. Check your connection.</string>
     <string name="update_checking">Checking…</string>
     <string name="update_auto_check">Check for app updates automatically</string>
+    <string name="dictionary_apply_word">Look up</string>
+    <string name="dictionary_reset_word">Reset</string>
 </resources>
