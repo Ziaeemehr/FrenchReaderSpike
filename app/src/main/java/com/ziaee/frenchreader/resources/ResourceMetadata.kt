@@ -92,6 +92,11 @@ fun fetchResourceMetadata(pageUrl: String): ResourceMetadata {
     }
 }
 
+/** Built-ins dropped from the catalog; removed once from installs that seeded them. */
+val RETIRED_RESOURCE_URLS = setOf(
+    "https://www.youtube.com/results?search_query=Mahya+polyglot"
+)
+
 /** Built-in resources not added to this install yet. */
 fun catalogEntriesToSeed(seededUrls: Set<String>): List<DefaultResource> =
     DEFAULT_RESOURCES.filter { it.url !in seededUrls }

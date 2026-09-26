@@ -336,6 +336,9 @@ interface ResourceDao {
 
     @Delete
     suspend fun delete(resource: ResourceLink)
+
+    @Query("DELETE FROM resources WHERE url IN (:urls)")
+    suspend fun deleteByUrls(urls: Collection<String>)
 }
 
 @Dao

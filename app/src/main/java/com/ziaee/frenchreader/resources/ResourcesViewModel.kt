@@ -63,7 +63,14 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             // Built-ins ship with the app. Each is added once (its URL is remembered), so an update
             // brings only new ones and a built-in the user deleted never comes back.
-            val seeded = prefs.getStringSet(KEY_SEEDED_URLS, emptySet()).orEmpty()
+            var seeded = prefs.getStringSet(KEY_SEEDED_URLS, emptySet()).orEmpty()
+            // Retired built-ins leave the seeded set too, so the cleanup runs only once.
+            val retired = seeded intersect RETIRED_RESOURCE_URLS
+            if (retired.isNotEmpty()) {
+                dao.deleteByUrls(retired)
+                seeded = seeded - retired
+                prefs.edit().putStringSet(KEY_SEEDED_URLS, seeded).apply()
+            }
             val toSeed = catalogEntriesToSeed(seeded)
             if (toSeed.isNotEmpty()) {
                 dao.insertIgnoringExisting(

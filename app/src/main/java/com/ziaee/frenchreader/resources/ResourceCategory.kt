@@ -147,13 +147,6 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
             "آموزش رایگان فرانسه و انگلیسی برای فارسی‌زبانان، از مدرسی ساکن کانادا.")
     ),
     DefaultResource(
-        "Mahya Polyglot (محیا میرصادقی)", "https://www.youtube.com/results?search_query=Mahya+polyglot",
-        ResourceCategory.PERSIAN, 18, "A1–B1",
-        d("Language learning and culture, including French, from a polyglot who speaks Persian.",
-            "Apprentissage des langues et culture, dont le français, par une polyglotte persanophone.",
-            "یادگیری زبان و فرهنگ، از جمله فرانسه، از یک چندزبانهٔ فارسی‌زبان.")
-    ),
-    DefaultResource(
         "Avec Faranak", "https://www.youtube.com/@Avec.faranak", ResourceCategory.PERSIAN, 181, null,
         d("An Iranian teacher teaching French in Persian on YouTube.",
             "Un professeur iranien qui enseigne le français en persan sur YouTube.",
