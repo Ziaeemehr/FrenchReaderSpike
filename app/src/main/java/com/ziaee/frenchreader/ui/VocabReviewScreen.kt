@@ -259,10 +259,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 boxAfter < boxBefore -> context.getString(R.string.review_returned_box_one)
                 else -> context.getString(R.string.review_stayed_box, boxAfter)
             }
-            // Again, or Hard on a card still being learned, brings it back later in this session.
-            val requeued = if (!learnedReviewMode && (answer == VocabAnswer.FORGOT ||
-                    (answer == VocabAnswer.HARD && VocabSrs.isLearningStep(entry, now)))
-            ) updated else null
+            val requeued = if (!learnedReviewMode && answer == VocabAnswer.FORGOT) updated else null
             val completedId = if (requeued == null) entry.id else null
             if (requeued != null) queue.add(3.coerceAtMost(queue.size), requeued)
             else completedIds.add(entry.id)
@@ -695,7 +692,8 @@ private fun ReviewCard(
             val thisSession = stringResource(R.string.interval_this_session)
             val learningStep = !vm.isLearnedReview && VocabSrs.isLearningStep(entry, System.currentTimeMillis())
             ReviewAnswerButton(stringResource(R.string.vocab_answer_again), if (vm.isLearnedReview) intervalLabel(vm.intervals[0]) else thisSession, Modifier.weight(1f), MaterialTheme.colorScheme.error, interactive) { vm.answer(VocabAnswer.FORGOT) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), when { vm.isLearnedReview -> null; learningStep -> thisSession; else -> intervalLabel(VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals)) }, Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
+            // A card still being learned has no "hard": plain Leitner, right or wrong.
+            if (!learningStep) ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), if (vm.isLearnedReview) null else intervalLabel(VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals)), Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
             ReviewAnswerButton(stringResource(R.string.vocab_answer_good), if (vm.isLearnedReview) null else intervalLabel(VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals)), Modifier.weight(1f), MaterialTheme.colorScheme.primary, interactive) { vm.answer(VocabAnswer.KNEW) }
         }
     }
