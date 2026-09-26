@@ -612,4 +612,5 @@
     <string name="update_auto_check">بررسی خودکار به‌روزرسانی برنامه</string>
     <string name="dictionary_apply_word">جست‌وجو</string>
     <string name="dictionary_reset_word">بازگردانی</string>
+    <string name="interval_this_session">همین جلسه</string>
 </resources>

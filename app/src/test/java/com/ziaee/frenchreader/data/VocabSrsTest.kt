@@ -63,11 +63,43 @@ class VocabSrsTest {
     fun `custom intervals are applied from the start of the current day`() {
         val intervals = listOf(2L, 5L, 9L, 20L, 40L)
 
-        val result = VocabSrs.apply(entry(box = 1), VocabAnswer.KNEW, now, intervals, utc)
+        val later = now + 3 * VocabSrs.DAY_MS
+        val source = entry(box = 1, reviewedAt = now)
+
+        val result = VocabSrs.apply(source, VocabAnswer.KNEW, later, intervals, utc)
 
         assertEquals(2, result.leitnerBox)
-        assertEquals(5L * VocabSrs.DAY_MS, result.nextReviewAtMs)
-        assertEquals(5L, VocabSrs.previewIntervalDays(entry(box = 1), VocabAnswer.KNEW, intervals))
+        assertEquals(8L * VocabSrs.DAY_MS, result.nextReviewAtMs)
+        assertEquals(5L, VocabSrs.previewIntervalDays(source, VocabAnswer.KNEW, intervals, later, utc))
+    }
+
+    @Test
+    fun `good on a new card schedules its first review for tomorrow`() {
+        val source = entry(box = 1)
+
+        val result = VocabSrs.apply(source, VocabAnswer.KNEW, now, zoneId = utc)
+
+        assertEquals(1, result.leitnerBox)
+        assertEquals(VocabSrs.DAY_MS, result.nextReviewAtMs)
+        assertEquals(1L, VocabSrs.previewIntervalDays(source, VocabAnswer.KNEW, nowMs = now, zoneId = utc))
+    }
+
+    @Test
+    fun `good after again the same day still waits for tomorrow`() {
+        val forgotten = VocabSrs.apply(entry(box = 4, reviewedAt = 1L), VocabAnswer.FORGOT, now, zoneId = utc)
+
+        val result = VocabSrs.apply(forgotten, VocabAnswer.KNEW, now + 60_000, zoneId = utc)
+
+        assertEquals(1, result.leitnerBox)
+        assertEquals(VocabSrs.DAY_MS, result.nextReviewAtMs)
+    }
+
+    @Test
+    fun `learning step covers new and same-day box one cards only`() {
+        assertTrue(VocabSrs.isLearningStep(entry(box = 1), now, utc))
+        assertTrue(VocabSrs.isLearningStep(entry(box = 1, reviewedAt = now - 1), now, utc))
+        assertFalse(VocabSrs.isLearningStep(entry(box = 1, reviewedAt = now - VocabSrs.DAY_MS), now, utc))
+        assertFalse(VocabSrs.isLearningStep(entry(box = 2, reviewedAt = now - 1), now, utc))
     }
 
     @Test

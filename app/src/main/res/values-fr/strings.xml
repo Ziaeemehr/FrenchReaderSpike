@@ -614,4 +614,5 @@
     <string name="update_auto_check">Rechercher automatiquement les mises à jour</string>
     <string name="dictionary_apply_word">Rechercher</string>
     <string name="dictionary_reset_word">Rétablir</string>
+    <string name="interval_this_session">Cette séance</string>
 </resources>

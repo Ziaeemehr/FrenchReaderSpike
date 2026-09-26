@@ -39,6 +39,19 @@ object VocabSrs {
     const val DAY_MS = 86_400_000L
     val DEFAULT_INTERVAL_DAYS = listOf(1L, 2L, 4L, 8L, 16L)
 
+    /** A card still being learned: new, or back in box 1 and already answered today. Its first
+     * spaced review is tomorrow, so Good keeps it in box 1 instead of skipping to box 2. */
+    fun isLearningStep(entry: VocabEntry, nowMs: Long, zoneId: ZoneId = ZoneId.systemDefault()): Boolean =
+        entry.leitnerBox <= 1 &&
+            (entry.lastReviewedAtMs == null || entry.lastReviewedAtMs >= startOfDayMs(nowMs, zoneId))
+
+    private fun nextBox(entry: VocabEntry, answer: VocabAnswer, nowMs: Long, zoneId: ZoneId): Int = when (answer) {
+        VocabAnswer.FORGOT -> 1
+        VocabAnswer.HARD -> entry.leitnerBox
+        VocabAnswer.KNEW ->
+            if (isLearningStep(entry, nowMs, zoneId)) 1 else (entry.leitnerBox + 1).coerceAtMost(5)
+    }
+
     fun apply(
         entry: VocabEntry,
         answer: VocabAnswer,
@@ -46,11 +59,7 @@ object VocabSrs {
         intervalDays: List<Long> = DEFAULT_INTERVAL_DAYS,
         zoneId: ZoneId = ZoneId.systemDefault()
     ): VocabEntry {
-        val newBox = when (answer) {
-            VocabAnswer.FORGOT -> 1
-            VocabAnswer.HARD -> entry.leitnerBox
-            VocabAnswer.KNEW -> (entry.leitnerBox + 1).coerceAtMost(5)
-        }
+        val newBox = nextBox(entry, answer, nowMs, zoneId)
         return entry.copy(
             leitnerBox = newBox,
             nextReviewAtMs = dueAtMs(newBox, nowMs, intervalDays, zoneId),
@@ -62,12 +71,10 @@ object VocabSrs {
     fun previewIntervalDays(
         entry: VocabEntry,
         answer: VocabAnswer,
-        intervalDays: List<Long> = DEFAULT_INTERVAL_DAYS
-    ): Long = intervalDays[(when (answer) {
-        VocabAnswer.FORGOT -> 1
-        VocabAnswer.HARD -> entry.leitnerBox
-        VocabAnswer.KNEW -> (entry.leitnerBox + 1).coerceAtMost(5)
-    } - 1).coerceIn(0, 4)]
+        intervalDays: List<Long> = DEFAULT_INTERVAL_DAYS,
+        nowMs: Long = System.currentTimeMillis(),
+        zoneId: ZoneId = ZoneId.systemDefault()
+    ): Long = intervalDays[(nextBox(entry, answer, nowMs, zoneId) - 1).coerceIn(0, 4)]
 
     fun startOfDayMs(nowMs: Long, zoneId: ZoneId = ZoneId.systemDefault()): Long =
         Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli()

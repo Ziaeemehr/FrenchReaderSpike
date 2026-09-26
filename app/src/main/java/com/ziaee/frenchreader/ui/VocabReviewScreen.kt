@@ -259,7 +259,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 boxAfter < boxBefore -> context.getString(R.string.review_returned_box_one)
                 else -> context.getString(R.string.review_stayed_box, boxAfter)
             }
-            val requeued = if (!learnedReviewMode && answer == VocabAnswer.FORGOT) updated else null
+            // Again, or Hard on a card still being learned, brings it back later in this session.
+            val requeued = if (!learnedReviewMode && (answer == VocabAnswer.FORGOT ||
+                    (answer == VocabAnswer.HARD && VocabSrs.isLearningStep(entry, now)))
+            ) updated else null
             val completedId = if (requeued == null) entry.id else null
             if (requeued != null) queue.add(3.coerceAtMost(queue.size), requeued)
             else completedIds.add(entry.id)
@@ -689,17 +692,22 @@ private fun ReviewCard(
         Spacer(Modifier.height(14.dp))
         if (!revealed) Button(onClick = onReveal, enabled = interactive, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_again), vm.intervals[0], Modifier.weight(1f), MaterialTheme.colorScheme.error, interactive) { vm.answer(VocabAnswer.FORGOT) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), if (vm.isLearnedReview) null else VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals), Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
-            ReviewAnswerButton(stringResource(R.string.vocab_answer_good), if (vm.isLearnedReview) null else VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals), Modifier.weight(1f), MaterialTheme.colorScheme.primary, interactive) { vm.answer(VocabAnswer.KNEW) }
+            val thisSession = stringResource(R.string.interval_this_session)
+            val learningStep = !vm.isLearnedReview && VocabSrs.isLearningStep(entry, System.currentTimeMillis())
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_again), if (vm.isLearnedReview) intervalLabel(vm.intervals[0]) else thisSession, Modifier.weight(1f), MaterialTheme.colorScheme.error, interactive) { vm.answer(VocabAnswer.FORGOT) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_hard), when { vm.isLearnedReview -> null; learningStep -> thisSession; else -> intervalLabel(VocabSrs.previewIntervalDays(entry, VocabAnswer.HARD, vm.intervals)) }, Modifier.weight(1f), enabled = interactive) { vm.answer(VocabAnswer.HARD) }
+            ReviewAnswerButton(stringResource(R.string.vocab_answer_good), if (vm.isLearnedReview) null else intervalLabel(VocabSrs.previewIntervalDays(entry, VocabAnswer.KNEW, vm.intervals)), Modifier.weight(1f), MaterialTheme.colorScheme.primary, interactive) { vm.answer(VocabAnswer.KNEW) }
         }
     }
 }
 
-@Composable private fun ReviewAnswerButton(label: String, days: Long?, modifier: Modifier, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable private fun intervalLabel(days: Long): String =
+    stringResource(if (days == 1L) R.string.interval_day else R.string.interval_days, days)
+
+@Composable private fun ReviewAnswerButton(label: String, hint: String?, modifier: Modifier, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface, enabled: Boolean = true, onClick: () -> Unit) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, color), colors = ButtonDefaults.outlinedButtonColors(contentColor = color)) { Text(label) }
-        if (days != null) Text(stringResource(if (days == 1L) R.string.interval_day else R.string.interval_days, days), style = MaterialTheme.typography.labelSmall)
+        if (hint != null) Text(hint, style = MaterialTheme.typography.labelSmall)
     }
 }
 

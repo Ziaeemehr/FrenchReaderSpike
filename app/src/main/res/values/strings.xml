@@ -614,4 +614,5 @@
     <string name="update_auto_check">Check for app updates automatically</string>
     <string name="dictionary_apply_word">Look up</string>
     <string name="dictionary_reset_word">Reset</string>
+    <string name="interval_this_session">This session</string>
 </resources>
