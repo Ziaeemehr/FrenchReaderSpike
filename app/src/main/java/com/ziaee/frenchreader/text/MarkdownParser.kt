@@ -9,9 +9,8 @@ enum class BlockType { HEADER, LIST_ITEM, PARAGRAPH, IMAGE }
 
 /**
  * A bold/italic run, measured as a [start, end) character range against the
- * SAME plain (Markdown-syntax-stripped) string that is sent to edge-tts and
- * to the translation service -- so it lines up with the spoken text, not
- * with the original Markdown source.
+ * block's plain (Markdown-syntax-stripped) display text, not against the
+ * original Markdown source.
  */
 data class EmphasisSpan(val start: Int, val end: Int, val bold: Boolean, val italic: Boolean)
 
@@ -20,6 +19,8 @@ data class ParsedBlock(
     val headerLevel: Int = 0,
     val listOrdered: Boolean = false,
     val plainText: String,
+    /** [plainText] without emoji/arrows/decorative symbols: the exact string sent to TTS and translation. */
+    val spokenText: String = sanitizeForSpeech(plainText),
     val emphasisSpans: List<EmphasisSpan> = emptyList(),
     val imageRef: String? = null,
     val imageAlt: String = ""
@@ -29,8 +30,10 @@ data class ParsedBlock(
  * Turns one raw TextChunker block (which may still carry Markdown syntax)
  * into a [ParsedBlock]: a block type for rendering (heading size, list
  * bullet, plain paragraph) plus a Markdown-stripped [ParsedBlock.plainText]
- * -- the exact string that gets sent to TTS/translation and that
- * ReadingViewModel/ReadingScreen highlight sentence-by-sentence. Bold/italic
+ * -- the string ReadingScreen displays and highlights sentence-by-sentence,
+ * symbols and emoji included -- and its [ParsedBlock.spokenText], the same
+ * text with those symbols removed, which is what TTS/translation receive.
+ * Bold/italic
  * markers are stripped too, with their positions recorded as
  * [EmphasisSpan]s so the UI can re-apply them on top of the highlighted
  * text.
@@ -63,13 +66,13 @@ object MarkdownParser {
 
         HEADER.find(trimmed)?.let { m ->
             val level = m.groupValues[1].length
-            val (text, spans) = stripInlineEmphasis(sanitizeForSpeech(m.groupValues[2]))
+            val (text, spans) = stripInlineEmphasis(sanitizeForDisplay(m.groupValues[2]))
             return ParsedBlock(BlockType.HEADER, headerLevel = level, plainText = text, emphasisSpans = spans)
         }
 
         LIST_ITEM.find(trimmed)?.let { m ->
             val ordered = m.groupValues[1].firstOrNull()?.isDigit() == true
-            val (text, spans) = stripInlineEmphasis(sanitizeForSpeech(m.groupValues[2]))
+            val (text, spans) = stripInlineEmphasis(sanitizeForDisplay(m.groupValues[2]))
             return ParsedBlock(BlockType.LIST_ITEM, listOrdered = ordered, plainText = text, emphasisSpans = spans)
         }
 
@@ -77,7 +80,7 @@ object MarkdownParser {
         val joined = trimmed.lines().joinToString(" ") { it.trim() }
             .replace(Regex("\\s+"), " ")
             .trim()
-        val (text, spans) = stripInlineEmphasis(sanitizeForSpeech(joined))
+        val (text, spans) = stripInlineEmphasis(sanitizeForDisplay(joined))
         return ParsedBlock(BlockType.PARAGRAPH, plainText = text, emphasisSpans = spans)
     }
 

@@ -105,3 +105,54 @@ private val SPEAKABLE_SYMBOLS = setOf(
     '¼'.code,
     '¾'.code
 )
+
+/**
+ * The on-screen counterpart of [sanitizeForSpeech]: collapses whitespace the
+ * same way but keeps emoji, arrows and other symbols (with the joiners and
+ * variation selectors they need to render), dropping only control,
+ * private-use and invisible format characters. [sanitizeForSpeech] applied to
+ * this result gives the same string as applying it to the original text, so
+ * the spoken text -- and every TTS/translation cache key -- is unchanged.
+ */
+fun sanitizeForDisplay(text: String): String {
+    val out = StringBuilder(text.length)
+    var pendingSpace = false
+    var index = 0
+
+    while (index < text.length) {
+        val codePoint = Character.codePointAt(text, index)
+        index += Character.charCount(codePoint)
+
+        if (codePoint == '\n'.code || codePoint == '\r'.code) {
+            if (codePoint == '\r'.code && index < text.length && text[index] == '\n') index++
+            trimTrailingSpace(out)
+            out.append('\n')
+            pendingSpace = false
+            continue
+        }
+
+        val type = Character.getType(codePoint)
+        if (codePoint == '\t'.code || Character.isWhitespace(codePoint) || isSeparator(type)) {
+            pendingSpace = true
+            continue
+        }
+
+        val keep = when (type) {
+            Character.CONTROL.toInt(),
+            Character.PRIVATE_USE.toInt(),
+            Character.SURROGATE.toInt(),
+            Character.UNASSIGNED.toInt() -> false
+            Character.FORMAT.toInt() ->
+                codePoint == 0x200D || codePoint in 0xE0020..0xE007F
+            else -> true
+        }
+        if (!keep) continue
+
+        if (pendingSpace && out.isNotEmpty() && out.last() != '\n') out.append(' ')
+        out.appendCodePoint(codePoint)
+        pendingSpace = false
+    }
+
+    trimTrailingSpace(out)
+    return out.toString().trim('\n')
+}

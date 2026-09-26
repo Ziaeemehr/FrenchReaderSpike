@@ -65,7 +65,7 @@ class TextChunkerTest {
                 "QUESTIONS :",
                 "Voir pour plus."
             ),
-            chunks.map { MarkdownParser.parse(it).plainText }
+            chunks.map { MarkdownParser.parse(it).spokenText }
         )
     }
 

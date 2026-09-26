@@ -26,6 +26,8 @@ import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.MarkdownParser
 import com.ziaee.frenchreader.text.ParsedBlock
 import com.ziaee.frenchreader.text.TextChunker
+import com.ziaee.frenchreader.text.alignSentencesToDisplay
+import com.ziaee.frenchreader.text.sanitizeForSpeech
 import com.ziaee.frenchreader.shadowing.*
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.SentenceBoundary
@@ -60,11 +62,20 @@ data class ChunkState(
     val translation: String? = null,
     val translationStatus: ChunkStatus = ChunkStatus.PENDING
 ) {
-    // The exact Markdown-stripped text sent to TTS/translation -- kept as a
-    // property (instead of a stored field) so every other call site that
-    // read `chunk.text` before the Markdown-parsing pass keeps working
-    // unchanged.
+    // The Markdown-stripped display text (symbols and emoji included) -- kept
+    // as a property (instead of a stored field) so every call site that read
+    // `chunk.text` before the Markdown-parsing pass keeps working unchanged.
     val text: String get() = block.plainText
+
+    // The symbol-free text actually sent to TTS/translation (and their caches).
+    val spokenText: String get() = block.spokenText
+}
+
+/** Re-cuts TTS [sentences] (spoken text) into display segments that keep the block's symbols. */
+internal fun displaySentences(block: ParsedBlock, sentences: List<SentenceBoundary>): List<SentenceBoundary> {
+    val segments = alignSentencesToDisplay(block.plainText, block.spokenText, sentences.map { it.text })
+        ?: return sentences
+    return sentences.zip(segments) { sentence, segment -> sentence.copy(text = segment) }
 }
 
 data class ReadingUiState(
@@ -82,7 +93,7 @@ data class ReadingUiState(
 )
 
 internal fun fullSynthesisTargets(chunks: List<ChunkState>): List<String> =
-    chunks.filter { it.block.type != BlockType.IMAGE }.map { it.text }
+    chunks.filter { it.block.type != BlockType.IMAGE }.map { it.spokenText }
 
 internal fun nextSpokenChunkIndex(chunks: List<ChunkState>, fromIndex: Int): Int? =
     (fromIndex.coerceAtLeast(0) until chunks.size).firstOrNull {
@@ -328,7 +339,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (chunk.translationStatus == ChunkStatus.READY) continue
                 updateChunk(i) { it.copy(translationStatus = ChunkStatus.LOADING) }
-                val result = translationRepo.getOrTranslate(chunk.text, targetLang)
+                val result = translationRepo.getOrTranslate(chunk.spokenText, targetLang)
                 if (generation != translationGeneration) return@launch
                 result.fold(
                     onSuccess = { translated ->
@@ -350,7 +361,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         val doc = _state.value.textDoc ?: return
         val pinned = !doc.pinned
         _state.value = _state.value.copy(textDoc = doc.copy(pinned = pinned))
-        val chunkTexts = _state.value.chunks.map { it.text }
+        val chunkTexts = _state.value.chunks.map { it.spokenText }
         viewModelScope.launch(Dispatchers.IO) {
             db.textDao().setPinned(doc.id, pinned)
             ttsRepo.setDocumentPinned(chunkTexts, doc.voice, doc.ratePercent, pinned)
@@ -488,7 +499,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
         updateChunk(index) { it.copy(status = ChunkStatus.LOADING, error = null) }
 
-        val result = ttsRepo.getOrSynthesize(chunk.text, doc.voice, doc.ratePercent)
+        val result = ttsRepo.getOrSynthesize(chunk.spokenText, doc.voice, doc.ratePercent)
 
         // A voice switch (or a fresh load()) can reset this text's chunks
         // while this synthesis call is still in flight -- coroutine
@@ -514,7 +525,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 updateChunk(index) {
                     it.copy(
                         status = ChunkStatus.READY,
-                        sentences = synth.sentences,
+                        sentences = displaySentences(it.block, synth.sentences),
                         playerItemIndex = itemIndex
                     )
                 }
@@ -770,7 +781,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         selectionPlaybackJob = viewModelScope.launch {
             selectionPlayer.stop()
             selectionPlayer.clearMediaItems()
-            val result = ttsRepo.getOrSynthesize(text, doc.voice, doc.ratePercent)
+            val spoken = sanitizeForSpeech(text)
+            if (spoken.isBlank()) return@launch
+            val result = ttsRepo.getOrSynthesize(spoken, doc.voice, doc.ratePercent)
             result.onSuccess { synth ->
                 selectionPlayer.setMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
                 selectionPlayer.prepare()

@@ -81,7 +81,7 @@ object TextChunker {
         }
         return out.filter { block ->
             val parsed = MarkdownParser.parse(block)
-            parsed.type == BlockType.IMAGE || parsed.plainText.isNotBlank()
+            parsed.type == BlockType.IMAGE || parsed.spokenText.isNotBlank()
         }
     }
 

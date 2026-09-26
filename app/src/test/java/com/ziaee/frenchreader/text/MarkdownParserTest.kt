@@ -6,9 +6,21 @@ import org.junit.Test
 
 class MarkdownParserTest {
     @Test
-    fun `sanitizes emoji headers and keeps French punctuation`() {
-        assertEquals("ACTIVITÉS", MarkdownParser.parse("## 🍀 ACTIVITÉS 🍀").plainText)
-        assertEquals("QUESTIONS :", MarkdownParser.parse("## 🔷 QUESTIONS :").plainText)
+    fun `keeps emoji on screen but not in spoken text`() {
+        val header = MarkdownParser.parse("## 🍀 ACTIVITÉS 🍀")
+        assertEquals("🍀 ACTIVITÉS 🍀", header.plainText)
+        assertEquals("ACTIVITÉS", header.spokenText)
+        assertEquals("QUESTIONS :", MarkdownParser.parse("## 🔷 QUESTIONS :").spokenText)
+    }
+
+    @Test
+    fun `keeps correction marks in list items`() {
+        val block = MarkdownParser.parse("- ❌ **Ta phrase :** dans une soirée")
+
+        assertEquals(BlockType.LIST_ITEM, block.type)
+        assertEquals("❌ Ta phrase : dans une soirée", block.plainText)
+        assertEquals("Ta phrase : dans une soirée", block.spokenText)
+        assertEquals(listOf(EmphasisSpan(2, 13, bold = true, italic = false)), block.emphasisSpans)
     }
 
     @Test
@@ -23,18 +35,20 @@ class MarkdownParserTest {
     fun `sanitizes visible link text while retaining it`() {
         val block = MarkdownParser.parse("Lire [le 🍀 texte](https://example.com/texte).")
 
-        assertEquals("Lire le texte.", block.plainText)
+        assertEquals("Lire le 🍀 texte.", block.plainText)
+        assertEquals("Lire le texte.", block.spokenText)
     }
 
     @Test
-    fun `emphasis spans use sanitized plain text offsets`() {
+    fun `emphasis spans use display text offsets`() {
         val block = MarkdownParser.parse("**Bravo** 🎉 *vraiment*")
 
-        assertEquals("Bravo vraiment", block.plainText)
+        assertEquals("Bravo 🎉 vraiment", block.plainText)
+        assertEquals("Bravo vraiment", block.spokenText)
         assertEquals(
             listOf(
                 EmphasisSpan(0, 5, bold = true, italic = false),
-                EmphasisSpan(6, 14, bold = false, italic = true)
+                EmphasisSpan(9, 17, bold = false, italic = true)
             ),
             block.emphasisSpans
         )
