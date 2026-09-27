@@ -164,6 +164,15 @@ fun SettingsScreen(
                             AppearanceState.fontScale = scale
                             AppearancePrefs.setFontScale(context, scale)
                         }
+                        CompactSettingLabel(R.string.page_navigation_title)
+                        CompactChoiceColumn(
+                            com.ziaee.frenchreader.ui.theme.PageNavigation.entries,
+                            AppearanceState.pageNavigation,
+                            { stringResource(it.labelResource()) }
+                        ) { navigation ->
+                            AppearanceState.pageNavigation = navigation
+                            AppearancePrefs.setPageNavigation(context, navigation)
+                        }
                     }
                     1 -> {
                         SettingsSwitchRow(
@@ -705,6 +714,23 @@ private fun <T> CompactChoiceRow(
 }
 
 @Composable
+private fun <T> CompactChoiceColumn(
+    entries: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit
+) {
+    Column(Modifier.fillMaxWidth()) {
+        entries.forEach { entry ->
+            Row(
+                Modifier.fillMaxWidth().clickable { onSelect(entry) }.padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(selected = entry == selected, onClick = { onSelect(entry) })
+                Text(label(entry), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
 private fun <T> ColorGrid(
     entries: List<T>, selected: T, color: (T) -> Color,
     label: @Composable (T) -> String, onSelect: (T) -> Unit
@@ -748,6 +774,11 @@ private fun FontScale.labelResource(): Int = when (this) {
     FontScale.MEDIUM -> R.string.font_scale_medium
     FontScale.LARGE -> R.string.font_scale_large
     FontScale.XLARGE -> R.string.font_scale_xlarge
+}
+private fun com.ziaee.frenchreader.ui.theme.PageNavigation.labelResource(): Int = when (this) {
+    com.ziaee.frenchreader.ui.theme.PageNavigation.SCROLL -> R.string.page_navigation_scroll
+    com.ziaee.frenchreader.ui.theme.PageNavigation.HORIZONTAL -> R.string.page_navigation_horizontal
+    com.ziaee.frenchreader.ui.theme.PageNavigation.VERTICAL -> R.string.page_navigation_vertical
 }
 private fun ReadingBackground.labelResource(): Int = when (this) {
     ReadingBackground.WHITE -> R.string.reading_background_white

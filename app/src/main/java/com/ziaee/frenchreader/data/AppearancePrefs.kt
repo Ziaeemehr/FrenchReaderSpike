@@ -4,6 +4,7 @@ import android.content.Context
 import com.ziaee.frenchreader.ui.theme.FontScale
 import com.ziaee.frenchreader.ui.theme.HighlightColor
 import com.ziaee.frenchreader.ui.theme.ReadingBackground
+import com.ziaee.frenchreader.ui.theme.PageNavigation
 import com.ziaee.frenchreader.ui.theme.ThemeMode
 
 /**
@@ -18,6 +19,7 @@ object AppearancePrefs {
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_READING_BACKGROUND = "reading_background"
     private const val KEY_FONT_SCALE = "font_scale"
+    private const val KEY_PAGE_NAVIGATION = "page_navigation"
     private const val KEY_HIGHLIGHT_SAVED_WORDS = "highlight_saved_words"
     private const val KEY_HIGHLIGHT_COLOR = "highlight_color"
 
@@ -31,6 +33,11 @@ object AppearancePrefs {
 
     fun getFontScale(context: Context): FontScale = read(context, KEY_FONT_SCALE, FontScale.MEDIUM)
     fun setFontScale(context: Context, scale: FontScale) = write(context, KEY_FONT_SCALE, scale.name)
+
+    fun getPageNavigation(context: Context): PageNavigation =
+        read(context, KEY_PAGE_NAVIGATION, PageNavigation.SCROLL)
+    fun setPageNavigation(context: Context, navigation: PageNavigation) =
+        write(context, KEY_PAGE_NAVIGATION, navigation.name)
 
     fun getHighlightColor(context: Context): HighlightColor =
         read(context, KEY_HIGHLIGHT_COLOR, HighlightColor.YELLOW)

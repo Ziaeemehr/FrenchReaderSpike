@@ -10,6 +10,9 @@ import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -41,16 +44,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalTextToolbar
 import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.TextRange
@@ -60,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.graphics.luminance
@@ -81,6 +88,8 @@ import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.data.HighlightEntry
 import com.ziaee.frenchreader.data.HighlightPrefs
 import com.ziaee.frenchreader.text.BlockType
+import com.ziaee.frenchreader.text.ParsedBlock
+import com.ziaee.frenchreader.text.isRtlText
 import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
@@ -88,6 +97,7 @@ import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.shadowing.*
 import com.ziaee.frenchreader.ui.theme.AppearanceState
 import com.ziaee.frenchreader.ui.theme.FontScale
+import com.ziaee.frenchreader.ui.theme.PageNavigation
 import com.ziaee.frenchreader.ui.theme.ReadingPalette
 import com.ziaee.frenchreader.ui.theme.readingPaletteFor
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
@@ -150,16 +160,21 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
         mutableStateOf(HighlightPrefs.getLastColorKey(settingsContext))
     }
     var clearSelectionTick by remember { mutableIntStateOf(0) }
+    var textSelectionActive by remember { mutableStateOf(false) }
     var processTextTarget by remember { mutableStateOf<String?>(null) }
     val selectionToolbarController = remember { SelectionToolbarController() }
     val density = androidx.compose.ui.platform.LocalDensity.current
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
 
     val listState = rememberLazyListState()
+    val pageNavigation = AppearanceState.pageNavigation
+    var requestedPageAnchor by remember { mutableStateOf<ReadingAnchor?>(null) }
+    var visiblePageAnchor by remember { mutableStateOf(ReadingAnchor(0, 0)) }
     var autoScrollEnabled by remember { mutableStateOf(true) }
     var voiceMenuExpanded by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
     var showSourceInfoSheet by remember { mutableStateOf(false) }
+    var pageNavigationMenuOpen by remember { mutableStateOf(false) }
     var showContentsSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -220,7 +235,10 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     }
     LaunchedEffect(findOpen, findQuery, findIndex, activeFindMatch?.chunkIndex, state.ready) {
         val match = activeFindMatch ?: return@LaunchedEffect
-        if (findOpen && state.ready) listState.animateScrollToItem(match.chunkIndex)
+        if (findOpen && state.ready) {
+            if (pageNavigation == PageNavigation.SCROLL) listState.animateScrollToItem(match.chunkIndex)
+            else requestedPageAnchor = ReadingAnchor(match.chunkIndex, match.range.first)
+        }
     }
     fun stepFind(delta: Int) {
         if (findResults.isEmpty()) return
@@ -232,6 +250,31 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     }
 
     LaunchedEffect(textId) { vm.load(textId) }
+    LaunchedEffect(pageNavigation) {
+        if (pageNavigation == PageNavigation.SCROLL) {
+            val anchor = requestedPageAnchor ?: visiblePageAnchor
+            if (state.chunks.isNotEmpty()) listState.scrollToItem(anchor.chunkIndex.coerceIn(state.chunks.indices))
+            requestedPageAnchor = null
+        } else if (requestedPageAnchor == null) {
+            requestedPageAnchor = ReadingAnchor(listState.firstVisibleItemIndex, 0)
+        }
+    }
+    // (title, body, body editable) while the in-reader editor is open.
+    var editTarget by remember { mutableStateOf<Triple<String, String, Boolean>?>(null) }
+    editTarget?.let { (title, body, bodyEditable) ->
+        com.ziaee.frenchreader.ui.shared.AddTextEditor(
+            initialTitle = title,
+            initialBody = body,
+            bodyEditable = bodyEditable,
+            dialogTitle = stringResource(R.string.edit_text_title),
+            confirmLabel = stringResource(R.string.action_save),
+            onDismiss = { editTarget = null },
+            onSave = { newTitle, newBody ->
+                editTarget = null
+                vm.saveEdit(newTitle, newBody)
+            }
+        )
+    }
     LaunchedEffect(state.fullSynthesisError) {
         val error = state.fullSynthesisError ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(error)
@@ -249,7 +292,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     }
 
     // With translations shown, translate the paragraphs on screen once scrolling settles.
-    LaunchedEffect(state.showTranslations, state.chunks.isNotEmpty()) {
+    LaunchedEffect(state.showTranslations, state.chunks.isNotEmpty(), pageNavigation) {
+        if (pageNavigation != PageNavigation.SCROLL) return@LaunchedEffect
         if (!state.showTranslations || state.chunks.isEmpty()) return@LaunchedEffect
         snapshotFlow {
             listState.firstVisibleItemIndex to listState.layoutInfo.visibleItemsInfo.size
@@ -262,12 +306,19 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     // Follows playback down the page as the current paragraph advances, so
     // reading along doesn't require manually dragging the screen up every
     // few sentences. Toggled off, the person scrolls entirely by hand.
-    LaunchedEffect(state.currentChunkIndex, state.ready, autoScrollEnabled) {
+    LaunchedEffect(state.currentChunkIndex, state.currentPositionMs, state.ready, autoScrollEnabled, pageNavigation) {
         // While find is showing a match, don't jump back to the reading position (it runs once
         // when the text loads); playback still takes over as soon as it starts.
         val findHoldsScroll = findOpen && findQuery.isNotBlank() && !state.isPlaying
         if (autoScrollEnabled && state.ready && state.chunks.isNotEmpty() && !findHoldsScroll) {
-            listState.animateScrollToItem(state.currentChunkIndex)
+            if (pageNavigation == PageNavigation.SCROLL) {
+                listState.animateScrollToItem(state.currentChunkIndex)
+            } else {
+                requestedPageAnchor = ReadingAnchor(
+                    state.currentChunkIndex,
+                    activeSentenceCharacterOffset(state.chunks.getOrNull(state.currentChunkIndex), state.currentPositionMs)
+                )
+            }
         }
     }
 
@@ -277,8 +328,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     // approaches the bottom of the visible area, so its tail is never being
     // read while sitting off-screen. Only activates for paragraphs that
     // don't already fit on screen; short paragraphs are untouched.
-    LaunchedEffect(autoScrollEnabled) {
-        if (!autoScrollEnabled) return@LaunchedEffect
+    LaunchedEffect(autoScrollEnabled, pageNavigation) {
+        if (!autoScrollEnabled || pageNavigation != PageNavigation.SCROLL) return@LaunchedEffect
         snapshotFlow { state.currentPositionMs to state.currentChunkIndex }
             .collect { (positionMs, chunkIndex) ->
                 if (!state.ready || state.chunks.isEmpty()) return@collect
@@ -360,7 +411,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                 }
                                 DropdownMenu(
                                     expanded = moreMenuExpanded,
-                                    onDismissRequest = { moreMenuExpanded = false }
+                                    onDismissRequest = { moreMenuExpanded = false; pageNavigationMenuOpen = false }
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.reading_find)) },
@@ -369,6 +420,16 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                             moreMenuExpanded = false
                                             findOpen = true
                                             findFocusRequest = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.action_edit)) },
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                        onClick = {
+                                            moreMenuExpanded = false
+                                            vm.loadForEdit { title, body, bodyEditable ->
+                                                editTarget = Triple(title, body, bodyEditable)
+                                            }
                                         }
                                     )
                                     DropdownMenuItem(
@@ -396,6 +457,51 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                             onClick = { setScale(scales[index + 1]) },
                                             enabled = index < scales.lastIndex
                                         ) { Text("A+", style = MaterialTheme.typography.titleMedium) }
+                                    }
+                                    fun pageNavigationLabel(navigation: PageNavigation) = when (navigation) {
+                                        PageNavigation.SCROLL -> R.string.page_navigation_scroll
+                                        PageNavigation.HORIZONTAL -> R.string.page_navigation_horizontal
+                                        PageNavigation.VERTICAL -> R.string.page_navigation_vertical
+                                    }
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column {
+                                                Text(stringResource(R.string.page_navigation_title))
+                                                Text(
+                                                    stringResource(pageNavigationLabel(pageNavigation)),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = palette.inkFaded
+                                                )
+                                            }
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.SwapVert, contentDescription = null) },
+                                        trailingIcon = {
+                                            Icon(
+                                                if (pageNavigationMenuOpen) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = { pageNavigationMenuOpen = !pageNavigationMenuOpen }
+                                    )
+                                    if (pageNavigationMenuOpen) PageNavigation.entries.forEach { navigation ->
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(pageNavigationLabel(navigation))) },
+                                            modifier = Modifier.padding(start = 24.dp),
+                                            leadingIcon = {
+                                                if (pageNavigation == navigation) {
+                                                    Icon(Icons.Default.Check, contentDescription = null)
+                                                }
+                                            },
+                                            onClick = {
+                                                moreMenuExpanded = false
+                                                pageNavigationMenuOpen = false
+                                                requestedPageAnchor = if (pageNavigation == PageNavigation.SCROLL) {
+                                                    ReadingAnchor(listState.firstVisibleItemIndex, 0)
+                                                } else visiblePageAnchor
+                                                AppearanceState.pageNavigation = navigation
+                                                AppearancePrefs.setPageNavigation(settingsContext, navigation)
+                                            }
+                                        )
                                     }
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.accessibility_select_voice)) },
@@ -453,7 +559,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                             }
                                         )
                                     }
-                                    if (state.textDoc?.sourceUrl != null) {
+                                    if (state.textDoc != null) {
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.accessibility_source_info)) },
                                             leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
@@ -564,7 +670,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
             }
 
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-                LazyColumn(
+                if (pageNavigation == PageNavigation.SCROLL) LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .fillMaxHeight()
@@ -625,7 +731,136 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                     }
                     Spacer(Modifier.height(spacing))
                 }
-            }
+                }
+                else BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val pageDensity = LocalDensity.current
+                    val readerWidthPx = minOf(
+                        constraints.maxWidth,
+                        with(pageDensity) { FrenchReaderDesign.sizes.readerMeasure.roundToPx() }
+                    )
+                    val reservedVerticalPx = with(pageDensity) { 56.dp.roundToPx() }
+                    val pageHeightPx = (constraints.maxHeight - reservedVerticalPx).coerceAtLeast(1)
+                    val pages by rememberReadingPages(
+                        chunks = state.chunks,
+                        widthPx = readerWidthPx,
+                        pageHeightPx = pageHeightPx,
+                        fontScale = fontScale,
+                        showTranslations = state.showTranslations,
+                        density = pageDensity,
+                        geometryThemeKey = AppearanceState.readingBackground
+                    )
+                    val bookDirection = if (dominantReadingDirectionIsRtl(state.chunks)) {
+                        LayoutDirection.Rtl
+                    } else LayoutDirection.Ltr
+                    PagedReadingContent(
+                        pages = pages,
+                        navigation = pageNavigation,
+                        bookDirection = bookDirection,
+                        background = palette.background,
+                        inkFaded = palette.inkFaded,
+                        requestedAnchor = requestedPageAnchor,
+                        onAnchorConsumed = { requestedPageAnchor = null },
+                        userScrollEnabled = !textSelectionActive,
+                        onVisiblePage = { page ->
+                            page.fragments.firstOrNull()?.let {
+                                visiblePageAnchor = ReadingAnchor(it.chunkIndex, it.startOffset)
+                            }
+                            val visible = page.chunkIndices()
+                            if (state.showTranslations && visible.isNotEmpty()) {
+                                vm.translateVisible(visible.first(), visible.last() - visible.first() + 1)
+                            }
+                        }
+                    ) { page ->
+                        val scrolling = page.fragments.any { it.atomic || it.internallyScrollable }
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .then(if (scrolling) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                                .padding(top = 20.dp, bottom = 36.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Column(
+                                Modifier
+                                    .widthIn(max = FrenchReaderDesign.sizes.readerMeasure)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = FrenchReaderDesign.spacing.medium)
+                            ) {
+                                page.fragments.forEach { fragment ->
+                                    val chunk = state.chunks.getOrNull(fragment.chunkIndex) ?: return@forEach
+                                    val start = fragment.startOffset
+                                    val end = fragment.endOffset
+                                    fun shifted(range: IntRange): IntRange? {
+                                        val clippedStart = maxOf(range.first, start)
+                                        val clippedEnd = minOf(range.last + 1, end)
+                                        return if (clippedStart < clippedEnd) {
+                                            (clippedStart - start)..(clippedEnd - start - 1)
+                                        } else null
+                                    }
+                                    val pageFindRanges = if (findOpen) {
+                                        findRangesByChunk[fragment.chunkIndex].orEmpty().mapNotNull(::shifted)
+                                    } else emptyList()
+                                    val pageActiveFind = activeFindMatch
+                                        ?.takeIf { findOpen && it.chunkIndex == fragment.chunkIndex }
+                                        ?.range?.let(::shifted)
+                                    ChunkParagraph(
+                                        chunk = chunk,
+                                        isCurrentChunk = fragment.chunkIndex == state.currentChunkIndex,
+                                        currentPositionMs = if (fragment.chunkIndex == state.currentChunkIndex) state.currentPositionMs else 0L,
+                                        showTranslation = state.showTranslations && fragment.showTranslation,
+                                        savedVocabStatuses = savedVocabStatuses,
+                                        highlights = highlights,
+                                        documentStartOffset = chunkDocumentOffsets.getOrElse(fragment.chunkIndex) { 0 } + start,
+                                        palette = palette,
+                                        fontScale = fontScale,
+                                        findRanges = pageFindRanges,
+                                        activeFindRange = pageActiveFind,
+                                        onSentenceClick = { sentence -> vm.seekToSentence(fragment.chunkIndex, sentence) },
+                                        onPendingClick = { vm.jumpToChunk(fragment.chunkIndex) },
+                                        onRetry = { vm.retryChunk(fragment.chunkIndex) },
+                                        onWordLookup = { word, sentenceText, range ->
+                                            selectedWord = word to sentenceText
+                                            selectedWordRange = range
+                                            selectedPhrase = null
+                                            selectedPhraseRange = null
+                                            showHighlightPalette = false
+                                        },
+                                        onPhraseSelected = { phrase, sentenceText, range ->
+                                            selectedPhrase = phrase
+                                            selectedPhraseSentence = sentenceText
+                                            selectedPhraseRange = range
+                                            selectedWord = null
+                                            selectedWordRange = null
+                                            highlightPopupTarget = null
+                                            highlightPopupRect = null
+                                        },
+                                        onHighlightClick = { highlight, rect ->
+                                            selectedPhrase = null
+                                            selectedPhraseRange = null
+                                            selectedWord = null
+                                            selectedWordRange = null
+                                            highlightPopupTarget = highlight
+                                            highlightPopupRect = rect
+                                            changeHighlightColor = false
+                                        },
+                                        clearSelectionSignal = clearSelectionTick,
+                                        onSelectionActiveChange = { textSelectionActive = it },
+                                        textStartOffset = start,
+                                        textEndOffset = end
+                                    )
+                                    if (!fragment.atomic && end == chunk.readingDisplayText().length) {
+                                        val spacing = when {
+                                            chunk.block.type == BlockType.LIST_ITEM &&
+                                                state.chunks.getOrNull(fragment.chunkIndex + 1)?.block?.type == BlockType.LIST_ITEM -> 6.dp
+                                            chunk.block.type == BlockType.HEADER -> FrenchReaderDesign.spacing.large
+                                            else -> FrenchReaderDesign.spacing.medium
+                                        }
+                                        Spacer(Modifier.height(spacing))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -925,7 +1160,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
 
     if (showSourceInfoSheet) {
         state.textDoc?.let { doc ->
-            SourceInfoSheet(doc = doc, palette = palette, onDismiss = { showSourceInfoSheet = false })
+            SourceInfoSheet(doc = doc, chunks = state.chunks, currentChunkIndex = state.currentChunkIndex, palette = palette, onDismiss = { showSourceInfoSheet = false })
         }
     }
 
@@ -938,7 +1173,11 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
             onSelect = { index ->
                 vm.jumpToChunk(index)
                 showContentsSheet = false
-                scope.launch { listState.scrollToItem(index) }
+                if (pageNavigation == PageNavigation.SCROLL) {
+                    scope.launch { listState.scrollToItem(index) }
+                } else {
+                    requestedPageAnchor = ReadingAnchor(index, 0)
+                }
             },
             onDismiss = { showContentsSheet = false }
         )
@@ -997,31 +1236,66 @@ private fun ContentsSheet(
 @Composable
 private fun SourceInfoSheet(
     doc: com.ziaee.frenchreader.data.TextDocument,
+    chunks: List<ChunkState>,
+    currentChunkIndex: Int,
     palette: ReadingPalette,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val dateFormat = remember { java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM) }
+    val numberFormat = remember { java.text.NumberFormat.getIntegerInstance() }
+    val words = remember(chunks) {
+        chunks.sumOf { chunk -> chunk.text.split(Regex("\\s+")).count { it.any(Char::isLetterOrDigit) } }
+    }
+    val paragraphs = chunks.count { it.block.type != BlockType.HEADER && it.block.type != BlockType.IMAGE }
+    // Learner pace: ~150 words per minute.
+    val minutes = maxOf(1, (words + 149) / 150)
+    val progress = if (chunks.isEmpty()) 0 else ((currentChunkIndex + 1) * 100 / chunks.size).coerceIn(0, 100)
+
+    @Composable
+    fun InfoRow(label: String, value: String) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = palette.inkFaded, modifier = Modifier.weight(1f))
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
 
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = palette.background, contentColor = palette.ink) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = FrenchReaderDesign.spacing.medium).padding(bottom = FrenchReaderDesign.spacing.large)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    doc.sourceName ?: stringResource(R.string.source_default_label),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle,
-                    modifier = Modifier.weight(1f)
-                )
-                doc.sourceUrl?.let { url ->
-                    IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
-                        Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
+            Text(doc.title, style = FrenchReaderDesign.editorialTypography.sectionTitle)
+            HorizontalDivider(Modifier.padding(vertical = FrenchReaderDesign.spacing.small), color = palette.divider)
+            InfoRow(stringResource(R.string.text_info_words), numberFormat.format(words))
+            InfoRow(stringResource(R.string.text_info_reading_time), stringResource(R.string.text_info_minutes, numberFormat.format(minutes)))
+            InfoRow(stringResource(R.string.text_info_paragraphs), numberFormat.format(paragraphs))
+            InfoRow(stringResource(R.string.text_info_progress), numberFormat.format(progress) + "%")
+            InfoRow(stringResource(R.string.text_info_added), dateFormat.format(Date(doc.createdAtMs)))
+            if (doc.sourceUrl != null || doc.sourceName != null || doc.author != null || doc.license != null || doc.publishedAt != null) {
+                HorizontalDivider(Modifier.padding(vertical = FrenchReaderDesign.spacing.small), color = palette.divider)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        doc.sourceName ?: stringResource(R.string.source_default_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    doc.sourceUrl?.let { url ->
+                        IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
+                            Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
+                        }
                     }
                 }
-            }
-            HorizontalDivider(Modifier.padding(vertical = FrenchReaderDesign.spacing.small), color = palette.divider)
-            doc.author?.let { Text(stringResource(R.string.source_author_label, it), style = MaterialTheme.typography.bodyLarge) }
-            doc.license?.let { Text(stringResource(R.string.source_license_label, it), style = MaterialTheme.typography.bodyLarge) }
-            doc.publishedAt?.let {
-                val dateLabel = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it))
-                Text(stringResource(R.string.source_published_label, dateLabel), style = MaterialTheme.typography.bodyLarge)
+                doc.author?.let { Text(stringResource(R.string.source_author_label, it), style = MaterialTheme.typography.bodyLarge) }
+                doc.license?.let { Text(stringResource(R.string.source_license_label, it), style = MaterialTheme.typography.bodyLarge) }
+                doc.publishedAt?.let {
+                    Text(stringResource(R.string.source_published_label, dateFormat.format(Date(it))), style = MaterialTheme.typography.bodyLarge)
+                }
+                doc.sourceUrl?.let {
+                    Text(
+                        Uri.parse(it).host ?: it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = palette.inkFaded,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
     }
@@ -1046,95 +1320,89 @@ private fun ChunkParagraph(
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
     onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
-    clearSelectionSignal: Int
+    clearSelectionSignal: Int,
+    onSelectionActiveChange: (Boolean) -> Unit = {},
+    textStartOffset: Int = 0,
+    textEndOffset: Int? = null
 ) {
     // Not-yet-synthesized chunks have no sentence timings, but must still render with
     // their Markdown structure (headings, lists, emphasis) -- so show the whole block as
     // one untimed sentence through the same path as READY chunks.
+    // A block whose audio failed still shows its text the same way; tapping it retries.
     val unsynthesized = chunk.status == ChunkStatus.PENDING || chunk.status == ChunkStatus.LOADING
-    val chunk = if (unsynthesized && chunk.sentences.isEmpty()) {
+    val failed = chunk.status == ChunkStatus.ERROR
+    val chunk = if ((unsynthesized || failed) && chunk.sentences.isEmpty()) {
         chunk.copy(sentences = listOf(SentenceBoundary(text = chunk.text, offsetMs = 0.0, durationMs = 0.0)))
     } else chunk
-    val onSentenceClick: (SentenceBoundary) -> Unit =
-        if (unsynthesized) { _ -> onPendingClick() } else onSentenceClick
+    val onSentenceClick: (SentenceBoundary) -> Unit = when {
+        unsynthesized -> { _ -> onPendingClick() }
+        failed -> { _ -> onRetry() }
+        else -> onSentenceClick
+    }
 
     if (chunk.block.type == BlockType.IMAGE) {
         EpubImage(block = chunk.block, palette = palette, fontScale = fontScale)
         return
     }
 
-    when (chunk.status) {
-        ChunkStatus.READY, ChunkStatus.PENDING, ChunkStatus.LOADING -> {
-            // The French text must always read left-to-right regardless of
-            // the surrounding Persian UI's layout direction.
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                Column {
-                    when (chunk.block.type) {
-                        BlockType.HEADER -> Column {
-                            Spacer(Modifier.height(if (chunk.block.headerLevel == 1) 12.dp else 4.dp))
-                            SentenceFlowText(
-                                chunk = chunk,
-                                isCurrentChunk = isCurrentChunk,
-                                currentPositionMs = currentPositionMs,
-                                fontSize = headerFontSize(chunk.block.headerLevel, fontScale),
-                                lineHeight = headerLineHeight(chunk.block.headerLevel, fontScale),
-                                fontWeight = FontWeight.SemiBold,
-                                color = palette.ink,
-                                palette = palette,
-                                savedVocabStatuses = savedVocabStatuses,
-                                highlights = highlights,
-                                documentStartOffset = documentStartOffset,
-                                findRanges = findRanges,
-                                activeFindRange = activeFindRange,
-                                onSentenceClick = onSentenceClick,
-                                onWordLookup = onWordLookup,
-                                onPhraseSelected = onPhraseSelected,
-                                onHighlightClick = onHighlightClick,
-                                clearSelectionSignal = clearSelectionSignal
-                            )
-                            if (chunk.block.headerLevel == 1) {
-                                Box(
-                                    Modifier.padding(top = 12.dp).width(48.dp).height(2.dp)
-                                        .clip(RoundedCornerShape(1.dp)).background(palette.accent)
-                                )
-                            }
-                        }
-                        BlockType.LIST_ITEM -> Row {
-                            Text(
-                                "•  ",
-                                fontSize = (19f * fontScale).sp,
-                                lineHeight = (29f * fontScale).sp,
-                                color = palette.accent
-                            )
-                            Box(modifier = Modifier.weight(1f)) {
-                                SentenceFlowText(
-                                    chunk = chunk,
-                                    isCurrentChunk = isCurrentChunk,
-                                    currentPositionMs = currentPositionMs,
-                                    fontSize = (19f * fontScale).sp,
-                                    lineHeight = (29f * fontScale).sp,
-                                    fontWeight = null,
-                                    color = palette.ink,
-                                    palette = palette,
-                                    savedVocabStatuses = savedVocabStatuses,
-                                    highlights = highlights,
-                                    documentStartOffset = documentStartOffset,
-                                    findRanges = findRanges,
-                                    activeFindRange = activeFindRange,
-                                    onSentenceClick = onSentenceClick,
-                                    onWordLookup = onWordLookup,
-                                    onPhraseSelected = onPhraseSelected,
-                                    onHighlightClick = onHighlightClick,
-                                    clearSelectionSignal = clearSelectionSignal
-                                )
-                            }
-                        }
-                        BlockType.PARAGRAPH -> SentenceFlowText(
+    // Each block takes the direction of its own text, not the surrounding UI's:
+    // French stays left-to-right under a Persian UI, and Persian blocks in a
+    // document lay out right-to-left (alignment and list bullet included).
+    val blockDirection = if (isRtlText(chunk.text)) LayoutDirection.Rtl else LayoutDirection.Ltr
+    CompositionLocalProvider(LocalLayoutDirection provides blockDirection) {
+        Column {
+            when (chunk.block.type) {
+                BlockType.HEADER -> Column {
+                    if (textStartOffset == 0) {
+                        Spacer(Modifier.height(if (chunk.block.headerLevel == 1) 12.dp else 4.dp))
+                    }
+                    SentenceFlowText(
+                        chunk = chunk,
+                        isCurrentChunk = isCurrentChunk,
+                        currentPositionMs = currentPositionMs,
+                        fontSize = headerFontSize(chunk.block.headerLevel, fontScale),
+                        lineHeight = headerLineHeight(chunk.block.headerLevel, fontScale),
+                        fontWeight = FontWeight.SemiBold,
+                        color = palette.ink,
+                        palette = palette,
+                        savedVocabStatuses = savedVocabStatuses,
+                        highlights = highlights,
+                        documentStartOffset = documentStartOffset,
+                        findRanges = findRanges,
+                        activeFindRange = activeFindRange,
+                        onSentenceClick = onSentenceClick,
+                        onWordLookup = onWordLookup,
+                        onPhraseSelected = onPhraseSelected,
+                        onHighlightClick = onHighlightClick,
+                        clearSelectionSignal = clearSelectionSignal,
+                        onSelectionActiveChange = onSelectionActiveChange,
+                        justify = false,
+                        textStartOffset = textStartOffset,
+                        textEndOffset = textEndOffset
+                    )
+                    if (chunk.block.headerLevel == 1 &&
+                        (textEndOffset == null || textEndOffset >= chunk.readingDisplayText().length)
+                    ) {
+                        Box(
+                            Modifier.padding(top = 12.dp).width(48.dp).height(2.dp)
+                                .clip(RoundedCornerShape(1.dp)).background(palette.accent)
+                        )
+                    }
+                }
+                BlockType.LIST_ITEM -> Row {
+                    Text(
+                        if (textStartOffset == 0) "•  " else "   ",
+                        fontSize = (19f * fontScale).sp,
+                        lineHeight = (29f * fontScale).sp,
+                        color = palette.accent
+                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        SentenceFlowText(
                             chunk = chunk,
                             isCurrentChunk = isCurrentChunk,
                             currentPositionMs = currentPositionMs,
                             fontSize = (19f * fontScale).sp,
-                            lineHeight = (31f * fontScale).sp,
+                            lineHeight = (29f * fontScale).sp,
                             fontWeight = null,
                             color = palette.ink,
                             palette = palette,
@@ -1147,62 +1415,105 @@ private fun ChunkParagraph(
                             onWordLookup = onWordLookup,
                             onPhraseSelected = onPhraseSelected,
                             onHighlightClick = onHighlightClick,
-                            clearSelectionSignal = clearSelectionSignal
+                            clearSelectionSignal = clearSelectionSignal,
+                            onSelectionActiveChange = onSelectionActiveChange,
+                            justify = false,
+                            textStartOffset = textStartOffset,
+                            textEndOffset = textEndOffset
                         )
-                        BlockType.IMAGE -> Unit
-                    }
-
-                    if (chunk.status == ChunkStatus.LOADING) {
-                        Spacer(Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = palette.accent)
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.audio_preparing), fontSize = (12f * fontScale).sp, color = palette.inkFaded)
-                        }
-                    }
-
-                    if (showTranslation) {
-                        Spacer(Modifier.height(6.dp))
-                        when (chunk.translationStatus) {
-                            ChunkStatus.READY -> chunk.translation?.let {
-                                // The block is forced LTR for the French text; let the translation
-                                // take its own direction so Persian lays out right-to-left.
-                                Text(
-                                    it,
-                                    fontSize = (14f * fontScale).sp,
-                                    lineHeight = (21f * fontScale).sp,
-                                    fontStyle = FontStyle.Italic,
-                                    color = palette.inkFaded,
-                                    style = LocalTextStyle.current.copy(textDirection = TextDirection.Content),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                            ChunkStatus.LOADING -> Text(
-                                stringResource(R.string.translation_loading),
-                                fontSize = (13f * fontScale).sp,
-                                fontStyle = FontStyle.Italic,
-                                color = palette.inkFaded
-                            )
-                            ChunkStatus.ERROR -> Text(
-                                stringResource(R.string.error_translation_unavailable),
-                                fontSize = (13f * fontScale).sp,
-                                fontStyle = FontStyle.Italic,
-                                color = palette.inkFaded
-                            )
-                            ChunkStatus.PENDING -> {}
-                        }
                     }
                 }
-            }
-        }
-        ChunkStatus.ERROR -> {
-            Column {
-                Text(
-                    stringResource(R.string.error_audio_generation_detail, chunk.error.orEmpty()),
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = (13f * fontScale).sp
+                BlockType.PARAGRAPH -> SentenceFlowText(
+                    chunk = chunk,
+                    isCurrentChunk = isCurrentChunk,
+                    currentPositionMs = currentPositionMs,
+                    fontSize = (19f * fontScale).sp,
+                    lineHeight = (31f * fontScale).sp,
+                    fontWeight = null,
+                    color = palette.ink,
+                    palette = palette,
+                    savedVocabStatuses = savedVocabStatuses,
+                    highlights = highlights,
+                    documentStartOffset = documentStartOffset,
+                    findRanges = findRanges,
+                    activeFindRange = activeFindRange,
+                    onSentenceClick = onSentenceClick,
+                    onWordLookup = onWordLookup,
+                    onPhraseSelected = onPhraseSelected,
+                    onHighlightClick = onHighlightClick,
+                    clearSelectionSignal = clearSelectionSignal,
+                    onSelectionActiveChange = onSelectionActiveChange,
+                    justify = true,
+                    textStartOffset = textStartOffset,
+                    textEndOffset = textEndOffset
                 )
-                TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
+                BlockType.TABLE -> TableBlock(
+                    chunk = chunk,
+                    fontScale = fontScale,
+                    palette = palette,
+                    savedVocabStatuses = savedVocabStatuses,
+                    highlights = highlights,
+                    documentStartOffset = documentStartOffset,
+                    findRanges = findRanges,
+                    activeFindRange = activeFindRange,
+                    onSentenceClick = onSentenceClick,
+                    onWordLookup = onWordLookup,
+                    onPhraseSelected = onPhraseSelected,
+                    onHighlightClick = onHighlightClick,
+                    clearSelectionSignal = clearSelectionSignal,
+                    onSelectionActiveChange = onSelectionActiveChange
+                )
+                BlockType.IMAGE -> Unit
+            }
+
+            if (chunk.status == ChunkStatus.LOADING) {
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = palette.accent)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.audio_preparing), fontSize = (12f * fontScale).sp, color = palette.inkFaded)
+                }
+            }
+            if (failed) {
+                // Just a small muted mark instead of an error message; tap to retry.
+                Icon(
+                    Icons.Default.VolumeOff,
+                    contentDescription = stringResource(R.string.action_retry),
+                    tint = palette.inkFaded.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(top = 2.dp).size(16.dp).clickable(onClick = onRetry)
+                )
+            }
+
+            if (showTranslation) {
+                Spacer(Modifier.height(6.dp))
+                when (chunk.translationStatus) {
+                    ChunkStatus.READY -> chunk.translation?.let {
+                        // The block is forced LTR for the French text; let the translation
+                        // take its own direction so Persian lays out right-to-left.
+                        Text(
+                            it,
+                            fontSize = (14f * fontScale).sp,
+                            lineHeight = (21f * fontScale).sp,
+                            fontStyle = FontStyle.Italic,
+                            color = palette.inkFaded,
+                            style = LocalTextStyle.current.copy(textDirection = TextDirection.Content),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    ChunkStatus.LOADING -> Text(
+                        stringResource(R.string.translation_loading),
+                        fontSize = (13f * fontScale).sp,
+                        fontStyle = FontStyle.Italic,
+                        color = palette.inkFaded
+                    )
+                    ChunkStatus.ERROR -> Text(
+                        stringResource(R.string.error_translation_unavailable),
+                        fontSize = (13f * fontScale).sp,
+                        fontStyle = FontStyle.Italic,
+                        color = palette.inkFaded
+                    )
+                    ChunkStatus.PENDING -> {}
+                }
             }
         }
     }
@@ -1263,21 +1574,149 @@ private fun headerLineHeight(level: Int, fontScale: Float): TextUnit = (when (le
 /**
  * The shared "flowing, sentence-highlighted, tappable, long-pressable" text
  * renderer used for every block type (paragraph, heading, list item). The
- * displayed string is built by concatenating [ChunkState.sentences] (edge-
- * tts's own SentenceBoundary text, in order) -- exactly as the original
- * Phase 1 renderer did -- so playback-time highlighting keeps working
- * unchanged. Bold/italic spans from Markdown are then re-applied on top by
- * searching for their exact phrase text rather than trusting character
- * offsets, since edge-tts's sentence text can differ very slightly
- * (whitespace/quote normalization) from the Markdown-stripped source: a
- * missed search match is silently skipped, never mis-applied to the wrong
- * text.
+ * displayed string is the exact Markdown-stripped document text. Sentence
+ * boundaries are mapped onto that source for playback highlighting, while
+ * paged callers can render a line-aligned [textStartOffset, textEndOffset)
+ * slice without changing selection or document offsets.
  *
  * A single tap seeks/continues playback from the tapped sentence (Phase 1
  * behaviour, unchanged). A long-press on a word instead opens the
  * dictionary for that word -- the two never fire for the same gesture, so
  * they cannot conflict per the design doc's acceptance criterion.
  */
+/**
+ * A Markdown pipe table, Notion-style: each column takes its text's natural width up to a
+ * cap (cells wrap past it), and a table wider than the screen scrolls sideways instead of
+ * squeezing its columns. Each cell is its own [SentenceFlowText] over its slice of the
+ * block text, so word lookup, highlights and find keep their document offsets.
+ */
+@Composable
+private fun TableBlock(
+    chunk: ChunkState,
+    fontScale: Float,
+    palette: ReadingPalette,
+    savedVocabStatuses: Map<String, VocabStatus>,
+    highlights: List<HighlightEntry>,
+    documentStartOffset: Int,
+    findRanges: List<IntRange>,
+    activeFindRange: IntRange?,
+    onSentenceClick: (SentenceBoundary) -> Unit,
+    onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
+    onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
+    onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
+    clearSelectionSignal: Int,
+    onSelectionActiveChange: (Boolean) -> Unit
+) {
+    val block = chunk.block
+    val rows = block.tableRows
+    if (rows.isEmpty()) return
+    val columns = rows.first().size
+    val fontSize = (16f * fontScale).sp
+    val lineHeight = (24f * fontScale).sp
+    val cellPadding = 10.dp
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val headerFontFamily = FrenchReaderDesign.editorialTypography.articleHeadline.fontFamily
+    // Clicking a cell plays the table from its start: the TTS sentences don't map to cells.
+    val tableSentence = chunk.sentences.firstOrNull()
+
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val available = maxWidth
+        val columnWidths = remember(block, fontScale, available) {
+            val natural = (0 until columns).map { col ->
+                val widest = rows.withIndex().maxOf { (rowIndex, row) ->
+                    val cell = row[col]
+                    measurer.measure(
+                        block.plainText.substring(cell.start, cell.end),
+                        TextStyle(
+                            fontSize = fontSize,
+                            letterSpacing = 0.1.sp,
+                            // Same font SentenceFlowText draws the bold header row with.
+                            fontWeight = if (rowIndex == 0) FontWeight.SemiBold else null,
+                            fontFamily = if (rowIndex == 0) headerFontFamily else null
+                        )
+                    ).size.width
+                }
+                with(density) { widest.toDp() } + cellPadding * 2 + 2.dp
+            }
+            val capped = natural.map { it.coerceIn(72.dp, 260.dp) }
+            // Room left on screen goes to the columns the cap cut short, so a narrow table
+            // with one long column wraps less instead of leaving empty space.
+            var spare = available - capped.fold(0.dp) { acc, w -> acc + w }
+            capped.mapIndexed { i, w ->
+                val grow = minOf(natural[i] - w, spare).coerceAtLeast(0.dp)
+                spare -= grow
+                w + grow
+            }
+        }
+        val lineColor = palette.divider
+        Column(
+            Modifier
+                .horizontalScroll(androidx.compose.foundation.rememberScrollState())
+                .padding(vertical = 6.dp)
+                .border(1.dp, lineColor, RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(6.dp))
+        ) {
+            rows.forEachIndexed { rowIndex, row ->
+                val header = rowIndex == 0
+                Row(
+                    Modifier
+                        .height(IntrinsicSize.Min)
+                        .then(if (header) Modifier.background(palette.accent.copy(alpha = 0.08f)) else Modifier)
+                ) {
+                    row.forEachIndexed { col, cell ->
+                        if (col > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(lineColor))
+                        val cellText = block.plainText.substring(cell.start, cell.end)
+                        val cellBlock = ParsedBlock(
+                            type = BlockType.PARAGRAPH,
+                            plainText = cellText,
+                            spokenText = cellText,
+                            emphasisSpans = block.emphasisSpans
+                                .filter { it.start >= cell.start && it.end <= cell.end }
+                                .map { it.copy(start = it.start - cell.start, end = it.end - cell.start) }
+                        )
+                        val cellChunk = chunk.copy(
+                            block = cellBlock,
+                            sentences = listOf(SentenceBoundary(text = cellText, offsetMs = 0.0, durationMs = 0.0))
+                        )
+                        Box(Modifier.width(columnWidths[col] - if (col > 0) 1.dp else 0.dp).padding(cellPadding)) {
+                            SentenceFlowText(
+                                chunk = cellChunk,
+                                isCurrentChunk = false,
+                                currentPositionMs = 0L,
+                                fontSize = fontSize,
+                                lineHeight = lineHeight,
+                                fontWeight = if (header) FontWeight.SemiBold else null,
+                                color = palette.ink,
+                                palette = palette,
+                                savedVocabStatuses = savedVocabStatuses,
+                                highlights = highlights,
+                                documentStartOffset = documentStartOffset + cell.start,
+                                findRanges = findRanges
+                                    .filter { it.first >= cell.start && it.last < cell.end }
+                                    .map { (it.first - cell.start)..(it.last - cell.start) },
+                                activeFindRange = activeFindRange
+                                    ?.takeIf { it.first >= cell.start && it.last < cell.end }
+                                    ?.let { (it.first - cell.start)..(it.last - cell.start) },
+                                onSentenceClick = { onSentenceClick(tableSentence ?: it) },
+                                onWordLookup = onWordLookup,
+                                onPhraseSelected = onPhraseSelected,
+                                onHighlightClick = onHighlightClick,
+                                clearSelectionSignal = clearSelectionSignal,
+                                onSelectionActiveChange = onSelectionActiveChange,
+                                justify = false
+                            )
+                        }
+                    }
+                }
+                if (rowIndex < rows.lastIndex) {
+                    Box(Modifier.width(columnWidths.fold(0.dp) { acc, w -> acc + w }).height(1.dp).background(lineColor))
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun SentenceFlowText(
     chunk: ChunkState,
@@ -1297,7 +1736,11 @@ private fun SentenceFlowText(
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
     onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
-    clearSelectionSignal: Int
+    clearSelectionSignal: Int,
+    onSelectionActiveChange: (Boolean) -> Unit = {},
+    justify: Boolean,
+    textStartOffset: Int = 0,
+    textEndOffset: Int? = null
 ) {
     val vocabHighlighter = remember(savedVocabStatuses) {
         VocabHighlighter(savedVocabStatuses.map { SavedVocab(it.key, it.value) })
@@ -1316,22 +1759,49 @@ private fun SentenceFlowText(
             textDecoration = if (status == VocabStatus.LEARNED) null else TextDecoration.Underline
         )
     }
-    val ranges = remember(chunk.sentences) { mutableListOf<IntRange>() }
-    val activeRange = remember(chunk.sentences, isCurrentChunk, currentPositionMs) {
+    val sourceText = remember(chunk.sentences, chunk.block.plainText) {
+        chunk.block.plainText
+    }
+    val sliceStart = textStartOffset.coerceIn(0, sourceText.length)
+    val sliceEnd = (textEndOffset ?: sourceText.length).coerceIn(sliceStart, sourceText.length)
+    val sentenceSourceRanges = remember(chunk.sentences, sourceText) {
+        var cursor = 0
+        chunk.sentences.map { sentence ->
+            val start = sourceText.indexOf(sentence.text, cursor).takeIf { it >= 0 } ?: cursor
+            val end = (start + sentence.text.length).coerceAtMost(sourceText.length)
+            cursor = (end + 1).coerceAtMost(sourceText.length)
+            start until end
+        }
+    }
+    val ranges = remember(chunk.sentences, sliceStart, sliceEnd) { mutableListOf<IntRange>() }
+    val visibleSentences = remember(chunk.sentences, sentenceSourceRanges, sliceStart, sliceEnd) {
+        chunk.sentences.zip(sentenceSourceRanges).mapNotNull { (sentence, range) ->
+            val start = maxOf(range.first, sliceStart)
+            val end = minOf(range.last + 1, sliceEnd)
+            if (start < end) sentence to ((start - sliceStart) until (end - sliceStart)) else null
+        }
+    }
+    val activeRange = remember(chunk.sentences, sentenceSourceRanges, sliceStart, sliceEnd, isCurrentChunk, currentPositionMs) {
         if (!isCurrentChunk) null else {
             val activeIndex = chunk.sentences.indexOfFirst { sentence ->
                 currentPositionMs >= sentence.offsetMs &&
                     currentPositionMs < sentence.offsetMs + sentence.durationMs
             }
             if (activeIndex < 0) null else {
-                val start = chunk.sentences.take(activeIndex).sumOf { it.text.length + 1 }
-                start until (start + chunk.sentences[activeIndex].text.length)
+                val sourceRange = sentenceSourceRanges[activeIndex]
+                val start = maxOf(sourceRange.first, sliceStart)
+                val end = minOf(sourceRange.last + 1, sliceEnd)
+                if (start < end) (start - sliceStart) until (end - sliceStart) else null
             }
         }
     }
     val annotated = remember(
         chunk.sentences,
         chunk.block,
+        sourceText,
+        sliceStart,
+        sliceEnd,
+        visibleSentences,
         isCurrentChunk,
         currentPositionMs,
         palette,
@@ -1344,17 +1814,9 @@ private fun SentenceFlowText(
     ) {
         buildAnnotatedString {
             ranges.clear()
-            chunk.sentences.forEachIndexed { i, s ->
-                val start = length
-                append(s.text)
-                val end = length
-                ranges.add(start until end)
-                if (i != chunk.sentences.lastIndex) append(" ")
-            }
-
-            // Builder.toString() doesn't return the text built so far, so
-            // derive it from the same sentences that were appended above.
-            val full = chunk.sentences.joinToString(" ") { it.text }
+            val full = sourceText.substring(sliceStart, sliceEnd)
+            append(full)
+            ranges.addAll(visibleSentences.map { it.second })
             if (savedVocabStatuses.isNotEmpty()) {
                 for (match in vocabHighlighter.findMatches(full)) {
                     val style = vocabStyles.getValue(match.status)
@@ -1387,7 +1849,7 @@ private fun SentenceFlowText(
                     range.last + 1
                 )
             }
-            chunk.sentences.forEachIndexed { index, sentence ->
+            visibleSentences.forEachIndexed { index, (sentence, _) ->
                 val isActive = isCurrentChunk &&
                     currentPositionMs >= sentence.offsetMs &&
                     currentPositionMs < sentence.offsetMs + sentence.durationMs
@@ -1401,43 +1863,82 @@ private fun SentenceFlowText(
                 }
             }
             for (span in chunk.block.emphasisSpans) {
-                if (span.start < 0 || span.end > chunk.block.plainText.length || span.start >= span.end) continue
-                val phrase = chunk.block.plainText.substring(span.start, span.end)
-                if (phrase.isBlank()) continue
-                val idx = full.indexOf(phrase)
-                if (idx >= 0) {
+                val start = maxOf(span.start, sliceStart)
+                val end = minOf(span.end, sliceEnd)
+                if (start < end) {
                     addStyle(
                         SpanStyle(
                             fontWeight = if (span.bold) FontWeight.Bold else null,
                             fontStyle = if (span.italic) FontStyle.Italic else null
                         ),
-                        idx, idx + phrase.length
+                        start - sliceStart, end - sliceStart
                     )
                 }
             }
         }
     }
 
-    var selection by remember(chunk.sentences, clearSelectionSignal) { mutableStateOf(TextRange.Zero) }
+    var selection by remember(chunk.sentences, sliceStart, sliceEnd, clearSelectionSignal) { mutableStateOf(TextRange.Zero) }
+    LaunchedEffect(clearSelectionSignal) { onSelectionActiveChange(false) }
     var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
     var layoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val headingFontFamily = FrenchReaderDesign.editorialTypography.articleHeadline.fontFamily
 
     fun sentenceTextFor(offset: Int): String {
         val idx = ranges.indexOfFirst { offset in it }
-        return if (idx >= 0) chunk.sentences[idx].text else annotated.text
+        return if (idx >= 0) visibleSentences[idx].first.text else annotated.text
+    }
+
+    // Start-aligned base style. Justification is done by widening the spaces (see
+    // justifyBySpaceWidening): Compose 1.7's TextAlign.Justify draws stretched lines but
+    // reports unstretched glyph positions, so selection, handles and hit-testing drifted
+    // off the visible characters.
+    val baseStyle = TextStyle(
+        fontSize = fontSize,
+        lineHeight = lineHeight,
+        letterSpacing = BASE_LETTER_SPACING,
+        color = color,
+        fontWeight = fontWeight,
+        fontFamily = if (fontWeight != null) headingFontFamily else null,
+        textAlign = TextAlign.Start,
+        // Android's inserted hyphen glyphs have no source-text offset. Keeping
+        // hyphenation off makes selection offsets identical to document offsets.
+        hyphens = Hyphens.None
+    )
+    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var layoutMaxWidth by remember { mutableIntStateOf(0) }
+    // A paged slice that stops mid-paragraph justifies its last line too, like a book.
+    val justifyLastLine = sliceEnd < sourceText.length
+    val displayed = remember(annotated, baseStyle, layoutMaxWidth, justify, justifyLastLine, density) {
+        if (!justify || layoutMaxWidth <= 0 || annotated.isEmpty()) annotated
+        else justifyBySpaceWidening(
+            annotated,
+            textMeasurer.measure(
+                annotated,
+                baseStyle,
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = layoutMaxWidth),
+                density = density
+            ),
+            layoutMaxWidth,
+            density,
+            justifyLastLine
+        )
     }
 
     androidx.compose.runtime.CompositionLocalProvider(
         androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
             androidx.compose.foundation.text.selection.TextSelectionColors(
-                handleColor = palette.selectionHandle,
+                // The stock teardrop handles stay (invisibly) for dragging; slim
+                // bar handles are drawn over them in drawWithContent below.
+                handleColor = Color.Transparent,
                 backgroundColor = palette.selectionBg
             )
     ) {
         BasicTextField(
-            value = TextFieldValue(annotatedString = annotated, selection = selection),
+            value = TextFieldValue(annotatedString = displayed, selection = selection),
             onValueChange = { newValue ->
+                onSelectionActiveChange(!newValue.selection.collapsed)
                 if (newValue.selection.collapsed) {
                     val localOffset = newValue.selection.start.coerceIn(0, annotated.length)
                     val documentOffset = documentStartOffset + localOffset
@@ -1459,12 +1960,24 @@ private fun SentenceFlowText(
                         selection = TextRange.Zero
                     } else {
                         val idx = ranges.indexOfFirst { newValue.selection.start in it }
-                        if (idx >= 0) onSentenceClick(chunk.sentences[idx])
+                        if (idx >= 0) onSentenceClick(visibleSentences[idx].first)
                         selection = TextRange.Zero
                     }
                 } else {
-                    selection = newValue.selection
-                    when (val kind = classifySelection(annotated.text, newValue.selection)) {
+                    val kind = classifySelection(annotated.text, newValue.selection)
+                    // Show the word-snapped range, not the raw handle offset, so a handle
+                    // dropped mid-word still selects the whole word (keep drag direction).
+                    val snapped = when (kind) {
+                        is SelectionKind.Word -> kind.range
+                        is SelectionKind.Phrase -> kind.range
+                        null -> null
+                    }
+                    selection = when {
+                        snapped == null -> newValue.selection
+                        newValue.selection.reversed -> TextRange(snapped.max, snapped.min)
+                        else -> snapped
+                    }
+                    when (kind) {
                         is SelectionKind.Word ->
                             onWordLookup(
                                 kind.word,
@@ -1483,7 +1996,10 @@ private fun SentenceFlowText(
                                     documentStartOffset + kind.range.max
                                 )
                             )
-                        null -> selection = TextRange.Zero
+                        null -> {
+                            selection = TextRange.Zero
+                            onSelectionActiveChange(false)
+                        }
                     }
                 }
             },
@@ -1512,17 +2028,20 @@ private fun SentenceFlowText(
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
                     )
                 }
+            }.drawWithContent {
+                drawContent()
+                val layout = textLayout ?: return@drawWithContent
+                if (selection.collapsed || annotated.isEmpty()) return@drawWithContent
+                val start = selection.min.coerceIn(0, annotated.lastIndex)
+                val endChar = (selection.max - 1).coerceIn(0, annotated.lastIndex)
+                drawSlimSelectionHandle(layout, start, isStart = true, color = palette.selectionHandle)
+                drawSlimSelectionHandle(layout, endChar, isStart = false, color = palette.selectionHandle)
             },
-            onTextLayout = { textLayout = it },
-            textStyle = TextStyle(
-                fontSize = fontSize,
-                lineHeight = lineHeight,
-                letterSpacing = 0.1.sp,
-                color = color,
-                fontWeight = fontWeight,
-                fontFamily = if (fontWeight != null) headingFontFamily else null,
-                textAlign = TextAlign.Start
-            ),
+            onTextLayout = {
+                textLayout = it
+                layoutMaxWidth = it.layoutInput.constraints.maxWidth
+            },
+            textStyle = baseStyle,
             cursorBrush = SolidColor(Color.Transparent)
         )
     }
@@ -1762,4 +2281,74 @@ private fun ReadingFindBar(
             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.reading_find_close))
         }
     }
+}
+
+/**
+ * Slim book-style selection handle: a thin bar spanning the line at the selection edge
+ * with a small flag below it pointing outward. [charOffset] is the first selected
+ * character (start) or the last one (end), so line-end offsets never resolve to the
+ * next line on justified text.
+ */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSlimSelectionHandle(
+    layout: TextLayoutResult,
+    charOffset: Int,
+    isStart: Boolean,
+    color: Color
+) {
+    val box = layout.getBoundingBox(charOffset)
+    val rtl = layout.getBidiRunDirection(charOffset) == androidx.compose.ui.text.style.ResolvedTextDirection.Rtl
+    // Visual edge of the selection and the direction pointing away from it.
+    val leftEdge = isStart != rtl
+    val x = if (leftEdge) box.left else box.right
+    val outward = if (leftEdge) -1f else 1f
+    val line = layout.getLineForOffset(charOffset)
+    val top = layout.getLineTop(line)
+    val bottom = layout.getLineBottom(line)
+    val barWidth = 2.dp.toPx()
+    val flag = 9.dp.toPx()
+    drawRect(color, topLeft = Offset(x - barWidth / 2, top), size = Size(barWidth, bottom - top))
+    val path = androidx.compose.ui.graphics.Path().apply {
+        moveTo(x - outward * barWidth / 2, bottom - 1.dp.toPx())
+        lineTo(x - outward * barWidth / 2, bottom + flag)
+        lineTo(x + outward * flag, bottom + flag)
+        close()
+    }
+    drawPath(path, color)
+}
+
+private val BASE_LETTER_SPACING = 0.1.sp
+
+/**
+ * Justifies [text] by giving each space of a full line extra letter spacing so the line
+ * reaches [maxWidth]. Unlike TextAlign.Justify, the widened spaces are real metrics, so
+ * TextLayoutResult positions (selection, handles, hit-testing, highlights) match the
+ * drawn glyphs. [layout] is the start-aligned layout of [text]; line breaks don't move
+ * because every widened line stays just under [maxWidth].
+ */
+internal fun justifyBySpaceWidening(
+    text: AnnotatedString,
+    layout: TextLayoutResult,
+    maxWidth: Int,
+    density: androidx.compose.ui.unit.Density,
+    justifyLastLine: Boolean
+): AnnotatedString {
+    val builder = AnnotatedString.Builder(text)
+    var changed = false
+    for (line in 0 until layout.lineCount) {
+        val lineEnd = layout.getLineEnd(line)
+        val isParagraphEnd = line == layout.lineCount - 1 || text.getOrNull(lineEnd - 1) == '\n'
+        if (isParagraphEnd && !(justifyLastLine && line == layout.lineCount - 1)) continue
+        val start = layout.getLineStart(line)
+        val visibleEnd = layout.getLineEnd(line, visibleEnd = true)
+        val spaces = (start until visibleEnd).filter { text[it] == ' ' }
+        if (spaces.isEmpty()) continue
+        // Keep a small margin so float rounding never pushes a word onto the next line.
+        val slack = maxWidth - (layout.getLineRight(line) - layout.getLineLeft(line)) - 2f
+        if (slack <= 0f) continue
+        val extraSp = with(density) { (slack / spaces.size).toSp() }
+        val spacing = (BASE_LETTER_SPACING.value + extraSp.value).sp
+        for (i in spaces) builder.addStyle(SpanStyle(letterSpacing = spacing), i, i + 1)
+        changed = true
+    }
+    return if (changed) builder.toAnnotatedString() else text
 }

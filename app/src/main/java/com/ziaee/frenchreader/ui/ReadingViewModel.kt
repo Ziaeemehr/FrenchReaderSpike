@@ -16,6 +16,7 @@ import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HighlightEntry
 import com.ziaee.frenchreader.data.HighlightRepository
 import com.ziaee.frenchreader.data.TextBodyStore
+import com.ziaee.frenchreader.data.updateTextDocumentBody
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabStatus
 import com.ziaee.frenchreader.data.VocabPrefs
@@ -339,7 +340,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (chunk.translationStatus == ChunkStatus.READY) continue
                 updateChunk(i) { it.copy(translationStatus = ChunkStatus.LOADING) }
-                val result = translationRepo.getOrTranslate(chunk.spokenText, targetLang)
+                val result = translationRepo.getOrTranslateParagraph(chunk.spokenText, targetLang)
                 if (generation != translationGeneration) return@launch
                 result.fold(
                     onSuccess = { translated ->
@@ -389,6 +390,8 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     db.textDao().setPinned(doc.id, true)
                     ttsRepo.setDocumentPinned(targets, voice, ratePercent, true)
                 }
+                var succeeded = 0
+                var lastFailure: Throwable? = null
                 for (text in targets) {
                     if (!isActive) {
                         _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
@@ -399,22 +402,23 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                         _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
                         return@launch
                     }
+                    // Skip blocks that can't be voiced; only report an error if nothing could be.
                     if (result.isFailure) {
-                        _state.value = _state.value.copy(
-                            fullSynthesisTotal = 0,
-                            fullSynthesisDone = 0,
-                            fullSynthesisError = result.exceptionOrNull()?.message
-                                ?: result.exceptionOrNull()?.toString()
-                                ?: "Audio synthesis failed"
-                        )
-                        return@launch
+                        lastFailure = result.exceptionOrNull()
+                    } else {
+                        succeeded++
+                        ttsRepo.pinText(text, voice, ratePercent)
                     }
-                    ttsRepo.pinText(text, voice, ratePercent)
                     _state.value = _state.value.copy(
                         fullSynthesisDone = _state.value.fullSynthesisDone + 1
                     )
                 }
-                _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
+                _state.value = _state.value.copy(
+                    fullSynthesisTotal = 0,
+                    fullSynthesisDone = 0,
+                    fullSynthesisError = lastFailure?.takeIf { succeeded == 0 }
+                        ?.let { it.message ?: it.toString() }
+                )
             } catch (_: CancellationException) {
                 _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
             } catch (error: Exception) {
@@ -423,6 +427,42 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     fullSynthesisDone = 0,
                     fullSynthesisError = error.message ?: error.toString()
                 )
+            }
+        }
+    }
+
+    /** The open text's current title and full body, for the in-reader editor. */
+    fun loadForEdit(onLoaded: (title: String, body: String, bodyEditable: Boolean) -> Unit) {
+        val id = _state.value.textDoc?.id ?: return
+        viewModelScope.launch {
+            val doc = db.textDao().getById(id) ?: return@launch
+            onLoaded(doc.title, bodyStore.read(doc), doc.bodyPath == null)
+        }
+    }
+
+    /**
+     * Saves an in-reader edit. A changed body restarts the text from the top (as a Library
+     * edit does), so the open text is re-chunked and re-voiced; a rename just updates the title.
+     */
+    fun saveEdit(title: String, body: String) {
+        val id = _state.value.textDoc?.id ?: return
+        player.pause()
+        viewModelScope.launch {
+            savePositionJob?.cancel()
+            flushPositionNow()
+            val doc = db.textDao().getById(id) ?: return@launch
+            val oldBody = bodyStore.read(doc)
+            val bodyChanged = body.isNotBlank() && body != oldBody
+            // A position save firing before the reload must not write the old block index
+            // back over the edit's reset-to-top.
+            if (bodyChanged) _state.value = _state.value.copy(currentChunkIndex = 0, currentPositionMs = 0L)
+            updateTextDocumentBody(db.textDao(), bodyStore, doc, title, body)
+            if (bodyChanged) {
+                load(id)
+            } else {
+                db.textDao().getById(id)?.let { updated ->
+                    _state.value = _state.value.copy(textDoc = _state.value.textDoc?.copy(title = updated.title))
+                }
             }
         }
     }
@@ -472,8 +512,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     continue
                 }
                 if (chunk.status == ChunkStatus.LOADING) break
+                // A block that can't be voiced is skipped (it stays on screen, marked);
+                // playback carries on with the blocks after it.
                 synthesizeChunk(next, generation)
-                if (_state.value.chunks.getOrNull(next)?.status == ChunkStatus.ERROR) break
                 nextSynthesisIndex = next + 1
             }
         }
@@ -521,7 +562,16 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 // looks up the chunk by this mapping -- if it ran before
                 // the mapping was set, the lookup would miss and the
                 // highlighted chunk would fall out of sync with the audio.
-                val itemIndex = player.mediaItemCount
+                // Keep the playlist in document order: a retried block that failed earlier is
+                // inserted before the later blocks already queued, not appended after them.
+                val itemIndex = playerItemToChunk.count { it < index }
+                val appended = itemIndex == playerItemToChunk.size
+                if (!appended) {
+                    for (i in _state.value.chunks.indices) {
+                        val item = _state.value.chunks[i].playerItemIndex ?: continue
+                        if (item >= itemIndex) updateChunk(i) { it.copy(playerItemIndex = item + 1) }
+                    }
+                }
                 updateChunk(index) {
                     it.copy(
                         status = ChunkStatus.READY,
@@ -530,10 +580,10 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
                 val wasWaitingAtEnd = player.playWhenReady && player.playbackState == Player.STATE_ENDED
-                playerItemToChunk += index
-                player.addMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
+                playerItemToChunk.add(itemIndex, index)
+                player.addMediaItem(itemIndex, MediaItem.fromUri(synth.audioFile.toURI().toString()))
                 if (player.playbackState == Player.STATE_IDLE) player.prepare()
-                if (wasWaitingAtEnd) {
+                if (wasWaitingAtEnd && appended) {
                     player.seekTo(itemIndex, 0L)
                     player.prepare()
                     player.play()
@@ -653,6 +703,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             player.seekTo(itemIndex, position)
             _state.value = _state.value.copy(currentPositionMs = position)
             if (keepPlaying) player.play()
+        } else if (keepPlaying) {
+            // The target couldn't be voiced: start playing with the next block that can.
+            player.playWhenReady = true
         }
         requestAudioWindow(target)
     }

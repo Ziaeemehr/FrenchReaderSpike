@@ -27,7 +27,35 @@ object TranslationService {
         }
     }
 
-    private fun translateWithGoogle(text: String, targetLang: String, sourceLang: String): String {
+    /**
+     * Translates with the source language auto-detected. Returns null when the text is
+     * already in [targetLang] (e.g. a Persian note in a French lesson, translating to Persian).
+     */
+    fun translateUnlessSameLanguage(text: String, targetLang: String): String? {
+        val translated = try {
+            val body = googleRequest(text, targetLang, "auto")
+            val detected = JSONArray(body).opt(2) as? String
+            if (detected != null && baseLanguage(detected) == baseLanguage(targetLang)) return null
+            parseGoogleResponse(body)
+        } catch (e: Exception) {
+            translateWithMyMemory(text, targetLang, "fr")
+        }
+        return translated.takeUnless { isSameText(it, text) }
+    }
+
+    /** "fa-IR" / "zh-CN" -> "fa" / "zh". */
+    fun baseLanguage(code: String): String = code.substringBefore('-').substringBefore('_').lowercase()
+
+    /** A "translation" that just echoes the source means the text was already in the target language. */
+    fun isSameText(translated: String, source: String): Boolean {
+        fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+        return norm(translated) == norm(source)
+    }
+
+    private fun translateWithGoogle(text: String, targetLang: String, sourceLang: String): String =
+        parseGoogleResponse(googleRequest(text, targetLang, sourceLang))
+
+    private fun googleRequest(text: String, targetLang: String, sourceLang: String): String {
         val encoded = URLEncoder.encode(text, "UTF-8")
         val urlStr = "https://translate.googleapis.com/translate_a/single" +
             "?client=gtx&sl=$sourceLang&tl=$targetLang&dt=t&q=$encoded"
@@ -42,8 +70,7 @@ object TranslationService {
                 "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36"
             )
             conn.inputStream.use { stream ->
-                val body = stream.bufferedReader(Charsets.UTF_8).readText()
-                return parseGoogleResponse(body)
+                return stream.bufferedReader(Charsets.UTF_8).readText()
             }
         } finally {
             conn.errorStream?.close()

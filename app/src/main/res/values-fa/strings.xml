@@ -98,6 +98,11 @@
     <string name="reading_background_white">سفید</string>
     <string name="reading_background_dark">تیره (شبانه)</string>
     <string name="reading_font_scale_title">اندازهٔ فونت خوانش</string>
+    <string name="page_navigation_title">پیمایش صفحه</string>
+    <string name="page_navigation_scroll">پیمایش پیوسته</string>
+    <string name="page_navigation_horizontal">صفحه‌های افقی</string>
+    <string name="page_navigation_vertical">صفحه‌های عمودی</string>
+    <string name="reading_page_indicator">%1$s / %2$s</string>
     <string name="highlight_saved_words">برجسته‌کردن واژه‌های ذخیره‌شده</string>
     <string name="font_scale_small">کوچک</string>
     <string name="font_scale_medium">متوسط</string>
@@ -197,13 +202,13 @@
     <string name="library_filter_all">همه</string>
     <string name="library_folder_selection_all">همه متن‌ها</string>
     <string name="library_filter_unfiled">بدون پوشه</string>
+    <string name="library_folder_expand">باز کردن %1$s</string>
+    <string name="library_folder_collapse">بستن %1$s</string>
     <string name="library_row_more_actions">گزینه‌های بیشتر برای «%1$s»</string>
     <string name="library_status_read">خوانده‌شده</string>
     <string name="library_status_in_progress">در حال خواندن</string>
     <string name="library_status_new">جدید</string>
     <string name="library_delete_confirm_title">این متن حذف شود؟</string>
-    <string name="library_folder_expand">باز کردن %1$s</string>
-    <string name="library_folder_collapse">بستن %1$s</string>
     <string name="library_delete_confirm_message">تصویر ذخیره‌شدهٔ آن نیز حذف می‌شود. این کار قابل بازگشت نیست.</string>
     <plurals name="library_selection_count">
         <item quantity="other">%d مورد انتخاب شده</item>
@@ -615,4 +620,10 @@
     <string name="dictionary_apply_word">جست‌وجو</string>
     <string name="dictionary_reset_word">بازگردانی</string>
     <string name="interval_this_session">همین جلسه</string>
+    <string name="text_info_words">تعداد کلمات</string>
+    <string name="text_info_reading_time">زمان مطالعه</string>
+    <string name="text_info_minutes">حدود %1$s دقیقه</string>
+    <string name="text_info_paragraphs">پاراگراف‌ها</string>
+    <string name="text_info_progress">پیشرفت</string>
+    <string name="text_info_added">تاریخ افزودن</string>
 </resources>

@@ -98,6 +98,11 @@
     <string name="reading_background_white">White</string>
     <string name="reading_background_dark">Dark (night)</string>
     <string name="reading_font_scale_title">Reading font size</string>
+    <string name="page_navigation_title">Page navigation</string>
+    <string name="page_navigation_scroll">Scroll</string>
+    <string name="page_navigation_horizontal">Horizontal pages</string>
+    <string name="page_navigation_vertical">Vertical pages</string>
+    <string name="reading_page_indicator">%1$s / %2$s</string>
     <string name="highlight_saved_words">Highlight saved words</string>
     <string name="font_scale_small">Small</string>
     <string name="font_scale_medium">Medium</string>
@@ -197,13 +202,13 @@
     <string name="library_filter_all">All</string>
     <string name="library_folder_selection_all">All texts</string>
     <string name="library_filter_unfiled">Unfiled</string>
+    <string name="library_folder_expand">Expand %1$s</string>
+    <string name="library_folder_collapse">Collapse %1$s</string>
     <string name="library_row_more_actions">More actions for “%1$s”</string>
     <string name="library_status_read">Read</string>
     <string name="library_status_in_progress">In progress</string>
     <string name="library_status_new">New</string>
     <string name="library_delete_confirm_title">Delete this text?</string>
-    <string name="library_folder_expand">Expand %1$s</string>
-    <string name="library_folder_collapse">Collapse %1$s</string>
     <string name="library_delete_confirm_message">This also removes its saved image, if any. This can\'t be undone.</string>
     <plurals name="library_selection_count">
         <item quantity="one">%d selected</item>
@@ -617,4 +622,10 @@
     <string name="dictionary_apply_word">Look up</string>
     <string name="dictionary_reset_word">Reset</string>
     <string name="interval_this_session">This session</string>
+    <string name="text_info_words">Words</string>
+    <string name="text_info_reading_time">Reading time</string>
+    <string name="text_info_minutes">About %1$s min</string>
+    <string name="text_info_paragraphs">Paragraphs</string>
+    <string name="text_info_progress">Progress</string>
+    <string name="text_info_added">Added</string>
 </resources>

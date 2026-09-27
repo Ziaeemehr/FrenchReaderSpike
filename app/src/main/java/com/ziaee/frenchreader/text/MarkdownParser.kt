@@ -5,7 +5,7 @@ package com.ziaee.frenchreader.text
  * guarantees a HEADER or LIST_ITEM block is exactly one source line, and a
  * PARAGRAPH block is one or more wrapped lines -- see TextChunker's kdoc.
  */
-enum class BlockType { HEADER, LIST_ITEM, PARAGRAPH, IMAGE }
+enum class BlockType { HEADER, LIST_ITEM, PARAGRAPH, IMAGE, TABLE }
 
 /**
  * A bold/italic run, measured as a [start, end) character range against the
@@ -13,6 +13,9 @@ enum class BlockType { HEADER, LIST_ITEM, PARAGRAPH, IMAGE }
  * original Markdown source.
  */
 data class EmphasisSpan(val start: Int, val end: Int, val bold: Boolean, val italic: Boolean)
+
+/** One table cell: a [start, end) range into the TABLE block's [ParsedBlock.plainText]. */
+data class TableCell(val start: Int, val end: Int)
 
 data class ParsedBlock(
     val type: BlockType,
@@ -23,7 +26,9 @@ data class ParsedBlock(
     val spokenText: String = sanitizeForSpeech(plainText),
     val emphasisSpans: List<EmphasisSpan> = emptyList(),
     val imageRef: String? = null,
-    val imageAlt: String = ""
+    val imageAlt: String = "",
+    /** TABLE only: rows of cells, header row first, every row padded to the same column count. */
+    val tableRows: List<List<TableCell>> = emptyList()
 )
 
 /**
@@ -51,6 +56,13 @@ object MarkdownParser {
     private val HEADER = Regex("^(#{1,6})\\s+(.*)$")
     private val LIST_ITEM = Regex("^([-*+•▪◦‣●■►▶✓✔➤→]|\\d+\\.)\\s+(.*)$")
     private val EPUB_IMAGE = Regex("^!\\[([^]]*)]\\(epubimg:([^)]+)\\)$")
+    private val TABLE_DELIMITER_ROW = Regex("^\\|?\\s*:?-+:?\\s*(\\|\\s*:?-+:?\\s*)*\\|?$")
+
+    /** True for a pipe-table block: a "|" header line followed by a "|---|" delimiter line. */
+    fun isTable(rawBlock: String): Boolean {
+        val lines = rawBlock.trim().lines().map { it.trim() }
+        return lines.size >= 2 && lines[0].startsWith("|") && TABLE_DELIMITER_ROW.matches(lines[1])
+    }
 
     fun parse(rawBlock: String): ParsedBlock {
         val trimmed = rawBlock.trim()
@@ -63,6 +75,8 @@ object MarkdownParser {
                 imageAlt = match.groupValues[1]
             )
         }
+
+        if (isTable(trimmed)) return parseTable(trimmed)
 
         HEADER.find(trimmed)?.let { m ->
             val level = m.groupValues[1].length
@@ -82,6 +96,63 @@ object MarkdownParser {
             .trim()
         val (text, spans) = stripInlineEmphasis(sanitizeForDisplay(joined))
         return ParsedBlock(BlockType.PARAGRAPH, plainText = text, emphasisSpans = spans)
+    }
+
+    /**
+     * Display text is the cells joined by tabs, rows by newlines, so every cell is a
+     * plain substring for highlights and find. Speech reads it row by row instead.
+     */
+    private fun parseTable(trimmed: String): ParsedBlock {
+        val lines = trimmed.lines().map { it.trim() }
+        val rows = (listOf(lines[0]) + lines.drop(2)).filter { it.isNotEmpty() }.map(::splitRow)
+        val columns = rows.maxOf { it.size }
+        val text = StringBuilder()
+        val spans = mutableListOf<EmphasisSpan>()
+        val tableRows = rows.mapIndexed { rowIndex, cells ->
+            if (rowIndex > 0) text.append('\n')
+            (0 until columns).map { col ->
+                if (col > 0) text.append('\t')
+                val (cellText, cellSpans) = stripInlineEmphasis(
+                    sanitizeForDisplay(cells.getOrElse(col) { "" }).replace(Regex("\\s+"), " ").trim()
+                )
+                val start = text.length
+                text.append(cellText)
+                cellSpans.forEach { spans.add(it.copy(start = it.start + start, end = it.end + start)) }
+                TableCell(start, text.length)
+            }
+        }
+        val plain = text.toString()
+        val spoken = tableRows.joinToString(" ") { row ->
+            row.map { plain.substring(it.start, it.end) }.filter { it.isNotBlank() }
+                .joinToString(", ") + "."
+        }
+        return ParsedBlock(
+            BlockType.TABLE,
+            plainText = plain,
+            spokenText = sanitizeForSpeech(spoken),
+            emphasisSpans = spans,
+            tableRows = tableRows
+        )
+    }
+
+    /** Splits "| a | b |" into cells, keeping escaped "\\|" as a literal pipe. */
+    private fun splitRow(line: String): List<String> {
+        var body = line
+        if (body.startsWith("|")) body = body.substring(1)
+        if (body.endsWith("|") && !body.endsWith("\\|")) body = body.dropLast(1)
+        val cells = mutableListOf<String>()
+        val cell = StringBuilder()
+        var i = 0
+        while (i < body.length) {
+            val c = body[i]
+            if (c == '\\' && i + 1 < body.length && body[i + 1] == '|') {
+                cell.append('|'); i += 2; continue
+            }
+            if (c == '|') { cells.add(cell.toString().trim()); cell.clear() } else cell.append(c)
+            i++
+        }
+        cells.add(cell.toString().trim())
+        return cells
     }
 
     /**

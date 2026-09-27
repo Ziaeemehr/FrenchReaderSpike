@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         AppearanceState.themeMode = AppearancePrefs.getThemeMode(this)
         AppearanceState.readingBackground = AppearancePrefs.getReadingBackground(this)
         AppearanceState.fontScale = AppearancePrefs.getFontScale(this)
+        AppearanceState.pageNavigation = AppearancePrefs.getPageNavigation(this)
         AppearanceState.highlightColor = AppearancePrefs.getHighlightColor(this)
         AppearanceState.highlightSavedWords = AppearancePrefs.getHighlightSavedWords(this)
 

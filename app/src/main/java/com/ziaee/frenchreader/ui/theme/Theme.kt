@@ -148,10 +148,13 @@ enum class FontScale(val multiplier: Float) {
     SMALL(0.85f), MEDIUM(1f), LARGE(1.15f), XLARGE(1.3f)
 }
 
+enum class PageNavigation { SCROLL, HORIZONTAL, VERTICAL }
+
 object AppearanceState {
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     var readingBackground by mutableStateOf(ReadingBackground.SEPIA)
     var fontScale by mutableStateOf(FontScale.MEDIUM)
+    var pageNavigation by mutableStateOf(PageNavigation.SCROLL)
     var highlightColor by mutableStateOf(HighlightColor.YELLOW)
     var highlightSavedWords by mutableStateOf(true)
 }

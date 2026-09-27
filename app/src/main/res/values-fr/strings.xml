@@ -98,6 +98,11 @@
     <string name="reading_background_white">Blanc</string>
     <string name="reading_background_dark">Sombre (nuit)</string>
     <string name="reading_font_scale_title">Taille du texte de lecture</string>
+    <string name="page_navigation_title">Navigation des pages</string>
+    <string name="page_navigation_scroll">Défilement</string>
+    <string name="page_navigation_horizontal">Pages horizontales</string>
+    <string name="page_navigation_vertical">Pages verticales</string>
+    <string name="reading_page_indicator">%1$s / %2$s</string>
     <string name="highlight_saved_words">Surligner les mots enregistrés</string>
     <string name="font_scale_small">Petite</string>
     <string name="font_scale_medium">Moyenne</string>
@@ -197,13 +202,13 @@
     <string name="library_filter_all">Tous</string>
     <string name="library_folder_selection_all">Tous les textes</string>
     <string name="library_filter_unfiled">Sans dossier</string>
+    <string name="library_folder_expand">Déplier %1$s</string>
+    <string name="library_folder_collapse">Replier %1$s</string>
     <string name="library_row_more_actions">Plus d\'actions pour « %1$s »</string>
     <string name="library_status_read">Lu</string>
     <string name="library_status_in_progress">En cours</string>
     <string name="library_status_new">Nouveau</string>
     <string name="library_delete_confirm_title">Supprimer ce texte ?</string>
-    <string name="library_folder_expand">Déplier %1$s</string>
-    <string name="library_folder_collapse">Replier %1$s</string>
     <string name="library_delete_confirm_message">Cela supprime aussi son image enregistrée, le cas échéant. Action irréversible.</string>
     <plurals name="library_selection_count">
         <item quantity="one">%d sélectionné</item>
@@ -617,4 +622,10 @@
     <string name="dictionary_apply_word">Rechercher</string>
     <string name="dictionary_reset_word">Rétablir</string>
     <string name="interval_this_session">Cette séance</string>
+    <string name="text_info_words">Mots</string>
+    <string name="text_info_reading_time">Temps de lecture</string>
+    <string name="text_info_minutes">Environ %1$s min</string>
+    <string name="text_info_paragraphs">Paragraphes</string>
+    <string name="text_info_progress">Progression</string>
+    <string name="text_info_added">Ajouté le</string>
 </resources>

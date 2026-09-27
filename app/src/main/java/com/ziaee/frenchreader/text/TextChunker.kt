@@ -17,6 +17,8 @@ package com.ziaee.frenchreader.text
  *    audio/highlight/translation exactly like a short paragraph would, and
  *    the reading screen can simply prefix it with a bullet.
  *  - An EPUB image marker is always its own block.
+ *  - Consecutive "|" lines are kept together, newline-joined; when they form a
+ *    pipe table ([MarkdownParser.isTable]) the whole table is one block, never split.
  *  - Decorative separators, bare URLs, URL-only source labels, and blocks
  *    with no speech text are omitted. This intentionally makes saved chunk
  *    indices from older chunking rules approximate; callers clamp them, and
@@ -41,8 +43,17 @@ object TextChunker {
         val lines = rawText.replace("\r\n", "\n").split("\n")
         val blocks = mutableListOf<String>()
         val current = mutableListOf<String>()
+        val tableLines = mutableListOf<String>()
+
+        fun flushTable() {
+            if (tableLines.isEmpty()) return
+            val table = tableLines.joinToString("\n")
+            if (MarkdownParser.isTable(table)) blocks.add(table) else current.addAll(tableLines)
+            tableLines.clear()
+        }
 
         fun flush() {
+            flushTable()
             if (current.isNotEmpty()) {
                 blocks.add(current.joinToString(" ").trim())
                 current.clear()
@@ -51,6 +62,12 @@ object TextChunker {
 
         for (rawLine in lines) {
             val line = cleanLine(rawLine)
+            if (line != null && line.startsWith("|")) {
+                if (tableLines.isEmpty() && current.isNotEmpty()) flush()
+                tableLines.add(line)
+                continue
+            }
+            flushTable()
             when {
                 line == null -> flush()
                 HEADER_LINE.matches(line) -> {
@@ -72,7 +89,8 @@ object TextChunker {
 
         val out = mutableListOf<String>()
         for (block in blocks) {
-            val isSpecial = HEADER_LINE.matches(block) || LIST_LINE.matches(block) || EPUB_IMAGE_LINE.matches(block)
+            val isSpecial = HEADER_LINE.matches(block) || LIST_LINE.matches(block) ||
+                EPUB_IMAGE_LINE.matches(block) || MarkdownParser.isTable(block)
             if (!isSpecial && block.length > MAX_CHUNK_CHARS) {
                 out.addAll(splitLongParagraph(block))
             } else {

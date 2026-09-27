@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.ziaee.frenchreader.R
@@ -36,7 +37,9 @@ class SelectionToolbarTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.selection_action_more)).performClick()
+        composeTestRule.onNodeWithContentDescription(string(R.string.selection_action_more))
+            .performScrollTo()
+            .performClick()
 
         assertEquals(true, moreClicked)
     }
