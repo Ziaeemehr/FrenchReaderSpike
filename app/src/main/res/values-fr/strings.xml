@@ -628,4 +628,26 @@
     <string name="text_info_paragraphs">Paragraphes</string>
     <string name="text_info_progress">Progression</string>
     <string name="text_info_added">Ajouté le</string>
+    <string name="editor_undo">Annuler</string>
+    <string name="editor_redo">Rétablir</string>
+    <string name="editor_find">Rechercher et remplacer</string>
+    <string name="editor_tools">Outils de l’éditeur</string>
+    <string name="editor_join_lines">Réunir les lignes coupées</string>
+    <string name="editor_tidy_spaces">Nettoyer les espaces</string>
+    <string name="editor_copy_all">Tout copier</string>
+    <string name="editor_find_hint">Rechercher</string>
+    <string name="editor_replace_hint">Remplacer par</string>
+    <string name="editor_match_count">%1$d/%2$d</string>
+    <string name="editor_previous_match">Résultat précédent</string>
+    <string name="editor_next_match">Résultat suivant</string>
+    <string name="editor_close_find">Fermer rechercher et remplacer</string>
+    <string name="editor_match_case_short">Aa</string>
+    <string name="editor_whole_word">Mot entier</string>
+    <string name="editor_replace">Remplacer</string>
+    <string name="editor_replace_all">Tout remplacer</string>
+    <string name="editor_replaced_count">%1$d remplacés</string>
+    <string name="editor_discard_title">Ignorer les modifications ?</string>
+    <string name="editor_discard_message">Vos modifications seront perdues.</string>
+    <string name="editor_discard">Ignorer</string>
+    <string name="editor_keep_editing">Continuer la modification</string>
 </resources>

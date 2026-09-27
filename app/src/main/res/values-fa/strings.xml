@@ -626,4 +626,26 @@
     <string name="text_info_paragraphs">پاراگراف‌ها</string>
     <string name="text_info_progress">پیشرفت</string>
     <string name="text_info_added">تاریخ افزودن</string>
+    <string name="editor_undo">واگرد</string>
+    <string name="editor_redo">از نو</string>
+    <string name="editor_find">پیدا کردن و جایگزینی</string>
+    <string name="editor_tools">ابزارهای ویرایشگر</string>
+    <string name="editor_join_lines">پیوستن خط‌های شکسته</string>
+    <string name="editor_tidy_spaces">مرتب کردن فاصله‌ها</string>
+    <string name="editor_copy_all">کپی همه</string>
+    <string name="editor_find_hint">پیدا کردن</string>
+    <string name="editor_replace_hint">جایگزینی با</string>
+    <string name="editor_match_count">%1$d/%2$d</string>
+    <string name="editor_previous_match">مورد قبلی</string>
+    <string name="editor_next_match">مورد بعدی</string>
+    <string name="editor_close_find">بستن پیدا کردن و جایگزینی</string>
+    <string name="editor_match_case_short">Aa</string>
+    <string name="editor_whole_word">تمام کلمه</string>
+    <string name="editor_replace">جایگزینی</string>
+    <string name="editor_replace_all">جایگزینی همه</string>
+    <string name="editor_replaced_count">%1$d مورد جایگزین شد</string>
+    <string name="editor_discard_title">تغییرات نادیده گرفته شوند؟</string>
+    <string name="editor_discard_message">ویرایش‌های شما از دست می‌روند.</string>
+    <string name="editor_discard">نادیده گرفتن</string>
+    <string name="editor_keep_editing">ادامهٔ ویرایش</string>
 </resources>
