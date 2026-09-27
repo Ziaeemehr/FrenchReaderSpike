@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
@@ -40,6 +41,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedButton
@@ -52,14 +54,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -254,6 +259,7 @@ fun LibraryContent(
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var folderMenuExpanded by remember { mutableStateOf(false) }
+    var expandedFolderIds by rememberSaveable { mutableStateOf(emptyList<Long>()) }
     var pendingDelete by remember { mutableStateOf<TextDocument?>(null) }
     var pendingEdit by remember { mutableStateOf<TextDocument?>(null) }
     var pendingEditBody by remember { mutableStateOf<String?>(null) }
@@ -265,7 +271,7 @@ fun LibraryContent(
     var showBulkTags by remember { mutableStateOf(false) }
     val selectedFolderId = (state.folderFilter as? FolderFilter.Folder)?.id
     val breadcrumb = selectedFolderId?.let { pathTo(state.folders, it) }.orEmpty()
-    val flattenedFolders = flattenTree(state.folders)
+    val folderRows = visibleFolderTree(state.folders, expandedFolderIds.toSet())
     val visibleIds = state.documents.mapTo(mutableSetOf()) { it.id }
     val allVisibleSelected = visibleIds.isNotEmpty() && visibleIds.all(state.selectedIds::contains)
 
@@ -370,7 +376,11 @@ fun LibraryContent(
                         .ifBlank { stringResource(R.string.library_folder_selection_all) }
                 }
                 OutlinedButton(
-                    onClick = { folderMenuExpanded = true },
+                    onClick = {
+                        // Open with the selected folder's ancestors expanded so the selection is visible.
+                        expandedFolderIds = (expandedFolderIds + breadcrumb.dropLast(1).map { it.id }).distinct()
+                        folderMenuExpanded = true
+                    },
                     modifier = Modifier.fillMaxWidth().testTag("folderFilters")
                 ) {
                     Text(folderSelectionLabel, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -397,14 +407,50 @@ fun LibraryContent(
                         },
                         modifier = Modifier.testTag("folderFilterUnfiled")
                     )
-                    flattenedFolders.forEach { (folder, depth) ->
+                    folderRows.forEach { row ->
+                        val folder = row.folder
+                        val isSelected = folder.id == selectedFolderId
                         DropdownMenuItem(
                             text = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Spacer(Modifier.width((depth * 16).dp))
-                                    Icon(Icons.Default.Folder, contentDescription = null)
+                                    Spacer(Modifier.width((row.depth * 16).dp))
+                                    if (row.hasChildren) {
+                                        IconButton(
+                                            onClick = {
+                                                expandedFolderIds = if (row.expanded) {
+                                                    expandedFolderIds - folder.id
+                                                } else {
+                                                    expandedFolderIds + folder.id
+                                                }
+                                            },
+                                            modifier = Modifier.size(32.dp).testTag("folderToggle_${folder.id}")
+                                        ) {
+                                            Icon(
+                                                if (row.expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                                                contentDescription = stringResource(
+                                                    if (row.expanded) R.string.library_folder_collapse
+                                                    else R.string.library_folder_expand,
+                                                    folder.name
+                                                )
+                                            )
+                                        }
+                                    } else {
+                                        Spacer(Modifier.width(32.dp))
+                                    }
+                                    Icon(
+                                        Icons.Default.Folder,
+                                        contentDescription = null,
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary
+                                        else LocalContentColor.current
+                                    )
                                     Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-                                    Text(folder.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        folder.name,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontWeight = if (isSelected) FontWeight.Bold else null,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Unspecified
+                                    )
                                 }
                             },
                             onClick = {

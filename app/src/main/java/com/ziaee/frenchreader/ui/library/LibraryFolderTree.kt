@@ -60,3 +60,25 @@ fun flattenTree(folders: List<LibraryFolder>): List<Pair<LibraryFolder, Int>> {
     folders.sortedWith(folderNameComparator).forEach { if (it.id !in visited) append(it, 0) }
     return result
 }
+
+data class FolderTreeRow(
+    val folder: LibraryFolder,
+    val depth: Int,
+    val hasChildren: Boolean,
+    val expanded: Boolean
+)
+
+/** [flattenTree] order, but a folder's descendants appear only while it and all its ancestors are expanded. */
+fun visibleFolderTree(folders: List<LibraryFolder>, expandedIds: Set<Long>): List<FolderTreeRow> {
+    val flat = flattenTree(folders)
+    val result = mutableListOf<FolderTreeRow>()
+    var hiddenBelowDepth: Int? = null
+    flat.forEachIndexed { index, (folder, depth) ->
+        hiddenBelowDepth?.let { if (depth > it) return@forEachIndexed else hiddenBelowDepth = null }
+        val hasChildren = flat.getOrNull(index + 1)?.second?.let { it > depth } == true
+        val expanded = hasChildren && folder.id in expandedIds
+        result += FolderTreeRow(folder, depth, hasChildren, expanded)
+        if (hasChildren && !expanded) hiddenBelowDepth = depth
+    }
+    return result
+}

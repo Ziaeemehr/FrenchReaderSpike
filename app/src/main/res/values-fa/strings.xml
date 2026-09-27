@@ -202,6 +202,8 @@
     <string name="library_status_in_progress">در حال خواندن</string>
     <string name="library_status_new">جدید</string>
     <string name="library_delete_confirm_title">این متن حذف شود؟</string>
+    <string name="library_folder_expand">باز کردن %1$s</string>
+    <string name="library_folder_collapse">بستن %1$s</string>
     <string name="library_delete_confirm_message">تصویر ذخیره‌شدهٔ آن نیز حذف می‌شود. این کار قابل بازگشت نیست.</string>
     <plurals name="library_selection_count">
         <item quantity="other">%d مورد انتخاب شده</item>

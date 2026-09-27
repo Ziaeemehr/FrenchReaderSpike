@@ -83,7 +83,7 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun folderDropdownListsTheWholeIndentedTreeAndSelectsFolder() {
+    fun folderDropdownCollapsesSubfoldersUntilExpandedAndSelectsFolder() {
         val parent = LibraryFolder(id = 10L, name = "Histoires")
         val child = LibraryFolder(id = 11L, name = "A2", parentId = parent.id)
         var selected: FolderFilter? = null
@@ -101,6 +101,8 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("folderFilters").performClick()
         composeRule.onNodeWithTag("folderFilterAll").assertExists()
         composeRule.onNodeWithTag("folderFilterUnfiled").assertExists()
+        composeRule.onNodeWithTag("folderFilter_${child.id}").assertDoesNotExist()
+        composeRule.onNodeWithTag("folderToggle_${parent.id}").performClick()
         composeRule.onNodeWithTag("folderFilter_${child.id}").performClick()
         assertEquals(FolderFilter.Folder(child.id), selected)
     }

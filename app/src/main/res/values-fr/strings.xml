@@ -202,6 +202,8 @@
     <string name="library_status_in_progress">En cours</string>
     <string name="library_status_new">Nouveau</string>
     <string name="library_delete_confirm_title">Supprimer ce texte ?</string>
+    <string name="library_folder_expand">Déplier %1$s</string>
+    <string name="library_folder_collapse">Replier %1$s</string>
     <string name="library_delete_confirm_message">Cela supprime aussi son image enregistrée, le cas échéant. Action irréversible.</string>
     <plurals name="library_selection_count">
         <item quantity="one">%d sélectionné</item>

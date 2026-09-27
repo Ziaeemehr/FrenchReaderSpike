@@ -202,6 +202,8 @@
     <string name="library_status_in_progress">In progress</string>
     <string name="library_status_new">New</string>
     <string name="library_delete_confirm_title">Delete this text?</string>
+    <string name="library_folder_expand">Expand %1$s</string>
+    <string name="library_folder_collapse">Collapse %1$s</string>
     <string name="library_delete_confirm_message">This also removes its saved image, if any. This can\'t be undone.</string>
     <plurals name="library_selection_count">
         <item quantity="one">%d selected</item>

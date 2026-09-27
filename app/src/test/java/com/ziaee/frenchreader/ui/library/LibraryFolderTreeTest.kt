@@ -69,6 +69,32 @@ class LibraryFolderTreeTest {
         assertFalse(canMoveFolder(corrupt, 10, 11))
     }
 
+    @Test
+    fun `collapsed folders hide their descendants`() {
+        val rows = visibleFolderTree(folders, emptySet())
+        assertEquals(listOf(culture, grammar), rows.map { it.folder })
+        assertFalse(rows.first { it.folder == culture }.hasChildren)
+        assertTrue(rows.first { it.folder == grammar }.hasChildren)
+        assertFalse(rows.first { it.folder == grammar }.expanded)
+    }
+
+    @Test
+    fun `expansion reveals nested levels one at a time`() {
+        assertEquals(
+            listOf(culture to 0, grammar to 0, adjectives to 1, verbs to 1),
+            visibleFolderTree(folders, setOf(grammar.id)).map { it.folder to it.depth }
+        )
+        assertEquals(
+            listOf(culture, grammar, adjectives, verbs, irregular),
+            visibleFolderTree(folders, setOf(grammar.id, verbs.id)).map { it.folder }
+        )
+    }
+
+    @Test
+    fun `collapsed ancestor hides an expanded grandchild`() {
+        assertEquals(listOf(culture, grammar), visibleFolderTree(folders, setOf(verbs.id)).map { it.folder })
+    }
+
     private fun folder(id: Long, name: String, parentId: Long? = null) =
         LibraryFolder(id = id, name = name, createdAtMs = id, parentId = parentId)
 }
