@@ -64,7 +64,8 @@ class VocabReviewReminderReceiver : BroadcastReceiver() {
                 val now = System.currentTimeMillis()
                 val date = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate().toString()
                 val remainingNew = (VocabPrefs.getMaxNewCards(app) - VocabPrefs.getNewReviewedToday(app, date)).coerceAtLeast(0)
-                val hasWork = reviewableCount(AppDatabase.get(app).vocabDao().getAllOnce(), now, remainingNew) > 0
+                val language = LanguagePrefs.getTargetLanguage(app)
+                val hasWork = reviewableCount(AppDatabase.get(app).vocabDao().getAllOnce(language), now, remainingNew) > 0
                 if (hasWork) notifyDue(app)
             } finally { pending.finish() }
         }

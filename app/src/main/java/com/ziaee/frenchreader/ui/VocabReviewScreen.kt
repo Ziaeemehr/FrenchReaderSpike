@@ -142,6 +142,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private fun remainingNewAt(now: Long): Int =
         (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, localDateFor(now))).coerceAtLeast(0)
 
+    private fun targetLanguage(): String = LanguagePrefs.getTargetLanguage(context)
+
     fun load(scope: Long) {
         scopeId = scope
         val requestedScope = scope
@@ -150,20 +152,21 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             loading = true
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
-            val scopedEntries = scoped(db.vocabDao().getAllOnce(), requestedScope)
+            val language = targetLanguage()
+            val scopedEntries = scoped(db.vocabDao().getAllOnce(language), requestedScope)
             val all = scopedEntries.filter { !it.learned }
             val learnedQueue = buildLearnedReviewQueue(scopedEntries, VocabPrefs.getLearnedCursor(context, requestedScope), requestedScope)
-            val loadedListNames = db.vocabListDao().getAllOnce().associate { it.id to it.name }
+            val loadedListNames = db.vocabListDao().getAllOnce(language).associate { it.id to it.name }
             val availableNew = all.count { it.lastReviewedAtMs == null }
             val remainingNew = remainingNewAt(now)
             val loadedNewCount = availableNew.coerceAtMost(remainingNew)
             val loadedDueCount = reviewableCount(all, now, 0)
             val loadedNewCapReached = availableNew > 0 && remainingNew == 0
-            val loadedReviewedToday = db.reviewLogDao().countSince(dayStart)
+            val loadedReviewedToday = db.reviewLogDao().countSince(dayStart, language)
             val loadedDailyGoal = VocabPrefs.getDailyGoal(context)
             val loadedStreak = computeStreak(loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = { db.activityLogDao().activeDates() }
+                reviewLogDates = { db.reviewLogDao().distinctActiveDates(language) },
+                activityLogDates = { db.activityLogDao().activeDates(language) }
             ), LocalDate.now())
             val loadedBoxes = (1..4).map { box ->
                 val entries = all.filter { it.leitnerBox == box }
@@ -189,7 +192,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             learnedReviewMode = false
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
-            queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
+            queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce(targetLanguage())), now, dayStart, remainingNewAt(now), box))
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
             cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
             sessionStartedAtMs = now
@@ -203,12 +206,12 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             if (restart) VocabPrefs.setLearnedCursor(context, scopeId, 0)
             val cursor = VocabPrefs.getLearnedCursor(context, scopeId)
-            val result = buildLearnedReviewQueue(db.vocabDao().getAllOnce(), cursor, scopeId)
+            val result = buildLearnedReviewQueue(db.vocabDao().getAllOnce(targetLanguage()), cursor, scopeId)
             if (result.resetCursor) VocabPrefs.setLearnedCursor(context, scopeId, 0)
             learnedReviewMode = true
             queue.clear(); queue.addAll(result.cards)
             completedIds.clear()
-            scoped(db.vocabDao().getAllOnce()).filter { it.learned && it.id <= if (result.resetCursor) 0 else cursor }
+            scoped(db.vocabDao().getAllOnce(targetLanguage())).filter { it.learned && it.id <= if (result.resetCursor) 0 else cursor }
                 .forEach { completedIds.add(it.id) }
             totalCards = result.total
             cardsReviewed = completedIds.size
@@ -247,7 +250,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val logId = db.withTransaction {
                 db.vocabDao().updateSchedule(updated.id, updated.leitnerBox, updated.nextReviewAtMs, updated.lastReviewedAtMs, updated.learned)
-                db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = boxBefore, boxAfter = boxAfter))
+                db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = boxBefore, boxAfter = boxAfter, language = entry.language))
             }
             val statsBefore = stats
             applyStats(stats.after(answer, boxBefore, boxAfter))
@@ -334,11 +337,12 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         VocabPrefs.addStudyTimeMs(context, date, sessionDurationMs)
         sessionInProgress = false
         studyTimeMs = VocabPrefs.getStudyTimeMsToday(context, date)
-        nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
+        val language = targetLanguage()
+        nextScheduledAtMs = scoped(db.vocabDao().getAllOnce(language)).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
         val dayStart = VocabSrs.startOfDayMs(now)
-        cardsReviewedToday = db.reviewLogDao().countSince(dayStart)
-        movedForwardToday = db.reviewLogDao().countMovedForwardSince(dayStart)
-        returnedToBoxOneToday = db.reviewLogDao().countReturnedToBoxOneSince(dayStart)
+        cardsReviewedToday = db.reviewLogDao().countSince(dayStart, language)
+        movedForwardToday = db.reviewLogDao().countMovedForwardSince(dayStart, language)
+        returnedToBoxOneToday = db.reviewLogDao().countReturnedToBoxOneSince(dayStart, language)
         if (learnedReviewMode) {
             VocabPrefs.setLearnedCursor(context, scopeId, 0)
             learnedReviewed = 0

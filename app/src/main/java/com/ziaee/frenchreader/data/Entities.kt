@@ -15,7 +15,7 @@ import com.ziaee.frenchreader.resources.ResourceCategory
  */
 @Entity(
     tableName = "texts",
-    indices = [Index(value = ["externalKey"], unique = true)]
+    indices = [Index(value = ["externalKey", "language"], unique = true), Index("language")]
 )
 data class TextDocument(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -40,7 +40,8 @@ data class TextDocument(
     val lastAccessedAtMs: Long = 0,
     val folderId: Long? = null,
     val bodyPath: String? = null,
-    val pinned: Boolean = false
+    val pinned: Boolean = false,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /**
@@ -59,12 +60,13 @@ data class TextSearchEntry(
 
 data class TextSearchHit(val id: Long, val snippet: String)
 
-@Entity(tableName = "library_folders")
+@Entity(tableName = "library_folders", indices = [Index("language")])
 data class LibraryFolder(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val createdAtMs: Long = System.currentTimeMillis(),
-    val parentId: Long? = null
+    val parentId: Long? = null,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 @Entity(
@@ -89,8 +91,8 @@ data class TextTagCrossRef(
 
 @Entity(
     tableName = "headlines",
-    primaryKeys = ["sourceId", "externalId"],
-    indices = [Index("publishedAtMs"), Index("articleUrl")]
+    primaryKeys = ["sourceId", "externalId", "language"],
+    indices = [Index("publishedAtMs"), Index("articleUrl"), Index("language")]
 )
 data class HeadlineEntity(
     val sourceId: String,
@@ -101,7 +103,8 @@ data class HeadlineEntity(
     val articleUrl: String,
     val imageUrl: String?,
     val publishedAtMs: Long?,
-    val cachedAtMs: Long
+    val cachedAtMs: Long,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /**
@@ -119,7 +122,7 @@ data class HeadlineEntity(
  * `nextReviewAtMs <= now`; `learned` doubles as "graduated out of box 5"
  * but can also still be toggled by hand from the plain list.
  */
-@Entity(tableName = "vocab")
+@Entity(tableName = "vocab", indices = [Index("language")])
 data class VocabEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val word: String,
@@ -132,44 +135,48 @@ data class VocabEntry(
     val listId: Long? = null,
     val leitnerBox: Int = 1,
     val nextReviewAtMs: Long = System.currentTimeMillis(),
-    val lastReviewedAtMs: Long? = null
+    val lastReviewedAtMs: Long? = null,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /** A user-created vocabulary list/deck (e.g. "فعل‌ها", "متن سوم"). Words not
  * explicitly filed into one keep [VocabEntry.listId] null. */
-@Entity(tableName = "vocab_lists")
+@Entity(tableName = "vocab_lists", indices = [Index("language")])
 data class VocabList(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val createdAtMs: Long = System.currentTimeMillis()
+    val createdAtMs: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /** One row per vocab-review answer, feeding the Statistics screen's
  * accuracy and streak calculations. Written once per [VocabEntry] answer,
  * never updated or deleted. */
-@Entity(tableName = "review_log", indices = [Index("timestampMs")])
+@Entity(tableName = "review_log", indices = [Index("timestampMs"), Index("language")])
 data class ReviewLogEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val entryId: Long,
     val timestampMs: Long,
     val knew: Boolean,
     val boxBefore: Int,
-    val boxAfter: Int
+    val boxAfter: Int,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /** One row per calendar day with any listening activity, accumulated from
  * [ReadingViewModel][com.ziaee.frenchreader.ui.ReadingViewModel]'s position
  * ticker. [date] is `LocalDate.toString()` (`yyyy-MM-dd`). */
-@Entity(tableName = "activity_log")
+@Entity(tableName = "activity_log", primaryKeys = ["date", "language"], indices = [Index("language")])
 data class ActivityLogEntry(
-    @PrimaryKey val date: String,
-    val listeningMs: Long
+    val date: String,
+    val listeningMs: Long,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /** A user-managed web bookmark shown on the Resources screen. */
 @Entity(
     tableName = "resources",
-    indices = [Index(value = ["url"], unique = true)]
+    indices = [Index(value = ["url", "language"], unique = true), Index("language")]
 )
 data class ResourceLink(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -180,11 +187,12 @@ data class ResourceLink(
     @ColumnInfo(defaultValue = "other") val category: String = ResourceCategory.OTHER.key,
     /** User-written; built-in resources leave these null and show their catalog text instead. */
     val description: String? = null,
-    val level: String? = null
+    val level: String? = null,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )
 
 /** One shadowing try on one sentence. Only the score is kept -- never the audio. */
-@Entity(tableName = "shadow_attempts", indices = [Index(value = ["timestampMs"])])
+@Entity(tableName = "shadow_attempts", indices = [Index(value = ["timestampMs"]), Index("language")])
 data class ShadowAttempt(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val textId: Long,
@@ -195,5 +203,6 @@ data class ShadowAttempt(
     /** Speech length / expected TTS length; null when the engine gave no audio to measure. */
     val paceRatio: Float? = null,
     val engine: String,
-    val timestampMs: Long
+    val timestampMs: Long,
+    @ColumnInfo(defaultValue = "fr") val language: String = "fr"
 )

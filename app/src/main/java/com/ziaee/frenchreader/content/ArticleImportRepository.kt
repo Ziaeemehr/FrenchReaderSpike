@@ -33,7 +33,7 @@ class ArticleImportRepository(
      * open so the caller can offer Retry. */
     suspend fun import(headline: HeadlineEntity): ArticleImportResult? {
         val externalKey = normalizeArticleUrl(headline.articleUrl)
-        textDao.findByExternalKey(externalKey)?.let { existing ->
+        textDao.findByExternalKey(externalKey, headline.language)?.let { existing ->
             return ArticleImportResult.OpenExisting(existing.id)
         }
 
@@ -51,7 +51,8 @@ class ArticleImportRepository(
                 author = article.author,
                 license = article.license,
                 publishedAt = article.publishedAtMs,
-                externalKey = externalKey
+                externalKey = externalKey,
+                language = headline.language
             ),
             article.text
         )

@@ -33,16 +33,16 @@ class ShadowAttemptDaoTest {
         dao.insert(attempt(ms(today.minusDays(10))))
         dao.insert(attempt(ms(today)))
         dao.insert(attempt(ms(today)))
-        assertEquals(2, dao.getSince(ms(today.minusDays(6))).size)
-        assertEquals(3, dao.countAll())
-        assertEquals(setOf(today.toString(), today.minusDays(10).toString()), dao.distinctActiveDates().toSet())
+        assertEquals(2, dao.getSince(ms(today.minusDays(6)), "fr").size)
+        assertEquals(3, dao.countAll("fr"))
+        assertEquals(setOf(today.toString(), today.minusDays(10).toString()), dao.distinctActiveDates("fr").toSet())
     }
 
     @Test fun getForTextSince_filtersByTextAndTime() = runBlocking {
         dao.insert(attempt(1_000, textId = 1))
         dao.insert(attempt(5_000, textId = 1))
         dao.insert(attempt(5_000, textId = 2))
-        val rows = dao.getForTextSince(textId = 1, sinceMs = 2_000)
+        val rows = dao.getForTextSince(textId = 1, sinceMs = 2_000, language = "fr")
         assertEquals(1, rows.size)
         assertEquals(1.1f, rows[0].paceRatio!!, 0.001f)
     }

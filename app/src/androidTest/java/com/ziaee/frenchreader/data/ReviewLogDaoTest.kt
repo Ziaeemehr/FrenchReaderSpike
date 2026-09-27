@@ -41,7 +41,7 @@ class ReviewLogDaoTest {
         dao.insert(ReviewLogEntry(entryId = 2, timestampMs = epochMsAt(today), knew = false, boxBefore = 2, boxAfter = 1))
         dao.insert(ReviewLogEntry(entryId = 3, timestampMs = epochMsAt(yesterday), knew = true, boxBefore = 1, boxAfter = 2))
 
-        val activeDates = dao.distinctActiveDates()
+        val activeDates = dao.distinctActiveDates("fr")
 
         assertEquals(setOf(today.toString(), yesterday.toString()), activeDates.toSet())
         // Every returned string must be parseable back into the LocalDate it represents --
@@ -57,7 +57,7 @@ class ReviewLogDaoTest {
         dao.insert(ReviewLogEntry(entryId = 2, timestampMs = epochMsAt(today), knew = true, boxBefore = 1, boxAfter = 2))
         dao.insert(ReviewLogEntry(entryId = 3, timestampMs = epochMsAt(today), knew = false, boxBefore = 2, boxAfter = 1))
 
-        assertEquals(2, dao.countSince(startOfToday))
+        assertEquals(2, dao.countSince(startOfToday, "fr"))
     }
 
     @Test
@@ -67,8 +67,8 @@ class ReviewLogDaoTest {
         dao.insert(ReviewLogEntry(entryId = 2, timestampMs = epochMsAt(today), knew = true, boxBefore = 2, boxAfter = 3))
         dao.insert(ReviewLogEntry(entryId = 3, timestampMs = epochMsAt(today), knew = false, boxBefore = 3, boxAfter = 1))
 
-        assertEquals(2, dao.countKnew())
-        assertEquals(3, dao.countTotal())
+        assertEquals(2, dao.countKnew("fr"))
+        assertEquals(3, dao.countTotal("fr"))
     }
 
     @Test
@@ -77,6 +77,6 @@ class ReviewLogDaoTest {
         val id = dao.insert(ReviewLogEntry(entryId = 1, timestampMs = epochMsAt(today), knew = true, boxBefore = 1, boxAfter = 2))
         dao.insert(ReviewLogEntry(entryId = 2, timestampMs = epochMsAt(today), knew = true, boxBefore = 1, boxAfter = 2))
         dao.deleteById(id)
-        assertEquals(1, dao.countTotal())
+        assertEquals(1, dao.countTotal("fr"))
     }
 }

@@ -6,6 +6,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.supervisorScope
 
 const val RFI_FACILE_SOURCE_ID = "rfi_facile"
@@ -75,10 +77,14 @@ class NewsRepository(
     private val headlineDao: HeadlineDao,
     private val feedClient: NewsFeedClient = defaultFeedClient,
     private val clock: Clock = systemClock,
-    private val enabledSourceIds: () -> Set<String> = { setOf(RFI_FACILE_SOURCE_ID, FRANCE_INFO_SOURCE_ID) }
+    private val enabledSourceIds: () -> Set<String> = { setOf(RFI_FACILE_SOURCE_ID, FRANCE_INFO_SOURCE_ID) },
+    private val language: () -> String = { "fr" }
 ) {
     fun observeHeadlines(limit: Int = 200): Flow<List<HeadlineEntity>> =
-        headlineDao.observeRecent(CACHE_SCAN_LIMIT).map { headlines ->
+        observeHeadlines(flowOf(language()), limit)
+
+    fun observeHeadlines(languages: Flow<String>, limit: Int = 200): Flow<List<HeadlineEntity>> =
+        languages.flatMapLatest { headlineDao.observeRecent(CACHE_SCAN_LIMIT, it) }.map { headlines ->
             val enabled = enabledSourceIds()
             headlines.filter { it.sourceId in enabled }.take(limit)
         }
@@ -86,6 +92,7 @@ class NewsRepository(
     suspend fun refresh(force: Boolean): NewsRefreshResult {
         if (!force && !isStale()) return NewsRefreshResult(emptyList(), emptyList())
 
+        val targetLanguage = language()
         return supervisorScope {
             val enabled = enabledSourceIds()
             val outcomes = NEWS_SOURCES.filter { it.id in enabled }.map { source ->
@@ -98,8 +105,8 @@ class NewsRepository(
                 deferred.await()
                     .onSuccess { items ->
                         val cachedAtMs = clock.nowMs()
-                        val entities = items.map { it.toHeadlineEntity(source.id, source.label, cachedAtMs) }
-                        headlineDao.replaceSource(source.id, entities)
+                        val entities = items.map { it.toHeadlineEntity(source.id, source.label, cachedAtMs, targetLanguage) }
+                        headlineDao.replaceSource(source.id, targetLanguage, entities)
                         updatedSources += source.id
                     }
                     .onFailure { failedSources += source.id }
@@ -111,7 +118,7 @@ class NewsRepository(
     private suspend fun isStale(): Boolean {
         val enabled = enabledSourceIds()
         if (enabled.isEmpty()) return false
-        val enabledHeadlines = headlineDao.observeRecent(CACHE_SCAN_LIMIT).first()
+        val enabledHeadlines = headlineDao.observeRecent(CACHE_SCAN_LIMIT, language()).first()
             .filter { it.sourceId in enabled }
         if (!enabledHeadlines.mapTo(mutableSetOf()) { it.sourceId }.containsAll(enabled)) return true
         val oldestSourceCacheWrite = enabledHeadlines
@@ -123,7 +130,7 @@ class NewsRepository(
     }
 }
 
-private fun NewsItem.toHeadlineEntity(sourceId: String, sourceLabel: String, cachedAtMs: Long) = HeadlineEntity(
+private fun NewsItem.toHeadlineEntity(sourceId: String, sourceLabel: String, cachedAtMs: Long, language: String) = HeadlineEntity(
     sourceId = sourceId,
     sourceLabel = sourceLabel,
     externalId = guid,
@@ -132,5 +139,6 @@ private fun NewsItem.toHeadlineEntity(sourceId: String, sourceLabel: String, cac
     articleUrl = link,
     imageUrl = imageUrl,
     publishedAtMs = publishedAtMs,
-    cachedAtMs = cachedAtMs
+    cachedAtMs = cachedAtMs,
+    language = language
 )

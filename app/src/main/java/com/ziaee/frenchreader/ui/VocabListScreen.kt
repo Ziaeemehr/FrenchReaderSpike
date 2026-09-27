@@ -45,6 +45,7 @@ import com.ziaee.frenchreader.content.parseCsvWords
 import com.ziaee.frenchreader.content.CsvWordFile
 import com.ziaee.frenchreader.content.CsvImportTarget
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.SQL_ID_CHUNK
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.VocabList
@@ -57,6 +58,7 @@ import com.ziaee.frenchreader.ui.components.EditorialDestination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -103,8 +105,14 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     var previewSentenceTranslationError by mutableStateOf(false); private set
 
     init {
-        viewModelScope.launch { db.vocabDao().observeAll().collect { _entries.value = it } }
-        viewModelScope.launch { db.vocabListDao().observeAll().collect { _lists.value = it } }
+        viewModelScope.launch {
+            LanguagePrefs.observeTargetLanguage(context).flatMapLatest(db.vocabDao()::observeAll)
+                .collect { _entries.value = it }
+        }
+        viewModelScope.launch {
+            LanguagePrefs.observeTargetLanguage(context).flatMapLatest(db.vocabListDao()::observeAll)
+                .collect { _lists.value = it }
+        }
     }
 
     fun setLearned(entry: VocabEntry, learned: Boolean) {
@@ -233,7 +241,9 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     fun createList(name: String, onCreated: (Long) -> Unit) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            val id = db.vocabListDao().insert(VocabList(name = name.trim()))
+            val id = db.vocabListDao().insert(
+                VocabList(name = name.trim(), language = LanguagePrefs.getTargetLanguage(context))
+            )
             onCreated(id)
         }
     }
@@ -241,7 +251,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     fun importAnki(json: String, keepProgress: Boolean, onDone: (AnkiImportResult?) -> Unit) {
         viewModelScope.launch {
             val result = try {
-                AnkiImportRepository(db).import(json, keepProgress)
+                AnkiImportRepository(db, LanguagePrefs.getTargetLanguage(context)).import(json, keepProgress)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -254,7 +264,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     fun importCsv(file: CsvWordFile, target: CsvImportTarget, onDone: (AnkiImportResult?) -> Unit) {
         viewModelScope.launch {
             val result = try {
-                AnkiImportRepository(db).importCsv(file, target)
+                AnkiImportRepository(db, LanguagePrefs.getTargetLanguage(context)).importCsv(file, target)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

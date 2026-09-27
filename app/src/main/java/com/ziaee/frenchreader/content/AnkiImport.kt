@@ -63,12 +63,13 @@ internal fun boxForInterval(days: Int): Int = when {
 
 internal fun buildVocabEntry(
     card: AnkiCard, mapped: MappedAnkiCard, listId: Long, keepProgress: Boolean,
-    todayDay: Int?, nowMs: Long, dictionaryUrl: String, zone: ZoneId = ZoneId.systemDefault()
+    todayDay: Int?, nowMs: Long, dictionaryUrl: String, zone: ZoneId = ZoneId.systemDefault(),
+    language: String = "fr"
 ): VocabEntry {
     val base = VocabEntry(
         word = mapped.word, sentence = mapped.sentence, textId = 0L, dictionaryUrl = dictionaryUrl,
         meaning = mapped.meaning, createdAtMs = nowMs, listId = listId,
-        leitnerBox = 1, nextReviewAtMs = nowMs, lastReviewedAtMs = null
+        leitnerBox = 1, nextReviewAtMs = nowMs, lastReviewedAtMs = null, language = language
     )
     if (!keepProgress) return base
     return when (card.type) {

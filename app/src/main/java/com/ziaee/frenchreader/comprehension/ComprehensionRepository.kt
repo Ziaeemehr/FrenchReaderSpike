@@ -5,6 +5,7 @@ import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.data.LanguagePrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,12 +15,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 class ComprehensionRepository private constructor(
     private val bodyStore: TextBodyStorage,
     private val lexiconLoader: LemmaLexicon,
-    database: AppDatabase
+    database: AppDatabase,
+    context: Context
 ) {
     private data class KnownState(val version: Long, val lemmas: Set<String>)
     private data class BodyKey(val id: Long, val bodyPath: String?, val rawTextLength: Int)
@@ -37,7 +40,8 @@ class ComprehensionRepository private constructor(
     init {
         scope.launch {
             var version = 0L
-            database.vocabDao().observeAll()
+            LanguagePrefs.observeTargetLanguage(context)
+                .flatMapLatest(database.vocabDao()::observeAll)
                 .mapLatest { entries -> buildKnownLemmaSet(entries, lexiconLoader.get()) }
                 .distinctUntilChanged()
                 .collectLatest { knownState.value = KnownState(++version, it) }
@@ -96,7 +100,8 @@ class ComprehensionRepository private constructor(
                 ComprehensionRepository(
                     bodyStore = TextBodyStore(application),
                     lexiconLoader = LemmaLexicon.get(application),
-                    database = AppDatabase.get(application)
+                    database = AppDatabase.get(application),
+                    context = application
                 ).also { instance = it }
             }
         }

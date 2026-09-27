@@ -47,6 +47,7 @@ import com.ziaee.frenchreader.data.VocabPrefs
 import com.ziaee.frenchreader.data.VocabRepository
 import com.ziaee.frenchreader.data.MANUAL_VOCAB_TEXT_ID
 import com.ziaee.frenchreader.data.DictionarySavedState
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.dictionarySavedState
 import com.ziaee.frenchreader.comprehension.FrenchLemmaLexicon
 import com.ziaee.frenchreader.comprehension.LemmaLexicon
@@ -57,6 +58,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
@@ -164,27 +166,34 @@ fun ManualDictionaryDialog(onDismiss: () -> Unit, onLookup: (String) -> Unit) {
 
 class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
-    private val repository = VocabRepository(db.vocabDao())
+    private val context = app.applicationContext
+    private val repository = VocabRepository(db.vocabDao()) { LanguagePrefs.getTargetLanguage(context) }
 
     private val _lists = MutableStateFlow<List<VocabList>>(emptyList())
     val lists: StateFlow<List<VocabList>> = _lists.asStateFlow()
 
     init {
         viewModelScope.launch {
-            db.vocabListDao().observeAll().collect { _lists.value = it }
+            LanguagePrefs.observeTargetLanguage(context).flatMapLatest { language ->
+                db.vocabListDao().observeAll(language)
+            }.collect { _lists.value = it }
         }
     }
 
     fun createList(name: String, onCreated: (Long) -> Unit) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            val id = db.vocabListDao().insert(VocabList(name = name.trim()))
+            val id = db.vocabListDao().insert(
+                VocabList(name = name.trim(), language = LanguagePrefs.getTargetLanguage(context))
+            )
             onCreated(id)
         }
     }
 
     fun observeSavedState(textId: Long, word: String, sentence: String): Flow<DictionarySavedState> =
-        db.vocabDao().observeAll().map { entries ->
+        LanguagePrefs.observeTargetLanguage(context).flatMapLatest { language ->
+            db.vocabDao().observeAll(language)
+        }.map { entries ->
             dictionarySavedState(entries, textId, word, sentence)
         }
 

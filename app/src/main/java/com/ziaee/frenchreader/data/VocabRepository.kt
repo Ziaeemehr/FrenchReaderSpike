@@ -34,7 +34,7 @@ fun dictionarySavedState(
     )
 }
 
-class VocabRepository(private val dao: VocabDao) {
+class VocabRepository(private val dao: VocabDao, private val language: () -> String) {
     suspend fun save(
         textId: Long,
         word: String,
@@ -45,15 +45,16 @@ class VocabRepository(private val dao: VocabDao) {
     ) {
         val existing = if (textId == MANUAL_VOCAB_TEXT_ID) {
             val identity = vocabIdentityKey(word)
-            dao.getManualEntries().firstOrNull { vocabIdentityKey(it.word) == identity }
+            dao.getManualEntries(language()).firstOrNull { vocabIdentityKey(it.word) == identity }
         } else {
-            dao.findExisting(textId, word, sentence)
+            dao.findExisting(textId, word, sentence, language())
         }
         if (existing != null) {
             dao.update(
                 existing.copy(
                     meaning = meaning?.ifBlank { existing.meaning } ?: existing.meaning,
-                    listId = listId
+                    listId = listId,
+                    language = language()
                 )
             )
         } else {
@@ -64,7 +65,8 @@ class VocabRepository(private val dao: VocabDao) {
                     textId = textId,
                     dictionaryUrl = dictionaryUrl,
                     meaning = meaning?.ifBlank { null },
-                    listId = listId
+                    listId = listId,
+                    language = language()
                 )
             )
         }

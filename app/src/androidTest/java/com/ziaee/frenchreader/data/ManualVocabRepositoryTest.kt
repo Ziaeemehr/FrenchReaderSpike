@@ -20,7 +20,7 @@ class ManualVocabRepositoryTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
-        repository = VocabRepository(db.vocabDao())
+        repository = VocabRepository(db.vocabDao()) { "fr" }
     }
 
     @After
@@ -55,9 +55,19 @@ class ManualVocabRepositoryTest {
             listId = null
         )
 
-        val entries = db.vocabDao().getAllOnce()
+        val entries = db.vocabDao().getAllOnce("fr")
         assertEquals(2, entries.size)
         assertEquals("Anki meaning", entries.single { it.textId == 0L }.meaning)
         assertEquals("updated manual meaning", entries.single { it.textId == MANUAL_VOCAB_TEXT_ID }.meaning)
+    }
+
+    @Test
+    fun saveTagsNewWordWithActiveLanguageAndKeepsLanguagesApart() = runBlocking {
+        val german = VocabRepository(db.vocabDao()) { "de" }
+        german.save(MANUAL_VOCAB_TEXT_ID, "Straße", "", "dictionary", "street", null)
+        repository.save(MANUAL_VOCAB_TEXT_ID, "Straße", "", "dictionary", "rue", null)
+
+        assertEquals("street", db.vocabDao().getAllOnce("de").single().meaning)
+        assertEquals("rue", db.vocabDao().getAllOnce("fr").single().meaning)
     }
 }

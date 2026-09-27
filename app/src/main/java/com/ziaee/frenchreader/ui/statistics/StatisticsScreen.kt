@@ -22,6 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.TextBodyStore
+import com.ziaee.frenchreader.data.LanguagePrefs
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
@@ -39,34 +41,35 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     init {
-        load()
+        viewModelScope.launch {
+            LanguagePrefs.observeTargetLanguage(app).collectLatest { load(it) }
+        }
     }
 
-    private fun load() {
-        viewModelScope.launch {
+    private suspend fun load(language: String) {
             val today = LocalDate.now()
-            val texts = db.textDao().getAllOnce()
+            val texts = db.textDao().getAllOnce(language)
             val bodyByTextId = texts.associate { it.id to bodyStore.read(it) }
-            val vocabEntries = db.vocabDao().getAllOnce()
+            val vocabEntries = db.vocabDao().getAllOnce(language)
 
-            val reviewedToday = db.reviewLogDao().countSince(today.startOfDayMs())
-            val reviewedThisWeek = db.reviewLogDao().countSince(today.minusDays(6).startOfDayMs())
-            val knewCount = db.reviewLogDao().countKnew()
-            val totalReviewCount = db.reviewLogDao().countTotal()
+            val reviewedToday = db.reviewLogDao().countSince(today.startOfDayMs(), language)
+            val reviewedThisWeek = db.reviewLogDao().countSince(today.minusDays(6).startOfDayMs(), language)
+            val knewCount = db.reviewLogDao().countKnew(language)
+            val totalReviewCount = db.reviewLogDao().countTotal(language)
 
             val monthDays = lastDays(today, 30)
-            val monthRows = db.activityLogDao().getForDates(monthDays.map { it.toString() })
+            val monthRows = db.activityLogDao().getForDates(monthDays.map { it.toString() }, language)
                 .associateBy { it.date }
             val monthlyListening = monthDays.map { day ->
                 DailyListening(day, monthRows[day.toString()]?.listeningMs ?: 0L)
             }
             val weeklyListening = monthlyListening.takeLast(7)
-            val reviewLogs = db.reviewLogDao().getAll()
+            val reviewLogs = db.reviewLogDao().getAll(language)
 
             val activeDates = loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
+                reviewLogDates = { db.reviewLogDao().distinctActiveDates(language) },
                 activityLogDates = {
-                    db.activityLogDao().activeDates() + db.shadowAttemptDao().distinctActiveDates()
+                    db.activityLogDao().activeDates(language) + db.shadowAttemptDao().distinctActiveDates(language)
                 }
             )
 
@@ -84,12 +87,11 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 reviewLogs = reviewLogs,
                 monthlyListening = monthlyListening
             )
-            val shadowRecent = db.shadowAttemptDao().getSince(today.minusDays(6).startOfDayMs())
+            val shadowRecent = db.shadowAttemptDao().getSince(today.minusDays(6).startOfDayMs(), language)
             uiState = uiState.copy(
-                shadowing = shadowingSummary(db.shadowAttemptDao().countAll(), shadowRecent, today)
+                shadowing = shadowingSummary(db.shadowAttemptDao().countAll(language), shadowRecent, today)
             )
             loading = false
-        }
     }
 }
 

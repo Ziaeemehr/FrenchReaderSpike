@@ -25,6 +25,7 @@ import com.ziaee.frenchreader.content.TextExtractionController
 import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HeadlineEntity
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.NewsPrefs
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStore
@@ -46,6 +47,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -58,11 +61,13 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
+    private val targetLanguage = LanguagePrefs.observeTargetLanguage(app).distinctUntilChanged()
     private val comprehensionRepository = ComprehensionRepository.get(app)
     val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val newsRepository = NewsRepository(
         db.headlineDao(),
-        enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app) }
+        enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app) },
+        language = { LanguagePrefs.getTargetLanguage(getApplication()) }
     )
     private val epubImportRepository = EpubImportRepository(app, db)
     private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
@@ -95,32 +100,33 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         val bodies: Map<Long, String>
     )
 
-    private val textsWithBodies = db.textDao().observeAll().mapLatest { documents ->
+    private val textsWithBodies = targetLanguage.flatMapLatest(db.textDao()::observeAll).mapLatest { documents ->
         TextsWithBodies(
             documents,
             documents.take(MAX_RECENT_TEXTS).associate { it.id to bodyStore.read(it) }
         )
     }
 
-    private val continueWithBody = db.textDao().observeMostRecentlyAccessed().mapLatest { document ->
+    private val continueWithBody = targetLanguage.flatMapLatest(db.textDao()::observeMostRecentlyAccessed).mapLatest { document ->
         document to document?.let { bodyStore.read(it) }
     }
 
     /** Re-derives the real, non-fabricated reading streak whenever a review
      * or a listening session is logged -- driven by Room's own invalidation
      * tracker rather than a timer, so it stays correct without polling. */
-    private val activeDates = db.invalidationTrackerFlow("review_log", "activity_log", emitInitialState = true)
-        .map {
+    private val activeDates = targetLanguage.flatMapLatest { language ->
+        db.invalidationTrackerFlow("review_log", "activity_log", emitInitialState = true).map {
             loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = { db.activityLogDao().activeDates() }
+                reviewLogDates = { db.reviewLogDao().distinctActiveDates(language) },
+                activityLogDates = { db.activityLogDao().activeDates(language) }
             )
         }
+    }
 
     val uiState: StateFlow<HomeUiState> = combine(
-        newsRepository.observeHeadlines(),
+        newsRepository.observeHeadlines(targetLanguage),
         textsWithBodies,
-        db.vocabDao().observeAll(),
+        targetLanguage.flatMapLatest(db.vocabDao()::observeAll),
         continueWithBody,
         isRefreshing,
         sourceErrors,
@@ -194,7 +200,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         existingDocumentId = null
         headlineLookupJob?.cancel()
         headlineLookupJob = viewModelScope.launch {
-            val documentId = db.textDao().findByExternalKey(normalizeArticleUrl(headline.articleUrl))?.id
+            val documentId = db.textDao().findByExternalKey(normalizeArticleUrl(headline.articleUrl), headline.language)?.id
             if (selectedHeadline == headline) existingDocumentId = documentId
         }
     }
@@ -238,7 +244,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
      * flow, unrelated to headline or topic-search imports. */
     fun pasteText(title: String, body: String, onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = ""), body)
+            val language = LanguagePrefs.getTargetLanguage(getApplication())
+            val id = insertTextDocument(
+                db.textDao(), bodyStore, TextDocument(title = title, rawText = "", language = language), body
+            )
             onDone(id)
         }
     }
@@ -359,7 +368,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     sourceName = article.sourceName,
                     author = article.author,
                     license = article.license,
-                    publishedAt = article.publishedAtMs
+                    publishedAt = article.publishedAtMs,
+                    language = LanguagePrefs.getTargetLanguage(getApplication())
                 ),
                 article.text
             )

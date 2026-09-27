@@ -6,11 +6,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.ResourceLink
+import com.ziaee.frenchreader.data.LanguagePrefs
 import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,7 +48,10 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
         Controls(text, busy, problem, selected, tiles)
     }
 
-    val uiState = combine(dao.observeAll(), controls) { items, c ->
+    private val resources = LanguagePrefs.observeTargetLanguage(app)
+        .flatMapLatest(dao::observeAll)
+
+    val uiState = combine(resources, controls) { items, c ->
         ResourcesUiState(
             resources = filterResources(items, c.query, c.category),
             query = c.query,
@@ -67,7 +72,7 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
             // Retired built-ins leave the seeded set too, so the cleanup runs only once.
             val retired = seeded intersect RETIRED_RESOURCE_URLS
             if (retired.isNotEmpty()) {
-                dao.deleteByUrls(retired)
+                dao.deleteByUrls(retired, "fr")
                 seeded = seeded - retired
                 prefs.edit().putStringSet(KEY_SEEDED_URLS, seeded).apply()
             }
@@ -80,7 +85,8 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
                             url = resource.url,
                             createdAtMs = resource.createdAtMs,
                             category = resource.category.key,
-                            imageUrl = resource.imageUrl
+                            imageUrl = resource.imageUrl,
+                            language = "fr"
                         )
                     }
                 )
@@ -88,7 +94,7 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
             }
             // Look up a page image once per URL (not on every visit), and never for search links.
             val tried = prefs.getStringSet(KEY_IMAGE_TRIED, emptySet()).orEmpty()
-            val pending = dao.getWithoutImages().filter { it.url !in tried && wantsImageLookup(it.url) }
+            val pending = dao.getWithoutImages("fr").filter { it.url !in tried && wantsImageLookup(it.url) }
             pending.forEach { resource ->
                 val metadata = withContext(Dispatchers.IO) {
                     runCatching { fetchResourceMetadata(resource.url) }.getOrNull()
@@ -144,7 +150,8 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
                     description = descriptionInput.trim().ifBlank {
                         if (existing == null && defaultResourceFor(url) == null) metadata.description.orEmpty() else ""
                     }.ifBlank { null },
-                    level = levelInput.trim().ifBlank { null }
+                    level = levelInput.trim().ifBlank { null },
+                    language = existing?.language ?: LanguagePrefs.getTargetLanguage(getApplication())
                 )
                 if (existing == null) dao.insert(resource) else dao.update(resource)
                 onSaved()

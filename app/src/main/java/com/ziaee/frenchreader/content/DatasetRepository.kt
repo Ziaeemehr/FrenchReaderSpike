@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val GRADED_STORIES_FOLDER = "Histoires graduées"
+private const val DATASET_LANGUAGE = "fr"
 
 internal val STARTER_DECK_IDS = setOf(
     "gram-dial-a1-vocab",
@@ -53,10 +54,10 @@ class DatasetRepository(
         val rows = parseDatasetDeck(asset(pack.file))
         val now = System.currentTimeMillis()
         db.withTransaction {
-            val lists = db.vocabListDao().getAllOnce()
+            val lists = db.vocabListDao().getAllOnce(DATASET_LANGUAGE)
             val listId = lists.firstOrNull { it.name.equals(pack.name, true) }?.id
-                ?: db.vocabListDao().insert(VocabList(name = pack.name))
-            val existing = db.vocabDao().getAllOnce()
+                ?: db.vocabListDao().insert(VocabList(name = pack.name, language = DATASET_LANGUAGE))
+            val existing = db.vocabDao().getAllOnce(DATASET_LANGUAGE)
                 .filter { it.listId == listId }
                 .map { it.word.lowercase() }
                 .toMutableSet()
@@ -74,7 +75,8 @@ class DatasetRepository(
                             createdAtMs = now + added,
                             nextReviewAtMs = now,
                             leitnerBox = 1,
-                            lastReviewedAtMs = null
+                            lastReviewedAtMs = null,
+                            language = DATASET_LANGUAGE
                         )
                     )
                     added++
@@ -88,11 +90,11 @@ class DatasetRepository(
         val manifest = loadManifest()
         val rowsByPack = manifest.decks.associateWith { parseDatasetDeck(asset(it.file)) }
         db.withTransaction {
-            val lists = db.vocabListDao().getAllOnce()
+            val lists = db.vocabListDao().getAllOnce(DATASET_LANGUAGE)
             val packs = rowsByPack.map { (pack, rows) ->
                 rows to lists.firstOrNull { it.name.equals(pack.name, ignoreCase = true) }?.id
             }
-            val plan = planDatasetCardCleanup(packs, db.vocabDao().getAllOnce())
+            val plan = planDatasetCardCleanup(packs, db.vocabDao().getAllOnce(DATASET_LANGUAGE))
             plan.deleteIds.chunked(SQL_ID_CHUNK).forEach { db.vocabDao().deleteByIds(it) }
             plan.moveToList.entries.groupBy({ it.value }, { it.key }).forEach { (listId, ids) ->
                 ids.chunked(SQL_ID_CHUNK).forEach { db.vocabDao().setListId(it, listId) }
@@ -105,13 +107,13 @@ class DatasetRepository(
         val rows = parseDatasetStories(asset(pack.file))
         db.withTransaction {
             val folders = db.libraryOrganizerDao()
-            val root = folders.findFolderByName(GRADED_STORIES_FOLDER)?.id
-                ?: folders.insertFolder(LibraryFolder(name = GRADED_STORIES_FOLDER))
-            val level = folders.findFolderByName(pack.level, root)?.id
-                ?: folders.insertFolder(LibraryFolder(name = pack.level, parentId = root))
+            val root = folders.findFolderByName(GRADED_STORIES_FOLDER, language = DATASET_LANGUAGE)?.id
+                ?: folders.insertFolder(LibraryFolder(name = GRADED_STORIES_FOLDER, language = DATASET_LANGUAGE))
+            val level = folders.findFolderByName(pack.level, root, DATASET_LANGUAGE)?.id
+                ?: folders.insertFolder(LibraryFolder(name = pack.level, parentId = root, language = DATASET_LANGUAGE))
             var added = 0
             rows.forEach { story ->
-                if (db.textDao().findByExternalKey(story.key) == null) {
+                if (db.textDao().findByExternalKey(story.key, DATASET_LANGUAGE) == null) {
                     val stored = story.image?.let { image ->
                         val bytes = context.assets.open("dataset/$image").use { it.readBytes() }
                         imageStore.storeBytes(
@@ -136,7 +138,8 @@ class DatasetRepository(
                             sourceUrl = story.sourceUrl,
                             externalKey = story.key,
                             folderId = level,
-                            imagePath = stored
+                            imagePath = stored,
+                            language = DATASET_LANGUAGE
                         ),
                         body
                     )
@@ -149,9 +152,9 @@ class DatasetRepository(
 
     suspend fun status(manifestOrNull: DatasetManifest? = null): DatasetStatus = withContext(Dispatchers.IO) {
         val manifest = manifestOrNull ?: loadManifest()
-        val lists = db.vocabListDao().getAllOnce()
-        val entries = db.vocabDao().getAllOnce()
-        val storyKeys = db.textDao().getDatasetExternalKeys().toSet()
+        val lists = db.vocabListDao().getAllOnce(DATASET_LANGUAGE)
+        val entries = db.vocabDao().getAllOnce(DATASET_LANGUAGE)
+        val storyKeys = db.textDao().getDatasetExternalKeys(DATASET_LANGUAGE).toSet()
         DatasetStatus(
             decks = manifest.decks.associate { pack ->
                 val installed = lists.firstOrNull { it.name.equals(pack.name, true) }

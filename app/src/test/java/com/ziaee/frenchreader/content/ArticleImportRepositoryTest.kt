@@ -151,20 +151,20 @@ class ArticleImportRepositoryTest {
         val imagePaths = mutableMapOf<Long, String>()
         private var nextId = (initial.maxOfOrNull { it.id } ?: 0L) + 1L
 
-        override fun observeAll(): Flow<List<TextDocument>> = flowOf(documents)
-        override fun observeRecent(): Flow<List<TextDocument>> = flowOf(documents.take(5))
-        override fun observeMostRecentlyAccessed(): Flow<TextDocument?> = flowOf(documents.firstOrNull())
-        override fun observeMatchingTitleOrSource(query: String): Flow<List<TextDocument>> = flowOf(documents)
+        override fun observeAll(language: String): Flow<List<TextDocument>> = flowOf(documents.filter { it.language == language })
+        override fun observeRecent(language: String): Flow<List<TextDocument>> = flowOf(documents.filter { it.language == language }.take(5))
+        override fun observeMostRecentlyAccessed(language: String): Flow<TextDocument?> = flowOf(documents.firstOrNull { it.language == language })
+        override fun observeMatchingTitleOrSource(query: String, language: String): Flow<List<TextDocument>> = flowOf(documents.filter { it.language == language })
 
         override suspend fun getById(id: Long): TextDocument? = documents.find { it.id == id }
 
-        override suspend fun getAllOnce(): List<TextDocument> = documents.toList()
+        override suspend fun getAllOnce(language: String): List<TextDocument> = documents.filter { it.language == language }
 
-        override suspend fun findByExternalKey(externalKey: String): TextDocument? =
-            documents.find { it.externalKey == externalKey }
+        override suspend fun findByExternalKey(externalKey: String, language: String): TextDocument? =
+            documents.find { it.externalKey == externalKey && it.language == language }
 
-        override suspend fun getDatasetExternalKeys(): List<String> =
-            documents.mapNotNull { it.externalKey?.takeIf { key -> key.startsWith("dataset:") } }
+        override suspend fun getDatasetExternalKeys(language: String): List<String> =
+            documents.filter { it.language == language }.mapNotNull { it.externalKey?.takeIf { key -> key.startsWith("dataset:") } }
 
         override suspend fun insert(text: TextDocument): Long {
             val id = nextId++
@@ -183,7 +183,7 @@ class ArticleImportRepositoryTest {
             documents.removeAll { it.id == text.id }
         }
 
-        override suspend fun searchText(match: String): List<TextSearchHit> = emptyList()
+        override suspend fun searchText(match: String, language: String): List<TextSearchHit> = emptyList()
         override suspend fun setSearchBody(id: Long, body: String) = Unit
         override suspend fun getUnindexedFileBodies(): List<TextDocument> = emptyList()
 

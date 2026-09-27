@@ -138,13 +138,14 @@ class NewsRepositoryTest {
         var cached = initial.toMutableList()
         val replacedSourceIds = mutableListOf<String>()
 
-        override fun observeRecent(limit: Int): Flow<List<HeadlineEntity>> = flowOf(cached.take(limit))
+        override fun observeRecent(limit: Int, language: String): Flow<List<HeadlineEntity>> =
+            flowOf(cached.filter { it.language == language }.take(limit))
 
         override suspend fun insertAll(items: List<HeadlineEntity>) = Unit
 
-        override suspend fun clearSource(sourceId: String) = Unit
+        override suspend fun clearSource(sourceId: String, language: String) = Unit
 
-        override suspend fun replaceSource(sourceId: String, items: List<HeadlineEntity>) {
+        override suspend fun replaceSource(sourceId: String, language: String, items: List<HeadlineEntity>) {
             replacedSourceIds += sourceId
             cached.removeAll { it.sourceId == sourceId }
             cached.addAll(items)

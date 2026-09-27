@@ -30,13 +30,13 @@ class ResourceDaoTest {
     @Test
     fun insertUpdateDelete_roundTripsResource() = runBlocking {
         val id = dao.insert(ResourceLink(title = "Fabulang", url = "https://fabulang.com"))
-        val inserted = dao.observeAll().first().single()
+        val inserted = dao.observeAll("fr").first().single()
         assertEquals(id, inserted.id)
 
         dao.update(inserted.copy(title = "French stories"))
-        assertEquals("French stories", dao.observeAll().first().single().title)
+        assertEquals("French stories", dao.observeAll("fr").first().single().title)
 
         dao.delete(inserted.copy(title = "French stories"))
-        assertEquals(emptyList<ResourceLink>(), dao.observeAll().first())
+        assertEquals(emptyList<ResourceLink>(), dao.observeAll("fr").first())
     }
 }

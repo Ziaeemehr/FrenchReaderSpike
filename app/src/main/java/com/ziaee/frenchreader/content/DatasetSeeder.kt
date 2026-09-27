@@ -47,8 +47,8 @@ object DatasetSeeder {
             return
         }
 
-        val isFresh = db.textDao().getAllOnce().isEmpty() &&
-            db.vocabListDao().getAllOnce().isEmpty()
+        val isFresh = db.textDao().getAllOnce("fr").isEmpty() &&
+            db.vocabListDao().getAllOnce("fr").isEmpty()
         if (!isFresh) {
             markComplete(context, manifest.version)
             return

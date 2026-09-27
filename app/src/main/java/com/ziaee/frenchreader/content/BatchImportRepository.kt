@@ -10,6 +10,7 @@ import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.insertTextDocument
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.images.ArticleImageStorage
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.ui.shared.queryDisplayName
@@ -78,13 +79,14 @@ class BatchImportRepository(
     }
 
     private suspend fun importText(uri: Uri, folderId: Long?, treeUri: Uri?): Boolean {
+        val language = LanguagePrefs.getTargetLanguage(context)
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytesLimited(MAX_TEXT_IMPORT_BYTES) }
             ?: error("Unable to open document")
         val content = bytes.toString(Charsets.UTF_8)
         val externalKey = "file:${sha1(bytes)}"
         val displayName = queryDisplayName(context, uri, stripExtension = false) ?: "Untitled.txt"
         val parsed = parseFrontMatter(content)
-        if (db.textDao().findByExternalKey(externalKey) != null) return false
+        if (db.textDao().findByExternalKey(externalKey, language) != null) return false
         val stagingDir = File(context.cacheDir, "batch-import-${UUID.randomUUID()}").apply { mkdirs() }
         val writtenPaths = mutableListOf<String>()
         try {
@@ -92,7 +94,7 @@ class BatchImportRepository(
             val body = resolveLocalImages(parsed.body, uri, treeUri, stagingDir, writtenPaths)
             val stagedBody = File(stagingDir, "body-final.txt").apply { writeText(body, Charsets.UTF_8) }
             return db.withTransaction {
-                if (db.textDao().findByExternalKey(externalKey) != null) {
+                if (db.textDao().findByExternalKey(externalKey, language) != null) {
                     writtenPaths.forEach { imageStore.delete(it) }
                     return@withTransaction false
                 }
@@ -100,7 +102,8 @@ class BatchImportRepository(
                     db.textDao(), bodyStore,
                     TextDocument(
                         title = parsed.title?.takeIf { it.isNotBlank() } ?: displayName.substringBeforeLast('.'),
-                        rawText = "", sourceName = displayName, externalKey = externalKey, folderId = folderId
+                        rawText = "", sourceName = displayName, externalKey = externalKey, folderId = folderId,
+                        language = language
                     ),
                     stagedBody.readText(Charsets.UTF_8)
                 )
@@ -169,7 +172,9 @@ class BatchImportRepository(
 
     private suspend fun createFolder(name: String): Long = db.withTransaction {
         val cleanName = name.trim().ifBlank { datedFolderName() }
-        db.libraryOrganizerDao().insertFolder(LibraryFolder(name = cleanName))
+        db.libraryOrganizerDao().insertFolder(
+            LibraryFolder(name = cleanName, language = LanguagePrefs.getTargetLanguage(context))
+        )
     }
 
     private fun isEpub(uri: Uri): Boolean {

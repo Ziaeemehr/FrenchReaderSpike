@@ -274,6 +274,62 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+// v17 -> v18: scope learning content and activity to the selected target language.
+// Existing installs were French-only, so every existing row is tagged `fr`.
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        listOf(
+            "texts", "library_folders", "vocab", "vocab_lists", "review_log",
+            "resources", "shadow_attempts"
+        ).forEach { table ->
+            db.execSQL("ALTER TABLE `$table` ADD COLUMN `language` TEXT NOT NULL DEFAULT 'fr'")
+            db.execSQL("CREATE INDEX `index_${table}_language` ON `$table` (`language`)")
+        }
+
+        db.execSQL("DROP INDEX `index_texts_externalKey`")
+        db.execSQL(
+            "CREATE UNIQUE INDEX `index_texts_externalKey_language` " +
+                "ON `texts` (`externalKey`, `language`)"
+        )
+        db.execSQL("DROP INDEX `index_resources_url`")
+        db.execSQL(
+            "CREATE UNIQUE INDEX `index_resources_url_language` " +
+                "ON `resources` (`url`, `language`)"
+        )
+
+        db.execSQL(
+            "CREATE TABLE `headlines_new` (" +
+                "`sourceId` TEXT NOT NULL, `sourceLabel` TEXT NOT NULL, " +
+                "`externalId` TEXT NOT NULL, `title` TEXT NOT NULL, `snippet` TEXT NOT NULL, " +
+                "`articleUrl` TEXT NOT NULL, `imageUrl` TEXT, `publishedAtMs` INTEGER, " +
+                "`cachedAtMs` INTEGER NOT NULL, `language` TEXT NOT NULL DEFAULT 'fr', " +
+                "PRIMARY KEY(`sourceId`, `externalId`, `language`))"
+        )
+        db.execSQL(
+            "INSERT INTO `headlines_new` (sourceId, sourceLabel, externalId, title, snippet, " +
+                "articleUrl, imageUrl, publishedAtMs, cachedAtMs) SELECT sourceId, sourceLabel, " +
+                "externalId, title, snippet, articleUrl, imageUrl, publishedAtMs, cachedAtMs FROM headlines"
+        )
+        db.execSQL("DROP TABLE `headlines`")
+        db.execSQL("ALTER TABLE `headlines_new` RENAME TO `headlines`")
+        db.execSQL("CREATE INDEX `index_headlines_publishedAtMs` ON `headlines` (`publishedAtMs`)")
+        db.execSQL("CREATE INDEX `index_headlines_articleUrl` ON `headlines` (`articleUrl`)")
+        db.execSQL("CREATE INDEX `index_headlines_language` ON `headlines` (`language`)")
+
+        db.execSQL(
+            "CREATE TABLE `activity_log_new` (" +
+                "`date` TEXT NOT NULL, `listeningMs` INTEGER NOT NULL, " +
+                "`language` TEXT NOT NULL DEFAULT 'fr', PRIMARY KEY(`date`, `language`))"
+        )
+        db.execSQL(
+            "INSERT INTO `activity_log_new` (date, listeningMs) SELECT date, listeningMs FROM activity_log"
+        )
+        db.execSQL("DROP TABLE `activity_log`")
+        db.execSQL("ALTER TABLE `activity_log_new` RENAME TO `activity_log`")
+        db.execSQL("CREATE INDEX `index_activity_log_language` ON `activity_log` (`language`)")
+    }
+}
+
 /**
  * Triggers that mirror `texts` into `texts_fts`. A file-backed text has rawText = "", so on update
  * its indexed body is left alone (Kotlin writes it). Created on every open (IF NOT EXISTS) so fresh
@@ -310,7 +366,7 @@ val TEXT_SEARCH_CALLBACK = object : RoomDatabase.Callback() {
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
     MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
-    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17
+    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18
 )
 
 @Database(
@@ -336,7 +392,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shadowAttemptDao(): ShadowAttemptDao
 
     companion object {
-        const val SCHEMA_VERSION = 17
+        const val SCHEMA_VERSION = 18
 
         @Volatile private var INSTANCE: AppDatabase? = null
 

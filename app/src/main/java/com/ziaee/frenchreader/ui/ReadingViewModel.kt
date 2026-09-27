@@ -13,6 +13,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.PlayerMessage
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.HighlightEntry
 import com.ziaee.frenchreader.data.HighlightRepository
 import com.ziaee.frenchreader.data.TextBodyStore
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -192,7 +194,8 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             VocabPrefs.addStudyTimeMs(app, java.time.LocalDate.now().toString(), delta)
         },
         now = System::currentTimeMillis,
-        isPlaying = { player.isPlaying || player.playWhenReady }
+        isPlaying = { player.isPlaying || player.playWhenReady },
+        language = { _state.value.textDoc?.language ?: LanguagePrefs.getTargetLanguage(app) }
     )
     val shadowing: StateFlow<ShadowingState> = shadowingController.state
     private val _shadowSummary = MutableStateFlow<ShadowSummaryUi?>(null)
@@ -207,7 +210,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val _highlights = MutableStateFlow<List<HighlightEntry>>(emptyList())
     val highlights: StateFlow<List<HighlightEntry>> = _highlights.asStateFlow()
     val savedVocabStatuses: StateFlow<Map<String, VocabStatus>> = db.vocabDao()
-        .observeAll()
+        .let { dao -> LanguagePrefs.observeTargetLanguage(app).flatMapLatest(dao::observeAll) }
         .map { entries ->
             buildVocabStatusMap(entries.map { SavedVocab(it.word, it.status()) })
         }
@@ -741,7 +744,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         setShadowing(false)
         if (doc == null) return
         viewModelScope.launch {
-            val summary = shadowTextSummary(db.shadowAttemptDao().getForTextSince(doc.id, since)) ?: return@launch
+            val summary = shadowTextSummary(db.shadowAttemptDao().getForTextSince(doc.id, since, doc.language)) ?: return@launch
             val chunks = _state.value.chunks
             val texts = summary.weakest.associate { w ->
                 w.ref to chunks.getOrNull(w.ref.chunkIndex)?.sentences?.getOrNull(w.ref.sentenceIndex)?.text.orEmpty()
@@ -983,8 +986,9 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         listeningByDate: Map<String, Long>
     ) {
         db.textDao().savePosition(textId, chunkIndex, positionMs)
+        val language = db.textDao().getById(textId)?.language ?: LanguagePrefs.getTargetLanguage(getApplication())
         listeningByDate.forEach { (date, durationMs) ->
-            if (durationMs > 0) db.activityLogDao().addListening(date, durationMs)
+            if (durationMs > 0) db.activityLogDao().addListening(date, durationMs, language)
         }
     }
 

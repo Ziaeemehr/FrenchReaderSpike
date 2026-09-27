@@ -37,7 +37,8 @@ class ShadowingController(
     private val saveAttempt: suspend (ShadowAttempt) -> Unit,
     private val addStudyTimeMs: (Long) -> Unit,
     private val now: () -> Long,
-    private val isPlaying: () -> Boolean
+    private val isPlaying: () -> Boolean,
+    private val language: () -> String = { "fr" }
 ) {
     private val _state = MutableStateFlow(ShadowingState())
     val state: StateFlow<ShadowingState> = _state.asStateFlow()
@@ -101,7 +102,7 @@ class ShadowingController(
             saveAttempt(
                 ShadowAttempt(textId = textId, chunkIndex = target.chunkIndex, sentenceIndex = target.sentenceIndex,
                     matched = alignment.matched, total = alignment.total, paceRatio = pace?.ratio,
-                    engine = e.kind.id, timestampMs = now())
+                    engine = e.kind.id, timestampMs = now(), language = language())
             )
             _state.value = _state.value.copy(phase = ShadowPhase.Result(alignment, pace), hasRecording = rec.pcm != null)
         }

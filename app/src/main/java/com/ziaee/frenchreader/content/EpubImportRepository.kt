@@ -8,6 +8,7 @@ import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStorage
 import com.ziaee.frenchreader.data.TextBodyStore
 import com.ziaee.frenchreader.data.insertTextDocument
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.images.ArticleImageStorage
 import com.ziaee.frenchreader.images.ArticleImageStore
 import com.ziaee.frenchreader.ui.shared.queryDisplayName
@@ -32,6 +33,7 @@ class EpubImportRepository(
     private val bodyStore: TextBodyStorage = TextBodyStore(context)
 ) {
     suspend fun import(uri: Uri): EpubImportResult = withContext(Dispatchers.IO) {
+        val language = LanguagePrefs.getTargetLanguage(context)
         val displayName = queryDisplayName(context, uri)
         val book = context.contentResolver.openInputStream(uri)?.use { EpubReader.read(it) }
             ?: throw EpubFormatException("unable to open EPUB")
@@ -43,7 +45,7 @@ class EpubImportRepository(
             .joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
         val externalKey = "epub:$identifierHash"
 
-        db.textDao().findByExternalKey(externalKey)?.let { existing ->
+        db.textDao().findByExternalKey(externalKey, language)?.let { existing ->
             return@withContext EpubImportResult(null, bookTitle, existing.id, 0, 0)
         }
         val stagingDir = File(context.cacheDir, "epub-import-${UUID.randomUUID()}").apply { mkdirs() }
@@ -76,14 +78,14 @@ class EpubImportRepository(
             val stagedBody = File(stagingDir, "body.txt").apply { writeText(body, Charsets.UTF_8) }
             db.withTransaction {
                 val textDao = db.textDao()
-                textDao.findByExternalKey(externalKey)?.let { existing ->
+                textDao.findByExternalKey(externalKey, language)?.let { existing ->
                     writtenPaths.forEach { imageStore.delete(it) }
                     return@withTransaction EpubImportResult(null, bookTitle, existing.id, 0, 0)
                 }
                 val id = insertTextDocument(
                     textDao, bodyStore,
                     TextDocument(title = bookTitle, rawText = "", sourceName = bookTitle,
-                        externalKey = externalKey, imagePath = coverPath),
+                        externalKey = externalKey, imagePath = coverPath, language = language),
                     stagedBody.readText(Charsets.UTF_8)
                 )
                 EpubImportResult(null, bookTitle, id, book.chapters.size, 0)

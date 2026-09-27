@@ -30,25 +30,25 @@ class ActivityLogDaoTest {
 
     @Test
     fun addListening_createsRowWhenNoneExists() = runBlocking {
-        dao.addListening("2026-09-16", 5000L)
+        dao.addListening("2026-09-16", 5000L, "fr")
 
-        assertEquals(5000L, dao.getForDate("2026-09-16")?.listeningMs)
+        assertEquals(5000L, dao.getForDate("2026-09-16", "fr")?.listeningMs)
     }
 
     @Test
     fun addListening_accumulatesAcrossCalls() = runBlocking {
-        dao.addListening("2026-09-16", 5000L)
-        dao.addListening("2026-09-16", 3000L)
+        dao.addListening("2026-09-16", 5000L, "fr")
+        dao.addListening("2026-09-16", 3000L, "fr")
 
-        assertEquals(8000L, dao.getForDate("2026-09-16")?.listeningMs)
+        assertEquals(8000L, dao.getForDate("2026-09-16", "fr")?.listeningMs)
     }
 
     @Test
     fun addListening_keepsSeparateDatesIndependent() = runBlocking {
-        dao.addListening("2026-09-16", 5000L)
-        dao.addListening("2026-09-17", 2000L)
+        dao.addListening("2026-09-16", 5000L, "fr")
+        dao.addListening("2026-09-17", 2000L, "fr")
 
-        assertEquals(5000L, dao.getForDate("2026-09-16")?.listeningMs)
-        assertEquals(2000L, dao.getForDate("2026-09-17")?.listeningMs)
+        assertEquals(5000L, dao.getForDate("2026-09-16", "fr")?.listeningMs)
+        assertEquals(2000L, dao.getForDate("2026-09-17", "fr")?.listeningMs)
     }
 }

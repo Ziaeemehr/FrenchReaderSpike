@@ -14,6 +14,7 @@ import com.ziaee.frenchreader.content.TextExtractionController
 import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.LibraryFolder
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.LibraryTag
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStore
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,6 +43,11 @@ import kotlinx.coroutines.launch
  */
 class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    private val context = app.applicationContext
+    private val organizerDao = db.libraryOrganizerDao()
+    private val targetLanguage = LanguagePrefs.observeTargetLanguage(context).distinctUntilChanged()
+    private val documents = targetLanguage.flatMapLatest(db.textDao()::observeAll)
+    private val folders = targetLanguage.flatMapLatest(organizerDao::observeFolders)
     private val bodyStore = TextBodyStore(app)
     private val comprehensionRepository = ComprehensionRepository.get(app)
     val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
@@ -51,7 +58,6 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     // Library only ever deletes -- it never imports a headline, so no
     // ContentSource needs to be registered here.
-    private val organizerDao = db.libraryOrganizerDao()
     private val importRepository = ArticleImportRepository(
         db.textDao(), emptyList(), ArticleImageStore(app), bodyStore, organizerDao
     )
@@ -73,7 +79,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         viewModelScope.launch {
-            db.textDao().observeAll().collectLatest { documents ->
+            documents.collectLatest { documents ->
                 selectedIds.value = prunedSelection(selectedIds.value, documents.mapTo(mutableSetOf()) { it.id })
             }
         }
@@ -94,7 +100,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     private val completionCache = LibraryCompletionCache()
 
-    private val documentsWithCompletion = db.textDao().observeAll().mapLatest { documents ->
+    private val documentsWithCompletion = documents.mapLatest { documents ->
         DocumentsWithCompletion(
             documents,
             completionCache.completionFor(documents, bodyStore::read)
@@ -110,7 +116,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     private val libraryData = combine(
         documentsWithCompletion,
-        organizerDao.observeFolders(),
+        folders,
         organizerDao.observeTags(),
         organizerDao.observeAllTagRefs()
     ) { documentData, folders, tags, refs ->
@@ -127,11 +133,12 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     /** Full-text body matches for the current query (id -> snippet); re-run when texts change. */
     private val bodySnippets = combine(
         query.map { textSearchMatch(it) }.distinctUntilChanged().debounce(250),
-        db.textDao().observeAll()
-    ) { match, _ -> match }.mapLatest { match ->
+        targetLanguage,
+        documents
+    ) { match, language, _ -> match to language }.mapLatest { (match, language) ->
         if (match == null) emptyMap()
         else try {
-            db.textDao().searchText(match).associate { it.id to it.snippet }
+            db.textDao().searchText(match, language).associate { it.id to it.snippet }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
@@ -234,8 +241,9 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         if (cleanName.isBlank()) return
         val ids = selectedIds.value.toList()
         viewModelScope.launch {
-            val folderId = organizerDao.findFolderByName(cleanName)?.id
-                ?: organizerDao.insertFolder(LibraryFolder(name = cleanName))
+            val language = LanguagePrefs.getTargetLanguage(context)
+            val folderId = organizerDao.findFolderByName(cleanName, language = language)?.id
+                ?: organizerDao.insertFolder(LibraryFolder(name = cleanName, language = language))
             if (ids.isNotEmpty()) db.textDao().setFolders(ids, folderId)
             clearSelection()
         }
@@ -258,8 +266,9 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         val cleanName = name.trim()
         if (cleanName.isBlank()) return
         viewModelScope.launch {
-            if (organizerDao.findFolderByName(cleanName, parentId) == null) {
-                organizerDao.insertFolder(LibraryFolder(name = cleanName, parentId = parentId))
+            val language = LanguagePrefs.getTargetLanguage(context)
+            if (organizerDao.findFolderByName(cleanName, parentId, language) == null) {
+                organizerDao.insertFolder(LibraryFolder(name = cleanName, parentId = parentId, language = language))
             }
         }
     }
@@ -269,7 +278,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         if (cleanName.isBlank()) return
         viewModelScope.launch {
             val folder = uiState.value.folders.firstOrNull { it.id == id } ?: return@launch
-            val existing = organizerDao.findFolderByName(cleanName, folder.parentId)
+            val existing = organizerDao.findFolderByName(cleanName, folder.parentId, folder.language)
             if (existing == null || existing.id == id) organizerDao.renameFolder(id, cleanName)
         }
     }
@@ -279,7 +288,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
             val folders = uiState.value.folders
             val folder = folders.firstOrNull { it.id == id } ?: return@launch
             if (!canMoveFolder(folders, id, newParentId)) return@launch
-            val duplicate = organizerDao.findFolderByName(folder.name, newParentId)
+            val duplicate = organizerDao.findFolderByName(folder.name, newParentId, folder.language)
             if (duplicate == null || duplicate.id == id) organizerDao.moveFolder(id, newParentId)
         }
     }
@@ -295,7 +304,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             if (deleteFiles) {
                 val folderIds = removed
-                db.textDao().getAllOnce()
+                db.textDao().getAllOnce(LanguagePrefs.getTargetLanguage(context))
                     .filter { it.folderId in folderIds }
                     .forEach { importRepository.deleteWithImage(it) }
                 organizerDao.deleteFolderRows(folderIds.toList())
@@ -341,8 +350,9 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         val cleanName = name.trim()
         if (cleanName.isBlank()) return
         viewModelScope.launch {
-            val folderId = organizerDao.findFolderByName(cleanName, parentId)?.id
-                ?: organizerDao.insertFolder(LibraryFolder(name = cleanName, parentId = parentId))
+            val language = doc.language
+            val folderId = organizerDao.findFolderByName(cleanName, parentId, language)?.id
+                ?: organizerDao.insertFolder(LibraryFolder(name = cleanName, parentId = parentId, language = language))
             db.textDao().setFolder(doc.id, folderId)
         }
     }
@@ -381,7 +391,10 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
      * entry point mirrors Home's (see [com.ziaee.frenchreader.ui.home.HomeViewModel.pasteText]). */
     fun pasteText(title: String, body: String, onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = ""), body)
+            val language = LanguagePrefs.getTargetLanguage(context)
+            val id = insertTextDocument(
+                db.textDao(), bodyStore, TextDocument(title = title, rawText = "", language = language), body
+            )
             onDone(id)
         }
     }

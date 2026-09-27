@@ -45,7 +45,7 @@ class EpubImportRepositoryTest {
         val uri = Uri.fromFile(epubFile)
 
         val first = repository.import(uri)
-        val documents = db.textDao().getAllOnce()
+        val documents = db.textDao().getAllOnce("fr")
 
         assertEquals("Le Petit Test", first.bookTitle)
         assertEquals(2, first.importedCount)
@@ -66,7 +66,7 @@ class EpubImportRepositoryTest {
         assertEquals(0, second.skippedCount)
         assertEquals(first.folderId, second.folderId)
         assertEquals(first.firstTextId, second.firstTextId)
-        assertEquals(1, db.textDao().getAllOnce().size)
+        assertEquals(1, db.textDao().getAllOnce("fr").size)
     }
 
     @Test
