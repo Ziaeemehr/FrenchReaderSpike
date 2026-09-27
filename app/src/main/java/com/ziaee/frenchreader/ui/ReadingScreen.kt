@@ -171,6 +171,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     var requestedPageAnchor by remember { mutableStateOf<ReadingAnchor?>(null) }
     var visiblePageAnchor by remember { mutableStateOf(ReadingAnchor(0, 0)) }
     var autoScrollEnabled by remember { mutableStateOf(true) }
+    // Paragraph the scroll-mode auto-follow last handled; -1 forces a check on load.
+    var lastFollowedChunk by remember { mutableIntStateOf(-1) }
     var voiceMenuExpanded by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
     var showSourceInfoSheet by remember { mutableStateOf(false) }
@@ -303,6 +305,9 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
             .collect { (first, count) -> vm.translateVisible(first, count.coerceAtLeast(1)) }
     }
 
+    // Re-check the reading position whenever following is (re)enabled or scroll mode returns.
+    LaunchedEffect(autoScrollEnabled, pageNavigation) { lastFollowedChunk = -1 }
+
     // Follows playback down the page as the current paragraph advances, so
     // reading along doesn't require manually dragging the screen up every
     // few sentences. Toggled off, the person scrolls entirely by hand.
@@ -312,7 +317,21 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
         val findHoldsScroll = findOpen && findQuery.isNotBlank() && !state.isPlaying
         if (autoScrollEnabled && state.ready && state.chunks.isNotEmpty() && !findHoldsScroll) {
             if (pageNavigation == PageNavigation.SCROLL) {
-                listState.animateScrollToItem(state.currentChunkIndex)
+                // Scroll only when the paragraph being read doesn't fit in what's already on
+                // screen: short paragraphs are read in place, then the next one that would
+                // run off the bottom is brought to the top -- like turning a page, instead of
+                // moving the text on every paragraph.
+                val chunkIndex = state.currentChunkIndex
+                if (chunkIndex != lastFollowedChunk) {
+                    lastFollowedChunk = chunkIndex
+                    val info = listState.layoutInfo
+                    val item = info.visibleItemsInfo.find { it.index == chunkIndex }
+                    val bottomMargin = (info.viewportEndOffset - info.viewportStartOffset) * 0.08f
+                    val fits = item != null &&
+                        item.offset >= info.viewportStartOffset &&
+                        item.offset + item.size <= info.viewportEndOffset - bottomMargin
+                    if (!fits) listState.animateScrollToItem(chunkIndex)
+                }
             } else {
                 requestedPageAnchor = ReadingAnchor(
                     state.currentChunkIndex,
