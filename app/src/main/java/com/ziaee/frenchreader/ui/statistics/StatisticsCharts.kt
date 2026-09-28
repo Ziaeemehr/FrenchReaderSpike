@@ -62,6 +62,50 @@ fun BarChart(values: List<Float>, labels: List<String>, color: Color, modifier: 
 }
 
 @Composable
+fun StackedBarChart(
+    valuesByBar: List<List<Float>>,
+    labels: List<String>,
+    colors: List<Color>,
+    modifier: Modifier = Modifier
+) {
+    val max = maxOf(valuesByBar.maxOfOrNull { it.sum() } ?: 0f, 1f)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+        ) {
+            if (valuesByBar.isEmpty()) return@Canvas
+            val slot = size.width / valuesByBar.size
+            val width = slot * .65f
+            valuesByBar.forEachIndexed { index, segments ->
+                val x0 = index * slot + (slot - width) / 2
+                val x = if (layoutDirection == LayoutDirection.Rtl) {
+                    size.width - x0 - width
+                } else {
+                    x0
+                }
+                var bottom = size.height
+                segments.forEachIndexed { segment, value ->
+                    val height = size.height * (value / max).coerceIn(0f, 1f)
+                    drawRect(
+                        color = colors.getOrElse(segment) { Color.Gray },
+                        topLeft = Offset(x, bottom - height),
+                        size = Size(width, height)
+                    )
+                    bottom -= height
+                }
+            }
+        }
+        LabelRow(labels)
+    }
+}
+
+@Composable
 fun LineChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier, maxValue: Float? = null) {
     val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {

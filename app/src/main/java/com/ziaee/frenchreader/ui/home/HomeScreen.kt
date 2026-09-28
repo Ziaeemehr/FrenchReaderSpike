@@ -93,6 +93,7 @@ fun HomeScreen(
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
     onStartReview: () -> Unit,
+    onOpenStudyLog: () -> Unit = {},
     openAddTextSheet: Boolean = false,
     onAddTextSheetOpened: () -> Unit = {}
 ) {
@@ -217,7 +218,8 @@ fun HomeScreen(
         onDownloadOrOpen = { vm.importSelected { id -> onOpenText(id) } },
         onDismissPreview = { vm.dismissPreview() },
         onStartReview = onStartReview,
-        onOpenDataset = onOpenDataset
+        onOpenDataset = onOpenDataset,
+        onOpenStudyLog = onOpenStudyLog
     )
 
     AddTextHost(
@@ -289,7 +291,8 @@ fun HomeContent(
     onDownloadOrOpen: () -> Unit,
     onDismissPreview: () -> Unit,
     onStartReview: () -> Unit,
-    onOpenDataset: () -> Unit = {}
+    onOpenDataset: () -> Unit = {},
+    onOpenStudyLog: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -357,6 +360,12 @@ fun HomeContent(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
             LazyColumn(modifier = Modifier.fillMaxSize().testTag(HOME_LAZY_COLUMN_TEST_TAG)) {
+                item {
+                    androidx.compose.material3.Card(
+                        onClick = onOpenStudyLog,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) { Text(stringResource(R.string.study_log_home_card), modifier = Modifier.padding(20.dp)) }
+                }
                 item {
                     LearningSummaryStrip(
                         streakDays = state.streakDays,

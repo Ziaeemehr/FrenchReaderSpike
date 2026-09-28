@@ -98,7 +98,7 @@ private fun LocalDate.startOfDayMs(): Long =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatisticsScreen(onBack: () -> Unit) {
+fun StatisticsScreen(onBack: () -> Unit, onOpenStudyLog: () -> Unit = {}) {
     val vm: StatisticsViewModel = viewModel()
 
     Scaffold(
@@ -130,6 +130,7 @@ fun StatisticsScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
+            OutlinedButton(onClick = onOpenStudyLog, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.study_log_title)) }
             StreakSection(state.streakDays)
             WeeklyListeningSection(state.weeklyListening)
             ShadowingSection(state.shadowing)

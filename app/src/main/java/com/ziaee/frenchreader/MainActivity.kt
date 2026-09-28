@@ -27,7 +27,13 @@ import com.ziaee.frenchreader.content.ImageTextExtractor
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
+import com.ziaee.frenchreader.resources.ResourcesScreen
+import com.ziaee.frenchreader.studylog.StudyLogChartsScreen
+import com.ziaee.frenchreader.studylog.StudyLogEntryScreen
+import com.ziaee.frenchreader.studylog.StudyLogScreen
+import com.ziaee.frenchreader.studylog.StudySourcesScreen
 import com.ziaee.frenchreader.ui.AboutScreen
+import com.ziaee.frenchreader.ui.AutoUpdatePrompt
 import com.ziaee.frenchreader.ui.DatasetScreen
 import com.ziaee.frenchreader.ui.ReadingScreen
 import com.ziaee.frenchreader.ui.SettingsScreen
@@ -37,10 +43,8 @@ import com.ziaee.frenchreader.ui.VocabReviewScreen
 import com.ziaee.frenchreader.ui.home.HomeScreen
 import com.ziaee.frenchreader.ui.library.LibraryScreen
 import com.ziaee.frenchreader.ui.shared.queryDisplayName
-import com.ziaee.frenchreader.resources.ResourcesScreen
 import com.ziaee.frenchreader.ui.statistics.StatisticsScreen
 import com.ziaee.frenchreader.ui.theme.AppearanceState
-import com.ziaee.frenchreader.ui.AutoUpdatePrompt
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
 import com.ziaee.frenchreader.util.IncomingContentKind
@@ -211,6 +215,7 @@ private fun AppNavHost() {
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
+                onOpenStudyLog = { navController.navigate("study_log") },
                 openAddTextSheet = openAddTextOnHome,
                 onAddTextSheetOpened = { openAddTextOnHome = false }
             )
@@ -282,7 +287,43 @@ private fun AppNavHost() {
         }
         composable("dataset") { DatasetScreen { navController.popBackStack() } }
         composable("statistics") {
-            StatisticsScreen(onBack = { navController.popBackStack() })
+            StatisticsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenStudyLog = { navController.navigate("study_log") }
+            )
+        }
+        composable("study_log") {
+            StudyLogScreen(
+                onBack = { navController.popBackStack() },
+                onAdd = { navController.navigate("study_log/entry?id=-1") },
+                onEdit = { navController.navigate("study_log/entry?id=$it") },
+                onSources = { navController.navigate("study_log/sources") },
+                onCharts = { navController.navigate("study_log/charts") }
+            )
+        }
+        composable(
+            route = "study_log/entry?id={id}",
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) { entry ->
+            StudyLogEntryScreen(
+                entryId = entry.arguments?.getLong("id")?.takeIf { it >= 0 },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("study_log/sources") {
+            StudySourcesScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("study_log/charts") {
+            StudyLogChartsScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
         composable("about") {
             AboutScreen(onBack = { navController.popBackStack() })

@@ -71,6 +71,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
+            // Separate package so a debug build installs next to the release app on the
+            // phone instead of replacing it (different signing key would wipe its data).
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-dev"
             minifyEnabled false
         }
     }
