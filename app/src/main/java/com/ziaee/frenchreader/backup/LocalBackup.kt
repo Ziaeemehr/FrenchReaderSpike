@@ -25,9 +25,9 @@ private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCI
 private const val DATABASE_ENTRY = "database/french_reader.db"
 private const val SETTINGS_ENTRY = "prefs/settings.json"
 private val FILE_DIRECTORIES = listOf("text_bodies", "text_images")
-private val PREFERENCE_FILES = listOf(
+internal val PREFERENCE_FILES = listOf(
     "vocab_prefs", "appearance_prefs", "locale_prefs", "news_prefs",
-    "highlight_prefs", "tts_cache_prefs", "xtts_prefs"
+    "highlight_prefs", "tts_cache_prefs", "xtts_prefs", "study_log_prefs"
 )
 private const val MAX_BACKUP_ENTRIES = 20_000
 

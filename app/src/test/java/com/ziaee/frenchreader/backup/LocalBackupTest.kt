@@ -6,6 +6,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LocalBackupTest {
+    @Test fun `study log preferences are backed up`() {
+        assertTrue("study_log_prefs" in PREFERENCE_FILES)
+    }
     @Test
     fun `valid SQLite header is accepted`() {
         val bytes = "SQLite format 3\u0000remaining database bytes".toByteArray()

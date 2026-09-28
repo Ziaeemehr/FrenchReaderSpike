@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -274,6 +275,16 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `study_source` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT COLLATE NOCASE NOT NULL, `kind` TEXT NOT NULL, `default_skill` TEXT, `note` TEXT, `archived` INTEGER NOT NULL, `created_at` INTEGER NOT NULL)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_study_source_name` ON `study_source` (`name`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `study_session` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` INTEGER NOT NULL, `duration_min` INTEGER NOT NULL, `skill` TEXT NOT NULL, `source_id` INTEGER, `note` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`source_id`) REFERENCES `study_source`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_study_session_date` ON `study_session` (`date`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_study_session_source_id` ON `study_session` (`source_id`)")
+    }
+}
+
 /**
  * Triggers that mirror `texts` into `texts_fts`. A file-backed text has rawText = "", so on update
  * its indexed body is left alone (Kotlin writes it). Created on every open (IF NOT EXISTS) so fresh
@@ -310,7 +321,7 @@ val TEXT_SEARCH_CALLBACK = object : RoomDatabase.Callback() {
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
     MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
-    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17
+    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18
 )
 
 @Database(
@@ -318,12 +329,14 @@ val ALL_MIGRATIONS = arrayOf(
         TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class,
         ReviewLogEntry::class, ActivityLogEntry::class, ResourceLink::class,
         LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class, HighlightEntry::class,
-        ShadowAttempt::class, TextSearchEntry::class
+        ShadowAttempt::class, TextSearchEntry::class, StudySource::class, StudySession::class
     ],
     version = AppDatabase.SCHEMA_VERSION,
     exportSchema = false
 )
+@TypeConverters(StudyLogConverters::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun studyLogDao(): StudyLogDao
     abstract fun textDao(): TextDao
     abstract fun headlineDao(): HeadlineDao
     abstract fun vocabDao(): VocabDao
@@ -336,7 +349,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shadowAttemptDao(): ShadowAttemptDao
 
     companion object {
-        const val SCHEMA_VERSION = 17
+        const val SCHEMA_VERSION = 18
 
         @Volatile private var INSTANCE: AppDatabase? = null
 
