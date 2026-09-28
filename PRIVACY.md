@@ -25,7 +25,7 @@ The app connects to outside services only to do things you ask for, plus a once-
 | Shadowing, offline engine (default) | alphacephei.com, once, to download the French speech model | A normal download request. Your voice is processed on the phone and never sent anywhere |
 | Shadowing, Android engine (optional) | Your phone's speech recognition service (usually Google) | The sentence you speak, unless offline French recognition is installed on the phone |
 | Translating a word or paragraph | Google Translate's web service; MyMemory (api.mymemory.translated.net) if that fails | The word or text to translate |
-| Dictionary lookup | The dictionary site you choose (WordReference, Larousse, Linguee, Wiktionary, B-amooz) | The word you look up |
+| Dictionary lookup | The dictionary site you choose (WordReference, Reverso Conjugator, Larousse, Linguee, Wiktionary, B-amooz) | The word you look up |
 | News, Wikisource, Vikidia, importing an article | The site the content comes from (e.g. RFI, France Info, Wikisource) | A normal page or feed request |
 | Google Drive backup (optional) | Google | Your backup file (see below) |
 | Update check (once a day, can be turned off in Settings; also "Check for updates" in About) | GitHub (api.github.com) | A request for the latest release of this app. Nothing about you or your data |

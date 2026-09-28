@@ -34,7 +34,7 @@
     <string name="about_chaquopy_credit">Python SDK for Android</string>
     <string name="about_vazirmatn_credit">Persian and Arabic typeface</string>
     <string name="about_software_credits">Jetpack Compose, Room, Media3, Coil, jsoup (Apache-2.0/MIT)</string>
-    <string name="about_content_credits">Content and dictionaries: RFI, France Info, Wikisource, Vikidia, WordReference, Larousse, Linguee, Wiktionary, B-amooz. All content belongs to its respective owners.</string>
+    <string name="about_content_credits">Content and dictionaries: RFI, France Info, Wikisource, Vikidia, WordReference, Reverso Conjugator, Larousse, Linguee, Wiktionary, B-amooz. All content belongs to its respective owners.</string>
     <string name="about_lexique_credit">French lemma and frequency data: Lexique 3.83 (CC BY-SA 4.0).</string>
     <string name="about_footer">© 2026 Abolfazl Ziaeemehr</string>
     <string name="about_open_link_failed">No app is available to open this link.</string>

@@ -8,6 +8,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
@@ -28,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -77,21 +80,31 @@ internal fun wordReferenceUrl(word: String): String =
  * lookup panel below the WebView -- see ROADMAP.md. URL patterns verified
  * against live pages during design; Reverso Context was considered and
  * dropped because it's behind a Cloudflare bot challenge that blocked even
- * full-browser-header requests. */
-private data class DictionaryProvider(val id: String, val label: String, val urlFor: (String) -> String)
+ * full-browser-header requests, but Reverso Conjugator is not challenged and
+ * is included. */
+private data class DictionaryProvider(
+    val id: String,
+    val label: String,
+    @DrawableRes val iconRes: Int,
+    val urlFor: (String) -> String
+)
 
 private val DICTIONARY_PROVIDERS = listOf(
-    DictionaryProvider("wordreference", "WordReference") { wordReferenceUrl(it) },
-    DictionaryProvider("bamooz", "B-amooz") {
+    DictionaryProvider("wordreference", "WordReference", R.drawable.ic_dict_wordreference) { wordReferenceUrl(it) },
+    DictionaryProvider("reverso_conj", "Reverso Conjugaison", R.drawable.ic_dict_reverso) {
+        "https://conjugator.reverso.net/conjugation-french-verb-" +
+            URLEncoder.encode(it, "UTF-8").replace("+", "%20") + ".html"
+    },
+    DictionaryProvider("bamooz", "B-amooz", R.drawable.ic_dict_bamooz) {
         "https://dic.b-amooz.com/fr/dictionary/w?word=" + URLEncoder.encode(it, "UTF-8")
     },
-    DictionaryProvider("larousse", "Larousse") {
+    DictionaryProvider("larousse", "Larousse", R.drawable.ic_dict_larousse) {
         "https://www.larousse.fr/dictionnaires/francais/" + URLEncoder.encode(it, "UTF-8")
     },
-    DictionaryProvider("linguee", "Linguee") {
+    DictionaryProvider("linguee", "Linguee", R.drawable.ic_dict_linguee) {
         "https://www.linguee.com/french-english/search?source=auto&query=" + URLEncoder.encode(it, "UTF-8")
     },
-    DictionaryProvider("wiktionary", "Wiktionary") {
+    DictionaryProvider("wiktionary", "Wiktionary", R.drawable.ic_dict_wiktionary) {
         "https://fr.wiktionary.org/wiki/" + URLEncoder.encode(it, "UTF-8")
     }
 )
@@ -543,9 +556,8 @@ fun DictionarySheet(
             }
 
             // Dictionaries as tabs sitting directly on the page they switch.
-            ScrollableTabRow(
+            TabRow(
                 selectedTabIndex = DICTIONARY_PROVIDERS.indexOfFirst { it.id == selectedProvider.id }.coerceAtLeast(0),
-                edgePadding = 0.dp,
                 containerColor = Color.Transparent,
                 divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
             ) {
@@ -553,9 +565,15 @@ fun DictionarySheet(
                     Tab(
                         selected = selectedProvider.id == provider.id,
                         onClick = { selectedProvider = provider; webViewFailed = false },
-                        text = { Text(provider.label, style = MaterialTheme.typography.labelLarge) },
+                        modifier = Modifier.height(40.dp),
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    ) {
+                        Image(
+                            painter = painterResource(provider.iconRes),
+                            contentDescription = provider.label,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 

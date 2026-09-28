@@ -34,7 +34,7 @@
     <string name="about_chaquopy_credit">SDK Python pour Android</string>
     <string name="about_vazirmatn_credit">Police de caractères persane et arabe</string>
     <string name="about_software_credits">Jetpack Compose, Room, Media3, Coil, jsoup (Apache-2.0/MIT)</string>
-    <string name="about_content_credits">Contenus et dictionnaires : RFI, France Info, Wikisource, Vikidia, WordReference, Larousse, Linguee, Wiktionary, B-amooz. Tous les contenus appartiennent à leurs propriétaires respectifs.</string>
+    <string name="about_content_credits">Contenus et dictionnaires : RFI, France Info, Wikisource, Vikidia, WordReference, Reverso Conjugator, Larousse, Linguee, Wiktionary, B-amooz. Tous les contenus appartiennent à leurs propriétaires respectifs.</string>
     <string name="about_lexique_credit">Données de lemmes et de fréquence du français : Lexique 3.83 (CC BY-SA 4.0).</string>
     <string name="about_footer">© 2026 Abolfazl Ziaeemehr</string>
     <string name="about_open_link_failed">Aucune application ne permet d’ouvrir ce lien.</string>
