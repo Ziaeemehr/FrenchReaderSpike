@@ -190,7 +190,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     init {
-        refresh(force = false)
+        // The first value is the language at startup; later ones are switches, which need that
+        // language's (possibly never fetched) headlines. The stale check still skips fresh caches.
+        viewModelScope.launch { targetLanguage.collect { refresh(force = false) } }
     }
 
     fun requestComprehension(document: TextDocument) {
