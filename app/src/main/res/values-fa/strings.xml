@@ -165,8 +165,8 @@
     <string name="add_text_title_review">بررسی متن</string>
     <string name="edit_text_title">ویرایش متن</string>
     <string name="add_text_field_title">عنوان</string>
-    <string name="add_text_field_body">متن فرانسوی</string>
-    <string name="add_text_body_hint">متن فرانسوی را اینجا بنویسید یا جای‌گذاری کنید…</string>
+    <string name="add_text_field_body">متن</string>
+    <string name="add_text_body_hint">متن خود را اینجا بنویسید یا جای‌گذاری کنید…</string>
     <string name="add_text_paste">جای‌گذاری</string>
     <string name="add_text_clear">پاک کردن</string>
     <string name="add_text_counts">%1$d واژه · %2$d نویسه</string>
@@ -358,7 +358,7 @@
     <string name="highlight_delete">حذف برجسته‌سازی</string>
     <string name="manual_dictionary_action">واژه‌نامه</string>
     <string name="manual_dictionary_title">جست‌وجوی واژه</string>
-    <string name="manual_dictionary_word_hint">واژه یا عبارت فرانسوی</string>
+    <string name="manual_dictionary_word_hint">واژه یا عبارت</string>
     <string name="manual_dictionary_lookup">جست‌وجو</string>
     <string name="dictionary_saved_exact">ذخیره‌شده</string>
     <string name="dictionary_saved_elsewhere">قبلاً در %1$d زمینه‌ی دیگر ذخیره شده</string>
@@ -620,7 +620,7 @@
     <string name="resources_level_optional">سطح (اختیاری)</string>
     <string name="resources_description_optional">توضیح (اختیاری)</string>
     <string name="resources_description_hint">اگر خالی بماند، از وب‌سایت برداشته می‌شود</string>
-    <string name="resource_category_textbooks">کتاب‌های آموزشی فرانسه</string>
+    <string name="resource_category_textbooks">کتاب‌های آموزشی</string>
     <string name="resources_web_search">جستجوی وب</string>
     <string name="resources_youtube_search">جستجو در یوتیوب</string>
     <string name="resource_category_telegram">کانال‌های تلگرام</string>

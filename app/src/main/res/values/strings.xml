@@ -165,8 +165,8 @@
     <string name="add_text_title_review">Review text</string>
     <string name="edit_text_title">Edit text</string>
     <string name="add_text_field_title">Title</string>
-    <string name="add_text_field_body">French text</string>
-    <string name="add_text_body_hint">Paste or type French text here…</string>
+    <string name="add_text_field_body">Text</string>
+    <string name="add_text_body_hint">Paste or type your text here…</string>
     <string name="add_text_paste">Paste</string>
     <string name="add_text_clear">Clear</string>
     <string name="add_text_counts">%1$d words · %2$d characters</string>
@@ -360,7 +360,7 @@
     <string name="highlight_delete">Delete highlight</string>
     <string name="manual_dictionary_action">Dictionary</string>
     <string name="manual_dictionary_title">Look up a word</string>
-    <string name="manual_dictionary_word_hint">French word or phrase</string>
+    <string name="manual_dictionary_word_hint">Word or phrase</string>
     <string name="manual_dictionary_lookup">Look up</string>
     <string name="dictionary_saved_exact">Saved</string>
     <string name="dictionary_saved_elsewhere">Previously saved in %1$d other context(s)</string>
@@ -622,7 +622,7 @@
     <string name="resources_level_optional">Level (optional)</string>
     <string name="resources_description_optional">Description (optional)</string>
     <string name="resources_description_hint">Filled in from the website if left empty</string>
-    <string name="resource_category_textbooks">French textbooks</string>
+    <string name="resource_category_textbooks">Textbooks</string>
     <string name="resources_web_search">Web search</string>
     <string name="resources_youtube_search">YouTube search</string>
     <string name="resource_category_telegram">Telegram channels</string>

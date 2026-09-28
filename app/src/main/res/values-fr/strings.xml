@@ -165,8 +165,8 @@
     <string name="add_text_title_review">Vérifier le texte</string>
     <string name="edit_text_title">Modifier le texte</string>
     <string name="add_text_field_title">Titre</string>
-    <string name="add_text_field_body">Texte français</string>
-    <string name="add_text_body_hint">Collez ou saisissez le texte français ici…</string>
+    <string name="add_text_field_body">Texte</string>
+    <string name="add_text_body_hint">Collez ou saisissez votre texte ici…</string>
     <string name="add_text_paste">Coller</string>
     <string name="add_text_clear">Effacer</string>
     <string name="add_text_counts">%1$d mots · %2$d caractères</string>
@@ -360,7 +360,7 @@
     <string name="highlight_delete">Supprimer le surlignage</string>
     <string name="manual_dictionary_action">Dictionnaire</string>
     <string name="manual_dictionary_title">Rechercher un mot</string>
-    <string name="manual_dictionary_word_hint">Mot ou expression en français</string>
+    <string name="manual_dictionary_word_hint">Mot ou expression</string>
     <string name="manual_dictionary_lookup">Rechercher</string>
     <string name="dictionary_saved_exact">Enregistré</string>
     <string name="dictionary_saved_elsewhere">Déjà enregistré dans %1$d autre(s) contexte(s)</string>
@@ -622,7 +622,7 @@
     <string name="resources_level_optional">Niveau (facultatif)</string>
     <string name="resources_description_optional">Description (facultative)</string>
     <string name="resources_description_hint">Reprise du site si vide</string>
-    <string name="resource_category_textbooks">Manuels de français</string>
+    <string name="resource_category_textbooks">Manuels</string>
     <string name="resources_web_search">Recherche web</string>
     <string name="resources_youtube_search">Recherche YouTube</string>
     <string name="resource_category_telegram">Chaînes Telegram</string>
