@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.comprehension
 
+import com.ziaee.frenchreader.language.LanguageFeature
+import com.ziaee.frenchreader.language.LanguageCatalog
 import android.content.Context
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.TextBodyStorage
@@ -67,7 +69,7 @@ class ComprehensionRepository private constructor(
     }
 
     private suspend fun publishScore(document: TextDocument, known: KnownState) {
-        if (document.language != "fr") {
+        if (!LanguageCatalog.supports(document.language, LanguageFeature.LEMMA_LEXICON)) {
             _scores.update { it + (document.id to null) }
             return
         }

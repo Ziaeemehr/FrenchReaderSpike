@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui
 
+import com.ziaee.frenchreader.language.LanguageFeature
+import com.ziaee.frenchreader.language.LanguageCatalog
 import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -186,7 +188,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         scope = viewModelScope,
         engineFactory = {
             when (ShadowingPrefs.getEngine(app)) {
-                SpeechEngineKind.VOSK -> if (_state.value.textDoc?.language == "fr") {
+                SpeechEngineKind.VOSK -> if (LanguageCatalog.supports(_state.value.textDoc?.language, LanguageFeature.OFFLINE_STT)) {
                     VoskEngine(VoskModelManager(app).modelDir)
                 } else AndroidSpeechEngine(app, _state.value.textDoc?.language ?: LanguagePrefs.getTargetLanguage(app))
                 SpeechEngineKind.ANDROID -> AndroidSpeechEngine(app, _state.value.textDoc?.language ?: LanguagePrefs.getTargetLanguage(app))

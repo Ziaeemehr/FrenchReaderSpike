@@ -280,7 +280,7 @@ private fun ShadowingSettings(
 
     CompactSettingLabel(R.string.shadowing_engine_title)
     val engines = when {
-        targetLanguage != "fr" -> listOf(SpeechEngineKind.ANDROID)
+        !LanguageCatalog.supports(targetLanguage, LanguageFeature.OFFLINE_STT) -> listOf(SpeechEngineKind.ANDROID)
         androidAvailable -> SpeechEngineKind.entries
         else -> listOf(SpeechEngineKind.VOSK)
     }

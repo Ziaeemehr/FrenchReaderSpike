@@ -20,6 +20,10 @@ enum class LanguageFeature {
     WIKISOURCE,
     SHADOWING,
     FRENCH_ELISION,
+    /** Offline speech recognition with a downloadable Vosk model (French model only today). */
+    OFFLINE_STT,
+    /** Lemma dictionary for dictionary-form suggestions and comprehension scores (French only). */
+    LEMMA_LEXICON,
     /** Ready-made vocabulary decks and graded stories bundled with the app. */
     DATASET,
 }
@@ -54,6 +58,8 @@ object LanguageCatalog {
                 LanguageFeature.SHADOWING,
                 LanguageFeature.FRENCH_ELISION,
                 LanguageFeature.DATASET,
+                LanguageFeature.OFFLINE_STT,
+                LanguageFeature.LEMMA_LEXICON,
             ),
         ),
         LanguageSupport(

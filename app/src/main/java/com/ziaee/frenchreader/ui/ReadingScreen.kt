@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui
 
+import com.ziaee.frenchreader.language.LanguageFeature
+import com.ziaee.frenchreader.language.LanguageCatalog
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -189,7 +191,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     val modelManager = remember { VoskModelManager(settingsContext) }
 
     fun enableShadowingChecked() {
-        if (state.textDoc?.language == "fr" && ShadowingPrefs.getEngine(settingsContext) == SpeechEngineKind.VOSK && !modelManager.isInstalled()) {
+        if (LanguageCatalog.supports(state.textDoc?.language, LanguageFeature.OFFLINE_STT) && ShadowingPrefs.getEngine(settingsContext) == SpeechEngineKind.VOSK && !modelManager.isInstalled()) {
             showModelPrompt = true
         } else vm.setShadowing(true)
     }

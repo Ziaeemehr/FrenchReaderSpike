@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui
 
+import com.ziaee.frenchreader.language.LanguageFeature
+import com.ziaee.frenchreader.language.LanguageCatalog
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
@@ -66,7 +68,7 @@ internal fun manualDictionaryWord(raw: String): String? = raw.trim().takeIf { it
 
 /** Dictionary forms (e.g. the infinitive) of a looked-up form, offered as one-tap replacements. */
 internal fun lemmaSuggestions(word: String, lexicon: FrenchLemmaLexicon, language: String = "fr"): List<String> {
-    if (language != "fr") return emptyList()
+    if (!LanguageCatalog.supports(language, LanguageFeature.LEMMA_LEXICON)) return emptyList()
     val form = normalizeFrench(word.trim())
     if (form.isEmpty() || form.any(Char::isWhitespace)) return emptyList()
     return lexicon.lemmas(form).filter { it != form }.distinct().take(3)
@@ -294,7 +296,7 @@ fun DictionarySheet(
     var currentWord by rememberSaveable(originalWord) { mutableStateOf(originalWord) }
     var lemmas by remember(originalWord) { mutableStateOf(emptyList<String>()) }
     LaunchedEffect(originalWord, language) {
-        lemmas = if (language == "fr") runCatching { lemmaSuggestions(originalWord, LemmaLexicon.get(context).get(), language) }
+        lemmas = if (LanguageCatalog.supports(language, LanguageFeature.LEMMA_LEXICON)) runCatching { lemmaSuggestions(originalWord, LemmaLexicon.get(context).get(), language) }
             .getOrDefault(emptyList())
         else emptyList()
     }
