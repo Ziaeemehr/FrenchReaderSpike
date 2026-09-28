@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -32,7 +33,18 @@ data class StudyLogUiState(
     val totalsBySkill: Map<StudySkill, Int> = StudySkill.entries.associateWith { 0 },
     val sourceTotals: Map<Long?, Int> = emptyMap(),
     val allSourceTotals: Map<Long?, Int> = emptyMap(),
-    val buckets: List<DailyStudyBucket> = emptyList()
+    val buckets: List<DailyStudyBucket> = emptyList(),
+    val weeklyTargets: Map<StudySkill, Int> = StudySkill.entries.associateWith { 0 },
+    val cumulative: Map<StudySkill, List<CumulativePoint>> = emptyMap(),
+    val activitySessions: List<StudySession> = emptyList(),
+    val comparison: WeekComparison = WeekComparison(
+        0,
+        0,
+        StudySkill.entries.associateWith { 0 }
+    ),
+    val streaks: Streaks = Streaks(0, 0),
+    val activeDays: Int = 0,
+    val hasEntries: Boolean = false
 ) {
     val totalMinutes
         get() = sessions.sumOf { it.durationMin }
@@ -56,49 +68,73 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     private val firstDay = MutableStateFlow(StudyLogPrefs.getFirstDayOfWeek(app))
     private val today
         get() = LocalDate.now().toEpochDay()
-    private val range = combine(period, firstDay) { selectedPeriod, day ->
-        periodRange(today, selectedPeriod, day)
+    private val targets = MutableStateFlow(StudyLogPrefs.getWeeklyTargets(app))
+    private val firstDate = dao.observeFirstSessionDate()
+    private val range = combine(period, firstDay, firstDate) { selectedPeriod, day, first ->
+        periodRange(today, selectedPeriod, day, first) ?: PeriodRange(today, today, today)
     }
-    private val sessions = range.flatMapLatest {
-        dao.observeSessions(it.start, it.queryEnd)
+    private val sessions = range.flatMapLatest { selectedRange ->
+        dao.observeSessions(selectedRange.start, selectedRange.queryEnd)
+    }
+    private val allSessions = firstDate.flatMapLatest { first ->
+        if (first == null) flowOf(emptyList()) else dao.observeSessions(first, today)
     }
 
     private data class Lists(
         val sources: List<StudySource>,
         val recent: List<StudySession>,
-        val allTotals: Map<Long?, Int>
+        val allTotals: Map<Long?, Int>,
+        val allSessions: List<StudySession>
+    )
+
+    private data class Selection(
+        val period: StudyPeriod,
+        val firstDay: DayOfWeek,
+        val targets: Map<StudySkill, Int>
     )
 
     private val lists = combine(
         dao.observeSources(),
         dao.observeRecent(),
-        dao.observeAllSourceTotals()
-    ) { sources, recent, totals ->
+        dao.observeAllSourceTotals(),
+        allSessions
+    ) { sources, recent, totals, allSessions ->
         Lists(
             sources = sources,
             recent = recent,
-            allTotals = totals.associate { it.sourceId to it.minutes }
+            allTotals = totals.associate { it.sourceId to it.minutes },
+            allSessions = allSessions
         )
+    }
+
+    private val selection = combine(period, firstDay, targets) { selectedPeriod, day, selectedTargets ->
+        Selection(selectedPeriod, day, selectedTargets)
     }
 
     val uiState = combine(
         sessions,
         lists,
         range,
-        period,
-        firstDay
-    ) { rows, data, selectedRange, selectedPeriod, selectedFirstDay ->
+        selection
+    ) { rows, data, selectedRange, selected ->
         StudyLogUiState(
             sessions = rows,
             sources = data.sources,
             recentSessions = data.recent,
             range = selectedRange,
-            period = selectedPeriod,
-            firstDayOfWeek = selectedFirstDay,
+            period = selected.period,
+            firstDayOfWeek = selected.firstDay,
             totalsBySkill = totalsBySkill(rows),
             sourceTotals = totalsBySource(rows),
             allSourceTotals = data.allTotals,
-            buckets = dailyBuckets(rows, selectedRange)
+            buckets = periodBuckets(rows, selectedRange, selected.period, selected.firstDay),
+            weeklyTargets = selected.targets,
+            cumulative = cumulativeSeries(rows, selectedRange, selected.period, selected.firstDay),
+            activitySessions = data.allSessions,
+            comparison = weekOverWeek(data.allSessions, today, selected.firstDay),
+            streaks = streaks(data.allSessions, today),
+            activeDays = activeDayCount(rows),
+            hasEntries = if (selected.period == StudyPeriod.ALL) data.allSessions.isNotEmpty() else true
         )
     }.stateIn(
         scope = viewModelScope,
@@ -113,6 +149,11 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     fun setFirstDayOfWeek(value: DayOfWeek) {
         firstDay.value = value
         StudyLogPrefs.setFirstDayOfWeek(application, value)
+    }
+
+    fun setWeeklyTarget(skill: StudySkill, minutes: Int) {
+        StudyLogPrefs.setWeeklyTarget(application, skill, minutes)
+        targets.value = StudyLogPrefs.getWeeklyTargets(application)
     }
 
     suspend fun getSession(id: Long) = dao.getSession(id)

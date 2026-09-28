@@ -15,6 +15,9 @@ data class SourceMinutes(
 
 @Dao
 interface StudyLogDao {
+    @Query("SELECT MIN(date) FROM study_session")
+    fun observeFirstSessionDate(): Flow<Long?>
+
     @Query("SELECT * FROM study_session WHERE date BETWEEN :start AND :end ORDER BY date DESC, created_at DESC")
     fun observeSessions(start: Long, end: Long): Flow<List<StudySession>>
 

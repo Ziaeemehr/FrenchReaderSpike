@@ -75,6 +75,9 @@ fun StudyLogEntryScreen(
     var newSource by remember { mutableStateOf(false) }
     var newSourceName by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+    val parsedDuration = parseDuration(hours, minutes)
+    val durationInvalid = parsedDuration == null || parsedDuration !in 1..1440
+    val dateInvalid = date > LocalDate.now().toEpochDay()
 
     LaunchedEffect(entryId) {
         entryId?.let { vm.getSession(it) }?.let { row ->
@@ -145,6 +148,8 @@ fun StudyLogEntryScreen(
             note = note,
             sources = state.sources,
             hasError = error,
+            durationInvalid = durationInvalid,
+            dateInvalid = dateInvalid,
             isEditing = original != null,
             onShowDatePicker = { showDatePicker = true },
             onHoursChange = { hours = it },
@@ -219,6 +224,8 @@ private fun EntryForm(
     note: String,
     sources: List<StudySource>,
     hasError: Boolean,
+    durationInvalid: Boolean,
+    dateInvalid: Boolean,
     isEditing: Boolean,
     onShowDatePicker: () -> Unit,
     onHoursChange: (String) -> Unit,
@@ -285,14 +292,24 @@ private fun EntryForm(
             label = { Text(stringResource(R.string.study_log_note)) },
             modifier = Modifier.fillMaxWidth()
         )
-        if (hasError) {
+        if (durationInvalid) {
             Text(
-                text = stringResource(R.string.study_log_validation_error),
+                text = stringResource(R.string.study_log_duration_error),
                 color = MaterialTheme.colorScheme.error
             )
         }
+        if (dateInvalid) {
+            Text(
+                text = stringResource(R.string.study_log_future_date_error),
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+        if (hasError && !durationInvalid && !dateInvalid) {
+            Text(stringResource(R.string.study_log_validation_error), color = MaterialTheme.colorScheme.error)
+        }
         Button(
             onClick = onSubmit,
+            enabled = !durationInvalid && !dateInvalid,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.study_log_save))
