@@ -46,6 +46,28 @@ object LanguagePrefs {
     fun setKnownLanguage(context: Context, code: String) {
         require(code in LanguageCatalog.knownLanguages) { "Unsupported known language: $code" }
         prefs(context).edit().putString(KEY_KNOWN_LANGUAGE, code).apply()
+        when (code) {
+            "fa" -> VocabPrefs.setMeaningLanguage(context, VocabPrefs.MeaningLanguage.PERSIAN)
+            "en" -> VocabPrefs.setMeaningLanguage(context, VocabPrefs.MeaningLanguage.ENGLISH)
+        }
+    }
+
+    fun setLanguages(context: Context, targetLanguage: String, knownLanguage: String) {
+        require(LanguageCatalog.isSupportedTarget(targetLanguage)) {
+            "Unsupported target language: $targetLanguage"
+        }
+        require(knownLanguage in LanguageCatalog.knownLanguages) {
+            "Unsupported known language: $knownLanguage"
+        }
+        require(targetLanguage != knownLanguage) { "Target and known languages must differ" }
+        prefs(context).edit()
+            .putString(KEY_TARGET_LANGUAGE, targetLanguage)
+            .putString(KEY_KNOWN_LANGUAGE, knownLanguage)
+            .apply()
+        when (knownLanguage) {
+            "fa" -> VocabPrefs.setMeaningLanguage(context, VocabPrefs.MeaningLanguage.PERSIAN)
+            "en" -> VocabPrefs.setMeaningLanguage(context, VocabPrefs.MeaningLanguage.ENGLISH)
+        }
     }
 
     fun observeTargetLanguage(context: Context): Flow<String> = callbackFlow {

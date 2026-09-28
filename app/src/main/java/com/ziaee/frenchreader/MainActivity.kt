@@ -25,6 +25,7 @@ import com.chaquo.python.android.AndroidPlatform
 import com.ziaee.frenchreader.content.DatasetSeeder
 import com.ziaee.frenchreader.content.ImageTextExtractor
 import com.ziaee.frenchreader.data.AppearancePrefs
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.ui.AboutScreen
@@ -35,6 +36,7 @@ import com.ziaee.frenchreader.ui.VOCAB_SCOPE_ALL
 import com.ziaee.frenchreader.ui.VocabListScreen
 import com.ziaee.frenchreader.ui.VocabReviewScreen
 import com.ziaee.frenchreader.ui.home.HomeScreen
+import com.ziaee.frenchreader.ui.onboarding.OnboardingScreen
 import com.ziaee.frenchreader.ui.library.LibraryScreen
 import com.ziaee.frenchreader.ui.shared.queryDisplayName
 import com.ziaee.frenchreader.resources.ResourcesScreen
@@ -53,6 +55,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val languagesConfigured = LanguagePrefs.isConfigured(this)
+        val startupAction = startupLanguageAction(
+            isConfigured = languagesConfigured,
+            hasLegacyData = !languagesConfigured && hasLegacyLanguageData(),
+        )
+        if (startupAction == StartupLanguageAction.MIGRATE_LEGACY) {
+            LanguagePrefs.migrateLegacyIfNeeded(this)
+        }
 
         applyAppLanguage(LocalePrefs.get(this))
 
@@ -75,8 +86,15 @@ class MainActivity : AppCompatActivity() {
         setContent {
             FrenchReaderTheme(themeMode = AppearanceState.themeMode) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavHost()
-                    AutoUpdatePrompt()
+                    var showOnboarding by rememberSaveable {
+                        mutableStateOf(startupAction == StartupLanguageAction.SHOW_ONBOARDING)
+                    }
+                    if (showOnboarding) {
+                        OnboardingScreen(onContinue = { showOnboarding = false })
+                    } else {
+                        AppNavHost()
+                        AutoUpdatePrompt()
+                    }
                 }
             }
         }
@@ -175,6 +193,22 @@ class MainActivity : AppCompatActivity() {
             mimeType = intent.type ?: contentResolver.getType(uri),
             displayName = queryDisplayName(this, uri, stripExtension = false)
         )
+
+    // Every install that has opened the app before has its database (the home screen seeds it),
+    // while nothing touches it before onboarding finishes. Other prefs files are not a reliable
+    // signal: background work (update checks, reminders) can create them on a fresh install.
+    private fun hasLegacyLanguageData(): Boolean = getDatabasePath("french_reader.db").exists()
+}
+
+enum class StartupLanguageAction { CONTINUE, MIGRATE_LEGACY, SHOW_ONBOARDING }
+
+fun startupLanguageAction(
+    isConfigured: Boolean,
+    hasLegacyData: Boolean,
+): StartupLanguageAction = when {
+    isConfigured -> StartupLanguageAction.CONTINUE
+    hasLegacyData -> StartupLanguageAction.MIGRATE_LEGACY
+    else -> StartupLanguageAction.SHOW_ONBOARDING
 }
 
 @Composable
@@ -211,6 +245,7 @@ private fun AppNavHost() {
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
+                onTargetLanguageChanged = { navigateToTab("home") },
                 openAddTextSheet = openAddTextOnHome,
                 onAddTextSheetOpened = { openAddTextOnHome = false }
             )
@@ -277,7 +312,8 @@ private fun AppNavHost() {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenAbout = { navController.navigate("about") },
-                onOpenDataset = { navController.navigate("dataset") }
+                onOpenDataset = { navController.navigate("dataset") },
+                onTargetLanguageChanged = { navigateToTab("home") },
             )
         }
         composable("dataset") { DatasetScreen { navController.popBackStack() } }

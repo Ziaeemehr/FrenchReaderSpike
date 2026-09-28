@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +53,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
+import com.ziaee.frenchreader.data.LanguagePrefs
+import com.ziaee.frenchreader.language.LanguageCatalog
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
@@ -65,6 +68,8 @@ import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
 import com.ziaee.frenchreader.ui.shared.TextExtractionProgress
 import com.ziaee.frenchreader.ui.shared.rememberTextExtractionImporter
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
+import com.ziaee.frenchreader.ui.onboarding.LanguagePickerDialog
+import com.ziaee.frenchreader.ui.onboarding.languageNameResource
 
 /** Lets instrumented tests scroll Home's content list to a node that's
  * below the initially-composed viewport (LazyColumn only composes visible
@@ -93,6 +98,7 @@ fun HomeScreen(
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
     onStartReview: () -> Unit,
+    onTargetLanguageChanged: () -> Unit,
     openAddTextSheet: Boolean = false,
     onAddTextSheetOpened: () -> Unit = {}
 ) {
@@ -114,6 +120,10 @@ fun HomeScreen(
 
     val addTextState = rememberAddTextUiState()
     val context = LocalContext.current
+    val targetLanguage by LanguagePrefs.observeTargetLanguage(context).collectAsState(
+        initial = LanguagePrefs.getTargetLanguage(context),
+    )
+    var showTargetLanguagePicker by remember { mutableStateOf(false) }
     var showFindArticleSheet by remember { mutableStateOf(false) }
     var showAddSourceSheet by remember { mutableStateOf(false) }
     var showManualDictionary by rememberSaveable { mutableStateOf(false) }
@@ -217,8 +227,24 @@ fun HomeScreen(
         onDownloadOrOpen = { vm.importSelected { id -> onOpenText(id) } },
         onDismissPreview = { vm.dismissPreview() },
         onStartReview = onStartReview,
-        onOpenDataset = onOpenDataset
+        onOpenDataset = onOpenDataset,
+        targetLanguage = targetLanguage,
+        onOpenTargetLanguagePicker = { showTargetLanguagePicker = true },
     )
+
+    if (showTargetLanguagePicker) {
+        LanguagePickerDialog(
+            title = stringResource(R.string.settings_learning_language),
+            languages = LanguageCatalog.targets.map { it.code }.filterNot { it == LanguagePrefs.getKnownLanguage(context) },
+            selected = targetLanguage,
+            onSelect = { code ->
+                LanguagePrefs.setTargetLanguage(context, code)
+                showTargetLanguagePicker = false
+                onTargetLanguageChanged()
+            },
+            onDismiss = { showTargetLanguagePicker = false },
+        )
+    }
 
     AddTextHost(
         addTextState,
@@ -289,7 +315,9 @@ fun HomeContent(
     onDownloadOrOpen: () -> Unit,
     onDismissPreview: () -> Unit,
     onStartReview: () -> Unit,
-    onOpenDataset: () -> Unit = {}
+    onOpenDataset: () -> Unit = {},
+    targetLanguage: String = LanguageCatalog.DEFAULT_TARGET,
+    onOpenTargetLanguagePicker: () -> Unit = {},
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -357,6 +385,16 @@ fun HomeContent(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
             LazyColumn(modifier = Modifier.fillMaxSize().testTag(HOME_LAZY_COLUMN_TEST_TAG)) {
+                item {
+                    AssistChip(
+                        onClick = onOpenTargetLanguagePicker,
+                        label = { Text(stringResource(languageNameResource(targetLanguage))) },
+                        modifier = Modifier.padding(
+                            horizontal = FrenchReaderDesign.spacing.small,
+                            vertical = FrenchReaderDesign.spacing.half,
+                        ),
+                    )
+                }
                 item {
                     LearningSummaryStrip(
                         streakDays = state.streakDays,

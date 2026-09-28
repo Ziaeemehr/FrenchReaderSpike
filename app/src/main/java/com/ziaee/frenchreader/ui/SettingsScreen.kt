@@ -52,6 +52,7 @@ import com.ziaee.frenchreader.backup.formatLastBackupLabel
 import com.ziaee.frenchreader.data.AppLanguage
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
+import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.data.NewsPrefs
 import com.ziaee.frenchreader.data.TtsCachePrefs
 import com.ziaee.frenchreader.data.VocabPrefs
@@ -69,6 +70,9 @@ import com.ziaee.frenchreader.shadowing.ShadowingPrefs
 import com.ziaee.frenchreader.shadowing.SpeechEngineKind
 import com.ziaee.frenchreader.shadowing.VoskModelManager
 import com.ziaee.frenchreader.ui.theme.*
+import com.ziaee.frenchreader.language.LanguageCatalog
+import com.ziaee.frenchreader.ui.onboarding.LanguagePickerDialog
+import com.ziaee.frenchreader.ui.onboarding.languageNameResource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,12 +88,17 @@ import java.util.Locale
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenAbout: () -> Unit,
-    onOpenDataset: () -> Unit
+    onOpenDataset: () -> Unit,
+    onTargetLanguageChanged: () -> Unit,
 ) {
     val context = LocalContext.current
     val appLanguage = LocalePrefs.get(context)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var targetLanguage by remember { mutableStateOf(LanguagePrefs.getTargetLanguage(context)) }
+    var knownLanguage by remember { mutableStateOf(LanguagePrefs.getKnownLanguage(context)) }
+    var showTargetLanguagePicker by remember { mutableStateOf(false) }
+    var showKnownLanguagePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -125,6 +134,16 @@ fun SettingsScreen(
                 when (selectedTab) {
                     0 -> {
                         var autoUpdate by remember { mutableStateOf(UpdatePrefs.isAutoCheckEnabled(context)) }
+                        LanguageSettingRow(
+                            label = stringResource(R.string.settings_learning_language),
+                            value = stringResource(languageNameResource(targetLanguage)),
+                            onClick = { showTargetLanguagePicker = true },
+                        )
+                        LanguageSettingRow(
+                            label = stringResource(R.string.settings_known_language),
+                            value = stringResource(languageNameResource(knownLanguage)),
+                            onClick = { showKnownLanguagePicker = true },
+                        )
                         SettingsSwitchRow(stringResource(R.string.update_auto_check), autoUpdate) {
                             autoUpdate = it
                             UpdatePrefs.setAutoCheckEnabled(context, it)
@@ -182,7 +201,7 @@ fun SettingsScreen(
                             AppearanceState.highlightSavedWords = enabled
                             AppearancePrefs.setHighlightSavedWords(context, enabled)
                         }
-                        VocabularyReviewSettings(context)
+                        VocabularyReviewSettings(context) { knownLanguage = it }
                     }
                     2 -> NewsSettings(context)
                     3 -> LocalXttsSettings(context, scope, snackbarHostState)
@@ -211,6 +230,34 @@ fun SettingsScreen(
                 Spacer(Modifier.height(20.dp))
             }
         }
+    }
+
+    if (showTargetLanguagePicker) {
+        LanguagePickerDialog(
+            title = stringResource(R.string.settings_learning_language),
+            languages = LanguageCatalog.targets.map { it.code }.filterNot { it == knownLanguage },
+            selected = targetLanguage,
+            onSelect = { code ->
+                targetLanguage = code
+                LanguagePrefs.setTargetLanguage(context, code)
+                showTargetLanguagePicker = false
+                onTargetLanguageChanged()
+            },
+            onDismiss = { showTargetLanguagePicker = false },
+        )
+    }
+    if (showKnownLanguagePicker) {
+        LanguagePickerDialog(
+            title = stringResource(R.string.settings_known_language),
+            languages = LanguageCatalog.knownLanguages.filterNot { it == targetLanguage },
+            selected = knownLanguage,
+            onSelect = { code ->
+                knownLanguage = code
+                LanguagePrefs.setKnownLanguage(context, code)
+                showKnownLanguagePicker = false
+            },
+            onDismiss = { showKnownLanguagePicker = false },
+        )
     }
 }
 
@@ -571,7 +618,10 @@ private fun TtsCacheSettings(
 }
 
 @Composable
-private fun VocabularyReviewSettings(context: Context) {
+private fun VocabularyReviewSettings(
+    context: Context,
+    onKnownLanguageChanged: (String) -> Unit,
+) {
     var reminder by remember { mutableStateOf(VocabPrefs.getReminderEnabled(context)) }
     var hour by remember { mutableIntStateOf(VocabPrefs.getReminderHour(context)) }
     var minute by remember { mutableIntStateOf(VocabPrefs.getReminderMinute(context)) }
@@ -655,7 +705,13 @@ private fun VocabularyReviewSettings(context: Context) {
         VocabPrefs.MeaningLanguage.entries,
         meaningLanguage,
         { stringResource(if (it == VocabPrefs.MeaningLanguage.PERSIAN) R.string.language_persian else R.string.language_english) }
-    ) { meaningLanguage = it; VocabPrefs.setMeaningLanguage(context, it) }
+    ) {
+        meaningLanguage = it
+        VocabPrefs.setMeaningLanguage(context, it)
+        val code = if (it == VocabPrefs.MeaningLanguage.PERSIAN) "fa" else "en"
+        LanguagePrefs.setKnownLanguage(context, code)
+        onKnownLanguageChanged(code)
+    }
     CompactSettingLabel(R.string.review_intervals)
     intervals.forEachIndexed { index, days ->
         StepperSetting(stringResource(R.string.review_box_interval, index + 1), days.toInt(), 1, 365) { value ->
@@ -756,6 +812,16 @@ private fun SettingsSwitchRow(label: String, checked: Boolean, onCheckedChange: 
         Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
+}
+
+@Composable
+private fun LanguageSettingRow(label: String, value: String, onClick: () -> Unit) {
+    ListItem(
+        headlineContent = { Text(label) },
+        supportingContent = { Text(value) },
+        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+    )
 }
 
 private fun AppLanguage.labelResource(): Int = when (this) {
