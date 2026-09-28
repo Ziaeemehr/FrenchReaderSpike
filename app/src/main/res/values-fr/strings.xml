@@ -658,4 +658,33 @@
     <string name="study_log_rename">Renommer</string><string name="study_log_archive">Archiver</string><string name="study_log_unarchive">Restaurer</string><string name="study_log_week">Semaine</string><string name="study_log_month">Mois</string><string name="study_log_skill_share">Répartition par compétence</string><string name="study_log_by_source">Par source</string><string name="study_log_first_day">Premier jour de la semaine</string><string name="study_log_source_duplicate">Une source portant ce nom existe déjà.</string>
     <string name="study_log_skill_co">Compréhension orale</string><string name="study_log_skill_ce">Compréhension écrite</string><string name="study_log_skill_ee">Expression écrite</string><string name="study_log_skill_eo">Expression orale</string><string name="study_log_skill_lex">Vocabulaire / grammaire</string>
     <string name="study_log_kind_book">Livre</string><string name="study_log_kind_notes">Notes</string><string name="study_log_kind_audio">Audio</string><string name="study_log_kind_video">Vidéo</string><string name="study_log_kind_website">Site web</string><string name="study_log_kind_app">Application</string><string name="study_log_kind_mock_test">Examen blanc</string><string name="study_log_kind_other">Autre</string>
+    <string name="study_log_all">Tout</string>
+    <string name="study_log_time_by_skill">Temps d’étude par compétence</string>
+    <string name="study_log_cumulative">Heures cumulées</string>
+    <string name="study_log_heatmap">Activité quotidienne · 16 dernières semaines</string>
+    <string name="study_log_week_comparison">Cette semaine et la précédente</string>
+    <string name="study_log_total">Total</string>
+    <string name="study_log_average">Moyenne quotidienne</string>
+    <string name="study_log_active_days">Jours actifs</string>
+    <string name="study_log_streaks">Série la plus longue · actuelle</string>
+    <string name="study_log_streak_values">%1$d · %2$d jours</string>
+    <string name="study_log_skill_full">%1$s (%2$s)</string>
+    <string name="study_log_empty_hint">Ajoutez du temps d’étude pour suivre vos progrès.</string>
+    <string name="study_log_settings">Réglages du journal d’étude</string>
+    <string name="study_log_weekly_targets">Objectifs hebdomadaires (minutes)</string>
+    <string name="study_log_minutes_short">min</string>
+    <string name="study_log_saturday">Samedi</string>
+    <string name="study_log_monday">Lundi</string>
+    <string name="study_log_today">Aujourd’hui</string>
+    <string name="study_log_yesterday">Hier</string>
+    <string name="study_log_undo">Annuler</string>
+    <string name="study_log_least_studied_value">Compétence la moins étudiée : %1$s · %2$s</string>
+    <string name="study_log_duration_error">La durée doit être comprise entre 1 et 1 440 minutes.</string>
+    <string name="study_log_future_date_error">La date d’étude ne peut pas être dans le futur.</string>
+    <string name="study_log_activity">Activité</string>
+    <string name="study_log_year">Année</string>
+    <string name="study_log_less">Moins</string>
+    <string name="study_log_more">Plus</string>
+    <string name="study_log_no_study">Aucune étude</string>
+    <string name="study_log_year_summary">%1$s en %2$d · %3$d jours actifs · plus longue série : %4$d jours</string>
 </resources>

@@ -43,7 +43,7 @@ fun StudySourcesScreen(
     onBack: () -> Unit,
     vm: StudyLogViewModel = viewModel()
 ) {
-    val state by vm.uiState.collectAsState()
+    val state by vm.sourceUiState.collectAsState()
     var editing by remember { mutableStateOf<StudySource?>(null) }
     var name by remember { mutableStateOf("") }
     var adding by remember { mutableStateOf(false) }
@@ -69,6 +69,9 @@ fun StudySourcesScreen(
             FloatingActionButton(
                 onClick = {
                     name = ""
+                    kind = SourceKind.OTHER
+                    defaultSkill = null
+                    duplicateError = false
                     adding = true
                 }
             ) {
@@ -87,7 +90,7 @@ fun StudySourcesScreen(
             ) { source ->
                 StudySourceRow(
                     source = source,
-                    totalMinutes = state.allSourceTotals[source.id] ?: 0,
+                    totalMinutes = state.totals[source.id] ?: 0,
                     onEdit = {
                         editing = source
                         name = source.name
@@ -110,7 +113,10 @@ fun StudySourcesScreen(
             kind = kind,
             defaultSkill = defaultSkill,
             duplicateError = duplicateError,
-            onNameChange = { name = it },
+            onNameChange = {
+                name = it
+                duplicateError = false
+            },
             onKindChange = { kind = it },
             onDefaultSkillChange = { defaultSkill = it },
             onDismiss = {

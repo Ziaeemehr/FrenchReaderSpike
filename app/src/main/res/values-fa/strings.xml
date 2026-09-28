@@ -656,4 +656,33 @@
     <string name="study_log_rename">تغییر نام</string><string name="study_log_archive">بایگانی</string><string name="study_log_unarchive">بازگردانی</string><string name="study_log_week">هفته</string><string name="study_log_month">ماه</string><string name="study_log_skill_share">سهم مهارت‌ها</string><string name="study_log_by_source">بر اساس منبع</string><string name="study_log_first_day">روز آغاز هفته</string><string name="study_log_source_duplicate">منبعی با این نام از قبل وجود دارد.</string>
     <string name="study_log_skill_co">درک شنیداری</string><string name="study_log_skill_ce">درک نوشتاری</string><string name="study_log_skill_ee">بیان نوشتاری</string><string name="study_log_skill_eo">بیان گفتاری</string><string name="study_log_skill_lex">واژگان / دستور زبان</string>
     <string name="study_log_kind_book">کتاب</string><string name="study_log_kind_notes">یادداشت‌ها</string><string name="study_log_kind_audio">صوت</string><string name="study_log_kind_video">ویدئو</string><string name="study_log_kind_website">وب‌سایت</string><string name="study_log_kind_app">برنامه</string><string name="study_log_kind_mock_test">آزمون آزمایشی</string><string name="study_log_kind_other">سایر</string>
+    <string name="study_log_all">همه</string>
+    <string name="study_log_time_by_skill">زمان مطالعه بر اساس مهارت</string>
+    <string name="study_log_cumulative">ساعت‌های تجمعی</string>
+    <string name="study_log_heatmap">فعالیت روزانه · ۱۶ هفتهٔ اخیر</string>
+    <string name="study_log_week_comparison">این هفته در مقایسه با هفتهٔ پیش</string>
+    <string name="study_log_total">مجموع</string>
+    <string name="study_log_average">میانگین روزانه</string>
+    <string name="study_log_active_days">روزهای فعال</string>
+    <string name="study_log_streaks">طولانی‌ترین · روند کنونی</string>
+    <string name="study_log_streak_values">%1$d · %2$d روز</string>
+    <string name="study_log_skill_full">%1$s (%2$s)</string>
+    <string name="study_log_empty_hint">برای دیدن پیشرفت خود، زمان مطالعه اضافه کنید.</string>
+    <string name="study_log_settings">تنظیمات دفتر مطالعه</string>
+    <string name="study_log_weekly_targets">هدف‌های هفتگی (دقیقه)</string>
+    <string name="study_log_minutes_short">دقیقه</string>
+    <string name="study_log_saturday">شنبه</string>
+    <string name="study_log_monday">دوشنبه</string>
+    <string name="study_log_today">امروز</string>
+    <string name="study_log_yesterday">دیروز</string>
+    <string name="study_log_undo">واگرد</string>
+    <string name="study_log_least_studied_value">کمترین مهارت مطالعه‌شده: %1$s · %2$s</string>
+    <string name="study_log_duration_error">مدت باید بین ۱ تا ۱۴۴۰ دقیقه باشد.</string>
+    <string name="study_log_future_date_error">تاریخ مطالعه نمی‌تواند در آینده باشد.</string>
+    <string name="study_log_activity">فعالیت</string>
+    <string name="study_log_year">سال</string>
+    <string name="study_log_less">کمتر</string>
+    <string name="study_log_more">بیشتر</string>
+    <string name="study_log_no_study">بدون مطالعه</string>
+    <string name="study_log_year_summary">%1$s در %2$d · %3$d روز فعال · طولانی‌ترین روند %4$d روز</string>
 </resources>

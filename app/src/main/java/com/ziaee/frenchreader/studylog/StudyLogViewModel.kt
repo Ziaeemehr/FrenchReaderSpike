@@ -15,10 +15,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 
 data class StudyLogUiState(
+    val today: Long = LocalDate.now().toEpochDay(),
     val sessions: List<StudySession> = emptyList(),
     val sources: List<StudySource> = emptyList(),
     val recentSessions: List<StudySession> = emptyList(),
@@ -32,7 +35,18 @@ data class StudyLogUiState(
     val totalsBySkill: Map<StudySkill, Int> = StudySkill.entries.associateWith { 0 },
     val sourceTotals: Map<Long?, Int> = emptyMap(),
     val allSourceTotals: Map<Long?, Int> = emptyMap(),
-    val buckets: List<DailyStudyBucket> = emptyList()
+    val buckets: List<DailyStudyBucket> = emptyList(),
+    val weeklyTargets: Map<StudySkill, Int> = StudySkill.entries.associateWith { 0 },
+    val cumulative: Map<StudySkill, List<CumulativePoint>> = emptyMap(),
+    val activitySessions: List<StudySession> = emptyList(),
+    val comparison: WeekComparison = WeekComparison(
+        0,
+        0,
+        StudySkill.entries.associateWith { 0 }
+    ),
+    val streaks: Streaks = Streaks(0, 0),
+    val activeDays: Int = 0,
+    val hasEntries: Boolean = false
 ) {
     val totalMinutes
         get() = sessions.sumOf { it.durationMin }
@@ -41,12 +55,19 @@ data class StudyLogUiState(
         get() = activeSourcesForPicker(sources)
 }
 
+data class StudySourceUiState(
+    val sources: List<StudySource> = emptyList(),
+    val totals: Map<Long?, Int> = emptyMap()
+)
+
 sealed interface SaveResult {
     data object Saved : SaveResult
 
     data object NeedsDailyLimitConfirmation : SaveResult
 
     data class Invalid(val reason: SessionValidation) : SaveResult
+
+    data object InFlight : SaveResult
 }
 
 class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
@@ -54,51 +75,97 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     private val application = app
     private val period = MutableStateFlow(StudyPeriod.WEEK)
     private val firstDay = MutableStateFlow(StudyLogPrefs.getFirstDayOfWeek(app))
-    private val today
-        get() = LocalDate.now().toEpochDay()
-    private val range = combine(period, firstDay) { selectedPeriod, day ->
-        periodRange(today, selectedPeriod, day)
+    private val today = localEpochDayFlow().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = LocalDate.now().toEpochDay()
+    )
+    val currentDay = today
+    private val targets = MutableStateFlow(StudyLogPrefs.getWeeklyTargets(app))
+    private val firstDate = dao.observeFirstSessionDate()
+    private val saveMutex = Mutex()
+    private val range = combine(today, period, firstDay, firstDate) { currentDay, selectedPeriod, day, first ->
+        periodRange(currentDay, selectedPeriod, day, first) ?: PeriodRange(currentDay, currentDay, currentDay)
     }
-    private val sessions = range.flatMapLatest {
-        dao.observeSessions(it.start, it.queryEnd)
+    private val sessions = range.flatMapLatest { selectedRange ->
+        dao.observeSessions(selectedRange.start, selectedRange.queryEnd)
     }
+    private val allSessions = combine(firstDate, today) { first, currentDay -> first to currentDay }
+        .flatMapLatest { (first, currentDay) ->
+            if (first == null) flowOf(emptyList()) else dao.observeSessions(first, currentDay)
+        }
+
+    val sources = dao.observeSources().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList()
+    )
+
+    val sourceUiState = combine(sources, dao.observeAllSourceTotals()) { sourceRows, totals ->
+        StudySourceUiState(
+            sources = sourceRows,
+            totals = totals.associate { it.sourceId to it.minutes }
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = StudySourceUiState()
+    )
 
     private data class Lists(
-        val sources: List<StudySource>,
+        val sourceState: StudySourceUiState,
         val recent: List<StudySession>,
-        val allTotals: Map<Long?, Int>
+        val allSessions: List<StudySession>
+    )
+
+    private data class Selection(
+        val period: StudyPeriod,
+        val firstDay: DayOfWeek,
+        val targets: Map<StudySkill, Int>
     )
 
     private val lists = combine(
-        dao.observeSources(),
+        sourceUiState,
         dao.observeRecent(),
-        dao.observeAllSourceTotals()
-    ) { sources, recent, totals ->
+        allSessions
+    ) { sourceState, recent, allSessions ->
         Lists(
-            sources = sources,
+            sourceState = sourceState,
             recent = recent,
-            allTotals = totals.associate { it.sourceId to it.minutes }
+            allSessions = allSessions
         )
+    }
+
+    private val selection = combine(period, firstDay, targets) { selectedPeriod, day, selectedTargets ->
+        Selection(selectedPeriod, day, selectedTargets)
     }
 
     val uiState = combine(
         sessions,
         lists,
         range,
-        period,
-        firstDay
-    ) { rows, data, selectedRange, selectedPeriod, selectedFirstDay ->
+        selection,
+        today
+    ) { rows, data, selectedRange, selected, currentDay ->
         StudyLogUiState(
+            today = currentDay,
             sessions = rows,
-            sources = data.sources,
+            sources = data.sourceState.sources,
             recentSessions = data.recent,
             range = selectedRange,
-            period = selectedPeriod,
-            firstDayOfWeek = selectedFirstDay,
+            period = selected.period,
+            firstDayOfWeek = selected.firstDay,
             totalsBySkill = totalsBySkill(rows),
             sourceTotals = totalsBySource(rows),
-            allSourceTotals = data.allTotals,
-            buckets = dailyBuckets(rows, selectedRange)
+            allSourceTotals = data.sourceState.totals,
+            buckets = periodBuckets(rows, selectedRange, selected.period, selected.firstDay),
+            weeklyTargets = selected.targets,
+            cumulative = cumulativeSeries(rows, selectedRange, selected.period, selected.firstDay),
+            activitySessions = data.allSessions,
+            comparison = weekOverWeek(data.allSessions, currentDay, selected.firstDay),
+            streaks = streaks(data.allSessions, currentDay),
+            activeDays = activeDayCount(rows),
+            hasEntries = if (selected.period == StudyPeriod.ALL) data.allSessions.isNotEmpty() else true
         )
     }.stateIn(
         scope = viewModelScope,
@@ -115,30 +182,43 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
         StudyLogPrefs.setFirstDayOfWeek(application, value)
     }
 
+    fun setWeeklyTarget(skill: StudySkill, minutes: Int) {
+        StudyLogPrefs.setWeeklyTarget(application, skill, minutes)
+        targets.value = StudyLogPrefs.getWeeklyTargets(application)
+    }
+
     suspend fun getSession(id: Long) = dao.getSession(id)
 
     suspend fun save(
         session: StudySession,
         confirmed: Boolean = false
     ): SaveResult {
-        val validation = validateSession(session.durationMin, session.date, today)
-        if (validation != SessionValidation.Valid) {
-            return SaveResult.Invalid(validation)
+        if (!saveMutex.tryLock()) return SaveResult.InFlight
+        try {
+            val validation = validateSession(session.durationMin, session.date, today.value)
+            if (validation != SessionValidation.Valid) {
+                return SaveResult.Invalid(validation)
+            }
+            val existing = if (session.id == 0L) null else dao.getSession(session.id)
+            if (session.id != 0L && existing == null) {
+                return SaveResult.Invalid(SessionValidation.MissingEntry)
+            }
+            val excludedId = session.id.takeIf { it != 0L } ?: -1
+            val dayTotal = dao.sumMinutesForDateExcluding(session.date, excludedId)
+            if (!confirmed && wouldExceedDailyLimit(dayTotal, session.durationMin)) {
+                return SaveResult.NeedsDailyLimitConfirmation
+            }
+            val now = System.currentTimeMillis()
+            if (existing == null) {
+                dao.insertSession(session.copy(createdAt = now, updatedAt = now))
+            } else {
+                dao.updateSession(session.copy(createdAt = existing.createdAt, updatedAt = now))
+            }
+            StudyLogPrefs.setLastSkill(application, session.skill)
+            return SaveResult.Saved
+        } finally {
+            saveMutex.unlock()
         }
-        val existing = if (session.id == 0L) null else dao.getSession(session.id)
-        val excludedId = session.id.takeIf { it != 0L } ?: -1
-        val dayTotal = dao.sumMinutesForDateExcluding(session.date, excludedId)
-        if (!confirmed && wouldExceedDailyLimit(dayTotal, session.durationMin)) {
-            return SaveResult.NeedsDailyLimitConfirmation
-        }
-        val now = System.currentTimeMillis()
-        if (existing == null) {
-            dao.insertSession(session.copy(createdAt = now, updatedAt = now))
-        } else {
-            dao.updateSession(session.copy(createdAt = existing.createdAt, updatedAt = now))
-        }
-        StudyLogPrefs.setLastSkill(application, session.skill)
-        return SaveResult.Saved
     }
 
     fun delete(
@@ -159,14 +239,15 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
         defaultSkill: StudySkill? = null,
         onResult: (Long?) -> Unit = {}
     ) = viewModelScope.launch {
-        if (name.isBlank()) {
+        val normalized = normalizeSourceName(name)
+        if (normalized !is SourceNameValidation.Valid) {
             onResult(null)
             return@launch
         }
         runCatching {
             dao.insertSource(
                 StudySource(
-                    name = name.trim(),
+                    name = normalized.name,
                     kind = kind,
                     defaultSkill = defaultSkill
                 )
@@ -181,7 +262,12 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
         source: StudySource,
         onResult: (Boolean) -> Unit = {}
     ) = viewModelScope.launch {
-        runCatching { dao.updateSource(source) }.fold(
+        val normalized = normalizeSourceName(source.name)
+        if (normalized !is SourceNameValidation.Valid) {
+            onResult(false)
+            return@launch
+        }
+        runCatching { dao.updateSource(source.copy(name = normalized.name)) }.fold(
             onSuccess = { onResult(true) },
             onFailure = { onResult(false) }
         )

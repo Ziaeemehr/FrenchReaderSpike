@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import java.time.DayOfWeek
 
 @Composable
 private fun LabelRow(labels: List<String>) {
@@ -42,7 +43,13 @@ private fun LabelRow(labels: List<String>) {
 }
 
 @Composable
-fun BarChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier, maxValue: Float? = null) {
+fun BarChart(
+    values: List<Float>,
+    labels: List<String>,
+    color: Color,
+    modifier: Modifier = Modifier,
+    maxValue: Float? = null
+) {
     val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
         Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
@@ -106,7 +113,13 @@ fun StackedBarChart(
 }
 
 @Composable
-fun LineChart(values: List<Float>, labels: List<String>, color: Color, modifier: Modifier = Modifier, maxValue: Float? = null) {
+fun LineChart(
+    values: List<Float>,
+    labels: List<String>,
+    color: Color,
+    modifier: Modifier = Modifier,
+    maxValue: Float? = null
+) {
     val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
         Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
@@ -130,11 +143,59 @@ fun LineChart(values: List<Float>, labels: List<String>, color: Color, modifier:
 }
 
 @Composable
-fun HeatmapGrid(days: List<HeatmapDay>, modifier: Modifier = Modifier) {
+fun MultiLineChart(
+    valuesBySeries: List<List<Float>>,
+    labels: List<String>,
+    colors: List<Color>,
+    modifier: Modifier = Modifier
+) {
+    val max = maxOf(valuesBySeries.maxOfOrNull { it.maxOrNull() ?: 0f } ?: 0f, 1f)
+    Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(140.dp)) {
+            val count = valuesBySeries.maxOfOrNull { it.size } ?: 0
+            if (count == 0) return@Canvas
+            val slot = size.width / count
+            valuesBySeries.forEachIndexed { seriesIndex, values ->
+                val points = values.mapIndexed { index, value ->
+                    val x0 = index * slot + slot / 2f
+                    val x = if (layoutDirection == LayoutDirection.Rtl) size.width - x0 else x0
+                    val y = 4.dp.toPx() + (size.height - 8.dp.toPx()) *
+                        (1f - (value / max).coerceIn(0f, 1f))
+                    Offset(x, y)
+                }
+                points.zipWithNext().forEach { (start, end) ->
+                    drawLine(
+                        color = colors.getOrElse(seriesIndex) { Color.Gray },
+                        start = start,
+                        end = end,
+                        strokeWidth = 2.dp.toPx()
+                    )
+                }
+                if (points.size == 1) {
+                    drawCircle(
+                        color = colors.getOrElse(seriesIndex) { Color.Gray },
+                        radius = 4.dp.toPx(),
+                        center = points.single()
+                    )
+                }
+            }
+        }
+        LabelRow(labels)
+    }
+}
+
+@Composable
+fun HeatmapGrid(
+    days: List<HeatmapDay>,
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY
+) {
     val maxCount = maxOf(days.maxOfOrNull { it.count } ?: 0, 1)
     val primary = MaterialTheme.colorScheme.primary
     val empty = MaterialTheme.colorScheme.surfaceVariant
-    val offset = days.firstOrNull()?.date?.dayOfWeek?.let { it.value - 1 } ?: 0
+    val offset = days.firstOrNull()?.date?.dayOfWeek?.let {
+        (it.value - firstDayOfWeek.value + 7) % 7
+    } ?: 0
     val cells: List<HeatmapDay?> = List(offset) { null } + days
     Row(
         modifier = modifier.padding(top = 8.dp),

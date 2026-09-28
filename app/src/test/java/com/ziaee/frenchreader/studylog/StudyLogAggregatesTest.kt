@@ -5,6 +5,7 @@ import com.ziaee.frenchreader.data.StudySkill
 import com.ziaee.frenchreader.data.StudySource
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -119,5 +120,187 @@ class StudyLogAggregatesTest {
         assertEquals(listOf(1L), activeSourcesForPicker(sources).map { it.id })
         assertEquals(StudySkill.EE, sources.first().defaultSkill)
         assertEquals(0L, duplicateSession(session(5, today, 30, StudySkill.CO), 99).id)
+    }
+
+    @Test
+    fun `all range starts at first entry and is absent without entries`() {
+        val rows = listOf(session(1, today - 20, 10, StudySkill.CO))
+        assertEquals(today - 20, periodRange(today, StudyPeriod.ALL, DayOfWeek.MONDAY, rows)?.start)
+        assertNull(periodRange(today, StudyPeriod.ALL, DayOfWeek.SATURDAY, emptyList()))
+    }
+
+    @Test
+    fun `weekly buckets zero fill across year boundary for both week starts`() {
+        val first = LocalDate.of(2025, 12, 20).toEpochDay()
+        val last = LocalDate.of(2026, 1, 12).toEpochDay()
+        listOf(DayOfWeek.SATURDAY, DayOfWeek.MONDAY).forEach { firstDay ->
+            val buckets = weeklyBuckets(
+                sessions = listOf(session(1, first, 15, StudySkill.CO)),
+                start = first,
+                end = last,
+                firstDayOfWeek = firstDay
+            )
+            assertTrue(buckets.size >= 4)
+            assertEquals(15, buckets.sumOf { it.totalMinutes })
+            assertTrue(buckets.drop(1).any { it.totalMinutes == 0 })
+        }
+    }
+
+    @Test
+    fun `cumulative series are monotonic and finish at totals`() {
+        val rows = listOf(
+            session(1, today - 2, 20, StudySkill.CO),
+            session(2, today, 30, StudySkill.CO),
+            session(3, today - 1, 10, StudySkill.CE)
+        )
+        listOf(DayOfWeek.SATURDAY, DayOfWeek.MONDAY).forEach { firstDay ->
+            val range = PeriodRange(today - 2, today, today)
+            val series = cumulativeSeries(rows, range, StudyPeriod.WEEK, firstDay)
+            val listening = series.getValue(StudySkill.CO)
+            assertTrue(listening.zipWithNext().all { (a, b) -> b.minutes >= a.minutes })
+            assertEquals(50, listening.last().minutes)
+            assertEquals(10, series.getValue(StudySkill.CE).last().minutes)
+        }
+    }
+
+    @Test
+    fun `week and month cumulative series stop at today`() {
+        val range = PeriodRange(today - 2, today, today + 4)
+        listOf(StudyPeriod.WEEK, StudyPeriod.MONTH).forEach { period ->
+            val series = cumulativeSeries(emptyList(), range, period, DayOfWeek.MONDAY)
+            assertEquals(3, series.getValue(StudySkill.CO).size)
+            assertEquals(today, series.getValue(StudySkill.CO).last().epochDay)
+        }
+    }
+
+    @Test
+    fun `source names are trimmed and blank names are rejected`() {
+        assertEquals(SourceNameValidation.Valid("Book"), normalizeSourceName("  Book  "))
+        assertEquals(SourceNameValidation.Blank, normalizeSourceName(" \t "))
+    }
+
+    @Test
+    fun `week comparison returns total and per skill deltas`() {
+        listOf(DayOfWeek.SATURDAY, DayOfWeek.MONDAY).forEach { firstDay ->
+            val currentStart = weekStart(today, firstDay)
+            val rows = listOf(
+                session(1, currentStart, 70, StudySkill.CO),
+                session(2, currentStart - 7, 20, StudySkill.CO),
+                session(3, currentStart - 6, 30, StudySkill.CE)
+            )
+            val comparison = weekOverWeek(rows, today, firstDay)
+            assertEquals(20, comparison.totalDeltaMinutes)
+            assertEquals(50, comparison.deltaBySkill[StudySkill.CO])
+            assertEquals(-30, comparison.deltaBySkill[StudySkill.CE])
+        }
+    }
+
+    @Test
+    fun `streak keeps yesterday current until today ends and breaks on gap`() {
+        val yesterdayOnly = listOf(session(1, today - 1, 20, StudySkill.CO))
+        assertEquals(Streaks(longest = 1, current = 1), streaks(yesterdayOnly, today))
+        val gap = listOf(
+            session(1, today - 3, 20, StudySkill.CO),
+            session(2, today - 1, 20, StudySkill.CO)
+        )
+        assertEquals(Streaks(longest = 1, current = 1), streaks(gap, today))
+        assertEquals(Streaks(longest = 1, current = 0), streaks(gap, today + 2))
+    }
+
+    @Test
+    fun `active days counts only days with positive totals`() {
+        val rows = listOf(
+            session(1, today, 20, StudySkill.CO),
+            session(2, today, 10, StudySkill.CE),
+            session(3, today - 2, 5, StudySkill.EE)
+        )
+        assertEquals(2, activeDayCount(rows))
+    }
+
+    @Test
+    fun `targets cap progress and choose least percentage when configured`() {
+        val totals = mapOf(StudySkill.CO to 120, StudySkill.CE to 30)
+        val targets = mapOf(StudySkill.CO to 60, StudySkill.CE to 120)
+        assertEquals(1f, targetProgress(120, 60))
+        assertEquals(.25f, targetProgress(30, 120))
+        assertEquals(StudySkill.CE, leastStudiedSkill(totals, targets))
+        assertEquals(StudySkill.EE, leastStudiedSkill(totals, emptyMap()))
+    }
+
+    @Test
+    fun `intensity levels use fixed minute thresholds`() {
+        val minutes = listOf(0, 1, 29, 30, 59, 60, 119, 120)
+        assertEquals(listOf(0, 1, 1, 2, 2, 3, 3, 4), minutes.map(::intensityLevel))
+    }
+
+    @Test
+    fun `year grid aligns january first for saturday and monday`() {
+        val year = 2026
+        val fullyPast = LocalDate.of(2030, 1, 1).toEpochDay()
+        val saturday = yearGrid(emptyList(), year, DayOfWeek.SATURDAY, fullyPast)
+        val monday = yearGrid(emptyList(), year, DayOfWeek.MONDAY, fullyPast)
+        assertEquals(5, saturday.first().indexOfFirst { it?.epochDay == LocalDate.of(year, 1, 1).toEpochDay() })
+        assertEquals(3, monday.first().indexOfFirst { it?.epochDay == LocalDate.of(year, 1, 1).toEpochDay() })
+    }
+
+    @Test
+    fun `past leap year contains all days and year grids include edge weeks`() {
+        val fullyPast = LocalDate.of(2030, 1, 1).toEpochDay()
+        val leap = yearGrid(emptyList(), 2028, DayOfWeek.MONDAY, fullyPast)
+        assertEquals(366, leap.flatten().count { it != null })
+        assertEquals(53, yearGrid(emptyList(), 2026, DayOfWeek.MONDAY, fullyPast).size)
+        assertEquals(54, yearGrid(emptyList(), 2028, DayOfWeek.SUNDAY, fullyPast).size)
+    }
+
+    @Test
+    fun `current year grid excludes days after today`() {
+        val date = LocalDate.of(2026, 4, 12)
+        val grid = yearGrid(emptyList(), 2026, DayOfWeek.MONDAY, date.toEpochDay())
+        assertEquals(date.toEpochDay(), grid.flatten().filterNotNull().maxOf { it.epochDay })
+    }
+
+    @Test
+    fun `month grid uses leading blanks for both week starts`() {
+        val month = YearMonth.of(2026, 1)
+        val fullyPast = LocalDate.of(2030, 1, 1).toEpochDay()
+        val saturday = monthGrid(emptyList(), month, DayOfWeek.SATURDAY, fullyPast)
+        val monday = monthGrid(emptyList(), month, DayOfWeek.MONDAY, fullyPast)
+        assertEquals(5, saturday.first().takeWhile { it == null }.size)
+        assertEquals(3, monday.first().takeWhile { it == null }.size)
+    }
+
+    @Test
+    fun `calendar grids sum sessions on the same day`() {
+        val date = LocalDate.of(2026, 1, 7)
+        val rows = listOf(
+            session(1, date.toEpochDay(), 29, StudySkill.CO),
+            session(2, date.toEpochDay(), 31, StudySkill.CE)
+        )
+        val yearCell = yearGrid(rows, 2026, DayOfWeek.MONDAY, today)
+            .flatten()
+            .filterNotNull()
+            .single { it.epochDay == date.toEpochDay() }
+        val monthCell = monthGrid(rows, YearMonth.of(2026, 1), DayOfWeek.MONDAY, today)
+            .flatten()
+            .filterNotNull()
+            .single { it.epochDay == date.toEpochDay() }
+        assertEquals(60, yearCell.minutes)
+        assertEquals(3, yearCell.level)
+        assertEquals(60, monthCell.minutes)
+    }
+
+    @Test
+    fun `year summary totals active days and longest in-year streak`() {
+        val rows = listOf(
+            session(1, LocalDate.of(2025, 12, 31).toEpochDay(), 90, StudySkill.CO),
+            session(2, LocalDate.of(2026, 1, 1).toEpochDay(), 20, StudySkill.CO),
+            session(3, LocalDate.of(2026, 1, 1).toEpochDay(), 10, StudySkill.CE),
+            session(4, LocalDate.of(2026, 1, 2).toEpochDay(), 40, StudySkill.EE),
+            session(5, LocalDate.of(2026, 1, 4).toEpochDay(), 50, StudySkill.EO)
+        )
+        assertEquals(
+            YearSummary(totalMinutes = 120, activeDays = 3, longestStreak = 2),
+            yearSummary(rows, 2026)
+        )
     }
 }

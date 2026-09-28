@@ -658,4 +658,33 @@
     <string name="study_log_rename">Rename</string><string name="study_log_archive">Archive</string><string name="study_log_unarchive">Unarchive</string><string name="study_log_week">Week</string><string name="study_log_month">Month</string><string name="study_log_skill_share">Skill share</string><string name="study_log_by_source">By source</string><string name="study_log_first_day">First day of week</string><string name="study_log_source_duplicate">A source with this name already exists.</string>
     <string name="study_log_skill_co">Listening</string><string name="study_log_skill_ce">Reading</string><string name="study_log_skill_ee">Writing</string><string name="study_log_skill_eo">Speaking</string><string name="study_log_skill_lex">Vocabulary / grammar</string>
     <string name="study_log_kind_book">Book</string><string name="study_log_kind_notes">Notes</string><string name="study_log_kind_audio">Audio</string><string name="study_log_kind_video">Video</string><string name="study_log_kind_website">Website</string><string name="study_log_kind_app">App</string><string name="study_log_kind_mock_test">Mock test</string><string name="study_log_kind_other">Other</string>
+    <string name="study_log_all">All</string>
+    <string name="study_log_time_by_skill">Study time by skill</string>
+    <string name="study_log_cumulative">Cumulative hours</string>
+    <string name="study_log_heatmap">Daily activity · last 16 weeks</string>
+    <string name="study_log_week_comparison">This week vs last week</string>
+    <string name="study_log_total">Total</string>
+    <string name="study_log_average">Daily average</string>
+    <string name="study_log_active_days">Active days</string>
+    <string name="study_log_streaks">Longest · current streak</string>
+    <string name="study_log_streak_values">%1$d · %2$d days</string>
+    <string name="study_log_skill_full">%1$s (%2$s)</string>
+    <string name="study_log_empty_hint">Add study time to start seeing your progress.</string>
+    <string name="study_log_settings">Study log settings</string>
+    <string name="study_log_weekly_targets">Weekly targets (minutes)</string>
+    <string name="study_log_minutes_short">min</string>
+    <string name="study_log_saturday">Saturday</string>
+    <string name="study_log_monday">Monday</string>
+    <string name="study_log_today">Today</string>
+    <string name="study_log_yesterday">Yesterday</string>
+    <string name="study_log_undo">Undo</string>
+    <string name="study_log_least_studied_value">Least studied: %1$s · %2$s</string>
+    <string name="study_log_duration_error">Duration must be between 1 and 1,440 minutes.</string>
+    <string name="study_log_future_date_error">The study date cannot be in the future.</string>
+    <string name="study_log_activity">Activity</string>
+    <string name="study_log_year">Year</string>
+    <string name="study_log_less">Less</string>
+    <string name="study_log_more">More</string>
+    <string name="study_log_no_study">No study</string>
+    <string name="study_log_year_summary">%1$s in %2$d · %3$d active days · longest streak %4$d days</string>
 </resources>
