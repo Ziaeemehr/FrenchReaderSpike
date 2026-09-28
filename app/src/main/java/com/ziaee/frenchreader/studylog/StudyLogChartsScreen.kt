@@ -63,6 +63,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +98,8 @@ private fun ChartsContent(
     modifier: Modifier = Modifier
 ) {
     val colors = studySkillColors()
-    val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(appLocale())
+    val formatter = DateTimeFormatter.ofPattern("dd/MM", appLocale())
+    val displayedSkills = chartSkills(state.activitySessions)
     val shares = largestRemainderShares(state.totalsBySkill)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -119,32 +121,32 @@ private fun ChartsContent(
         ChartCard(stringResource(R.string.study_log_time_by_skill)) {
             StackedBarChart(
                 valuesByBar = state.buckets.map { bucket ->
-                    StudySkill.entries.map { skill ->
+                    displayedSkills.map { skill ->
                         (bucket.minutesBySkill[skill] ?: 0).toFloat()
                     }
                 },
                 labels = sparseLabels(state.buckets.map { it.epochDay }, formatter),
-                colors = StudySkill.entries.map { colors.getValue(it) }
+                colors = displayedSkills.map { colors.getValue(it) }
             )
-            SkillLegend(colors)
+            SkillLegend(colors, displayedSkills)
         }
         ChartCard(stringResource(R.string.study_log_cumulative)) {
             val cumulativeDays = state.cumulative[StudySkill.CO].orEmpty().map { it.epochDay }
             MultiLineChart(
-                valuesBySeries = StudySkill.entries.map { skill ->
+                valuesBySeries = displayedSkills.map { skill ->
                     state.cumulative[skill].orEmpty().map { it.minutes.toFloat() / 60f }
                 },
                 labels = sparseLabels(cumulativeDays, formatter),
-                colors = StudySkill.entries.map { colors.getValue(it) }
+                colors = displayedSkills.map { colors.getValue(it) }
             )
-            SkillLegend(colors)
+            SkillLegend(colors, displayedSkills)
         }
         ChartCard(stringResource(R.string.study_log_activity)) {
             ActivityMap(state, colors)
         }
         ChartCard(stringResource(R.string.study_log_week_comparison)) {
             DeltaRow(stringResource(R.string.study_log_total), state.comparison.totalDeltaMinutes)
-            StudySkill.entries.forEach { skill ->
+            displayedSkills.forEach { skill ->
                 DeltaRow(skillFullName(skill), state.comparison.deltaBySkill[skill] ?: 0)
             }
         }
@@ -152,7 +154,7 @@ private fun ChartsContent(
             if (state.totalMinutes == 0) {
                 Text(stringResource(R.string.study_log_no_data))
             } else {
-                StudySkill.entries.forEach { skill ->
+                displayedSkills.forEach { skill ->
                     LegendRow(colors.getValue(skill), stringResource(skill.labelRes()), "${shares[skill]}%")
                 }
             }
@@ -580,9 +582,9 @@ private fun ChartCard(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SkillLegend(colors: Map<StudySkill, Color>) {
+private fun SkillLegend(colors: Map<StudySkill, Color>, skills: List<StudySkill>) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        StudySkill.entries.forEach { skill ->
+        skills.forEach { skill ->
             LegendRow(colors.getValue(skill), skillFullName(skill), null)
         }
     }
@@ -621,16 +623,27 @@ private fun EmptyStudyLog() {
     }
 }
 
-private fun sparseLabels(days: List<Long>, formatter: DateTimeFormatter): List<String> {
-    val step = (days.size / 6).coerceAtLeast(1)
+internal fun sparseLabels(days: List<Long>, formatter: DateTimeFormatter): List<String> {
+    val labeledIndices = when (days.size) {
+        0 -> emptySet()
+        in 1..4 -> days.indices.toSet()
+        else -> (0..3).mapTo(mutableSetOf()) { marker ->
+            ((days.lastIndex * marker) / 3.0).roundToInt()
+        }
+    }
     return days.mapIndexed { index, day ->
-        if (index % step == 0 || index == days.lastIndex) {
+        if (index in labeledIndices) {
             LocalDate.ofEpochDay(day).format(formatter)
         } else {
             ""
         }
     }
 }
+
+internal fun chartSkills(sessions: List<StudySession>): List<StudySkill> =
+    StudySkill.entries.filter { skill ->
+        !skill.legacy || sessions.any { it.skill == skill }
+    }
 
 @Composable
 internal fun studySkillColors(): Map<StudySkill, Color> {
@@ -640,14 +653,18 @@ internal fun studySkillColors(): Map<StudySkill, Color> {
         Color(0xff2e7d32),
         Color(0xffad1457),
         Color(0xff6a1b9a),
-        Color(0xffe65100)
+        Color(0xffe65100),
+        Color(0xff00838f),
+        Color(0xff757575)
     )
     val darkColors = listOf(
         Color(0xff90caf9),
         Color(0xff81c784),
         Color(0xfff48fb1),
         Color(0xffce93d8),
-        Color(0xffffb74d)
+        Color(0xffffb74d),
+        Color(0xff80deea),
+        Color(0xffbdbdbd)
     )
     return StudySkill.entries.zip(if (dark) darkColors else light).toMap()
 }

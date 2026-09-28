@@ -299,16 +299,17 @@ internal fun averagePerElapsedDay(totalMinutes: Int, range: PeriodRange): Int =
     if (range.elapsedDays == 0) 0 else totalMinutes / range.elapsedDays
 
 internal fun leastStudiedSkill(totals: Map<StudySkill, Int>): StudySkill? {
-    val complete = StudySkill.entries.associateWith { totals[it] ?: 0 }
-    if (complete.values.all { it == 0 }) return null
-    return StudySkill.entries.minBy { complete.getValue(it) }
+    val currentSkills = StudySkill.entries.filterNot { it.legacy }
+    val complete = currentSkills.associateWith { totals[it] ?: 0 }
+    if (totals.values.all { it == 0 }) return null
+    return currentSkills.minBy { complete.getValue(it) }
 }
 
 internal fun leastStudiedSkill(
     totals: Map<StudySkill, Int>,
     targets: Map<StudySkill, Int>
 ): StudySkill? {
-    val configured = targets.filterValues { it > 0 }
+    val configured = targets.filter { (skill, value) -> !skill.legacy && value > 0 }
     if (configured.isEmpty()) return leastStudiedSkill(totals)
     return configured.keys.minWith(
         compareBy<StudySkill> { (totals[it] ?: 0).toDouble() / configured.getValue(it) }

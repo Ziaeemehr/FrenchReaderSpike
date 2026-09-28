@@ -19,25 +19,71 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
+import kotlin.math.roundToInt
 
 @Composable
 private fun LabelRow(labels: List<String>) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        labels.forEach { label ->
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Visible,
-                modifier = Modifier.weight(1f)
+    val visibleLabels = labels.mapIndexedNotNull { index, label ->
+        label.takeIf { it.isNotEmpty() }?.let { index to it }
+    }
+    Layout(
+        content = {
+            visibleLabels.forEach { (_, label) ->
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) { measurables, constraints ->
+        val width = if (constraints.maxWidth == Constraints.Infinity) {
+            constraints.minWidth
+        } else {
+            constraints.maxWidth
+        }
+        if (labels.isEmpty() || visibleLabels.isEmpty()) {
+            return@Layout layout(width, 0) {}
+        }
+        val centers = visibleLabels.map { (index, _) ->
+            width * (index + 0.5f) / labels.size
+        }
+        val bounds = centers.indices.map { index ->
+            val start = if (index == 0) 0f else (centers[index - 1] + centers[index]) / 2f
+            val end = if (index == centers.lastIndex) width.toFloat()
+            else (centers[index] + centers[index + 1]) / 2f
+            start.roundToInt() to end.roundToInt()
+        }
+        val placeables = measurables.mapIndexed { index, measurable ->
+            val (start, end) = bounds[index]
+            measurable.measure(
+                Constraints(
+                    minWidth = 0,
+                    maxWidth = (end - start).coerceAtLeast(0),
+                    minHeight = 0,
+                    maxHeight = constraints.maxHeight
+                )
             )
+        }
+        val height = placeables.maxOfOrNull { it.height } ?: 0
+        layout(width, height.coerceIn(constraints.minHeight, constraints.maxHeight)) {
+            placeables.forEachIndexed { index, placeable ->
+                val (start, end) = bounds[index]
+                val centered = (centers[index] - placeable.width / 2f).roundToInt()
+                val x = centered.coerceIn(start, (end - placeable.width).coerceAtLeast(start))
+                placeable.placeRelative(x, 0)
+            }
         }
     }
 }

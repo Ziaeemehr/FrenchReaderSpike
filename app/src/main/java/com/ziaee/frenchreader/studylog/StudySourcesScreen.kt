@@ -229,7 +229,7 @@ private fun SourceEditorDialog(
                     }
                 }
                 FlowRow {
-                    StudySkill.entries.forEach { skill ->
+                    StudySkill.entries.filter { !it.legacy || it == defaultSkill }.forEach { skill ->
                         FilterChip(
                             selected = defaultSkill == skill,
                             onClick = {

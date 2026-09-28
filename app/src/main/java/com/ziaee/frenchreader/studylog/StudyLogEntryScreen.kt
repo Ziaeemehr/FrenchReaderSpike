@@ -310,7 +310,7 @@ private fun EntryForm(
         }
         Text(stringResource(R.string.study_log_skill))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            StudySkill.entries.forEach { value ->
+            StudySkill.entries.filter { !it.legacy || it == skill }.forEach { value ->
                 FilterChip(
                     selected = skill == value,
                     onClick = { onSkillChange(value) },

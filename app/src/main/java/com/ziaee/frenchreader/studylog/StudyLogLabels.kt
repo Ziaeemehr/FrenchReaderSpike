@@ -11,6 +11,8 @@ internal fun StudySkill.labelRes() = when (this) {
     StudySkill.CE -> R.string.study_log_skill_ce
     StudySkill.EE -> R.string.study_log_skill_ee
     StudySkill.EO -> R.string.study_log_skill_eo
+    StudySkill.VOC -> R.string.study_log_skill_voc
+    StudySkill.GRAM -> R.string.study_log_skill_gram
     StudySkill.LEX -> R.string.study_log_skill_lex
 }
 

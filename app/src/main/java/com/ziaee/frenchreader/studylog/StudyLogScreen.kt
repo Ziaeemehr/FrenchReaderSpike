@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -46,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -167,7 +170,9 @@ private fun StudyLogList(
                         stringResource(R.string.study_log_this_week, formatMinutes(state.totalMinutes)),
                         style = MaterialTheme.typography.titleLarge
                     )
-                    StudySkill.entries.forEach { skill ->
+                    StudySkill.entries.filter { skill ->
+                        !skill.legacy || (state.totalsBySkill[skill] ?: 0) > 0
+                    }.forEach { skill ->
                         val value = state.totalsBySkill[skill] ?: 0
                         val target = state.weeklyTargets[skill] ?: 0
                         val detail = if (target > 0) {
@@ -175,16 +180,39 @@ private fun StudyLogList(
                         } else {
                             formatMinutes(value)
                         }
-                        Text("${stringResource(skill.labelRes())} (${skill.code}) · $detail")
-                        LinearProgressIndicator(
-                            progress = if (target > 0) {
-                                targetProgress(value, target)
-                            } else {
-                                relativeProgress(value, largest)
-                            },
-                            color = colors.getValue(skill),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(Modifier.size(8.dp).background(colors.getValue(skill), CircleShape))
+                                Text(
+                                    stringResource(skill.labelRes()),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    detail,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            LinearProgressIndicator(
+                                progress = if (target > 0) {
+                                    targetProgress(value, target)
+                                } else {
+                                    relativeProgress(value, largest)
+                                },
+                                color = colors.getValue(skill),
+                                trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .5f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                            )
+                        }
                     }
                     val least = leastStudiedSkill(state.totalsBySkill, state.weeklyTargets)
                     Text(
@@ -193,7 +221,9 @@ private fun StudyLogList(
                             val value = state.totalsBySkill[it] ?: 0
                             val label = if (target > 0) "${value * 100 / target}%" else formatMinutes(value)
                             stringResource(R.string.study_log_least_studied_value, it.code, label)
-                        } ?: stringResource(R.string.study_log_no_data)
+                        } ?: stringResource(R.string.study_log_no_data),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -299,7 +329,9 @@ private fun StudyLogSettingsDialog(
                     }
                 }
                 Text(stringResource(R.string.study_log_weekly_targets))
-                StudySkill.entries.forEach { skill ->
+                StudySkill.entries.filter { skill ->
+                    !skill.legacy || (state.weeklyTargets[skill] ?: 0) > 0
+                }.forEach { skill ->
                     OutlinedTextField(
                         value = values[skill].orEmpty(),
                         onValueChange = { text ->
@@ -314,7 +346,9 @@ private fun StudyLogSettingsDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                StudySkill.entries.forEach { skill ->
+                StudySkill.entries.filter { skill ->
+                    !skill.legacy || (state.weeklyTargets[skill] ?: 0) > 0
+                }.forEach { skill ->
                     onTargetChange(skill, values[skill]?.toIntOrNull() ?: 0)
                 }
                 onDismiss()

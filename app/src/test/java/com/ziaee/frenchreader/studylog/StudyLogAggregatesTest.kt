@@ -94,6 +94,30 @@ class StudyLogAggregatesTest {
     }
 
     @Test
+    fun `least studied never recommends a legacy skill`() {
+        assertEquals(
+            StudySkill.CE,
+            leastStudiedSkill(mapOf(StudySkill.CO to 1, StudySkill.LEX to 0))
+        )
+        assertEquals(
+            StudySkill.VOC,
+            leastStudiedSkill(
+                totals = mapOf(StudySkill.VOC to 0, StudySkill.LEX to 0),
+                targets = mapOf(StudySkill.VOC to 60, StudySkill.LEX to 60)
+            )
+        )
+    }
+
+    @Test
+    fun `chart skills include lex only when legacy sessions exist`() {
+        assertEquals(StudySkill.entries.filterNot { it.legacy }, chartSkills(emptyList()))
+        assertEquals(
+            StudySkill.entries,
+            chartSkills(listOf(session(1, today, 10, StudySkill.LEX)))
+        )
+    }
+
+    @Test
     fun `daily warning excludes edited row`() {
         assertTrue(wouldExceedDailyLimit(1400, 60))
         assertFalse(wouldExceedDailyLimit(1400, 60, previousDurationMin = 60))

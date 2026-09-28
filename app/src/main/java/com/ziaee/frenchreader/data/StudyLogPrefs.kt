@@ -23,7 +23,7 @@ object StudyLogPrefs {
             StudySkill.fromCode(
                 prefs(context).getString(KEY_LAST_SKILL, null) ?: StudySkill.CO.code
             )
-        }.getOrDefault(StudySkill.CO)
+        }.getOrDefault(StudySkill.CO).let { if (it.legacy) StudySkill.VOC else it }
 
     fun setLastSkill(context: Context, value: StudySkill) {
         prefs(context).edit().putString(KEY_LAST_SKILL, value.code).apply()

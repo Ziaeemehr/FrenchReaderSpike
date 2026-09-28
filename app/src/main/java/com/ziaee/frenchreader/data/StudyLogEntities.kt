@@ -7,12 +7,15 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 
-enum class StudySkill(val code: String) {
+enum class StudySkill(val code: String, val legacy: Boolean = false) {
     CO("CO"),
     CE("CE"),
     EE("EE"),
     EO("EO"),
-    LEX("LEX");
+    VOC("VOC"),
+    GRAM("GRAM"),
+    // Kept so previously stored combined vocabulary/grammar sessions remain readable.
+    LEX("LEX", legacy = true);
 
     companion object {
         fun fromCode(code: String) = entries.firstOrNull { it.code == code } ?: LEX
