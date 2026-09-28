@@ -688,4 +688,5 @@
     <string name="study_log_no_study">Aucune étude</string>
     <string name="study_log_year_summary">%1$s en %2$d · %3$d jours actifs · plus longue série : %4$d jours</string>
     <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string><string name="study_log_home_summary_empty">Rien d’enregistré cette semaine</string>
+    <string name="study_log_review_source">Révision des mots</string>
 </resources>

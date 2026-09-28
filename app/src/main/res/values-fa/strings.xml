@@ -686,4 +686,5 @@
     <string name="study_log_no_study">بدون مطالعه</string>
     <string name="study_log_year_summary">%1$s در %2$d · %3$d روز فعال · طولانی‌ترین روند %4$d روز</string>
     <string name="study_log_home_summary">امروز %1$s · این هفته %2$s</string><string name="study_log_home_summary_empty">این هفته هنوز چیزی ثبت نشده</string>
+    <string name="study_log_review_source">مرور واژه‌ها</string>
 </resources>

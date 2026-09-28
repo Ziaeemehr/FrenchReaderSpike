@@ -31,7 +31,7 @@ internal fun VocabEditDialog(entry: VocabEntry, onDismiss: () -> Unit, onSave: (
         title = { Text(stringResource(R.string.vocab_edit_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                OutlinedTextField(word, { word = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.vocab_edit_word)) }, singleLine = true)
+                OutlinedTextField(word, { word = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.vocab_edit_word)) }, maxLines = 4)
                 OutlinedTextField(meaning, { meaning = it }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text(stringResource(R.string.vocab_edit_meaning)) })
                 OutlinedTextField(sentence, { sentence = it }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text(stringResource(R.string.vocab_edit_sentence)) })
             }

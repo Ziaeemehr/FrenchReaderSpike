@@ -37,6 +37,12 @@ interface StudyLogDao {
     @Query("SELECT * FROM study_source WHERE id = :id")
     suspend fun getSource(id: Long): StudySource?
 
+    @Query("SELECT * FROM study_source WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun getSourceByName(name: String): StudySource?
+
+    @Query("SELECT * FROM study_session WHERE date = :date AND source_id = :sourceId ORDER BY created_at LIMIT 1")
+    suspend fun findSessionForSource(date: Long, sourceId: Long): StudySession?
+
     @Insert
     suspend fun insertSession(session: StudySession): Long
 

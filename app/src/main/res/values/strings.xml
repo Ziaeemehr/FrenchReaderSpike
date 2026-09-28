@@ -688,4 +688,5 @@
     <string name="study_log_no_study">No study</string>
     <string name="study_log_year_summary">%1$s in %2$d · %3$d active days · longest streak %4$d days</string>
     <string name="study_log_home_summary">Today %1$s · This week %2$s</string><string name="study_log_home_summary_empty">Nothing logged this week yet</string>
+    <string name="study_log_review_source">Word review</string>
 </resources>

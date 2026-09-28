@@ -48,6 +48,7 @@ import com.ziaee.frenchreader.ui.statistics.computeStreak
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
+import com.ziaee.frenchreader.studylog.ReviewTimeLogger
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -334,6 +335,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         VocabPrefs.addStudyTimeMs(context, date, sessionDurationMs)
         sessionInProgress = false
         studyTimeMs = VocabPrefs.getStudyTimeMsToday(context, date)
+        ReviewTimeLogger.sync(context, LocalDate.parse(date), studyTimeMs)
         nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
         val dayStart = VocabSrs.startOfDayMs(now)
         cardsReviewedToday = db.reviewLogDao().countSince(dayStart)
@@ -427,7 +429,9 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         if (sessionInProgress && stage == ReviewStage.REVIEW && answerCount > 0) {
             val now = System.currentTimeMillis()
-            VocabPrefs.addStudyTimeMs(context, localDateFor(now), now - sessionStartedAtMs)
+            val date = localDateFor(now)
+            VocabPrefs.addStudyTimeMs(context, date, now - sessionStartedAtMs)
+            ReviewTimeLogger.sync(context, LocalDate.parse(date), VocabPrefs.getStudyTimeMsToday(context, date))
             sessionInProgress = false
         }
         player.release()
