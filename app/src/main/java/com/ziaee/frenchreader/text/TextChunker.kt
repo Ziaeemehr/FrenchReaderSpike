@@ -136,8 +136,9 @@ object TextChunker {
     private fun splitLongParagraph(paragraph: String): List<String> {
         // Rough split on ". " / "! " / "? " followed by a capital letter,
         // just to bound size -- edge-tts still does the real sentence
-        // segmentation for highlighting inside each resulting piece.
-        val sentenceEnd = Regex("(?<=[.!?…])\\s+(?=[A-ZÀ-Ü«\"])")
+        // segmentation for highlighting inside each resulting piece. A period after a digit is
+        // skipped: German ordinals ("am 25. Oktober") are followed by a capitalised noun.
+        val sentenceEnd = Regex("(?<=[.!?…])(?<![0-9]\\.)\\s+(?=[A-ZÀ-Ü«„\"])")
         val pieces = paragraph.split(sentenceEnd).flatMap(::splitOversizedUnit)
         val out = mutableListOf<String>()
         val buf = StringBuilder()
