@@ -1,6 +1,8 @@
 package com.ziaee.frenchreader.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
@@ -45,35 +47,35 @@ fun EditorialBottomBar(
             selected = selectedDestination == EditorialDestination.HOME,
             onClick = onHome,
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_home)) },
+            label = { NavLabel(stringResource(R.string.nav_home)) },
             colors = editorialNavigationItemColors()
         )
         NavigationBarItem(
             selected = selectedDestination == EditorialDestination.LIBRARY,
             onClick = onLibrary,
             icon = { Icon(Icons.Default.LibraryBooks, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_library)) },
+            label = { NavLabel(stringResource(R.string.nav_library)) },
             colors = editorialNavigationItemColors()
         )
         NavigationBarItem(
             selected = false,
             onClick = onAddText,
             icon = { Icon(Icons.Default.Add, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_import)) },
+            label = { NavLabel(stringResource(R.string.nav_import)) },
             colors = editorialNavigationItemColors()
         )
         NavigationBarItem(
             selected = selectedDestination == EditorialDestination.WORDS,
             onClick = onWords,
             icon = { Icon(Icons.Default.Style, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_words)) },
+            label = { NavLabel(stringResource(R.string.nav_words)) },
             colors = editorialNavigationItemColors()
         )
         NavigationBarItem(
             selected = selectedDestination == EditorialDestination.RESOURCES,
             onClick = onResources,
             icon = { Icon(Icons.Default.Bookmark, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_resources)) },
+            label = { NavLabel(stringResource(R.string.nav_resources)) },
             colors = editorialNavigationItemColors()
         )
     }
@@ -87,3 +89,22 @@ private fun editorialNavigationItemColors() = NavigationBarItemDefaults.colors(
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
     indicatorColor = Color.Transparent
 )
+
+/** Keeps a bottom-bar label on one line, shrinking the font for long translations (e.g. "Bibliothèque"). */
+@Composable
+private fun NavLabel(text: String) {
+    val baseStyle = androidx.compose.material3.LocalTextStyle.current
+    var fontSize by androidx.compose.runtime.remember(text) {
+        androidx.compose.runtime.mutableStateOf(baseStyle.fontSize)
+    }
+    Text(
+        text = text,
+        maxLines = 1,
+        softWrap = false,
+        fontSize = fontSize,
+        overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
+        onTextLayout = { layout ->
+            if (layout.hasVisualOverflow && fontSize.value > 9f) fontSize = fontSize * 0.92f
+        }
+    )
+}

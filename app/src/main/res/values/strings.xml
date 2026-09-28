@@ -650,7 +650,7 @@
     <string name="editor_discard_message">Your edits will be lost.</string>
     <string name="editor_discard">Discard</string>
     <string name="editor_keep_editing">Keep editing</string>
-    <string name="study_log_title">Study log</string><string name="study_log_home_card">Study log — track your learning time</string>
+    <string name="study_log_title">Study log</string><string name="study_log_home_card">Track your study time</string>
     <string name="study_log_add_time">Add study time</string><string name="study_log_edit_entry">Edit entry</string><string name="study_log_this_week">This week: %1$s</string><string name="study_log_least_studied">Least studied: %1$s</string><string name="study_log_no_data">No data yet</string>
     <string name="study_log_sources">Sources</string><string name="study_log_charts">Charts</string><string name="study_log_delete">Delete</string><string name="study_log_delete_confirm">Delete this entry?</string><string name="study_log_cancel">Cancel</string>
     <string name="study_log_hours">Hours</string><string name="study_log_minutes">Minutes</string><string name="study_log_skill">Skill</string><string name="study_log_no_source">No source</string><string name="study_log_new_source">+ New source…</string><string name="study_log_note">Note</string><string name="study_log_validation_error">Enter 1–1440 minutes and do not choose a future date.</string>
@@ -687,4 +687,5 @@
     <string name="study_log_more">More</string>
     <string name="study_log_no_study">No study</string>
     <string name="study_log_year_summary">%1$s in %2$d · %3$d active days · longest streak %4$d days</string>
+    <string name="study_log_home_summary">Today %1$s · This week %2$s</string><string name="study_log_home_summary_empty">Nothing logged this week yet</string>
 </resources>

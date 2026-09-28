@@ -41,6 +41,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -116,6 +117,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 activityLogDates = { db.activityLogDao().activeDates() }
             )
         }
+
+    /** Minutes studied today and this week (study log), shown on the Home study-log button. */
+    val studyLogMinutes: StateFlow<Pair<Int, Int>> = com.ziaee.frenchreader.studylog.localEpochDayFlow()
+        .flatMapLatest { today ->
+            val start = com.ziaee.frenchreader.studylog.weekStart(
+                today,
+                com.ziaee.frenchreader.data.StudyLogPrefs.getFirstDayOfWeek(app)
+            )
+            db.studyLogDao().observeSessions(start, today).map { rows ->
+                rows.filter { it.date == today }.sumOf { it.durationMin } to rows.sumOf { it.durationMin }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0 to 0)
 
     val uiState: StateFlow<HomeUiState> = combine(
         newsRepository.observeHeadlines(),

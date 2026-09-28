@@ -648,7 +648,7 @@
     <string name="editor_discard_message">ویرایش‌های شما از دست می‌روند.</string>
     <string name="editor_discard">نادیده گرفتن</string>
     <string name="editor_keep_editing">ادامهٔ ویرایش</string>
-    <string name="study_log_title">دفتر مطالعه</string><string name="study_log_home_card">دفتر مطالعه — زمان یادگیری را ثبت کنید</string>
+    <string name="study_log_title">دفتر مطالعه</string><string name="study_log_home_card">ثبت زمان مطالعه</string>
     <string name="study_log_add_time">افزودن زمان مطالعه</string><string name="study_log_edit_entry">ویرایش ثبت</string><string name="study_log_this_week">این هفته: %1$s</string><string name="study_log_least_studied">کمترین مهارت مطالعه‌شده: %1$s</string><string name="study_log_no_data">هنوز داده‌ای نیست</string>
     <string name="study_log_sources">منابع</string><string name="study_log_charts">نمودارها</string><string name="study_log_delete">حذف</string><string name="study_log_delete_confirm">این ثبت حذف شود؟</string><string name="study_log_cancel">لغو</string>
     <string name="study_log_hours">ساعت</string><string name="study_log_minutes">دقیقه</string><string name="study_log_skill">مهارت</string><string name="study_log_no_source">بدون منبع</string><string name="study_log_new_source">+ منبع جدید…</string><string name="study_log_note">یادداشت</string><string name="study_log_validation_error">بین ۱ تا ۱۴۴۰ دقیقه وارد کنید و تاریخ آینده را انتخاب نکنید.</string>
@@ -685,4 +685,5 @@
     <string name="study_log_more">بیشتر</string>
     <string name="study_log_no_study">بدون مطالعه</string>
     <string name="study_log_year_summary">%1$s در %2$d · %3$d روز فعال · طولانی‌ترین روند %4$d روز</string>
+    <string name="study_log_home_summary">امروز %1$s · این هفته %2$s</string><string name="study_log_home_summary_empty">این هفته هنوز چیزی ثبت نشده</string>
 </resources>

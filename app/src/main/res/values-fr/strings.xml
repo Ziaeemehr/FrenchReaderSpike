@@ -650,7 +650,7 @@
     <string name="editor_discard_message">Vos modifications seront perdues.</string>
     <string name="editor_discard">Ignorer</string>
     <string name="editor_keep_editing">Continuer la modification</string>
-    <string name="study_log_title">Journal d’étude</string><string name="study_log_home_card">Journal d’étude — suivez votre temps d’apprentissage</string>
+    <string name="study_log_title">Journal d’étude</string><string name="study_log_home_card">Suivez votre temps d’étude</string>
     <string name="study_log_add_time">Ajouter du temps d’étude</string><string name="study_log_edit_entry">Modifier l’entrée</string><string name="study_log_this_week">Cette semaine : %1$s</string><string name="study_log_least_studied">Compétence la moins étudiée : %1$s</string><string name="study_log_no_data">Aucune donnée</string>
     <string name="study_log_sources">Sources</string><string name="study_log_charts">Graphiques</string><string name="study_log_delete">Supprimer</string><string name="study_log_delete_confirm">Supprimer cette entrée ?</string><string name="study_log_cancel">Annuler</string>
     <string name="study_log_hours">Heures</string><string name="study_log_minutes">Minutes</string><string name="study_log_skill">Compétence</string><string name="study_log_no_source">Sans source</string><string name="study_log_new_source">+ Nouvelle source…</string><string name="study_log_note">Note</string><string name="study_log_validation_error">Saisissez de 1 à 1 440 minutes et ne choisissez pas une date future.</string>
@@ -687,4 +687,5 @@
     <string name="study_log_more">Plus</string>
     <string name="study_log_no_study">Aucune étude</string>
     <string name="study_log_year_summary">%1$s en %2$d · %3$d jours actifs · plus longue série : %4$d jours</string>
+    <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string><string name="study_log_home_summary_empty">Rien d’enregistré cette semaine</string>
 </resources>

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
@@ -18,6 +19,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -100,6 +103,7 @@ fun HomeScreen(
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
     val comprehensionScores by vm.comprehensionScores.collectAsState()
+    val studyLogMinutes by vm.studyLogMinutes.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, vm) {
@@ -219,7 +223,8 @@ fun HomeScreen(
         onDismissPreview = { vm.dismissPreview() },
         onStartReview = onStartReview,
         onOpenDataset = onOpenDataset,
-        onOpenStudyLog = onOpenStudyLog
+        onOpenStudyLog = onOpenStudyLog,
+        studyLogMinutes = studyLogMinutes
     )
 
     AddTextHost(
@@ -292,7 +297,8 @@ fun HomeContent(
     onDismissPreview: () -> Unit,
     onStartReview: () -> Unit,
     onOpenDataset: () -> Unit = {},
-    onOpenStudyLog: () -> Unit = {}
+    onOpenStudyLog: () -> Unit = {},
+    studyLogMinutes: Pair<Int, Int> = 0 to 0
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -361,10 +367,12 @@ fun HomeContent(
         Box(modifier = Modifier.padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
             LazyColumn(modifier = Modifier.fillMaxSize().testTag(HOME_LAZY_COLUMN_TEST_TAG)) {
                 item {
-                    androidx.compose.material3.Card(
+                    StudyLogButton(
+                        todayMinutes = studyLogMinutes.first,
+                        weekMinutes = studyLogMinutes.second,
                         onClick = onOpenStudyLog,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) { Text(stringResource(R.string.study_log_home_card), modifier = Modifier.padding(20.dp)) }
+                    )
                 }
                 item {
                     LearningSummaryStrip(
@@ -441,5 +449,52 @@ fun HomeContent(
             onDownloadOrOpen = onDownloadOrOpen,
             onDismiss = onDismissPreview
         )
+    }
+}
+
+@Composable
+private fun StudyLogButton(
+    todayMinutes: Int,
+    weekMinutes: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
+        contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Timer, contentDescription = null)
+            androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp))
+            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.study_log_home_card),
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (weekMinutes == 0) {
+                        stringResource(R.string.study_log_home_summary_empty)
+                    } else {
+                        stringResource(
+                            R.string.study_log_home_summary,
+                            com.ziaee.frenchreader.studylog.formatMinutes(todayMinutes),
+                            com.ziaee.frenchreader.studylog.formatMinutes(weekMinutes)
+                        )
+                    },
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+        }
     }
 }
