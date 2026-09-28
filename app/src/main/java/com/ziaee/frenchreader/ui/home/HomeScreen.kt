@@ -55,6 +55,7 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.LanguagePrefs
 import com.ziaee.frenchreader.language.LanguageCatalog
+import com.ziaee.frenchreader.language.LanguageFeature
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
@@ -333,7 +334,7 @@ fun HomeContent(
     Scaffold(
         topBar = {
             EditorialTopAppBar(
-                title = stringResource(R.string.home_brand_title),
+                title = LanguageCatalog.forCode(targetLanguage).readingTitle,
                 titleStyle = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp),
                 actions = {
                     IconButton(onClick = onOpenDictionary) {
@@ -437,7 +438,7 @@ fun HomeContent(
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
                 }
-                item {
+                if (LanguageCatalog.supports(targetLanguage, LanguageFeature.DATASET)) item {
                     DatasetCard(
                         onOpen = onOpenDataset,
                         modifier = Modifier

@@ -1,5 +1,6 @@
 package com.ziaee.frenchreader.content
 
+import com.ziaee.frenchreader.news.NewsSource
 import com.ziaee.frenchreader.news.FRANCE_INFO_FEED_URL
 import com.ziaee.frenchreader.news.FRANCE_INFO_SOURCE_ID
 import com.ziaee.frenchreader.news.FRANCE_INFO_SOURCE_LABEL
@@ -115,4 +116,17 @@ object FranceInfoContentSource : NewsContentSource(
     feedUrl = FRANCE_INFO_FEED_URL
 ) {
     override fun extractArticleText(html: String): String? = ArticleExtractor.extractFranceInfoArticle(html)
+}
+
+/** Any feed without a dedicated extractor (the German feeds, France 24, Le Monde, ...): full text
+ * via [ArticleExtractor.extractGenericArticle]. */
+class GenericNewsContentSource(id: String, label: String, feedUrl: String) : NewsContentSource(id, label, feedUrl) {
+    override fun extractArticleText(html: String): String? = ArticleExtractor.extractGenericArticle(html)
+}
+
+/** The source that downloads a [NewsSource]'s articles: its dedicated extractor when it has one. */
+fun contentSourceForNews(source: NewsSource): ContentSource = when (source.id) {
+    RFI_FACILE_SOURCE_ID -> RfiFacileContentSource
+    FRANCE_INFO_SOURCE_ID -> FranceInfoContentSource
+    else -> GenericNewsContentSource(source.id, source.label, source.feedUrl)
 }

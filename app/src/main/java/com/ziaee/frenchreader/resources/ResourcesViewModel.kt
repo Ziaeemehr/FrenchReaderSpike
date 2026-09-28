@@ -1,5 +1,6 @@
 package com.ziaee.frenchreader.resources
 
+import com.ziaee.frenchreader.language.LanguageCatalog
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
@@ -86,7 +87,7 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
                             createdAtMs = resource.createdAtMs,
                             category = resource.category.key,
                             imageUrl = resource.imageUrl,
-                            language = "fr"
+                            language = resource.language
                         )
                     }
                 )
@@ -94,7 +95,8 @@ class ResourcesViewModel(app: Application) : AndroidViewModel(app) {
             }
             // Look up a page image once per URL (not on every visit), and never for search links.
             val tried = prefs.getStringSet(KEY_IMAGE_TRIED, emptySet()).orEmpty()
-            val pending = dao.getWithoutImages("fr").filter { it.url !in tried && wantsImageLookup(it.url) }
+            val pending = LanguageCatalog.targets.flatMap { dao.getWithoutImages(it.code) }
+                .filter { it.url !in tried && wantsImageLookup(it.url) }
             pending.forEach { resource ->
                 val metadata = withContext(Dispatchers.IO) {
                     runCatching { fetchResourceMetadata(resource.url) }.getOrNull()

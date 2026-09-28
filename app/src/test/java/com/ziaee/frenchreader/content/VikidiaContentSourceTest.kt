@@ -10,7 +10,7 @@ class VikidiaContentSourceTest {
     fun `maps a Vikidia search result to a ContentResult`() {
         val vikidiaResult = VikidiaSearchResult(pageId = 8826, title = "Espace", snippet = "dans la course à l'espace.", wordCount = 457)
 
-        val result = VikidiaContentSource.toContentResult(vikidiaResult)
+        val result = VikidiaContentSource().toContentResult(vikidiaResult)
 
         assertEquals(ContentResult(
             sourceId = "vikidia",
@@ -26,7 +26,7 @@ class VikidiaContentSourceTest {
     fun `maps a fetched Vikidia article to a ContentArticle`() {
         val article = VikidiaArticle(title = "Espace", text = "L'espace est l'étendue.", publishedAtMs = 1774901090000L)
 
-        val contentArticle = VikidiaContentSource.toContentArticle(article)
+        val contentArticle = VikidiaContentSource().toContentArticle(article)
 
         assertEquals(ContentArticle(
             title = "Espace",

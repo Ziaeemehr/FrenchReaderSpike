@@ -37,16 +37,17 @@ data class VikidiaArticle(
  * + org.json, no OkHttp/Retrofit/MediaWiki client library.
  */
 object VikidiaClient {
-    private const val API_BASE = "https://fr.vikidia.org/w/api.php"
+    /** Each language edition lives on its own subdomain (fr., de., ...). */
+    private fun apiBase(language: String) = "https://$language.vikidia.org/w/api.php"
 
-    suspend fun search(query: String, limit: Int = 10): List<VikidiaSearchResult> = withContext(Dispatchers.IO) {
-        val url = "$API_BASE?action=query&list=search&format=json&srlimit=$limit" +
+    suspend fun search(query: String, limit: Int = 10, language: String = "fr"): List<VikidiaSearchResult> = withContext(Dispatchers.IO) {
+        val url = "${apiBase(language)}?action=query&list=search&format=json&srlimit=$limit" +
             "&srprop=snippet%7Cwordcount&srsearch=" + URLEncoder.encode(query, "UTF-8")
         parseSearchResults(httpGet(url))
     }
 
-    suspend fun fetchArticle(pageId: Int): VikidiaArticle? = withContext(Dispatchers.IO) {
-        val url = "$API_BASE?action=query&prop=extracts%7Crevisions&explaintext=1" +
+    suspend fun fetchArticle(pageId: Int, language: String = "fr"): VikidiaArticle? = withContext(Dispatchers.IO) {
+        val url = "${apiBase(language)}?action=query&prop=extracts%7Crevisions&explaintext=1" +
             "&rvprop=timestamp&format=json&pageids=$pageId"
         parseArticle(httpGet(url), pageId)
     }
@@ -54,8 +55,8 @@ object VikidiaClient {
     /** Vikidia's canonical article URL, used for [com.ziaee.frenchreader.data.TextDocument.sourceUrl]
      * and the "open in browser" action -- spaces become underscores per
      * MediaWiki's URL convention, and the result is URL-encoded. */
-    fun articleUrl(title: String): String =
-        "https://fr.vikidia.org/wiki/" + URLEncoder.encode(title.replace(' ', '_'), "UTF-8")
+    fun articleUrl(title: String, language: String = "fr"): String =
+        "https://$language.vikidia.org/wiki/" + URLEncoder.encode(title.replace(' ', '_'), "UTF-8")
 
     internal fun parseSearchResults(json: String): List<VikidiaSearchResult> {
         val search = JSONObject(json).optJSONObject("query")?.optJSONArray("search") ?: return emptyList()

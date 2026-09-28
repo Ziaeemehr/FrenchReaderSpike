@@ -19,6 +19,10 @@ const val RFI_FACILE_FEED_URL = "https://apis.fle.rfi.fr/products/get_product/fl
     "?token_application=applepodcast_fle&program.entrepriseId=WBMZ39-FLE-FR-20220627"
 const val FRANCE_INFO_FEED_URL = "https://www.francetvinfo.fr/titres.rss"
 
+const val DW_LANGSAM_SOURCE_ID = "dw_langsam"
+const val TAGESSCHAU_SOURCE_ID = "tagesschau"
+const val DEUTSCHLANDFUNK_SOURCE_ID = "deutschlandfunk"
+
 private const val FETCH_LIMIT = 50
 private const val CACHE_SCAN_LIMIT = 500
 private const val STALE_THRESHOLD_MS = 15 * 60 * 1000L
@@ -40,7 +44,14 @@ data class NewsRefreshResult(val updatedSources: List<String>, val failedSources
 
 enum class NewsCategory { GENERAL, INTERNATIONAL_EUROPE, POLITICS, ECONOMY, TECHNOLOGY, SCIENCE, HEALTH, PSYCHOLOGY, CULTURE, SPORT }
 
-data class NewsSource(val id: String, val label: String, val feedUrl: String, val category: NewsCategory)
+/** [language] is the learning language the feed is written in; only that language's sources are fetched. */
+data class NewsSource(
+    val id: String,
+    val label: String,
+    val feedUrl: String,
+    val category: NewsCategory,
+    val language: String = "fr"
+)
 
 val NEWS_SOURCES = listOf(
     NewsSource(RFI_FACILE_SOURCE_ID, RFI_FACILE_SOURCE_LABEL, RFI_FACILE_FEED_URL, NewsCategory.GENERAL),
@@ -63,8 +74,30 @@ val NEWS_SOURCES = listOf(
     NewsSource("france24_culture", "France 24 Culture", "https://www.france24.com/fr/culture/rss", NewsCategory.CULTURE),
     NewsSource("lemonde_culture", "Le Monde Culture", "https://www.lemonde.fr/culture/rss_full.xml", NewsCategory.CULTURE),
     NewsSource("france24_sport", "France 24 Sport", "https://www.france24.com/fr/sport/rss", NewsCategory.SPORT),
-    NewsSource("francetv_sports", "France Info Sports", "https://www.francetvinfo.fr/sports.rss", NewsCategory.SPORT)
+    NewsSource("francetv_sports", "France Info Sports", "https://www.francetvinfo.fr/sports.rss", NewsCategory.SPORT),
+    // German feeds, each verified live on 2026-09-28.
+    NewsSource(DW_LANGSAM_SOURCE_ID, "DW – Langsam gesprochen", "https://rss.dw.com/xml/DKpodcast_lgn_de", NewsCategory.GENERAL, "de"),
+    NewsSource(TAGESSCHAU_SOURCE_ID, "Tagesschau", "https://www.tagesschau.de/index~rss2.xml", NewsCategory.GENERAL, "de"),
+    NewsSource(DEUTSCHLANDFUNK_SOURCE_ID, "Deutschlandfunk", "https://www.deutschlandfunk.de/nachrichten-100.rss", NewsCategory.GENERAL, "de"),
+    NewsSource("spiegel", "Der Spiegel", "https://www.spiegel.de/schlagzeilen/index.rss", NewsCategory.GENERAL, "de"),
+    NewsSource("dw_de", "DW", "https://rss.dw.com/rdf/rss-de-all", NewsCategory.GENERAL, "de"),
+    NewsSource("tagesschau_europa", "Tagesschau Europa", "https://www.tagesschau.de/ausland/europa/index~rss2.xml", NewsCategory.INTERNATIONAL_EUROPE, "de"),
+    NewsSource("tagesschau_innenpolitik", "Tagesschau Innenpolitik", "https://www.tagesschau.de/inland/innenpolitik/index~rss2.xml", NewsCategory.POLITICS, "de"),
+    NewsSource("spiegel_politik", "Spiegel Politik", "https://www.spiegel.de/politik/index.rss", NewsCategory.POLITICS, "de"),
+    NewsSource("tagesschau_wirtschaft", "Tagesschau Wirtschaft", "https://www.tagesschau.de/wirtschaft/index~rss2.xml", NewsCategory.ECONOMY, "de"),
+    NewsSource("spiegel_wirtschaft", "Spiegel Wirtschaft", "https://www.spiegel.de/wirtschaft/index.rss", NewsCategory.ECONOMY, "de"),
+    NewsSource("heise", "heise online", "https://www.heise.de/rss/heise-atom.xml", NewsCategory.TECHNOLOGY, "de"),
+    NewsSource("spiegel_netzwelt", "Spiegel Netzwelt", "https://www.spiegel.de/netzwelt/index.rss", NewsCategory.TECHNOLOGY, "de"),
+    NewsSource("spektrum", "Spektrum", "https://www.spektrum.de/alias/rss/spektrum-de-rss-feed/996406", NewsCategory.SCIENCE, "de"),
+    NewsSource("tagesschau_wissen", "Tagesschau Wissen", "https://www.tagesschau.de/wissen/index~rss2.xml", NewsCategory.SCIENCE, "de"),
+    NewsSource("tagesschau_gesundheit", "Tagesschau Gesundheit", "https://www.tagesschau.de/wissen/gesundheit/index~rss2.xml", NewsCategory.HEALTH, "de"),
+    NewsSource("spiegel_gesundheit", "Spiegel Gesundheit", "https://www.spiegel.de/gesundheit/index.rss", NewsCategory.HEALTH, "de"),
+    NewsSource("spiegel_kultur", "Spiegel Kultur", "https://www.spiegel.de/kultur/index.rss", NewsCategory.CULTURE, "de"),
+    NewsSource("spiegel_sport", "Spiegel Sport", "https://www.spiegel.de/sport/index.rss", NewsCategory.SPORT, "de"),
+    NewsSource("dw_sport", "DW Sport", "https://rss.dw.com/rdf/rss-de-sport", NewsCategory.SPORT, "de")
 )
+
+fun newsSourcesFor(language: String): List<NewsSource> = NEWS_SOURCES.filter { it.language == language }
 
 /**
  * Coordinates RSS refreshes for the independent RFI/France Info sources and
@@ -95,7 +128,7 @@ class NewsRepository(
         val targetLanguage = language()
         return supervisorScope {
             val enabled = enabledSourceIds()
-            val outcomes = NEWS_SOURCES.filter { it.id in enabled }.map { source ->
+            val outcomes = newsSourcesFor(targetLanguage).filter { it.id in enabled }.map { source ->
                 source to async { runCatching { feedClient.fetch(source.feedUrl, FETCH_LIMIT) } }
             }
 
@@ -116,9 +149,10 @@ class NewsRepository(
     }
 
     private suspend fun isStale(): Boolean {
-        val enabled = enabledSourceIds()
+        val language = language()
+        val enabled = enabledSourceIds() intersect newsSourcesFor(language).mapTo(mutableSetOf()) { it.id }
         if (enabled.isEmpty()) return false
-        val enabledHeadlines = headlineDao.observeRecent(CACHE_SCAN_LIMIT, language()).first()
+        val enabledHeadlines = headlineDao.observeRecent(CACHE_SCAN_LIMIT, language).first()
             .filter { it.sourceId in enabled }
         if (!enabledHeadlines.mapTo(mutableSetOf()) { it.sourceId }.containsAll(enabled)) return true
         val oldestSourceCacheWrite = enabledHeadlines

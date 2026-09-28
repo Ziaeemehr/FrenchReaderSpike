@@ -1,5 +1,11 @@
 package com.ziaee.frenchreader.ui.home
 
+import com.ziaee.frenchreader.language.LanguageCatalog
+import com.ziaee.frenchreader.language.LanguageFeature
+import com.ziaee.frenchreader.news.NEWS_SOURCES
+import com.ziaee.frenchreader.news.NewsCategory
+import com.ziaee.frenchreader.news.newsSourcesFor
+import com.ziaee.frenchreader.content.contentSourceForNews
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -53,10 +59,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/** Every source the Home topic-search field can query -- broader than the
- * two dashboard news sources used by the news dashboard above. */
-private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
-    listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource, WikisourceContentSource)
+/** Every source the Home topic-search field can query for [language]: the wikis' language edition
+ * plus the language's easy-reading news feeds. */
+private fun topicSearchSources(language: String): List<ContentSource> = buildList {
+    if (LanguageCatalog.supports(language, LanguageFeature.VIKIDIA)) add(VikidiaContentSource(language))
+    when (language) {
+        "fr" -> { add(RfiFacileContentSource); add(FranceInfoContentSource) }
+        else -> newsSourcesFor(language).filter { it.category == NewsCategory.GENERAL }.take(2)
+            .forEach { add(contentSourceForNews(it)) }
+    }
+    if (LanguageCatalog.supports(language, LanguageFeature.WIKISOURCE)) add(WikisourceContentSource(language))
+}
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
@@ -66,7 +79,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val newsRepository = NewsRepository(
         db.headlineDao(),
-        enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app) },
+        enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app, LanguagePrefs.getTargetLanguage(getApplication())) },
         language = { LanguagePrefs.getTargetLanguage(getApplication()) }
     )
     private val epubImportRepository = EpubImportRepository(app, db)
@@ -75,7 +88,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     val isExtractingText: Boolean get() = textExtraction.isExtracting
     private val importRepository = ArticleImportRepository(
         db.textDao(),
-        listOf(RfiFacileContentSource, FranceInfoContentSource),
+        NEWS_SOURCES.map(::contentSourceForNews),
         ArticleImageStore(app),
         bodyStore,
         db.libraryOrganizerDao(),
@@ -302,7 +315,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             contentSearchState = ContentSearchUiState.Searching
             contentSearchState = try {
                 val perSource = coroutineScope {
-                    TOPIC_SEARCH_SOURCES.map { source ->
+                    topicSearchSources(LanguagePrefs.getTargetLanguage(getApplication())).map { source ->
                         async {
                             try {
                                 source.search(query)
@@ -349,7 +362,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             contentImportingRef = result.ref
             contentImportError = null
-            val source = TOPIC_SEARCH_SOURCES.find { it.id == result.sourceId }
+            val source = topicSearchSources(LanguagePrefs.getTargetLanguage(getApplication())).find { it.id == result.sourceId }
             val article: ContentArticle? = try {
                 source?.fetchArticle(result)
             } catch (e: Exception) {

@@ -53,7 +53,9 @@ data class DefaultResource(
     val createdAtMs: Long,
     val level: String? = null,
     val description: Map<String, String> = emptyMap(),
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    /** Learning language the resource is for; it is shown only while that language is active. */
+    val language: String = "fr"
 )
 
 private fun d(en: String, fr: String, fa: String) = mapOf("en" to en, "fr" to fr, "fa" to fa)
@@ -397,6 +399,126 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
         d("Carefully edited free e-books of French literature.",
             "Livres numériques gratuits de littérature française, soigneusement édités.",
             "کتاب‌های الکترونیکی رایگان ادبیات فرانسه با ویرایش دقیق.")
+    ),
+    // German (learning language "de")
+    DefaultResource(
+        "Easy German", "https://www.youtube.com/@EasyGerman", ResourceCategory.VIDEO, 1001, "A1–C1",
+        d("Street interviews in German with German and English subtitles.",
+            "Interviews de rue en allemand, sous-titrées en allemand et en anglais.",
+            "مصاحبه‌های خیابانی به آلمانی با زیرنویس آلمانی و انگلیسی."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Nicos Weg (DW)", "https://learngerman.dw.com/de/nicos-weg/c-36519789", ResourceCategory.VIDEO, 1002, "A1–B1",
+        d("A free video course following Nico's life in Germany, from Deutsche Welle.",
+            "Cours vidéo gratuit de la Deutsche Welle qui suit la vie de Nico en Allemagne.",
+            "دورهٔ ویدیویی رایگان دویچه‌وله که زندگی نیکو در آلمان را دنبال می‌کند."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Slow German", "https://slowgerman.com/", ResourceCategory.PODCASTS, 1003, "A2–B2",
+        d("A podcast about everyday life in Germany, spoken slowly.",
+            "Podcast sur la vie quotidienne en Allemagne, parlé lentement.",
+            "پادکستی دربارهٔ زندگی روزمره در آلمان با گفتار آهسته."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Coffee Break German", "https://coffeebreaklanguages.com/coffeebreakgerman/", ResourceCategory.PODCASTS, 1004, "A1–B1",
+        d("Short structured podcast lessons for beginners.",
+            "Courtes leçons de podcast structurées pour débutants.",
+            "درس‌های کوتاه و منظم پادکستی برای مبتدیان."),
+        language = "de"
+    ),
+    DefaultResource(
+        "B-amooz Deutsch", "https://dic.b-amooz.com/de/dictionary", ResourceCategory.PERSIAN, 1005, "A1–C2",
+        d("German–Persian dictionary with examples and pronunciation.",
+            "Dictionnaire allemand–persan avec exemples et prononciation.",
+            "دیکشنری آلمانی به فارسی با مثال و تلفظ."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Klexikon", "https://klexikon.zum.de/", ResourceCategory.READING, 1006, "A2–B1",
+        d("A German encyclopedia for children: short, simple articles.",
+            "Encyclopédie allemande pour enfants : articles courts et simples.",
+            "دانشنامهٔ آلمانی برای کودکان با مقاله‌های کوتاه و ساده."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Vikidia (Deutsch)", "https://de.vikidia.org/", ResourceCategory.READING, 1007, "A2–B1",
+        d("The German edition of the encyclopedia for young readers.",
+            "L'édition allemande de l'encyclopédie pour jeunes lecteurs.",
+            "نسخهٔ آلمانی دانشنامهٔ نوجوانان."),
+        language = "de"
+    ),
+    DefaultResource(
+        "nachrichtenleicht", "https://www.nachrichtenleicht.de/", ResourceCategory.NEWS, 1008, "A2–B1",
+        d("Weekly news in simple German from Deutschlandfunk.",
+            "Actualités hebdomadaires en allemand simple, par Deutschlandfunk.",
+            "خبرهای هفتگی به آلمانی ساده از دویچلاندفونک."),
+        language = "de"
+    ),
+    DefaultResource(
+        "DW – Langsam gesprochene Nachrichten", "https://learngerman.dw.com/de/langsam-gesprochene-nachrichten/s-60040332", ResourceCategory.NEWS, 1009, "B1–B2",
+        d("Daily news read slowly, with the full transcript.",
+            "Actualités du jour lues lentement, avec la transcription complète.",
+            "خبرهای روزانه با خوانش آهسته همراه با متن کامل."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Mein Deutschbuch", "https://mein-deutschbuch.de/", ResourceCategory.GRAMMAR, 1010, "A1–C1",
+        d("Clear grammar explanations with free exercises.",
+            "Explications de grammaire claires avec exercices gratuits.",
+            "توضیح روشن دستور زبان همراه با تمرین رایگان."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Schubert Verlag – Online-Aufgaben", "https://www.schubert-verlag.de/aufgaben/", ResourceCategory.GRAMMAR, 1011, "A1–C1",
+        d("Free online grammar and vocabulary exercises by level.",
+            "Exercices gratuits de grammaire et de vocabulaire par niveau.",
+            "تمرین‌های رایگان دستور و واژگان بر اساس سطح."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Duden", "https://www.duden.de/", ResourceCategory.DICTIONARIES, 1012, "A2–C2",
+        d("The reference dictionary of German spelling and usage.",
+            "Le dictionnaire de référence pour l'orthographe et l'usage de l'allemand.",
+            "فرهنگ مرجع املا و کاربرد زبان آلمانی."),
+        language = "de"
+    ),
+    DefaultResource(
+        "DWDS", "https://www.dwds.de/", ResourceCategory.DICTIONARIES, 1013, "B1–C2",
+        d("Digital dictionary of German with examples from real texts.",
+            "Dictionnaire numérique de l'allemand avec des exemples tirés de textes réels.",
+            "فرهنگ دیجیتال آلمانی با مثال‌هایی از متن‌های واقعی."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Goethe-Institut – Prüfungen", "https://www.goethe.de/de/spr/prf.html", ResourceCategory.EXAMS, 1014, "A1–C2",
+        d("Goethe certificate exams with free practice materials.",
+            "Examens du Goethe-Zertifikat avec entraînements gratuits.",
+            "آزمون‌های گوته همراه با نمونه‌سؤال رایگان."),
+        language = "de"
+    ),
+    DefaultResource(
+        "telc", "https://www.telc.net/", ResourceCategory.EXAMS, 1015, "A1–C2",
+        d("telc German exams and sample tests.",
+            "Examens d'allemand telc et tests d'entraînement.",
+            "آزمون‌های آلمانی telc و نمونه‌آزمون‌ها."),
+        language = "de"
+    ),
+    DefaultResource(
+        "DW Deutsch lernen", "https://learngerman.dw.com/de/", ResourceCategory.COURSES, 1016, "A1–C1",
+        d("Free complete German courses from Deutsche Welle.",
+            "Cours d'allemand complets et gratuits de la Deutsche Welle.",
+            "دوره‌های کامل و رایگان آلمانی از دویچه‌وله."),
+        language = "de"
+    ),
+    DefaultResource(
+        "Projekt Gutenberg-DE", "https://www.projekt-gutenberg.org/", ResourceCategory.BOOKS, 1017, "B2–C2",
+        d("Free German classic literature to read online.",
+            "Littérature classique allemande gratuite à lire en ligne.",
+            "ادبیات کلاسیک آلمانی رایگان برای خواندن آنلاین."),
+        language = "de"
     )
 )
 

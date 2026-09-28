@@ -63,7 +63,7 @@ import com.ziaee.frenchreader.tts.XttsClient
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.tts.voicesFor
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
-import com.ziaee.frenchreader.news.NEWS_SOURCES
+import com.ziaee.frenchreader.news.newsSourcesFor
 import com.ziaee.frenchreader.news.NewsCategory
 import com.ziaee.frenchreader.shadowing.AndroidSpeechEngine
 import com.ziaee.frenchreader.shadowing.ShadowingPrefs
@@ -71,6 +71,7 @@ import com.ziaee.frenchreader.shadowing.SpeechEngineKind
 import com.ziaee.frenchreader.shadowing.VoskModelManager
 import com.ziaee.frenchreader.ui.theme.*
 import com.ziaee.frenchreader.language.LanguageCatalog
+import com.ziaee.frenchreader.language.LanguageFeature
 import com.ziaee.frenchreader.ui.onboarding.LanguagePickerDialog
 import com.ziaee.frenchreader.ui.onboarding.languageNameResource
 import kotlinx.coroutines.CancellationException
@@ -211,12 +212,14 @@ fun SettingsScreen(
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
-                    7 -> {
+                    7 -> if (LanguageCatalog.supports(targetLanguage, LanguageFeature.DATASET)) {
                         Text(stringResource(R.string.dataset_subtitle), style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(12.dp))
                         Button(onClick = onOpenDataset, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.dataset_settings_entry))
                         }
+                    } else {
+                        Text(stringResource(R.string.dataset_unavailable_for_language), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 OutlinedButton(
@@ -393,12 +396,13 @@ private fun SettingsTabRow(tabTitles: List<Int>, selectedTab: Int, onSelect: (In
 
 @Composable
 private fun NewsSettings(context: Context) {
-    var enabledIds by remember { mutableStateOf(NewsPrefs.getEnabledSourceIds(context)) }
+    val language = remember { LanguagePrefs.getTargetLanguage(context) }
+    var enabledIds by remember { mutableStateOf(NewsPrefs.getEnabledSourceIds(context, language)) }
     var keywords by remember { mutableStateOf(NewsPrefs.getKeywords(context)) }
     var matchingFirst by remember { mutableStateOf(NewsPrefs.getMatchingFirst(context)) }
 
     CompactSettingLabel(R.string.news_sources_title)
-    NEWS_SOURCES.groupBy { it.category }.forEach { (category, sources) ->
+    newsSourcesFor(language).groupBy { it.category }.forEach { (category, sources) ->
         Text(
             stringResource(category.labelResource()),
             style = MaterialTheme.typography.labelMedium,
@@ -409,7 +413,7 @@ private fun NewsSettings(context: Context) {
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 40.dp).clickable {
                     enabledIds = if (source.id in enabledIds) enabledIds - source.id else enabledIds + source.id
-                    NewsPrefs.setEnabledSourceIds(context, enabledIds)
+                    NewsPrefs.setEnabledSourceIds(context, language, enabledIds)
                 },
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -417,7 +421,7 @@ private fun NewsSettings(context: Context) {
                     checked = source.id in enabledIds,
                     onCheckedChange = { checked ->
                         enabledIds = if (checked) enabledIds + source.id else enabledIds - source.id
-                        NewsPrefs.setEnabledSourceIds(context, enabledIds)
+                        NewsPrefs.setEnabledSourceIds(context, language, enabledIds)
                     }
                 )
                 Text(source.label, style = MaterialTheme.typography.bodyMedium)

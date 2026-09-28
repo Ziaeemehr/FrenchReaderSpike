@@ -13,7 +13,7 @@ class WikisourceContentSourceTest {
             wordCount = 8200
         )
 
-        val result = WikisourceContentSource.toContentResult(wikisourceResult)
+        val result = WikisourceContentSource().toContentResult(wikisourceResult)
 
         assertEquals(
             ContentResult(

@@ -9,20 +9,20 @@ import com.ziaee.frenchreader.wikisource.WikisourceSearchResult
  * reliably (author from `.headertemplate-author`, a meaningful publish
  * date from a wiki edit timestamp) isn't needed for the core "search and
  * download a short story" flow. */
-object WikisourceContentSource : ContentSource {
+class WikisourceContentSource(private val language: String = "fr") : ContentSource {
     override val id = "wikisource"
     override val label = "Wikisource"
 
     override suspend fun search(query: String, limit: Int): List<ContentResult> =
-        WikisourceClient.search(query, limit).map(::toContentResult)
+        WikisourceClient.search(query, limit, language).map(::toContentResult)
 
     override suspend fun fetchArticle(result: ContentResult): ContentArticle? {
-        val page = WikisourceClient.fetchPage(result.ref) ?: return null
+        val page = WikisourceClient.fetchPage(result.ref, language) ?: return null
         val text = ArticleExtractor.extractWikisourceArticle(page.html) ?: return null
         return ContentArticle(
             title = page.title,
             text = text,
-            sourceUrl = WikisourceClient.articleUrl(page.title),
+            sourceUrl = WikisourceClient.articleUrl(page.title, language),
             sourceName = label,
             author = null,
             license = "CC BY-SA 4.0",

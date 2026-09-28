@@ -369,7 +369,6 @@
     <string name="process_text_add_label">افزودن به فرنچ‌ریدر</string>
 
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
-    <string name="home_brand_title">Lire en français</string>
     <string name="home_search_hint">جست‌وجوی موضوع، واژه یا مقاله…</string>
     <string name="home_summary_learned">%1$d واژه آموخته</string>
     <string name="home_summary_saved_words">%1$d واژه ذخیره</string>
@@ -668,4 +667,5 @@
     <string name="editor_discard_message">ویرایش‌های شما از دست می‌روند.</string>
     <string name="editor_discard">نادیده گرفتن</string>
     <string name="editor_keep_editing">ادامهٔ ویرایش</string>
+    <string name="dataset_unavailable_for_language">مجموعه‌دادهٔ آماده فعلاً فقط برای فرانسوی موجود است.</string>
 </resources>

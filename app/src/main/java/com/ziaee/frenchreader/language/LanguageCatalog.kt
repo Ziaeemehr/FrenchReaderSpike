@@ -10,6 +10,8 @@ data class LanguageSupport(
     val defaultVoiceId: String,
     val xttsSupported: Boolean,
     val features: Set<LanguageFeature>,
+    /** Home screen title, written in the learning language itself (same for every UI locale). */
+    val readingTitle: String,
 )
 
 enum class LanguageFeature {
@@ -18,6 +20,8 @@ enum class LanguageFeature {
     WIKISOURCE,
     SHADOWING,
     FRENCH_ELISION,
+    /** Ready-made vocabulary decks and graded stories bundled with the app. */
+    DATASET,
 }
 
 object LanguageCatalog {
@@ -41,6 +45,7 @@ object LanguageCatalog {
                 "fr-CH-ArianeNeural",
             ),
             defaultVoiceId = "fr-FR-HenriNeural",
+            readingTitle = "Lire en français",
             xttsSupported = true,
             features = setOf(
                 LanguageFeature.NEWS,
@@ -48,6 +53,7 @@ object LanguageCatalog {
                 LanguageFeature.WIKISOURCE,
                 LanguageFeature.SHADOWING,
                 LanguageFeature.FRENCH_ELISION,
+                LanguageFeature.DATASET,
             ),
         ),
         LanguageSupport(
@@ -65,8 +71,10 @@ object LanguageCatalog {
                 "de-CH-JanNeural",
             ),
             defaultVoiceId = "de-DE-KatjaNeural",
+            readingTitle = "Deutsch lesen",
             xttsSupported = true,
             features = setOf(
+                LanguageFeature.NEWS,
                 LanguageFeature.VIKIDIA,
                 LanguageFeature.WIKISOURCE,
                 LanguageFeature.SHADOWING,
@@ -77,6 +85,8 @@ object LanguageCatalog {
     fun forCode(code: String?): LanguageSupport =
         targets.firstOrNull { it.code == code }
             ?: targets.first { it.code == DEFAULT_TARGET }
+
+    fun supports(code: String?, feature: LanguageFeature): Boolean = feature in forCode(code).features
 
     fun isSupportedTarget(code: String?): Boolean = targets.any { it.code == code }
 }
