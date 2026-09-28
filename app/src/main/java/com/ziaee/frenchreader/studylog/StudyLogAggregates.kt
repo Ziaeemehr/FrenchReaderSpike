@@ -140,7 +140,8 @@ internal fun cumulativeSeries(
     period: StudyPeriod,
     firstDayOfWeek: DayOfWeek
 ): Map<StudySkill, List<CumulativePoint>> {
-    val buckets = periodBuckets(sessions, range, period, firstDayOfWeek)
+    val cumulativeRange = range.copy(displayEnd = range.queryEnd)
+    val buckets = periodBuckets(sessions, cumulativeRange, period, firstDayOfWeek)
     return StudySkill.entries.associateWith { skill ->
         var running = 0
         buckets.map { bucket ->
@@ -331,6 +332,8 @@ sealed interface SessionValidation {
     data object Valid : SessionValidation
     data object InvalidDuration : SessionValidation
     data object FutureDate : SessionValidation
+
+    data object MissingEntry : SessionValidation
 }
 
 internal fun validateSession(durationMin: Int, date: Long, today: Long): SessionValidation = when {
@@ -349,6 +352,21 @@ internal fun wouldExceedDailyLimit(
 internal fun activeSourcesForPicker(
     sources: List<com.ziaee.frenchreader.data.StudySource>
 ) = sources.filterNot { it.archived }
+
+sealed interface SourceNameValidation {
+    data class Valid(val name: String) : SourceNameValidation
+
+    data object Blank : SourceNameValidation
+}
+
+internal fun normalizeSourceName(name: String): SourceNameValidation {
+    val normalized = name.trim()
+    return if (normalized.isBlank()) {
+        SourceNameValidation.Blank
+    } else {
+        SourceNameValidation.Valid(normalized)
+    }
+}
 
 internal fun parseDuration(hours: String, minutes: String): Int? {
     val h = hours.toIntOrNull() ?: return null

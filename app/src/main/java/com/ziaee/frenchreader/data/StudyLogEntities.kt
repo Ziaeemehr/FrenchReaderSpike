@@ -15,7 +15,7 @@ enum class StudySkill(val code: String) {
     LEX("LEX");
 
     companion object {
-        fun fromCode(code: String) = entries.first { it.code == code }
+        fun fromCode(code: String) = entries.firstOrNull { it.code == code } ?: LEX
     }
 }
 

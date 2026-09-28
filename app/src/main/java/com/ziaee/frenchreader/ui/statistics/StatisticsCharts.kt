@@ -171,6 +171,13 @@ fun MultiLineChart(
                         strokeWidth = 2.dp.toPx()
                     )
                 }
+                if (points.size == 1) {
+                    drawCircle(
+                        color = colors.getOrElse(seriesIndex) { Color.Gray },
+                        radius = 4.dp.toPx(),
+                        center = points.single()
+                    )
+                }
             }
         }
         LabelRow(labels)

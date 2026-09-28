@@ -129,11 +129,12 @@ private fun ChartsContent(
             SkillLegend(colors)
         }
         ChartCard(stringResource(R.string.study_log_cumulative)) {
+            val cumulativeDays = state.cumulative[StudySkill.CO].orEmpty().map { it.epochDay }
             MultiLineChart(
                 valuesBySeries = StudySkill.entries.map { skill ->
                     state.cumulative[skill].orEmpty().map { it.minutes.toFloat() / 60f }
                 },
-                labels = sparseLabels(state.buckets.map { it.epochDay }, formatter),
+                labels = sparseLabels(cumulativeDays, formatter),
                 colors = StudySkill.entries.map { colors.getValue(it) }
             )
             SkillLegend(colors)
@@ -183,7 +184,7 @@ private fun ActivityMap(
     state: StudyLogUiState,
     skillColors: Map<StudySkill, Color>
 ) {
-    val today = remember { LocalDate.now() }
+    val today = LocalDate.ofEpochDay(state.today)
     val firstDate = state.activitySessions.minOfOrNull { it.date }
         ?.let { LocalDate.ofEpochDay(it) }
         ?: today
@@ -191,6 +192,15 @@ private fun ActivityMap(
     var selectedYear by remember { mutableIntStateOf(today.year) }
     var selectedMonth by remember { mutableStateOf(YearMonth.from(today)) }
     var selectedDay by remember { mutableStateOf<ActivityDay?>(null) }
+    LaunchedEffect(today) {
+        val yesterday = today.minusDays(1)
+        if (selectedYear == yesterday.year && selectedYear != today.year) {
+            selectedYear = today.year
+        }
+        if (selectedMonth == YearMonth.from(yesterday) && selectedMonth != YearMonth.from(today)) {
+            selectedMonth = YearMonth.from(today)
+        }
+    }
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         ActivityPeriod.entries.forEachIndexed { index, value ->
             SegmentedButton(

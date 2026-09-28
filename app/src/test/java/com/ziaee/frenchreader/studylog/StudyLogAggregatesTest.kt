@@ -164,6 +164,22 @@ class StudyLogAggregatesTest {
     }
 
     @Test
+    fun `week and month cumulative series stop at today`() {
+        val range = PeriodRange(today - 2, today, today + 4)
+        listOf(StudyPeriod.WEEK, StudyPeriod.MONTH).forEach { period ->
+            val series = cumulativeSeries(emptyList(), range, period, DayOfWeek.MONDAY)
+            assertEquals(3, series.getValue(StudySkill.CO).size)
+            assertEquals(today, series.getValue(StudySkill.CO).last().epochDay)
+        }
+    }
+
+    @Test
+    fun `source names are trimmed and blank names are rejected`() {
+        assertEquals(SourceNameValidation.Valid("Book"), normalizeSourceName("  Book  "))
+        assertEquals(SourceNameValidation.Blank, normalizeSourceName(" \t "))
+    }
+
+    @Test
     fun `week comparison returns total and per skill deltas`() {
         listOf(DayOfWeek.SATURDAY, DayOfWeek.MONDAY).forEach { firstDay ->
             val currentStart = weekStart(today, firstDay)

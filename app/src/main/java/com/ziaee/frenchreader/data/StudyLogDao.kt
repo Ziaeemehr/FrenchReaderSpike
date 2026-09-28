@@ -21,8 +21,12 @@ interface StudyLogDao {
     @Query("SELECT * FROM study_session WHERE date BETWEEN :start AND :end ORDER BY date DESC, created_at DESC")
     fun observeSessions(start: Long, end: Long): Flow<List<StudySession>>
 
-    @Query("SELECT * FROM study_session ORDER BY date DESC, created_at DESC LIMIT :limit")
-    fun observeRecent(limit: Int = 100): Flow<List<StudySession>>
+    @Query(
+        "SELECT * FROM study_session WHERE date >= COALESCE((" +
+            "SELECT date FROM study_session ORDER BY date DESC, created_at DESC LIMIT 1 OFFSET :offset" +
+            "), (SELECT MIN(date) FROM study_session)) ORDER BY date DESC, created_at DESC"
+    )
+    fun observeRecent(offset: Int = 99): Flow<List<StudySession>>
 
     @Query("SELECT * FROM study_source ORDER BY archived, name COLLATE NOCASE")
     fun observeSources(): Flow<List<StudySource>>
@@ -53,12 +57,6 @@ interface StudyLogDao {
 
     @Query("SELECT COUNT(*) FROM study_session WHERE source_id = :sourceId")
     suspend fun countSessionsForSource(sourceId: Long): Int
-
-    @Query(
-        "SELECT source_id, COALESCE(SUM(duration_min), 0) AS minutes " +
-            "FROM study_session WHERE date BETWEEN :start AND :end GROUP BY source_id"
-    )
-    fun observeSourceTotals(start: Long, end: Long): Flow<List<SourceMinutes>>
 
     @Query("SELECT source_id, COALESCE(SUM(duration_min), 0) AS minutes FROM study_session GROUP BY source_id")
     fun observeAllSourceTotals(): Flow<List<SourceMinutes>>

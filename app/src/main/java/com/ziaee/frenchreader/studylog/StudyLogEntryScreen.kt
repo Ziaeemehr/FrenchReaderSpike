@@ -62,7 +62,8 @@ fun StudyLogEntryScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val state by vm.uiState.collectAsState()
+    val sources by vm.sources.collectAsState()
+    val today by vm.currentDay.collectAsState()
     var original by remember { mutableStateOf<StudySession?>(null) }
     var date by remember { mutableLongStateOf(LocalDate.now().toEpochDay()) }
     var hours by remember { mutableStateOf("0") }
@@ -72,12 +73,14 @@ fun StudyLogEntryScreen(
     var note by remember { mutableStateOf("") }
     var warning by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
     var newSource by remember { mutableStateOf(false) }
     var newSourceName by remember { mutableStateOf("") }
+    var newSourceError by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val parsedDuration = parseDuration(hours, minutes)
     val durationInvalid = parsedDuration == null || parsedDuration !in 1..1440
-    val dateInvalid = date > LocalDate.now().toEpochDay()
+    val dateInvalid = date > today
 
     LaunchedEffect(entryId) {
         entryId?.let { vm.getSession(it) }?.let { row ->
@@ -92,11 +95,13 @@ fun StudyLogEntryScreen(
     }
 
     fun submit(confirmed: Boolean = false) {
+        if (saving || entryId != null && original == null) return
         val duration = parseDuration(hours, minutes)
         if (duration == null) {
             error = true
             return
         }
+        saving = true
         scope.launch {
             val session = StudySession(
                 id = original?.id ?: 0,
@@ -108,9 +113,14 @@ fun StudyLogEntryScreen(
             )
             when (vm.save(session, confirmed)) {
                 SaveResult.Saved -> onBack()
-                SaveResult.NeedsDailyLimitConfirmation -> warning = true
+                SaveResult.NeedsDailyLimitConfirmation -> {
+                    saving = false
+                    warning = true
+                }
                 is SaveResult.Invalid -> error = true
+                SaveResult.InFlight -> Unit
             }
+            saving = false
         }
     }
 
@@ -146,21 +156,40 @@ fun StudyLogEntryScreen(
             skill = skill,
             sourceId = sourceId,
             note = note,
-            sources = state.sources,
+            sources = sources,
             hasError = error,
             durationInvalid = durationInvalid,
             dateInvalid = dateInvalid,
-            isEditing = original != null,
+            isEditing = entryId != null,
+            saveEnabled = !saving && (entryId == null || original != null),
             onShowDatePicker = { showDatePicker = true },
-            onHoursChange = { hours = it },
-            onMinutesChange = { minutes = it },
-            onSkillChange = { skill = it },
+            onHoursChange = {
+                hours = it
+                error = false
+            },
+            onMinutesChange = {
+                minutes = it
+                error = false
+            },
+            onSkillChange = {
+                skill = it
+                error = false
+            },
             onSourceChange = { selectedId, defaultSkill ->
                 sourceId = selectedId
                 defaultSkill?.let { skill = it }
+                error = false
             },
-            onNewSource = { newSource = true },
-            onNoteChange = { note = it },
+            onNewSource = {
+                newSourceName = ""
+                newSourceError = false
+                error = false
+                newSource = true
+            },
+            onNoteChange = {
+                note = it
+                error = false
+            },
             onSubmit = { submit() },
             onDuplicate = {
                 original = original?.let { duplicateSession(it) }
@@ -178,6 +207,7 @@ fun StudyLogEntryScreen(
             onDismiss = { showDatePicker = false },
             onSelect = {
                 date = it
+                error = false
                 showDatePicker = false
             }
         )
@@ -194,8 +224,15 @@ fun StudyLogEntryScreen(
     if (newSource) {
         NewSourceDialog(
             name = newSourceName,
-            onNameChange = { newSourceName = it },
-            onDismiss = { newSource = false },
+            hasError = newSourceError,
+            onNameChange = {
+                newSourceName = it
+                newSourceError = false
+            },
+            onDismiss = {
+                newSource = false
+                newSourceError = false
+            },
             onConfirm = {
                 vm.addSource(
                     name = newSourceName,
@@ -205,7 +242,7 @@ fun StudyLogEntryScreen(
                         sourceId = id
                         newSource = false
                     } else {
-                        error = true
+                        newSourceError = true
                     }
                 }
             }
@@ -227,6 +264,7 @@ private fun EntryForm(
     durationInvalid: Boolean,
     dateInvalid: Boolean,
     isEditing: Boolean,
+    saveEnabled: Boolean,
     onShowDatePicker: () -> Unit,
     onHoursChange: (String) -> Unit,
     onMinutesChange: (String) -> Unit,
@@ -309,7 +347,7 @@ private fun EntryForm(
         }
         Button(
             onClick = onSubmit,
-            enabled = !durationInvalid && !dateInvalid,
+            enabled = saveEnabled && !durationInvalid && !dateInvalid,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.study_log_save))
@@ -351,7 +389,7 @@ private fun SourcePicker(
                     expanded = false
                 }
             )
-            sources.filterNot { it.archived }.forEach { source ->
+            activeSourcesForPicker(sources).forEach { source ->
                 DropdownMenuItem(
                     text = { Text(source.name) },
                     onClick = {
@@ -420,6 +458,7 @@ private fun DailyLimitDialog(
 @Composable
 private fun NewSourceDialog(
     name: String,
+    hasError: Boolean,
     onNameChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
@@ -428,15 +467,29 @@ private fun NewSourceDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.study_log_new_source)) },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.study_log_source_name)) }
-            )
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.study_log_source_name)) },
+                    isError = hasError
+                )
+                if (hasError) {
+                    Text(
+                        text = stringResource(R.string.study_log_source_duplicate),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(stringResource(R.string.study_log_add))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.study_log_cancel))
             }
         }
     )
