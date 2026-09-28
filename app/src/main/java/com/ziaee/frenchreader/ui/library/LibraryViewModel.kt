@@ -59,7 +59,8 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     // Library only ever deletes -- it never imports a headline, so no
     // ContentSource needs to be registered here.
     private val importRepository = ArticleImportRepository(
-        db.textDao(), emptyList(), ArticleImageStore(app), bodyStore, organizerDao
+        db.textDao(), emptyList(), ArticleImageStore(app), bodyStore, organizerDao,
+        translationLanguage = { LanguagePrefs.getKnownLanguage(context) }
     )
 
     private val query = MutableStateFlow("")
@@ -393,7 +394,9 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val language = LanguagePrefs.getTargetLanguage(context)
             val id = insertTextDocument(
-                db.textDao(), bodyStore, TextDocument(title = title, rawText = "", language = language), body
+                db.textDao(), bodyStore, TextDocument(title = title, rawText = "", language = language,
+                    voice = com.ziaee.frenchreader.language.LanguageCatalog.forCode(language).defaultVoiceId,
+                    translationLang = LanguagePrefs.getKnownLanguage(context)), body
             )
             onDone(id)
         }

@@ -44,6 +44,7 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.*
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.TtsChunkRepository
+import com.ziaee.frenchreader.tts.resolveVoice
 import com.ziaee.frenchreader.ui.statistics.computeStreak
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
 import kotlinx.coroutines.launch
@@ -362,13 +363,13 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val voiceAndRate = voiceCache[entry.textId] ?: run {
                 val text = if (entry.textId == 0L) null else db.textDao().getById(entry.textId)
                 if (text == null) {
-                    VocabPrefs.getCardVoice(context) to 0
+                    VocabPrefs.getCardVoice(context, entry.language) to 0
                 } else {
                     (text.voice to text.ratePercent).also { voiceCache[entry.textId] = it }
                 }
             }
             try {
-                ttsRepo.getOrSynthesize(text, voiceAndRate.first, voiceAndRate.second).fold(
+                ttsRepo.getOrSynthesize(text, resolveVoice(voiceAndRate.first, entry.language), entry.language, voiceAndRate.second).fold(
                     onSuccess = {
                         player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
                         player.prepare()
@@ -393,7 +394,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             wordAudioLoading = true
             player.stop()
             try {
-                ttsRepo.getOrSynthesize(text, VocabPrefs.getCardVoice(context), 0).fold(
+                ttsRepo.getOrSynthesize(text, resolveVoice(VocabPrefs.getCardVoice(context, entry.language), entry.language), entry.language, 0).fold(
                     onSuccess = {
                         player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
                         player.prepare()
@@ -414,7 +415,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         sentenceTranslationError = false
         sentenceTranslationLoading = true
         val targetLang = meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context))
-        val result = translationRepo.getOrTranslate(entry.sentence, targetLang)
+        val result = translationRepo.getOrTranslate(entry.sentence, entry.language, targetLang)
         if (current !== entry) return
         result.fold(
             onSuccess = { sentenceTranslation = it },
@@ -475,7 +476,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     }
     vm.current?.takeIf { showDictionary }?.let { e ->
         DictionarySheet(
-            e.textId, e.word, e.sentence, e.meaning, e.listId, false,
+            e.textId, e.word, e.sentence, e.language, e.meaning, e.listId, false,
             onCardRenamed = { w, m ->
                 val wasRevealed = e === revealedEntry
                 vm.editCurrent(w, m, e.sentence)?.let { if (wasRevealed) revealedEntry = it }
@@ -484,7 +485,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
         )
     }
     vm.current?.let { e -> tappedWord?.let { w ->
-        DictionarySheet(e.textId, w, e.sentence, null, null, true, onDismiss = { tappedWord = null })
+        DictionarySheet(e.textId, w, e.sentence, e.language, null, null, true, onDismiss = { tappedWord = null })
     } }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },

@@ -103,7 +103,9 @@ class BatchImportRepository(
                     TextDocument(
                         title = parsed.title?.takeIf { it.isNotBlank() } ?: displayName.substringBeforeLast('.'),
                         rawText = "", sourceName = displayName, externalKey = externalKey, folderId = folderId,
-                        language = language
+                        language = language,
+                        voice = com.ziaee.frenchreader.language.LanguageCatalog.forCode(language).defaultVoiceId,
+                        translationLang = LanguagePrefs.getKnownLanguage(context)
                     ),
                     stagedBody.readText(Charsets.UTF_8)
                 )

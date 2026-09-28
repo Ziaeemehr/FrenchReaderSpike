@@ -81,11 +81,15 @@ object VocabPrefs {
     }
     fun setAudioAutoplay(context: Context, value: AudioAutoplay) =
         prefs(context).edit().putString(KEY_AUDIO_AUTOPLAY_SIDES, value.name).apply()
-    fun getCardVoice(context: Context) =
-        prefs(context).getString(KEY_CARD_VOICE, DEFAULT_CARD_VOICE) ?: DEFAULT_CARD_VOICE
+    private fun cardVoiceKey(language: String) =
+        if (language == "fr") KEY_CARD_VOICE else "${KEY_CARD_VOICE}_$language"
 
-    fun setCardVoice(context: Context, value: String) =
-        prefs(context).edit().putString(KEY_CARD_VOICE, value).apply()
+    fun getCardVoice(context: Context, language: String) =
+        prefs(context).getString(cardVoiceKey(language), null)
+            ?: com.ziaee.frenchreader.language.LanguageCatalog.forCode(language).defaultVoiceId
+
+    fun setCardVoice(context: Context, value: String, language: String) =
+        prefs(context).edit().putString(cardVoiceKey(language), value).apply()
     fun getMeaningLanguage(context: Context) = runCatching {
         MeaningLanguage.valueOf(prefs(context).getString(KEY_MEANING_LANGUAGE, null) ?: MeaningLanguage.PERSIAN.name)
     }.getOrDefault(MeaningLanguage.PERSIAN)

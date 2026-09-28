@@ -428,6 +428,14 @@
     <string name="voice_label_gerard">ژرار – مرد، بلژیک</string>
     <string name="voice_label_ariane">آریان – زن، سوئیس</string>
     <string name="voice_label_xtts_local">سرور محلی XTTS</string>
+    <string name="voice_label_katja">کاتیا – زن، آلمان (پیش‌فرض)</string>
+    <string name="voice_label_conrad">کنراد – مرد، آلمان</string>
+    <string name="voice_label_amala">آمالا – زن، آلمان</string>
+    <string name="voice_label_killian">کیلیان – مرد، آلمان</string>
+    <string name="voice_label_ingrid">اینگرید – زن، اتریش</string>
+    <string name="voice_label_jonas">یوناس – مرد، اتریش</string>
+    <string name="voice_label_leni">لنی – زن، سوئیس</string>
+    <string name="voice_label_jan">یان – مرد، سوئیس</string>
     <string name="backup_section_title">پشتیبان‌گیری ابری</string>
     <string name="backup_sign_in">ورود با گوگل</string>
     <string name="backup_sign_out">خروج از حساب</string>

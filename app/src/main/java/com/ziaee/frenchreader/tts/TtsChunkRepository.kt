@@ -19,18 +19,22 @@ class TtsChunkRepository(context: Context) {
     suspend fun getOrSynthesize(
         text: String,
         voice: String,
+        language: String,
         ratePercent: Int,
         attempt: Int = 0
     ): Result<SynthesisResult> = withContext(Dispatchers.IO) {
         val cacheVoice = if (voice.startsWith(XTTS_VOICE_PREFIX)) {
-            "$XTTS_VOICE_PREFIX${XttsPrefs.getSpeaker(context)}"
+            // XTTS speaks every language with one speaker, so the language must be part of the
+            // key; French keeps the old key so audio cached before multilingual support stays valid.
+            val speaker = XttsPrefs.getSpeaker(context)
+            if (language == "fr") "$XTTS_VOICE_PREFIX$speaker" else "$XTTS_VOICE_PREFIX$speaker:$language"
         } else voice
         cache.get(text, cacheVoice, ratePercent)?.let { return@withContext Result.success(it) }
 
         try {
             val outFile = cache.audioPathFor(text, cacheVoice, ratePercent)
             val result = if (voice.startsWith(XTTS_VOICE_PREFIX)) {
-                XttsClient.synthesizeSentences(context, text, XttsPrefs.getSpeaker(context), ratePercent, outFile)
+                XttsClient.synthesizeSentences(context, text, XttsPrefs.getSpeaker(context), language, ratePercent, outFile)
             } else {
                 PyTts.synthesizeSentences(text, voice, ratePercent, outFile)
             }
@@ -40,7 +44,7 @@ class TtsChunkRepository(context: Context) {
             Result.success(result)
         } catch (e: Exception) {
             if (attempt < 1) {
-                getOrSynthesize(text, voice, ratePercent, attempt + 1)
+                getOrSynthesize(text, voice, language, ratePercent, attempt + 1)
             } else {
                 Result.failure(e)
             }

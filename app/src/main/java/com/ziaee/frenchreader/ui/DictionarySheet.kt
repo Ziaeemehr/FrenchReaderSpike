@@ -65,24 +65,25 @@ import java.net.URLEncoder
 internal fun manualDictionaryWord(raw: String): String? = raw.trim().takeIf { it.isNotEmpty() }
 
 /** Dictionary forms (e.g. the infinitive) of a looked-up form, offered as one-tap replacements. */
-internal fun lemmaSuggestions(word: String, lexicon: FrenchLemmaLexicon): List<String> {
+internal fun lemmaSuggestions(word: String, lexicon: FrenchLemmaLexicon, language: String = "fr"): List<String> {
+    if (language != "fr") return emptyList()
     val form = normalizeFrench(word.trim())
     if (form.isEmpty() || form.any(Char::isWhitespace)) return emptyList()
     return lexicon.lemmas(form).filter { it != form }.distinct().take(3)
 }
 
 /** Primary dictionary source per the design doc: WordReference French->English. */
-internal fun wordReferenceUrl(word: String): String =
-    "https://www.wordreference.com/fren/" + URLEncoder.encode(word, "UTF-8")
+internal fun wordReferenceUrl(word: String, language: String = "fr"): String =
+    "https://www.wordreference.com/${if (language == "de") "deen" else "fren"}/" + URLEncoder.encode(word, "UTF-8")
 
 /** One free, no-API-key dictionary source shown as a switchable tab in the
  * lookup panel below the WebView -- see ROADMAP.md. URL patterns verified
  * against live pages during design; Reverso Context was considered and
  * dropped because it's behind a Cloudflare bot challenge that blocked even
  * full-browser-header requests. */
-private data class DictionaryProvider(val id: String, val label: String, val urlFor: (String) -> String)
+internal data class DictionaryProvider(val id: String, val label: String, val urlFor: (String) -> String)
 
-private val DICTIONARY_PROVIDERS = listOf(
+private val FRENCH_DICTIONARY_PROVIDERS = listOf(
     DictionaryProvider("wordreference", "WordReference") { wordReferenceUrl(it) },
     DictionaryProvider("bamooz", "B-amooz") {
         "https://dic.b-amooz.com/fr/dictionary/w?word=" + URLEncoder.encode(it, "UTF-8")
@@ -97,6 +98,18 @@ private val DICTIONARY_PROVIDERS = listOf(
         "https://fr.wiktionary.org/wiki/" + URLEncoder.encode(it, "UTF-8")
     }
 )
+
+private val GERMAN_DICTIONARY_PROVIDERS = listOf(
+    DictionaryProvider("wordreference", "WordReference") { wordReferenceUrl(it, "de") },
+    DictionaryProvider("bamooz", "B-amooz") { "https://dic.b-amooz.com/de/dictionary/w?word=" + URLEncoder.encode(it, "UTF-8") },
+    DictionaryProvider("duden", "Duden") { "https://www.duden.de/suchen/dudenonline/" + URLEncoder.encode(it, "UTF-8") },
+    DictionaryProvider("linguee", "Linguee") { "https://www.linguee.com/german-english/search?source=auto&query=" + URLEncoder.encode(it, "UTF-8") },
+    DictionaryProvider("wiktionary", "Wiktionary") { "https://de.wiktionary.org/wiki/" + URLEncoder.encode(it, "UTF-8") },
+    DictionaryProvider("dwds", "DWDS") { "https://www.dwds.de/wb/" + URLEncoder.encode(it, "UTF-8") },
+)
+
+internal fun dictionaryProvidersFor(language: String): List<DictionaryProvider> =
+    if (language == "de") GERMAN_DICTIONARY_PROVIDERS else FRENCH_DICTIONARY_PROVIDERS
 
 /** Domains for ad networks confirmed to serve ads on Larousse (seen by
  * name in that page's own HTML comments: "PUB PAVE (Moneytizer & Prisma)",
@@ -132,6 +145,7 @@ fun ManualDictionaryHost(open: Boolean, onDismiss: () -> Unit) {
             textId = MANUAL_VOCAB_TEXT_ID,
             word = word,
             sentence = "",
+            language = LanguagePrefs.getTargetLanguage(LocalContext.current),
             onDismiss = onDismiss
         )
     }
@@ -197,16 +211,17 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
             dictionarySavedState(entries, textId, word, sentence)
         }
 
-    fun save(textId: Long, word: String, sentence: String, meaning: String?, listId: Long?, onDone: () -> Unit) {
+    fun save(textId: Long, word: String, sentence: String, language: String, meaning: String?, listId: Long?, onDone: () -> Unit) {
         val normalizedWord = manualDictionaryWord(word) ?: return
         viewModelScope.launch {
             repository.save(
                 textId = textId,
                 word = normalizedWord,
                 sentence = sentence,
-                dictionaryUrl = wordReferenceUrl(normalizedWord),
+                dictionaryUrl = wordReferenceUrl(normalizedWord, language),
                 meaning = meaning,
-                listId = listId
+                listId = listId,
+                entryLanguage = language,
             )
             onDone()
         }
@@ -216,6 +231,7 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
     fun rename(
         entry: com.ziaee.frenchreader.data.VocabEntry,
         word: String,
+        language: String,
         meaning: String?,
         listId: Long?,
         onDone: (com.ziaee.frenchreader.data.VocabEntry) -> Unit
@@ -223,7 +239,7 @@ class DictionaryViewModel(app: Application) : AndroidViewModel(app) {
         val normalizedWord = manualDictionaryWord(word) ?: return
         val renamed = entry.copy(
             word = normalizedWord,
-            dictionaryUrl = wordReferenceUrl(normalizedWord),
+            dictionaryUrl = wordReferenceUrl(normalizedWord, language),
             meaning = meaning?.ifBlank { entry.meaning } ?: entry.meaning,
             listId = listId
         )
@@ -263,6 +279,7 @@ fun DictionarySheet(
     textId: Long,
     word: String,
     sentence: String,
+    language: String,
     initialMeaning: String? = null,
     initialListId: Long? = null,
     isNew: Boolean = true,
@@ -276,9 +293,10 @@ fun DictionarySheet(
     val originalWord = word
     var currentWord by rememberSaveable(originalWord) { mutableStateOf(originalWord) }
     var lemmas by remember(originalWord) { mutableStateOf(emptyList<String>()) }
-    LaunchedEffect(originalWord) {
-        lemmas = runCatching { lemmaSuggestions(originalWord, LemmaLexicon.get(context).get()) }
+    LaunchedEffect(originalWord, language) {
+        lemmas = if (language == "fr") runCatching { lemmaSuggestions(originalWord, LemmaLexicon.get(context).get(), language) }
             .getOrDefault(emptyList())
+        else emptyList()
     }
     val word = currentWord
     val isOriginal = word == originalWord
@@ -302,7 +320,8 @@ fun DictionarySheet(
     var webViewFailed by remember(word) { mutableStateOf(false) }
     var listMenuExpanded by remember { mutableStateOf(false) }
     var showNewListDialog by remember { mutableStateOf(false) }
-    var selectedProvider by remember(word) { mutableStateOf(DICTIONARY_PROVIDERS.first()) }
+    val dictionaryProviders = remember(language) { dictionaryProvidersFor(language) }
+    var selectedProvider by remember(word, language) { mutableStateOf(dictionaryProviders.first()) }
     val url = remember(word, selectedProvider) { selectedProvider.urlFor(word) }
     val meaningLanguage = VocabPrefs.getMeaningLanguage(context)
     val meaningTarget = if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) "fa" else "en"
@@ -323,7 +342,7 @@ fun DictionarySheet(
         if (savedState.isLoaded && savedState.exactEntry == null && initialMeaning.isNullOrBlank()) {
             autoTranslating = true
             val repo = TranslationRepository(context.applicationContext)
-            val result = repo.getOrTranslate(word, meaningTarget)
+            val result = repo.getOrTranslate(word, language, meaningTarget)
             if (meaning.isBlank()) {
                 result.onSuccess { meaning = it }
             }
@@ -456,11 +475,11 @@ fun DictionarySheet(
                             VocabPrefs.setLastListId(context, selectedListId)
                         }
                         val card = editedEntry
-                        if (card != null && !isOriginal) vm.rename(card, word, meaning, selectedListId) {
+                        if (card != null && !isOriginal) vm.rename(card, word, language, meaning, selectedListId) {
                             onSaved()
                             onCardRenamed(it.word, it.meaning)
                         }
-                        else vm.save(textId, word, sentence, meaning, selectedListId, onSaved)
+                        else vm.save(textId, word, sentence, language, meaning, selectedListId, onSaved)
                     },
                     modifier = Modifier.size(48.dp)
                 ) {
@@ -553,12 +572,12 @@ fun DictionarySheet(
 
             // Dictionaries as tabs sitting directly on the page they switch.
             ScrollableTabRow(
-                selectedTabIndex = DICTIONARY_PROVIDERS.indexOfFirst { it.id == selectedProvider.id }.coerceAtLeast(0),
+                selectedTabIndex = dictionaryProviders.indexOfFirst { it.id == selectedProvider.id }.coerceAtLeast(0),
                 edgePadding = 0.dp,
                 containerColor = Color.Transparent,
                 divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
             ) {
-                DICTIONARY_PROVIDERS.forEach { provider ->
+                dictionaryProviders.forEach { provider ->
                     Tab(
                         selected = selectedProvider.id == provider.id,
                         onClick = { selectedProvider = provider; webViewFailed = false },

@@ -44,7 +44,7 @@ class AnkiImportTest {
     private val now = 1_800_000_000_000L
     private fun entry(c: AnkiCard, keep: Boolean, todayDay: Int? = 1030) =
         buildVocabEntry(c, mapAnkiCard(c)!!, listId = 7, keepProgress = keep, todayDay = todayDay,
-            nowMs = now, dictionaryUrl = "u", zone = ZoneOffset.UTC)
+            nowMs = now, dictionaryUrl = "u", zone = ZoneOffset.UTC, language = "fr")
 
     @Test fun `review card keeps box and due date when keepProgress`() {
         val e = entry(card(type = 2, interval = 20, due = 1050), keep = true)

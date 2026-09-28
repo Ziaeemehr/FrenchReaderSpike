@@ -32,6 +32,7 @@ import com.ziaee.frenchreader.text.alignSentencesToDisplay
 import com.ziaee.frenchreader.text.sanitizeForSpeech
 import com.ziaee.frenchreader.shadowing.*
 import com.ziaee.frenchreader.translate.TranslationRepository
+import com.ziaee.frenchreader.tts.resolveVoice
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
@@ -185,8 +186,10 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         scope = viewModelScope,
         engineFactory = {
             when (ShadowingPrefs.getEngine(app)) {
-                SpeechEngineKind.VOSK -> VoskEngine(VoskModelManager(app).modelDir)
-                SpeechEngineKind.ANDROID -> AndroidSpeechEngine(app)
+                SpeechEngineKind.VOSK -> if (_state.value.textDoc?.language == "fr") {
+                    VoskEngine(VoskModelManager(app).modelDir)
+                } else AndroidSpeechEngine(app, _state.value.textDoc?.language ?: LanguagePrefs.getTargetLanguage(app))
+                SpeechEngineKind.ANDROID -> AndroidSpeechEngine(app, _state.value.textDoc?.language ?: LanguagePrefs.getTargetLanguage(app))
             }
         },
         saveAttempt = { db.shadowAttemptDao().insert(it) },
@@ -343,7 +346,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (chunk.translationStatus == ChunkStatus.READY) continue
                 updateChunk(i) { it.copy(translationStatus = ChunkStatus.LOADING) }
-                val result = translationRepo.getOrTranslateParagraph(chunk.spokenText, targetLang)
+                val result = translationRepo.getOrTranslateParagraph(chunk.spokenText, _state.value.textDoc?.language ?: return@launch, targetLang)
                 if (generation != translationGeneration) return@launch
                 result.fold(
                     onSuccess = { translated ->
@@ -368,7 +371,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         val chunkTexts = _state.value.chunks.map { it.spokenText }
         viewModelScope.launch(Dispatchers.IO) {
             db.textDao().setPinned(doc.id, pinned)
-            ttsRepo.setDocumentPinned(chunkTexts, doc.voice, doc.ratePercent, pinned)
+            ttsRepo.setDocumentPinned(chunkTexts, resolveVoice(doc.voice, doc.language), doc.ratePercent, pinned)
         }
     }
 
@@ -388,10 +391,11 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             _state.value = _state.value.copy(textDoc = doc.copy(pinned = true))
         }
         fullSynthesisJob = viewModelScope.launch(Dispatchers.IO) {
+            val playbackVoice = resolveVoice(voice, doc.language)
             try {
                 if (!doc.pinned) {
                     db.textDao().setPinned(doc.id, true)
-                    ttsRepo.setDocumentPinned(targets, voice, ratePercent, true)
+                    ttsRepo.setDocumentPinned(targets, playbackVoice, ratePercent, true)
                 }
                 var succeeded = 0
                 var lastFailure: Throwable? = null
@@ -400,7 +404,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                         _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
                         return@launch
                     }
-                    val result = ttsRepo.getOrSynthesize(text, voice, ratePercent)
+                    val result = ttsRepo.getOrSynthesize(text, playbackVoice, doc.language, ratePercent)
                     if (!isActive) {
                         _state.value = _state.value.copy(fullSynthesisTotal = 0, fullSynthesisDone = 0)
                         return@launch
@@ -410,7 +414,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                         lastFailure = result.exceptionOrNull()
                     } else {
                         succeeded++
-                        ttsRepo.pinText(text, voice, ratePercent)
+                        ttsRepo.pinText(text, playbackVoice, ratePercent)
                     }
                     _state.value = _state.value.copy(
                         fullSynthesisDone = _state.value.fullSynthesisDone + 1
@@ -543,7 +547,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
         updateChunk(index) { it.copy(status = ChunkStatus.LOADING, error = null) }
 
-        val result = ttsRepo.getOrSynthesize(chunk.spokenText, doc.voice, doc.ratePercent)
+        val result = ttsRepo.getOrSynthesize(chunk.spokenText, resolveVoice(doc.voice, doc.language), doc.language, doc.ratePercent)
 
         // A voice switch (or a fresh load()) can reset this text's chunks
         // while this synthesis call is still in flight -- coroutine
@@ -839,7 +843,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
             selectionPlayer.clearMediaItems()
             val spoken = sanitizeForSpeech(text)
             if (spoken.isBlank()) return@launch
-            val result = ttsRepo.getOrSynthesize(spoken, doc.voice, doc.ratePercent)
+            val result = ttsRepo.getOrSynthesize(spoken, resolveVoice(doc.voice, doc.language), doc.language, doc.ratePercent)
             result.onSuccess { synth ->
                 selectionPlayer.setMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
                 selectionPlayer.prepare()

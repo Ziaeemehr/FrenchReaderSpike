@@ -10,16 +10,17 @@ class TranslationRepository(context: Context) {
 
     suspend fun getOrTranslate(
         text: String,
+        sourceLang: String,
         targetLang: String,
         attempt: Int = 0
     ): Result<String> = withContext(Dispatchers.IO) {
-        cache.get(text, targetLang)?.let { return@withContext Result.success(it) }
+        cache.get(text, sourceLang, targetLang)?.let { return@withContext Result.success(it) }
         try {
-            val translated = TranslationService.translate(text, targetLang)
-            cache.put(text, targetLang, translated)
+            val translated = TranslationService.translate(text, targetLang, sourceLang)
+            cache.put(text, sourceLang, targetLang, translated)
             Result.success(translated)
         } catch (e: Exception) {
-            if (attempt < 1) getOrTranslate(text, targetLang, attempt + 1)
+            if (attempt < 1) getOrTranslate(text, sourceLang, targetLang, attempt + 1)
             else Result.failure(e)
         }
     }
@@ -31,19 +32,20 @@ class TranslationRepository(context: Context) {
      */
     suspend fun getOrTranslateParagraph(
         text: String,
+        sourceLang: String,
         targetLang: String,
         attempt: Int = 0
     ): Result<String?> = withContext(Dispatchers.IO) {
         if (isRtlTarget(targetLang) && isRtlText(text)) return@withContext Result.success(null)
-        cache.get(text, targetLang)?.let { cached ->
+        cache.get(text, sourceLang, targetLang)?.let { cached ->
             return@withContext Result.success(cached.takeUnless { TranslationService.isSameText(it, text) })
         }
         try {
-            val translated = TranslationService.translateUnlessSameLanguage(text, targetLang)
-            cache.put(text, targetLang, translated ?: text)
+            val translated = TranslationService.translateUnlessSameLanguage(text, targetLang, sourceLang)
+            cache.put(text, sourceLang, targetLang, translated ?: text)
             Result.success(translated)
         } catch (e: Exception) {
-            if (attempt < 1) getOrTranslateParagraph(text, targetLang, attempt + 1)
+            if (attempt < 1) getOrTranslateParagraph(text, sourceLang, targetLang, attempt + 1)
             else Result.failure(e)
         }
     }

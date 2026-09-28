@@ -20,6 +20,7 @@ object XttsClient {
         context: Context,
         text: String,
         speaker: String,
+        language: String,
         ratePercent: Int,
         outFile: File
     ): SynthesisResult {
@@ -33,7 +34,7 @@ object XttsClient {
             put("text", text)
             put("speaker", speaker)
             put("rate_percent", ratePercent)
-            put("language", "fr")
+            put("language", language)
         }
         val response = try {
             connection.outputStream.use { it.write(request.toString().toByteArray(Charsets.UTF_8)) }

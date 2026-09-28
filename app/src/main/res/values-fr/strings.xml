@@ -430,6 +430,14 @@
     <string name="voice_label_gerard">Gérard – Homme, Belgique</string>
     <string name="voice_label_ariane">Ariane – Femme, Suisse</string>
     <string name="voice_label_xtts_local">Serveur XTTS local</string>
+    <string name="voice_label_katja">Katja – Femme, Allemagne (Par défaut)</string>
+    <string name="voice_label_conrad">Conrad – Homme, Allemagne</string>
+    <string name="voice_label_amala">Amala – Femme, Allemagne</string>
+    <string name="voice_label_killian">Killian – Homme, Allemagne</string>
+    <string name="voice_label_ingrid">Ingrid – Femme, Autriche</string>
+    <string name="voice_label_jonas">Jonas – Homme, Autriche</string>
+    <string name="voice_label_leni">Leni – Femme, Suisse</string>
+    <string name="voice_label_jan">Jan – Homme, Suisse</string>
     <string name="backup_section_title">Sauvegarde cloud</string>
     <string name="backup_sign_in">Se connecter avec Google</string>
     <string name="backup_sign_out">Se déconnecter</string>

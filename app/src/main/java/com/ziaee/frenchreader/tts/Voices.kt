@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.tts
 
 import androidx.annotation.StringRes
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.language.LanguageCatalog
 
 /**
  * A curated subset of edge-tts's French Neural voices -- enough variety in
@@ -28,7 +29,7 @@ data class VoiceOption(val id: String, @StringRes val labelRes: Int)
 
 const val XTTS_VOICE_PREFIX = "xtts:"
 
-val AVAILABLE_VOICES = listOf(
+private val EDGE_VOICES = listOf(
     VoiceOption("fr-FR-HenriNeural", R.string.voice_label_henri),
     VoiceOption("fr-FR-DeniseNeural", R.string.voice_label_denise),
     VoiceOption("fr-FR-EloiseNeural", R.string.voice_label_eloise),
@@ -37,5 +38,26 @@ val AVAILABLE_VOICES = listOf(
     VoiceOption("fr-BE-CharlineNeural", R.string.voice_label_charline),
     VoiceOption("fr-BE-GerardNeural", R.string.voice_label_gerard),
     VoiceOption("fr-CH-ArianeNeural", R.string.voice_label_ariane),
-    VoiceOption("${XTTS_VOICE_PREFIX}local", R.string.voice_label_xtts_local)
+    VoiceOption("de-DE-KatjaNeural", R.string.voice_label_katja),
+    VoiceOption("de-DE-ConradNeural", R.string.voice_label_conrad),
+    VoiceOption("de-DE-AmalaNeural", R.string.voice_label_amala),
+    VoiceOption("de-DE-KillianNeural", R.string.voice_label_killian),
+    VoiceOption("de-AT-IngridNeural", R.string.voice_label_ingrid),
+    VoiceOption("de-AT-JonasNeural", R.string.voice_label_jonas),
+    VoiceOption("de-CH-LeniNeural", R.string.voice_label_leni),
+    VoiceOption("de-CH-JanNeural", R.string.voice_label_jan),
 )
+
+private val XTTS_VOICE = VoiceOption("${XTTS_VOICE_PREFIX}local", R.string.voice_label_xtts_local)
+
+fun voicesFor(language: String): List<VoiceOption> {
+    val support = LanguageCatalog.forCode(language)
+    val edge = support.edgeVoiceIds.mapNotNull { id -> EDGE_VOICES.firstOrNull { it.id == id } }
+    return if (support.xttsSupported) edge + XTTS_VOICE else edge
+}
+
+fun resolveVoice(storedVoice: String, language: String): String {
+    val support = LanguageCatalog.forCode(language)
+    if (storedVoice.startsWith(XTTS_VOICE_PREFIX) && support.xttsSupported) return storedVoice
+    return storedVoice.takeIf { it in support.edgeVoiceIds } ?: support.defaultVoiceId
+}

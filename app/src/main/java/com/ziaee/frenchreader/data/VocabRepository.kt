@@ -41,20 +41,21 @@ class VocabRepository(private val dao: VocabDao, private val language: () -> Str
         sentence: String,
         dictionaryUrl: String,
         meaning: String?,
-        listId: Long?
+        listId: Long?,
+        entryLanguage: String = language(),
     ) {
         val existing = if (textId == MANUAL_VOCAB_TEXT_ID) {
             val identity = vocabIdentityKey(word)
-            dao.getManualEntries(language()).firstOrNull { vocabIdentityKey(it.word) == identity }
+            dao.getManualEntries(entryLanguage).firstOrNull { vocabIdentityKey(it.word) == identity }
         } else {
-            dao.findExisting(textId, word, sentence, language())
+            dao.findExisting(textId, word, sentence, entryLanguage)
         }
         if (existing != null) {
             dao.update(
                 existing.copy(
                     meaning = meaning?.ifBlank { existing.meaning } ?: existing.meaning,
                     listId = listId,
-                    language = language()
+                    language = entryLanguage
                 )
             )
         } else {
@@ -66,7 +67,7 @@ class VocabRepository(private val dao: VocabDao, private val language: () -> Str
                     dictionaryUrl = dictionaryUrl,
                     meaning = meaning?.ifBlank { null },
                     listId = listId,
-                    language = language()
+                    language = entryLanguage
                 )
             )
         }

@@ -61,7 +61,7 @@ import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.tts.XttsClient
 import com.ziaee.frenchreader.tts.TtsChunkRepository
-import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
+import com.ziaee.frenchreader.tts.voicesFor
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
 import com.ziaee.frenchreader.news.NEWS_SOURCES
 import com.ziaee.frenchreader.news.NewsCategory
@@ -272,10 +272,15 @@ private fun ShadowingSettings(
     var installed by remember { mutableStateOf(manager.isInstalled()) }
     var progress by remember { mutableStateOf<Float?>(null) }
     val androidAvailable = remember { AndroidSpeechEngine.isAvailable(context) }
+    val targetLanguage = LanguagePrefs.getTargetLanguage(context)
     val failed = stringResource(R.string.shadowing_model_failed)
 
     CompactSettingLabel(R.string.shadowing_engine_title)
-    val engines = if (androidAvailable) SpeechEngineKind.entries else listOf(SpeechEngineKind.VOSK)
+    val engines = when {
+        targetLanguage != "fr" -> listOf(SpeechEngineKind.ANDROID)
+        androidAvailable -> SpeechEngineKind.entries
+        else -> listOf(SpeechEngineKind.VOSK)
+    }
     CompactChoiceRow(
         engines,
         engine,
@@ -628,7 +633,8 @@ private fun VocabularyReviewSettings(
     var maxNew by remember { mutableIntStateOf(VocabPrefs.getMaxNewCards(context)) }
     var dailyGoal by remember { mutableIntStateOf(VocabPrefs.getDailyGoal(context)) }
     var autoplay by remember { mutableStateOf(VocabPrefs.getAudioAutoplay(context)) }
-    var cardVoice by remember { mutableStateOf(VocabPrefs.getCardVoice(context)) }
+    val targetLanguage = LanguagePrefs.getTargetLanguage(context)
+    var cardVoice by remember(targetLanguage) { mutableStateOf(VocabPrefs.getCardVoice(context, targetLanguage)) }
     var cardVoiceMenu by remember { mutableStateOf(false) }
     var meaningLanguage by remember { mutableStateOf(VocabPrefs.getMeaningLanguage(context)) }
     var intervals by remember { mutableStateOf(VocabPrefs.getIntervals(context)) }
@@ -676,7 +682,7 @@ private fun VocabularyReviewSettings(
     ) { autoplay = it; VocabPrefs.setAudioAutoplay(context, it) }
     CompactSettingLabel(R.string.card_voice_title)
     Box {
-        val voices = AVAILABLE_VOICES.filterNot { it.id.startsWith(XTTS_VOICE_PREFIX) }
+        val voices = voicesFor(targetLanguage).filterNot { it.id.startsWith(XTTS_VOICE_PREFIX) }
         OutlinedButton(onClick = { cardVoiceMenu = true }, modifier = Modifier.fillMaxWidth()) {
             Text(
                 stringResource(
@@ -693,7 +699,7 @@ private fun VocabularyReviewSettings(
                     text = { Text(stringResource(voice.labelRes)) },
                     onClick = {
                         cardVoice = voice.id
-                        VocabPrefs.setCardVoice(context, voice.id)
+                        VocabPrefs.setCardVoice(context, voice.id, targetLanguage)
                         cardVoiceMenu = false
                     }
                 )

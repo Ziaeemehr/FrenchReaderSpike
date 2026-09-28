@@ -34,6 +34,7 @@ class EpubImportRepository(
 ) {
     suspend fun import(uri: Uri): EpubImportResult = withContext(Dispatchers.IO) {
         val language = LanguagePrefs.getTargetLanguage(context)
+        val translationLanguage = LanguagePrefs.getKnownLanguage(context)
         val displayName = queryDisplayName(context, uri)
         val book = context.contentResolver.openInputStream(uri)?.use { EpubReader.read(it) }
             ?: throw EpubFormatException("unable to open EPUB")
@@ -85,7 +86,9 @@ class EpubImportRepository(
                 val id = insertTextDocument(
                     textDao, bodyStore,
                     TextDocument(title = bookTitle, rawText = "", sourceName = bookTitle,
-                        externalKey = externalKey, imagePath = coverPath, language = language),
+                        externalKey = externalKey, imagePath = coverPath, language = language,
+                        voice = com.ziaee.frenchreader.language.LanguageCatalog.forCode(language).defaultVoiceId,
+                        translationLang = translationLanguage),
                     stagedBody.readText(Charsets.UTF_8)
                 )
                 EpubImportResult(null, bookTitle, id, book.chapters.size, 0)

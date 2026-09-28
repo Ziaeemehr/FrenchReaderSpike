@@ -19,7 +19,7 @@ import java.net.URLEncoder
  */
 object TranslationService {
 
-    fun translate(text: String, targetLang: String, sourceLang: String = "fr"): String {
+    fun translate(text: String, targetLang: String, sourceLang: String): String {
         return try {
             translateWithGoogle(text, targetLang, sourceLang)
         } catch (e: Exception) {
@@ -31,14 +31,14 @@ object TranslationService {
      * Translates with the source language auto-detected. Returns null when the text is
      * already in [targetLang] (e.g. a Persian note in a French lesson, translating to Persian).
      */
-    fun translateUnlessSameLanguage(text: String, targetLang: String): String? {
+    fun translateUnlessSameLanguage(text: String, targetLang: String, sourceLang: String): String? {
         val translated = try {
             val body = googleRequest(text, targetLang, "auto")
             val detected = JSONArray(body).opt(2) as? String
             if (detected != null && baseLanguage(detected) == baseLanguage(targetLang)) return null
             parseGoogleResponse(body)
         } catch (e: Exception) {
-            translateWithMyMemory(text, targetLang, "fr")
+            translateWithMyMemory(text, targetLang, sourceLang)
         }
         return translated.takeUnless { isSameText(it, text) }
     }

@@ -26,7 +26,8 @@ class ArticleImportRepository(
     private val sources: List<ContentSource>,
     private val imageStore: ArticleImageStorage,
     private val bodyStore: TextBodyStorage,
-    private val libraryOrganizerDao: LibraryOrganizerDao? = null
+    private val libraryOrganizerDao: LibraryOrganizerDao? = null,
+    private val translationLanguage: () -> String = { "fa" },
 ) {
     /** Returns null if no registered source matches the headline or the
      * source fails to fetch the full article; the headline preview stays
@@ -52,7 +53,9 @@ class ArticleImportRepository(
                 license = article.license,
                 publishedAt = article.publishedAtMs,
                 externalKey = externalKey,
-                language = headline.language
+                language = headline.language,
+                voice = com.ziaee.frenchreader.language.LanguageCatalog.forCode(headline.language).defaultVoiceId,
+                translationLang = translationLanguage(),
             ),
             article.text
         )

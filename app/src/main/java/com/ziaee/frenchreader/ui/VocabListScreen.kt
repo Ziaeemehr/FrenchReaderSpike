@@ -71,6 +71,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.TtsChunkRepository
+import com.ziaee.frenchreader.tts.resolveVoice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -147,7 +148,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
             previewWordAudioLoading = true
             player.stop()
             try {
-                ttsRepo.getOrSynthesize(text, VocabPrefs.getCardVoice(context), 0).fold(
+                ttsRepo.getOrSynthesize(text, resolveVoice(VocabPrefs.getCardVoice(context, entry.language), entry.language), entry.language, 0).fold(
                     onSuccess = {
                         if (previewEntryId != entry.id) return@fold
                         player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
@@ -172,11 +173,11 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
             player.stop()
             val voiceAndRate = voiceCache[entry.textId] ?: run {
                 val source = if (entry.textId == 0L) null else db.textDao().getById(entry.textId)
-                if (source == null) VocabPrefs.getCardVoice(context) to 0
+                if (source == null) VocabPrefs.getCardVoice(context, entry.language) to 0
                 else (source.voice to source.ratePercent).also { voiceCache[entry.textId] = it }
             }
             try {
-                ttsRepo.getOrSynthesize(text, voiceAndRate.first, voiceAndRate.second).fold(
+                ttsRepo.getOrSynthesize(text, resolveVoice(voiceAndRate.first, entry.language), entry.language, voiceAndRate.second).fold(
                     onSuccess = {
                         if (previewEntryId != entry.id) return@fold
                         player.setMediaItem(MediaItem.fromUri(it.audioFile.toURI().toString()))
@@ -197,7 +198,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
             previewSentenceTranslation = null
             previewSentenceTranslationError = false
             previewSentenceTranslationLoading = true
-            val result = translationRepositoryResult(text)
+            val result = translationRepositoryResult(text, entry.language)
             if (previewEntryId != entry.id) return@launch
             result.fold(
                 onSuccess = { previewSentenceTranslation = it },
@@ -207,8 +208,8 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private suspend fun translationRepositoryResult(text: String) =
-        translationRepo.getOrTranslate(text, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)))
+    private suspend fun translationRepositoryResult(text: String, sourceLanguage: String) =
+        translationRepo.getOrTranslate(text, sourceLanguage, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)))
 
     private fun stopPreviewMedia() {
         previewAudioJob?.cancel()
@@ -833,6 +834,7 @@ fun VocabListScreen(
             textId = entry.textId,
             word = tappedWord ?: entry.word,
             sentence = entry.sentence,
+            language = entry.language,
             initialMeaning = if (tappedWord == null) entry.meaning else null,
             initialListId = if (tappedWord == null) entry.listId else null,
             isNew = tappedWord != null,

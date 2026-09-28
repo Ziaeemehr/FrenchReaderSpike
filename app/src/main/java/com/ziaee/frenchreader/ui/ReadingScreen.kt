@@ -90,7 +90,8 @@ import com.ziaee.frenchreader.data.HighlightPrefs
 import com.ziaee.frenchreader.text.BlockType
 import com.ziaee.frenchreader.text.ParsedBlock
 import com.ziaee.frenchreader.text.isRtlText
-import com.ziaee.frenchreader.tts.AVAILABLE_VOICES
+import com.ziaee.frenchreader.tts.voicesFor
+import com.ziaee.frenchreader.tts.resolveVoice
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
 import com.ziaee.frenchreader.data.AppearancePrefs
@@ -188,7 +189,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     val modelManager = remember { VoskModelManager(settingsContext) }
 
     fun enableShadowingChecked() {
-        if (ShadowingPrefs.getEngine(settingsContext) == SpeechEngineKind.VOSK && !modelManager.isInstalled()) {
+        if (state.textDoc?.language == "fr" && ShadowingPrefs.getEngine(settingsContext) == SpeechEngineKind.VOSK && !modelManager.isInstalled()) {
             showModelPrompt = true
         } else vm.setShadowing(true)
     }
@@ -591,10 +592,13 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                     expanded = voiceMenuExpanded,
                                     onDismissRequest = { voiceMenuExpanded = false }
                                 ) {
-                                    AVAILABLE_VOICES.forEach { voice ->
+                                    voicesFor(state.textDoc?.language ?: com.ziaee.frenchreader.language.LanguageCatalog.DEFAULT_TARGET).forEach { voice ->
                                         DropdownMenuItem(
                                             text = { Text(stringResource(voice.labelRes)) },
-                                            leadingIcon = { if (state.textDoc?.voice == voice.id) Icon(Icons.Default.Check, null) },
+                                            leadingIcon = {
+                                                val doc = state.textDoc
+                                                if (doc != null && resolveVoice(doc.voice, doc.language) == voice.id) Icon(Icons.Default.Check, null)
+                                            },
                                             onClick = { voiceMenuExpanded = false; vm.changeVoice(voice.id) }
                                         )
                                     }
@@ -938,6 +942,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
             textId = textId,
             word = word,
             sentence = sentence,
+            language = state.textDoc?.language ?: com.ziaee.frenchreader.language.LanguageCatalog.DEFAULT_TARGET,
             onDismiss = { dictionaryTarget = null }
         )
     }

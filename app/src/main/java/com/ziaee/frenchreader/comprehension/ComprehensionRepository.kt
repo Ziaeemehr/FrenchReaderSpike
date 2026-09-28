@@ -67,6 +67,10 @@ class ComprehensionRepository private constructor(
     }
 
     private suspend fun publishScore(document: TextDocument, known: KnownState) {
+        if (document.language != "fr") {
+            _scores.update { it + (document.id to null) }
+            return
+        }
         val bodyKey = BodyKey(document.id, document.bodyPath, document.rawText.length)
         val scoreKey = ScoreKey(bodyKey, known.version)
         val cached = synchronized(scoreCache) { scoreCache.containsKey(scoreKey) to scoreCache[scoreKey] }

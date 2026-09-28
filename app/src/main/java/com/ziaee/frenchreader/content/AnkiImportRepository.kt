@@ -21,7 +21,7 @@ class AnkiImportRepository(private val db: AppDatabase, private val language: St
                 db.vocabDao().insert(
                     buildVocabEntry(
                         w.card, w.mapped, listId, keepProgress, export.todayDay, nowMs,
-                        wordReferenceUrl(w.mapped.word), language = language
+                        wordReferenceUrl(w.mapped.word, language), language = language
                     )
                 )
             }

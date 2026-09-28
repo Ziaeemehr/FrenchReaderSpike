@@ -78,7 +78,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         listOf(RfiFacileContentSource, FranceInfoContentSource),
         ArticleImageStore(app),
         bodyStore,
-        db.libraryOrganizerDao()
+        db.libraryOrganizerDao(),
+        translationLanguage = { LanguagePrefs.getKnownLanguage(getApplication()) }
     )
 
     var contentSearchState by mutableStateOf<ContentSearchUiState>(ContentSearchUiState.Idle)
@@ -246,7 +247,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val language = LanguagePrefs.getTargetLanguage(getApplication())
             val id = insertTextDocument(
-                db.textDao(), bodyStore, TextDocument(title = title, rawText = "", language = language), body
+                db.textDao(), bodyStore, TextDocument(title = title, rawText = "", language = language,
+                    voice = com.ziaee.frenchreader.language.LanguageCatalog.forCode(language).defaultVoiceId,
+                    translationLang = LanguagePrefs.getKnownLanguage(getApplication())), body
             )
             onDone(id)
         }
@@ -369,7 +372,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     author = article.author,
                     license = article.license,
                     publishedAt = article.publishedAtMs,
-                    language = LanguagePrefs.getTargetLanguage(getApplication())
+                    language = LanguagePrefs.getTargetLanguage(getApplication()),
+                    translationLang = LanguagePrefs.getKnownLanguage(getApplication()),
+                    voice = com.ziaee.frenchreader.language.LanguageCatalog
+                        .forCode(LanguagePrefs.getTargetLanguage(getApplication())).defaultVoiceId
                 ),
                 article.text
             )

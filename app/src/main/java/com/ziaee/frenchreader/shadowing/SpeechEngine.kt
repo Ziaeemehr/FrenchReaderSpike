@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import com.ziaee.frenchreader.language.LanguageCatalog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
@@ -101,7 +102,7 @@ class VoskEngine(private val modelDir: File) : SpeechEngine {
 
 /** Android's recognizer. API 33+: we record, then feed our PCM through EXTRA_AUDIO_SOURCE, so
  * replay works. Older: the recognizer owns the mic live, so pcm is null (no replay). Main thread only. */
-class AndroidSpeechEngine(private val context: Context) : SpeechEngine {
+class AndroidSpeechEngine(private val context: Context, language: String) : SpeechEngine {
     override val kind = SpeechEngineKind.ANDROID
     private val feedsAudio = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
     private val recorder = MicRecorder()
@@ -109,9 +110,10 @@ class AndroidSpeechEngine(private val context: Context) : SpeechEngine {
     private var result: CompletableDeferred<String>? = null
     private var startedAtMs = 0L
 
+    private val sttLocale = LanguageCatalog.forCode(language).sttLocale
     private fun baseIntent() = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr-FR")
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, sttLocale)
         putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
         putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
     }
