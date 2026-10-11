@@ -6,6 +6,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LocalBackupTest {
+    @Test fun `grammar preferences are backed up`() {
+        assertTrue("grammar_prefs" in PREFERENCE_FILES)
+    }
     @Test fun `study log preferences are backed up`() {
         assertTrue("study_log_prefs" in PREFERENCE_FILES)
     }

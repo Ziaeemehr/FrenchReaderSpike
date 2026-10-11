@@ -723,4 +723,13 @@
         <item quantity="one">%d result</item>
         <item quantity="other">%d results</item>
     </plurals>
+    <string name="grammar_favourites">Favourites</string>
+    <string name="grammar_recently_opened">Recently opened</string>
+    <string name="grammar_add_favourite">Add to favourites</string>
+    <string name="grammar_remove_favourite">Remove from favourites</string>
+    <string name="grammar_export">Export note</string>
+    <string name="grammar_share_text">Share as text</string>
+    <string name="grammar_save_markdown">Save as Markdown file</string>
+    <string name="grammar_save_success">Markdown file saved</string>
+    <string name="grammar_save_failure">Could not save Markdown file</string>
 </resources>

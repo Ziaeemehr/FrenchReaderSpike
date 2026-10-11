@@ -1,6 +1,9 @@
 package com.ziaee.frenchreader.grammar
 
+import android.content.Intent
 import android.content.res.Configuration
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -10,9 +13,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,9 +30,16 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +51,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +87,7 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import com.ziaee.frenchreader.ui.theme.Vazirmatn
 import java.util.Locale
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -104,6 +120,9 @@ private fun grammarNotes(): State<List<GrammarNote>?> {
 @Composable
 fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
     val notes by grammarNotes()
+    val context = LocalContext.current
+    remember(context) { GrammarPrefs.load(context) }
+    val prefs by GrammarPrefs.state.collectAsState()
     val title = stringResource(R.string.grammar_title)
     var query by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -161,9 +180,26 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                 }
                 if (query.isBlank()) {
                     if (notes!!.isEmpty()) item(key = "empty") { Text(stringResource(R.string.grammar_empty)) }
+                    val favourites = notes!!.filter { it.id in prefs.favourites && shown(it) }
+                    val byId = notes!!.associateBy { it.id }
+                    val recents = prefs.recents.mapNotNull { byId[it.id] }.filter(::shown).take(5)
+                    if (favourites.isNotEmpty()) {
+                        item(key = "fav-header") { EditorialSectionHeader(stringResource(R.string.grammar_favourites)) }
+                        items(favourites, key = { "fav:${it.id}" }) { note ->
+                            GrammarNoteCard(note, onOpenNote, favourite = true)
+                        }
+                    }
+                    if (recents.isNotEmpty()) {
+                        item(key = "recent-header") { EditorialSectionHeader(stringResource(R.string.grammar_recently_opened)) }
+                        items(recents, key = { "recent:${it.id}" }) { note ->
+                            GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
+                        }
+                    }
                     notes!!.filter(::shown).groupBy { it.group }.forEach { (group, entries) ->
-                        item(key = "group:$group") { EditorialSectionHeader(stringResource(groupTitle(group))) }
-                        items(entries, key = { it.id }) { note -> GrammarNoteCard(note, onOpenNote) }
+                        item(key = "group-header:$group") { EditorialSectionHeader(stringResource(groupTitle(group))) }
+                        items(entries, key = { "group:${it.id}" }) { note ->
+                            GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
+                        }
                     }
                 } else {
                     item(key = "result-count") {
@@ -182,8 +218,8 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                             }
                         }
                     }
-                    items(results, key = { it.note.id }) { result ->
-                        GrammarNoteCard(result.note, onOpenNote, result.snippet)
+                    items(results, key = { "search:${it.note.id}" }) { result ->
+                        GrammarNoteCard(result.note, onOpenNote, result.snippet, result.note.id in prefs.favourites)
                     }
                 }
             }
@@ -192,10 +228,18 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
 }
 
 @Composable
-private fun GrammarNoteCard(note: GrammarNote, onOpenNote: (String) -> Unit, snippet: GrammarCell? = null) {
+private fun GrammarNoteCard(
+    note: GrammarNote, onOpenNote: (String) -> Unit, snippet: GrammarCell? = null, favourite: Boolean = false
+) {
     Card(onClick = { onOpenNote(note.id) }, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(FrenchReaderDesign.spacing.small), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            GrammarText(GrammarCell(note.titleFr), rtl = false)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                GrammarText(GrammarCell(note.titleFr), rtl = false, modifier = Modifier.weight(1f))
+                if (favourite) Icon(
+                    Icons.Default.Star, stringResource(R.string.grammar_favourites),
+                    modifier = Modifier.size(18.dp), tint = LocalGrammarColors.current.accent
+                )
+            }
             GrammarText(GrammarCell(note.titleFa), rtl = true, secondary = true)
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) { MetadataBadge(note.level) }
             if (snippet != null) GrammarText(snippet, rtl = isRtlText(snippet.text), secondary = true)
@@ -215,13 +259,79 @@ private fun groupTitle(group: String): Int = when (group) {
 fun GrammarNoteScreen(id: String, onBack: () -> Unit) {
     val notes by grammarNotes()
     val note = notes?.firstOrNull { it.id == id }
-    GrammarPage { padding ->
+    val context = LocalContext.current
+    remember(context) { GrammarPrefs.load(context) }
+    val prefs by GrammarPrefs.state.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val labels = GrammarExportLabels(
+        contentString(R.string.grammar_usage), contentString(R.string.grammar_structure),
+        contentString(R.string.grammar_examples), contentString(R.string.grammar_mistake),
+        contentString(R.string.grammar_more), contentString(R.string.grammar_comparison),
+        contentString(R.string.grammar_timeline), contentString(R.string.grammar_decision),
+        contentString(R.string.grammar_steps), contentString(R.string.grammar_correct),
+        contentString(R.string.grammar_wrong), stringResource(R.string.app_name)
+    )
+    val markdown = remember(note, labels) { note?.let { grammarNoteToMarkdown(it, labels) } }
+    var pendingMarkdown by rememberSaveable { mutableStateOf<String?>(null) }
+    val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
+        val text = pendingMarkdown
+        pendingMarkdown = null
+        if (uri != null && text != null) scope.launch {
+            val saved = runCatching {
+                withContext(Dispatchers.IO) {
+                    val output = context.contentResolver.openOutputStream(uri) ?: error("Unable to open destination")
+                    output.bufferedWriter(Charsets.UTF_8).use { it.write(text) }
+                }
+            }.isSuccess
+            snackbar.showSnackbar(context.getString(if (saved) R.string.grammar_save_success else R.string.grammar_save_failure))
+        }
+    }
+    LaunchedEffect(note?.id) {
+        if (note != null) GrammarPrefs.opened(context, note.id)
+    }
+    GrammarPage(snackbar) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(FrenchReaderDesign.spacing.small),
             verticalArrangement = Arrangement.spacedBy(FrenchReaderDesign.spacing.small)
         ) {
-            item { GrammarBackRow(onBack) }
+            item {
+                GrammarBackRow(onBack) {
+                    if (note != null && markdown != null) {
+                        IconButton(onClick = { GrammarPrefs.toggleFavourite(context, note.id) }) {
+                            val favourite = note.id in prefs.favourites
+                            Icon(
+                                if (favourite) Icons.Default.Star else Icons.Outlined.StarBorder,
+                                stringResource(if (favourite) R.string.grammar_remove_favourite else R.string.grammar_add_favourite),
+                                tint = if (favourite) LocalGrammarColors.current.accent else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(Icons.Default.Share, stringResource(R.string.grammar_export))
+                            }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.grammar_share_text)) }, onClick = {
+                                    expanded = false
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, markdown)
+                                        putExtra(Intent.EXTRA_SUBJECT, note.titleFr)
+                                    }
+                                    context.startActivity(Intent.createChooser(intent, context.getString(R.string.grammar_share_text)))
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.grammar_save_markdown)) }, onClick = {
+                                    expanded = false
+                                    pendingMarkdown = markdown
+                                    saveLauncher.launch("${note.id}.md")
+                                })
+                            }
+                        }
+                    }
+                }
+            }
             if (notes == null) item { CircularProgressIndicator() }
             else if (note == null) item { Text(stringResource(R.string.grammar_not_found)) }
             else {
@@ -239,18 +349,20 @@ fun GrammarNoteScreen(id: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun GrammarPage(content: @Composable (PaddingValues) -> Unit) {
-    Scaffold(content = content)
+private fun GrammarPage(snackbar: SnackbarHostState? = null, content: @Composable (PaddingValues) -> Unit) {
+    Scaffold(snackbarHost = { if (snackbar != null) SnackbarHost(snackbar) }, content = content)
 }
 
 /** A compact back row that scrolls away with the page instead of a pinned app bar. */
 @Composable
-private fun GrammarBackRow(onBack: () -> Unit, title: String? = null) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun GrammarBackRow(onBack: () -> Unit, title: String? = null, actions: @Composable () -> Unit = {}) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back))
         }
         if (title != null) Text(title, style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.weight(1f))
+        actions()
     }
 }
 

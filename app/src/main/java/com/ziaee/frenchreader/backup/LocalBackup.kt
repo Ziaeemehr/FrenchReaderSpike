@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.os.Build
+import com.ziaee.frenchreader.grammar.GrammarPrefs
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.util.MAX_BACKUP_ARCHIVE_BYTES
 import com.ziaee.frenchreader.util.copyToLimited
@@ -27,7 +28,7 @@ private const val SETTINGS_ENTRY = "prefs/settings.json"
 private val FILE_DIRECTORIES = listOf("text_bodies", "text_images")
 internal val PREFERENCE_FILES = listOf(
     "vocab_prefs", "appearance_prefs", "locale_prefs", "news_prefs",
-    "highlight_prefs", "tts_cache_prefs", "xtts_prefs", "study_log_prefs"
+    "highlight_prefs", "tts_cache_prefs", "xtts_prefs", "study_log_prefs", "grammar_prefs"
 )
 private const val MAX_BACKUP_ENTRIES = 20_000
 
@@ -163,6 +164,7 @@ object LocalBackup {
             if (includesFiles) FILE_DIRECTORIES.forEach { File(stagingRoot, it).mkdirs() }
             swapIntoPlace(context, candidateDb, stagingRoot, includesFiles)
             File(stagingRoot, SETTINGS_ENTRY).takeIf(File::isFile)?.let { restoreSettings(context, deserializeSettings(it.readText())) }
+            GrammarPrefs.reload(context)
             return true
         } finally {
             stagingRoot.deleteRecursively()

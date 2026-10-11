@@ -721,4 +721,13 @@
         <item quantity="one">%d نتیجه</item>
         <item quantity="other">%d نتیجه</item>
     </plurals>
+    <string name="grammar_favourites">علاقه‌مندی‌ها</string>
+    <string name="grammar_recently_opened">تازه بازشده‌ها</string>
+    <string name="grammar_add_favourite">افزودن به علاقه‌مندی‌ها</string>
+    <string name="grammar_remove_favourite">حذف از علاقه‌مندی‌ها</string>
+    <string name="grammar_export">خروجی یادداشت</string>
+    <string name="grammar_share_text">اشتراک‌گذاری به صورت متن</string>
+    <string name="grammar_save_markdown">ذخیره به صورت فایل Markdown</string>
+    <string name="grammar_save_success">فایل Markdown ذخیره شد</string>
+    <string name="grammar_save_failure">ذخیرهٔ فایل Markdown ممکن نشد</string>
 </resources>
