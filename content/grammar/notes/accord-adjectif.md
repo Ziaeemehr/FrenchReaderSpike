@@ -3,10 +3,10 @@ id: accord-adjectif
 group: basics
 level: A1
 title_fr: "L'accord et la place de l'adjectif"
-title_fa: "تطابق و جای صفت"
+title_fa: "هماهنگی و جای صفت"
 aliases_fr: [accord de l'adjectif, adjectif féminin, adjectif pluriel, place de l'adjectif, bel nouvel vieil]
-aliases_fa: [تطابق صفت, صفت مؤنث, جای صفت, صفت قبل یا بعد از اسم]
-related: [genre-et-nombre, articles]
+aliases_fa: [هماهنگی صفت, تطابق صفت, صفت مؤنث, جای صفت, صفت قبل یا بعد از اسم]
+related: [genre-et-nombre, articles, comparatif-superlatif]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

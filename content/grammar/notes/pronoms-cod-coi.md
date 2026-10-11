@@ -6,7 +6,7 @@ title_fr: "Les pronoms COD et COI"
 title_fa: "ضمیرهای مفعولی: le، la، les و lui، leur"
 aliases_fr: [pronoms compléments, COD, COI, le la les, lui leur, pronom complément d'objet direct, pronom complément d'objet indirect]
 aliases_fa: [ضمیر مفعولی, مفعول مستقیم, مفعول غیرمستقیم, فرق le و lui, lui یعنی چه]
-related: [pronom-y, pronom-en, negation, passe-compose, qui-vs-que]
+related: [pronom-y, pronom-en, negation, passe-compose, qui-vs-que, imperatif]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

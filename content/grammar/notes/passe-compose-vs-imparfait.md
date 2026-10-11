@@ -6,7 +6,7 @@ title_fr: "Passé composé ou imparfait ?"
 title_fa: "فرق passé composé و imparfait"
 aliases_fr: [passé composé ou imparfait, passé composé vs imparfait, différence passé composé imparfait]
 aliases_fa: [فرق ماضی ساده و استمراری, کدام زمان گذشته, تفاوت passé composé و imparfait]
-related: [passe-compose, imparfait, depuis-pendant-il-y-a, savoir-vs-connaitre]
+related: [passe-compose, imparfait, depuis-pendant-il-y-a, savoir-vs-connaitre, plus-que-parfait]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

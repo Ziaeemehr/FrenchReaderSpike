@@ -6,7 +6,7 @@ title_fr: "La négation"
 title_fa: "منفی‌کردن جمله"
 aliases_fr: [négation, ne pas, ne plus, ne jamais, ne rien, ne personne, ne que]
 aliases_fa: [نفی, جمله منفی, ne pas, دیگر نه, هرگز, هیچ‌چیز, هیچ‌کس]
-related: [articles, passe-compose, pronoms-cod-coi]
+related: [articles, passe-compose, pronoms-cod-coi, imperatif, verbes-pronominaux]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
