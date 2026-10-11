@@ -182,12 +182,8 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                         keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() })
                     )
                 }
-                item(key = "filters") {
-                    // One scrolling row: the two personal views first, then the level chips.
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                item(key = "views") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = view == VIEW_FAVOURITES,
                             onClick = { view = if (view == VIEW_FAVOURITES) VIEW_ALL else VIEW_FAVOURITES },
@@ -202,13 +198,21 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                             colors = chipColors,
                             leadingIcon = { Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp)) }
                         )
-                        if (allLevels.size > 1) allLevels.forEach { level ->
-                            FilterChip(
-                                selected = level in levels,
-                                onClick = { levels = if (level in levels) levels - level else levels + level },
-                                label = { Text(level) },
-                                colors = chipColors
-                            )
+                    }
+                }
+                // Levels keep a row of their own so they never scroll out of sight.
+                if (allLevels.size > 1) item(key = "levels") {
+                    // Level names are Latin (A1, B1), so the row reads left to right in every UI language.
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            allLevels.forEach { level ->
+                                FilterChip(
+                                    selected = level in levels,
+                                    onClick = { levels = if (level in levels) levels - level else levels + level },
+                                    label = { Text(level) },
+                                    colors = chipColors
+                                )
+                            }
                         }
                     }
                 }
