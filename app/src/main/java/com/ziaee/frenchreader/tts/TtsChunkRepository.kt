@@ -19,7 +19,23 @@ import java.util.concurrent.ConcurrentHashMap
  * لغات نشود").
  */
 private const val MAX_ATTEMPTS = 2
-private val synthesisLocks = ConcurrentHashMap<String, Mutex>()
+
+/** A per-audio-file lock that is dropped again once nobody holds or waits for it. */
+private class SynthesisLock {
+    val mutex = Mutex()
+    var users = 0
+}
+
+private val synthesisLocks = ConcurrentHashMap<String, SynthesisLock>()
+
+private suspend inline fun <T> withSynthesisLock(path: String, block: () -> T): T {
+    val lock = synthesisLocks.compute(path) { _, existing -> (existing ?: SynthesisLock()).also { it.users++ } }!!
+    try {
+        return lock.mutex.withLock { block() }
+    } finally {
+        synthesisLocks.compute(path) { _, existing -> existing?.takeIf { --it.users > 0 } }
+    }
+}
 
 class TtsChunkRepository(context: Context) {
     private val context = context.applicationContext
@@ -38,7 +54,7 @@ class TtsChunkRepository(context: Context) {
         // One synthesis per audio file at a time: a second request for the same
         // text waits for the first and then finds it in the cache, instead of two
         // writers interleaving in one file.
-        synthesisLocks.getOrPut(outFile.path) { Mutex() }.withLock {
+        withSynthesisLock(outFile.path) {
             cache.get(text, cacheVoice, ratePercent)?.let { return@withContext Result.success(it) }
             var lastError: Exception = IllegalStateException("Synthesis did not run")
             repeat(MAX_ATTEMPTS) {

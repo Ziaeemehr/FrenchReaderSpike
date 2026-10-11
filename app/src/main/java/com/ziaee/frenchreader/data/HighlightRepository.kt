@@ -12,8 +12,10 @@ class HighlightRepository(private val dao: HighlightDao) {
         // where the old colour would still show through.
         val absorbed = dao.overlapping(textId, startOffset, endOffset)
         val (start, end) = mergedHighlightRange(startOffset, endOffset, absorbed)
-        dao.insert(HighlightEntry(textId = textId, startOffset = start, endOffset = end, colorKey = colorKey))
-        absorbed.forEach { dao.deleteById(it.id) }
+        dao.insertReplacing(
+            HighlightEntry(textId = textId, startOffset = start, endOffset = end, colorKey = colorKey),
+            absorbed.map { it.id }
+        )
     }
 
     suspend fun updateColor(id: Long, colorKey: String) {
