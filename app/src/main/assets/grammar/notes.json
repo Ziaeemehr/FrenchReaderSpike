@@ -21,7 +21,9 @@
       "related": [
         "genre-et-nombre",
         "articles",
-        "comparatif-superlatif"
+        "comparatif-superlatif",
+        "adverbes",
+        "tout"
       ],
       "blocks": [
         {
@@ -184,7 +186,8 @@
       "related": [
         "articles",
         "genre-et-nombre",
-        "demonstratifs"
+        "demonstratifs",
+        "pronoms-possessifs"
       ],
       "blocks": [
         {
@@ -451,6 +454,165 @@
       ]
     },
     {
+      "id": "adverbes",
+      "group": "basics",
+      "level": "A2",
+      "titleFr": "Les adverbes en -ment et la place de l'adverbe",
+      "titleFa": "قیدها: ساخت با ‎-ment و جای قید",
+      "aliasesFr": [
+        "adverbes, adverbes en -ment, place de l'adverbe",
+        "lentement",
+        "vraiment",
+        "bien",
+        "souvent"
+      ],
+      "aliasesFa": [
+        "قید",
+        "قید حالت",
+        "ساخت قید",
+        "جای قید در جمله",
+        "فرق bon و bien"
+      ],
+      "related": [
+        "accord-adjectif",
+        "comparatif-superlatif",
+        "quantite",
+        "passe-compose"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "بیشتر قیدهای حالت از شکل مؤنث صفت و پایانهٔ `-ment` ساخته می‌شوند: `lente → lentement`. در جمله، قید معمولاً درست بعد از فعل صرف‌شده می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "قید فعل، صفت یا کل جمله را توصیف می‌کند: چطور (lentement)، چقدر (beaucoup)، چند وقت یک‌بار (souvent)، کی (hier)."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "adjectif au féminin + -ment",
+            "sujet + verbe + adverbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "قیدهایی مثل `souvent` و `bien` در جای معمول خود بعد از فعل صرف‌شده می‌آیند؛ قیدهای مربوط به کل جمله می‌توانند در آغاز جمله هم بیایند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Elle parle lentement.",
+              "fa": "او آهسته حرف می‌زند.",
+              "highlights": [
+                [
+                  11,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il a bien dormi.",
+              "fa": "او خوب خوابید.",
+              "highlights": [
+                [
+                  5,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Nous allons souvent au cinéma.",
+              "fa": "ما اغلب به سینما می‌رویم.",
+              "highlights": [
+                [
+                  12,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "C'est vraiment intéressant.",
+              "fa": "واقعاً جالب است.",
+              "highlights": [
+                [
+                  6,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Heureusement, il n'a pas plu.",
+              "fa": "خوشبختانه باران نبارید.",
+              "highlights": [
+                [
+                  0,
+                  12
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il souvent mange au restaurant.",
+          "right": "Il mange souvent au restaurant.",
+          "why": "در این جمله، جای معمول souvent بعد از فعل صرف‌شدهٔ mange است، نه بین il و mange."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "اگر صفت مذکر به مصوت ختم شود، `-ment` به همان شکل مذکر اضافه می‌شود: `vrai → vraiment`، `poli → poliment`، `absolu → absolument`."
+            },
+            {
+              "kind": "li",
+              "text": "صفت‌های مختوم به ‎-ant و ‎-ent: `courant → couramment`، `évident → évidemment`."
+            },
+            {
+              "kind": "li",
+              "text": "چند شکل بی‌قاعده: `gentil → gentiment`، `bref → brièvement`."
+            },
+            {
+              "kind": "li",
+              "text": "قیدِ `bon` می‌شود `bien` و قیدِ `mauvais` می‌شود `mal`: `Il chante bien.`"
+            },
+            {
+              "kind": "li",
+              "text": "در زمان‌های مرکب، قیدهای کوتاه و پرکاربرد (bien, mal, déjà, souvent, beaucoup, trop, toujours) بین فعل کمکی و participe passé می‌آیند: `J'ai beaucoup travaillé.`"
+            },
+            {
+              "kind": "li",
+              "text": "قیدهای بلندتر و قیدهای زمان و مکان معمولاً بعد از participe passé می‌آیند: `Il a parlé lentement.`، `Je l'ai vu hier.`"
+            },
+            {
+              "kind": "li",
+              "text": "قیدی که صفت را توصیف می‌کند پیش از آن می‌آید: `très grand`، `trop cher`."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "articles",
       "group": "basics",
       "level": "A1",
@@ -480,7 +642,9 @@
         "adjectifs-possessifs",
         "demonstratifs",
         "prepositions-de-lieu",
-        "comparatif-superlatif"
+        "comparatif-superlatif",
+        "quantite",
+        "tout"
       ],
       "blocks": [
         {
@@ -730,7 +894,9 @@
       ],
       "related": [
         "accord-adjectif",
-        "articles"
+        "articles",
+        "adverbes",
+        "pronoms-toniques"
       ],
       "blocks": [
         {
@@ -976,7 +1142,8 @@
       "related": [
         "articles",
         "adjectifs-possessifs",
-        "genre-et-nombre"
+        "genre-et-nombre",
+        "pronoms-possessifs"
       ],
       "blocks": [
         {
@@ -1427,7 +1594,8 @@
       ],
       "related": [
         "negation",
-        "qui-vs-que"
+        "qui-vs-que",
+        "discours-indirect"
       ],
       "blocks": [
         {
@@ -2173,6 +2341,482 @@
               },
               {
                 "text": "de chez Paul",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quantite",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "L'expression de la quantité",
+      "titleFa": "بیان مقدار: beaucoup de، trop، assez، peu",
+      "aliasesFr": [
+        "quantité",
+        "beaucoup de",
+        "trop de",
+        "assez de",
+        "peu de",
+        "un peu de",
+        "un kilo de",
+        "quelques",
+        "plusieurs"
+      ],
+      "aliasesFa": [
+        "مقدار",
+        "خیلی",
+        "زیاد",
+        "کافی",
+        "کم",
+        "چند",
+        "فرق très و beaucoup"
+      ],
+      "related": [
+        "articles",
+        "pronom-en",
+        "adverbes",
+        "comparatif-superlatif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "بعد از کلمه‌های مقدار مثل `beaucoup`، `trop`، `assez` و `peu`، برای بیان مقدار نامشخص از یک اسم معمولاً `de` بدون حرف تعریف می‌آید: `beaucoup de livres`. با فعل، همین کلمه‌ها بدون `de` بعد از فعل می‌آیند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "مقدار نامشخص: «خیلی»، «زیادی»، «به اندازهٔ کافی»، «کم»."
+            },
+            {
+              "kind": "li",
+              "text": "مقدار دقیق با واحد یا ظرف: «یک کیلو گوجه»، «یک لیوان آب»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "beaucoup / trop / assez / peu + de + nom",
+            "verbe + beaucoup / trop / assez / peu"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در این الگو، بعد از `beaucoup`، `trop`، `assez` و `peu` معمولاً `de` بدون حرف تعریف می‌آید؛ `de` پیش از مصوت یا h بی‌صدا به `d'` تبدیل می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il y a beaucoup de monde ce soir.",
+              "fa": "امشب خیلی شلوغ است.",
+              "highlights": [
+                [
+                  7,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Je n'ai pas assez d'argent.",
+              "fa": "پول کافی ندارم.",
+              "highlights": [
+                [
+                  12,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Tu manges trop de sucre.",
+              "fa": "تو زیادی شکر می‌خوری.",
+              "highlights": [
+                [
+                  10,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle a peu de temps libre.",
+              "fa": "او وقت آزاد کمی دارد.",
+              "highlights": [
+                [
+                  7,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je voudrais un kilo de tomates, s'il vous plaît.",
+              "fa": "یک کیلو گوجه‌فرنگی می‌خواستم، لطفاً.",
+              "highlights": [
+                [
+                  12,
+                  22
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je n'ai pas assez argent.",
+          "right": "Je n'ai pas assez d'argent.",
+          "why": "وقتی بعد از assez اسم می‌آید، de لازم است؛ پیش از argent به d' تبدیل می‌شود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`un peu de` (کمی، مثبت) با `peu de` (کم، منفی) فرق دارد: `J'ai un peu de temps.` (کمی وقت دارم.) و `J'ai peu de temps.` (وقت کمی دارم.)"
+            },
+            {
+              "kind": "li",
+              "text": "واحدها و ظرف‌ها هم با `de` می‌آیند: `un verre d'eau`، `une bouteille de vin`، `une tasse de thé`، `un morceau de pain`."
+            },
+            {
+              "kind": "li",
+              "text": "`quelques` (چند) و `plusieurs` (چندین) بدون `de` و با اسم جمع می‌آیند: `quelques amis`، `plusieurs fois`."
+            },
+            {
+              "kind": "li",
+              "text": "با صفت و قید، برای «خیلی» از `très` استفاده می‌شود، نه `beaucoup`: `très grand`، `très bien`."
+            },
+            {
+              "kind": "li",
+              "text": "`trop` و `assez` با صفت هم می‌آیند: `trop cher`، `assez grand`."
+            },
+            {
+              "kind": "li",
+              "text": "وقتی اسم با `en` جایگزین شود، کلمهٔ مقدار می‌ماند: `J'en ai beaucoup.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "با اسم",
+              "highlights": []
+            },
+            {
+              "text": "با فعل",
+              "highlights": []
+            },
+            {
+              "text": "با صفت",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "خیلی",
+                "highlights": []
+              },
+              {
+                "text": "beaucoup de",
+                "highlights": []
+              },
+              {
+                "text": "beaucoup",
+                "highlights": []
+              },
+              {
+                "text": "très",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "زیادی",
+                "highlights": []
+              },
+              {
+                "text": "trop de",
+                "highlights": []
+              },
+              {
+                "text": "trop",
+                "highlights": []
+              },
+              {
+                "text": "trop",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "کافی",
+                "highlights": []
+              },
+              {
+                "text": "assez de",
+                "highlights": []
+              },
+              {
+                "text": "assez",
+                "highlights": []
+              },
+              {
+                "text": "assez",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "کم",
+                "highlights": []
+              },
+              {
+                "text": "peu de",
+                "highlights": []
+              },
+              {
+                "text": "peu",
+                "highlights": []
+              },
+              {
+                "text": "peu",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tout",
+      "group": "basics",
+      "level": "A2",
+      "titleFr": "Tout, toute, tous, toutes",
+      "titleFa": "tout، toute، tous، toutes: همه، تمام، هر",
+      "aliasesFr": [
+        "tout",
+        "toute",
+        "tous",
+        "toutes",
+        "tous les jours",
+        "toute la journée",
+        "tout le monde"
+      ],
+      "aliasesFa": [
+        "همه",
+        "تمام",
+        "هر روز",
+        "همه‌چیز",
+        "فرق tout و tous"
+      ],
+      "related": [
+        "accord-adjectif",
+        "articles",
+        "quantite"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`tout` پیش از اسم یعنی «همهٔ / تمامِ» و در جنس و عدد با آن اسم هماهنگ می‌شود: `tout, toute, tous, toutes`. بدون اسم، `tout` یعنی «همه‌چیز» و `tous` یعنی «همه»."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "کلِ یک چیز: «تمام روز»."
+            },
+            {
+              "kind": "li",
+              "text": "همهٔ اعضای یک گروه: «همهٔ دوستانم»."
+            },
+            {
+              "kind": "li",
+              "text": "تکرار: «هر روز»."
+            },
+            {
+              "kind": "li",
+              "text": "به‌تنهایی به‌عنوان ضمیر: «همه‌چیز آماده است.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "tout / toute / tous / toutes + le, la, les (ou mon, ce …) + nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از `tout` معمولاً یک حرف تعریف یا صفت ملکی یا اشاره می‌آید و بعد اسم."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'ai travaillé toute la journée.",
+              "fa": "تمام روز کار کردم.",
+              "highlights": [
+                [
+                  15,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Tous mes amis sont venus.",
+              "fa": "همهٔ دوستانم آمدند.",
+              "highlights": [
+                [
+                  0,
+                  4
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Elle va à la piscine tous les jours.",
+              "fa": "او هر روز به استخر می‌رود.",
+              "highlights": [
+                [
+                  21,
+                  25
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Tout est prêt.",
+              "fa": "همه‌چیز آماده است.",
+              "highlights": [
+                [
+                  0,
+                  4
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Ils sont tous partis.",
+              "fa": "همه‌شان رفتند.",
+              "highlights": [
+                [
+                  9,
+                  13
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je travaille tout les jours.",
+          "right": "Je travaille tous les jours.",
+          "why": "les jours مذکر جمع است، پس شکل جمع مذکر یعنی tous لازم است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "با اسم مفرد معمولاً معنی «تمامِ» می‌دهد: `toute la journée` (تمام روز). با اسم جمع معنی «همهٔ» می‌دهد: `tous mes amis` (همهٔ دوستانم)؛ و با عبارت‌های زمانی می‌تواند معنی تکرار داشته باشد: `tous les jours` (هر روز)."
+            },
+            {
+              "kind": "li",
+              "text": "`tout le monde` یعنی «همه» و فعلش مفرد است: `Tout le monde est là.`"
+            },
+            {
+              "kind": "li",
+              "text": "تلفظ: در `tous les jours` حرف s خوانده نمی‌شود؛ وقتی `tous` ضمیر است خوانده می‌شود: `Ils sont tous là.`"
+            },
+            {
+              "kind": "li",
+              "text": "`tous les deux jours` یعنی «یک روز در میان»."
+            },
+            {
+              "kind": "li",
+              "text": "`tout` به‌عنوان قید یعنی «کاملاً، خیلی»: `Il est tout content.`"
+            },
+            {
+              "kind": "li",
+              "text": "چند عبارت ثابت: `tout de suite` (فوراً)، `tout à fait` (کاملاً)، `tout à l'heure` (چند لحظهٔ دیگر یا چند لحظه پیش)، `pas du tout` (اصلاً)."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "مفرد",
+              "highlights": []
+            },
+            {
+              "text": "جمع",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "مذکر",
+                "highlights": []
+              },
+              {
+                "text": "tout le monde",
+                "highlights": []
+              },
+              {
+                "text": "tous les jours",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "مؤنث",
+                "highlights": []
+              },
+              {
+                "text": "toute la journée",
+                "highlights": []
+              },
+              {
+                "text": "toutes les semaines",
                 "highlights": []
               }
             ]
@@ -2969,7 +3613,8 @@
       "related": [
         "passe-compose",
         "dont-et-ou",
-        "pronoms-cod-coi"
+        "pronoms-cod-coi",
+        "relatifs-composes"
       ],
       "blocks": [
         {
@@ -3441,7 +4086,8 @@
       ],
       "related": [
         "qui-vs-que",
-        "pronom-en"
+        "pronom-en",
+        "relatifs-composes"
       ],
       "blocks": [
         {
@@ -3697,7 +4343,9 @@
         "passe-compose",
         "articles",
         "dont-et-ou",
-        "pronoms-cod-coi"
+        "pronoms-cod-coi",
+        "quantite",
+        "pronoms-toniques"
       ],
       "blocks": [
         {
@@ -3863,7 +4511,8 @@
       "related": [
         "pronom-en",
         "pronoms-cod-coi",
-        "prepositions-de-lieu"
+        "prepositions-de-lieu",
+        "pronoms-toniques"
       ],
       "blocks": [
         {
@@ -4021,7 +4670,8 @@
         "negation",
         "passe-compose",
         "qui-vs-que",
-        "imperatif"
+        "imperatif",
+        "pronoms-toniques"
       ],
       "blocks": [
         {
@@ -4286,6 +4936,809 @@
               },
               {
                 "text": "leur",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pronoms-possessifs",
+      "group": "pronouns",
+      "level": "A2",
+      "titleFr": "Les pronoms possessifs : le mien, le tien, le sien",
+      "titleFa": "ضمیرهای ملکی: le mien، le tien، le sien",
+      "aliasesFr": [
+        "pronoms possessifs",
+        "le mien",
+        "la mienne",
+        "le tien",
+        "le sien",
+        "le nôtre",
+        "le vôtre",
+        "le leur"
+      ],
+      "aliasesFa": [
+        "ضمیر ملکی",
+        "مال من",
+        "مال تو",
+        "le mien یعنی چه"
+      ],
+      "related": [
+        "adjectifs-possessifs",
+        "pronoms-toniques",
+        "demonstratifs"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "ضمیر ملکی جای «صفت ملکی + اسم» را می‌گیرد تا اسم تکرار نشود: `mon livre` می‌شود `le mien`. در جنس و عدد با اسمی که جایش آمده هماهنگ است و همیشه با حرف تعریف می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای گفتن «مالِ من، مالِ تو …» وقتی اسم قبلاً گفته شده است: «این خودکار من نیست، مال توست.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "le / la / les + mien, tien, sien, nôtre, vôtre, leur"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "حرف تعریف و پایانهٔ ضمیر را اسمی تعیین می‌کند که حذف شده است، نه مالک: برای `la voiture` می‌گوییم `la mienne`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Ce n'est pas mon stylo, c'est le tien.",
+              "fa": "این خودکار من نیست، مال توست.",
+              "highlights": [
+                [
+                  30,
+                  37
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Ma voiture est en panne ; je peux prendre la tienne ?",
+              "fa": "ماشینم خراب است؛ می‌توانم مال تو را بردارم؟",
+              "highlights": [
+                [
+                  42,
+                  51
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Leurs enfants sont plus âgés que les nôtres.",
+              "fa": "بچه‌های آن‌ها از بچه‌های ما بزرگ‌ترند.",
+              "highlights": [
+                [
+                  33,
+                  43
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "J'ai mes clés, mais Paul a perdu les siennes.",
+              "fa": "من کلیدهایم را دارم، ولی پل کلیدهای خودش را گم کرده است.",
+              "highlights": [
+                [
+                  33,
+                  44
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Notre maison est petite ; la leur est immense.",
+              "fa": "خانهٔ ما کوچک است؛ مال آن‌ها خیلی بزرگ است.",
+              "highlights": [
+                [
+                  26,
+                  33
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Ce livre est le mon.",
+          "right": "Ce livre est le mien.",
+          "why": "mon صفت ملکی است و فقط پیش از اسم می‌آید. وقتی اسم حذف می‌شود، ضمیر ملکی یعنی le mien لازم است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`nôtre` و `vôtre` در ضمیر ملکی با ô نوشته می‌شوند؛ صفت‌های ملکی `notre` و `votre` بدون آن."
+            },
+            {
+              "kind": "li",
+              "text": "حرف تعریف با `à` و `de` ادغام می‌شود: `Je pense aux miens.`، `Je parle du mien.`"
+            },
+            {
+              "kind": "li",
+              "text": "`le sien` هم یعنی «مالِ آن مرد» و هم «مالِ آن زن»؛ شکلش را اسمِ حذف‌شده تعیین می‌کند."
+            },
+            {
+              "kind": "li",
+              "text": "راه ساده‌تر برای گفتن مالکیت، `être à` + ضمیر تأکیدی است: `Ce livre est à moi.`"
+            },
+            {
+              "kind": "li",
+              "text": "عبارت رایج هنگام نوشیدن به سلامتی: `À la vôtre !`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "مالک",
+              "highlights": []
+            },
+            {
+              "text": "مذکر",
+              "highlights": []
+            },
+            {
+              "text": "مؤنث",
+              "highlights": []
+            },
+            {
+              "text": "جمع",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "je",
+                "highlights": []
+              },
+              {
+                "text": "le mien",
+                "highlights": []
+              },
+              {
+                "text": "la mienne",
+                "highlights": []
+              },
+              {
+                "text": "les miens / les miennes",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "tu",
+                "highlights": []
+              },
+              {
+                "text": "le tien",
+                "highlights": []
+              },
+              {
+                "text": "la tienne",
+                "highlights": []
+              },
+              {
+                "text": "les tiens / les tiennes",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il / elle",
+                "highlights": []
+              },
+              {
+                "text": "le sien",
+                "highlights": []
+              },
+              {
+                "text": "la sienne",
+                "highlights": []
+              },
+              {
+                "text": "les siens / les siennes",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "le nôtre",
+                "highlights": []
+              },
+              {
+                "text": "la nôtre",
+                "highlights": []
+              },
+              {
+                "text": "les nôtres",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "vous",
+                "highlights": []
+              },
+              {
+                "text": "le vôtre",
+                "highlights": []
+              },
+              {
+                "text": "la vôtre",
+                "highlights": []
+              },
+              {
+                "text": "les vôtres",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ils / elles",
+                "highlights": []
+              },
+              {
+                "text": "le leur",
+                "highlights": []
+              },
+              {
+                "text": "la leur",
+                "highlights": []
+              },
+              {
+                "text": "les leurs",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pronoms-toniques",
+      "group": "pronouns",
+      "level": "A2",
+      "titleFr": "Les pronoms toniques : moi, toi, lui, eux",
+      "titleFa": "ضمیرهای تأکیدی: moi، toi، lui، eux",
+      "aliasesFr": [
+        "pronoms toniques, moi toi lui elle, nous vous eux elles, avec moi, c'est moi",
+        "moi aussi"
+      ],
+      "aliasesFa": [
+        "ضمیر تأکیدی",
+        "ضمیر منفصل",
+        "moi یعنی چه",
+        "بعد از حرف اضافه",
+        "فرق je و moi"
+      ],
+      "related": [
+        "pronoms-cod-coi",
+        "pronom-y",
+        "comparatif-superlatif",
+        "imperatif",
+        "pronom-en",
+        "pronoms-possessifs"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "ضمیرهای تأکیدی `moi, toi, lui, elle, nous, vous, eux, elles` هستند. بعد از حرف اضافه، بعد از `c'est`، در جواب کوتاه و برای تأکید بر فاعل می‌آیند. ضمیرهای فاعلی مثل `je` و `il` در این جاها نمی‌آیند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "تأکید: «من که چای را ترجیح می‌دهم.»"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از حرف اضافه: «با ما می‌آیی؟»"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `c'est`: «او بود که زنگ زد.»"
+            },
+            {
+              "kind": "li",
+              "text": "جواب بدون فعل: «کی قهوه می‌خواهد؟ — من!»"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `que` در مقایسه: «او از تو بلندتر است.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "préposition + moi / toi / lui / elle / nous / vous / eux / elles",
+            "c'est + pronom tonique"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "ضمیر تأکیدی جای ضمیر فاعلی را نمی‌گیرد؛ در تأکید، هر دو با هم می‌آیند: `Moi, je …`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Moi, je préfère le thé.",
+              "fa": "من که چای را ترجیح می‌دهم.",
+              "highlights": [
+                [
+                  0,
+                  3
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Tu viens avec nous ?",
+              "fa": "با ما می‌آیی؟",
+              "highlights": [
+                [
+                  14,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "C'est lui qui a téléphoné.",
+              "fa": "او بود که زنگ زد.",
+              "highlights": [
+                [
+                  6,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Qui veut du café ? — Moi !",
+              "fa": "کی قهوه می‌خواهد؟ — من!",
+              "highlights": [
+                [
+                  21,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Elle est plus grande que toi.",
+              "fa": "او از تو بلندتر است.",
+              "highlights": [
+                [
+                  25,
+                  28
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je vais au cinéma avec ils.",
+          "right": "Je vais au cinéma avec eux.",
+          "why": "بعد از حرف اضافه ضمیر تأکیدی می‌آید، نه ضمیر فاعلی."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بعد از `et` و `ou` هم ضمیر تأکیدی می‌آید: `Paul et moi`، `toi ou lui`."
+            },
+            {
+              "kind": "li",
+              "text": "با `-même` یعنی «خودم، خودت …»: `moi-même`، `elle-même`، `eux-mêmes`."
+            },
+            {
+              "kind": "li",
+              "text": "`être à` + ضمیر تأکیدی مالکیت را نشان می‌دهد: `Ce livre est à moi.` (این کتاب مال من است.)"
+            },
+            {
+              "kind": "li",
+              "text": "`chez` + ضمیر تأکیدی یعنی خانهٔ کسی: `chez moi`، `chez eux`."
+            },
+            {
+              "kind": "li",
+              "text": "با فعل‌هایی مثل `penser à` و `parler de`، شخص با ضمیر تأکیدی می‌آید: `Je pense à elle.`، `Nous parlons de lui.`"
+            },
+            {
+              "kind": "li",
+              "text": "ضمیر تأکیدیِ `lui` فقط مذکر است و مؤنثش `elle` است؛ ولی ضمیر COIِ `lui` برای هر دو جنس به کار می‌رود."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "فاعلی",
+              "highlights": []
+            },
+            {
+              "text": "تأکیدی",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "je",
+                "highlights": []
+              },
+              {
+                "text": "moi",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "tu",
+                "highlights": []
+              },
+              {
+                "text": "toi",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il",
+                "highlights": []
+              },
+              {
+                "text": "lui",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "elle",
+                "highlights": []
+              },
+              {
+                "text": "elle",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "nous",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "vous",
+                "highlights": []
+              },
+              {
+                "text": "vous",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ils",
+                "highlights": []
+              },
+              {
+                "text": "eux",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "elles",
+                "highlights": []
+              },
+              {
+                "text": "elles",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "relatifs-composes",
+      "group": "pronouns",
+      "level": "B1",
+      "titleFr": "Les pronoms relatifs composés : lequel, auquel, duquel",
+      "titleFa": "ضمیرهای موصولی مرکب: lequel، auquel، duquel",
+      "aliasesFr": [
+        "pronoms relatifs composés",
+        "lequel",
+        "laquelle",
+        "auquel",
+        "duquel",
+        "pour laquelle",
+        "avec lequel",
+        "avec qui"
+      ],
+      "aliasesFa": [
+        "ضمیر موصولی مرکب",
+        "lequel یعنی چه",
+        "که با آن",
+        "که برای آن",
+        "بعد از حرف اضافه"
+      ],
+      "related": [
+        "qui-vs-que",
+        "dont-et-ou",
+        "prepositions-de-lieu"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "در جملهٔ موصولی، بعد از حرف اضافه‌هایی مثل `avec`، `pour`، `sur` و `à` از `lequel, laquelle, lesquels, lesquelles` استفاده می‌شود. با `de` ساده معمولاً `dont` می‌آید. این ضمیر با اسمِ پیش از خود هماهنگ می‌شود و با `à` و `de` ادغام می‌شود: `auquel`، `duquel`."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای ساختن «که با آن»، «که برایش»، «که رویش»، «که به آن»: «خودکاری که با آن امضا کردم»."
+            },
+            {
+              "kind": "p",
+              "text": "برای اشخاص معمولاً به‌جای آن «حرف اضافه + `qui`» می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "nom + préposition + lequel / laquelle / lesquels / lesquelles + sujet + verbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "حرف اضافه از رابطهٔ اسم با جملهٔ موصولی می‌آید: از `penser à ce projet` می‌رسیم به `le projet auquel je pense` و از `signer avec ce stylo` به `le stylo avec lequel j'ai signé`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "C'est la raison pour laquelle je suis venu.",
+              "fa": "این دلیلی است که به خاطرش آمده‌ام.",
+              "highlights": [
+                [
+                  16,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Voici le stylo avec lequel j'ai signé.",
+              "fa": "این خودکاری است که با آن امضا کردم.",
+              "highlights": [
+                [
+                  15,
+                  26
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Le projet auquel je pense est ambitieux.",
+              "fa": "پروژه‌ای که به آن فکر می‌کنم بلندپروازانه است.",
+              "highlights": [
+                [
+                  10,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "La table sur laquelle j'ai posé mes clés est dans l'entrée.",
+              "fa": "میزی که کلیدهایم را رویش گذاشتم در ورودی است.",
+              "highlights": [
+                [
+                  9,
+                  21
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Les amis avec qui je voyage sont très drôles.",
+              "fa": "دوستانی که با آن‌ها سفر می‌کنم خیلی بامزه‌اند.",
+              "highlights": [
+                [
+                  9,
+                  17
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "C'est la raison pour lequel je suis venu.",
+          "right": "C'est la raison pour laquelle je suis venu.",
+          "why": "ضمیر موصولی با اسمِ پیش از خود هماهنگ می‌شود؛ la raison مؤنث است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ادغام با `à`: `auquel`، `auxquels`، `auxquelles`؛ ولی `à laquelle` جدا می‌ماند."
+            },
+            {
+              "kind": "li",
+              "text": "ادغام با `de`: `duquel`، `desquels`، `desquelles`؛ ولی `de laquelle` جدا می‌ماند."
+            },
+            {
+              "kind": "li",
+              "text": "برای اشخاص، «حرف اضافه + `qui`» رایج‌تر است: `l'ami à qui j'écris`، `la collègue avec qui je travaille`."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از حرف اضافهٔ مرکبی که به `de` ختم می‌شود (`près de`، `à côté de`)، به‌جای `dont` از `duquel`، `de laquelle`، `desquels` یا `desquelles` متناسب با جنس و عدد اسم استفاده می‌شود: `le parc près duquel j'habite`، `la gare près de laquelle j'habite`."
+            },
+            {
+              "kind": "li",
+              "text": "برای مکان، `où` اغلب جای `dans lequel` را می‌گیرد: `la ville où j'habite`."
+            },
+            {
+              "kind": "li",
+              "text": "`lequel` ضمیر پرسشی هم هست: `Lequel préfères-tu ?` (کدام را ترجیح می‌دهی؟)"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "مذکر",
+              "highlights": []
+            },
+            {
+              "text": "مؤنث",
+              "highlights": []
+            },
+            {
+              "text": "مذکر جمع",
+              "highlights": []
+            },
+            {
+              "text": "مؤنث جمع",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "ساده",
+                "highlights": []
+              },
+              {
+                "text": "lequel",
+                "highlights": []
+              },
+              {
+                "text": "laquelle",
+                "highlights": []
+              },
+              {
+                "text": "lesquels",
+                "highlights": []
+              },
+              {
+                "text": "lesquelles",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "با à",
+                "highlights": []
+              },
+              {
+                "text": "auquel",
+                "highlights": []
+              },
+              {
+                "text": "à laquelle",
+                "highlights": []
+              },
+              {
+                "text": "auxquels",
+                "highlights": []
+              },
+              {
+                "text": "auxquelles",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "با de",
+                "highlights": []
+              },
+              {
+                "text": "duquel",
+                "highlights": []
+              },
+              {
+                "text": "de laquelle",
+                "highlights": []
+              },
+              {
+                "text": "desquels",
+                "highlights": []
+              },
+              {
+                "text": "desquelles",
                 "highlights": []
               }
             ]
@@ -4665,6 +6118,400 @@
             {
               "kind": "li",
               "text": "در گفتار، indicatif بعد از `bien que` هم شنیده می‌شود، ولی در نوشتار و آزمون غلط به شمار می‌آید."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "discours-indirect",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Le discours indirect",
+      "titleFa": "نقل قول غیرمستقیم",
+      "aliasesFr": [
+        "discours indirect",
+        "discours rapporté",
+        "il dit que",
+        "il a dit que",
+        "demander si",
+        "ce que",
+        "concordance des temps"
+      ],
+      "aliasesFa": [
+        "نقل قول غیرمستقیم",
+        "نقل قول",
+        "گفت که",
+        "پرسید که آیا",
+        "تطابق زمان‌ها"
+      ],
+      "related": [
+        "plus-que-parfait",
+        "conditionnel-present",
+        "imparfait",
+        "interrogation"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای نقل حرف دیگران بدون گیومه، جملهٔ خبری با `que`، سؤال بله/خیر با `si`، سؤال «چه» با `ce que` (برای مفعول) یا `ce qui` (برای فاعل) و دستور با `de` + مصدر می‌آید. اگر فعلِ نقل در گذشته باشد، زمان فعل‌ها معمولاً یک پله عقب می‌رود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "نقل خبر: «می‌گوید که خسته است.»"
+            },
+            {
+              "kind": "li",
+              "text": "نقل سؤال: «از من پرسید که آیا می‌آیم.»"
+            },
+            {
+              "kind": "li",
+              "text": "نقل دستور یا درخواست: «استاد به ما گفت بنشینیم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "dire que + phrase",
+            "demander si + phrase",
+            "demander ce que + phrase",
+            "dire de + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در سؤال غیرمستقیم ترتیب جمله عادی است: نه وارونگی می‌آید و نه `est-ce que`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il dit qu'il est fatigué.",
+              "fa": "او می‌گوید که خسته است.",
+              "highlights": [
+                [
+                  7,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle m'a demandé si je venais.",
+              "fa": "از من پرسید که آیا می‌آیم.",
+              "highlights": [
+                [
+                  17,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il a dit qu'il avait fini son travail.",
+              "fa": "گفت که کارش را تمام کرده بود.",
+              "highlights": [
+                [
+                  9,
+                  12
+                ],
+                [
+                  15,
+                  25
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Je ne sais pas ce qu'il veut.",
+              "fa": "نمی‌دانم چه می‌خواهد.",
+              "highlights": [
+                [
+                  15,
+                  21
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Le professeur nous a dit de nous asseoir.",
+              "fa": "استاد به ما گفت بنشینیم.",
+              "highlights": [
+                [
+                  25,
+                  27
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Elle m'a demandé est-ce que je venais.",
+          "right": "Elle m'a demandé si je venais.",
+          "why": "در سؤال غیرمستقیم est-ce que نمی‌آید؛ سؤال بله/خیر با si نقل می‌شود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "اگر فعلِ نقل در زمان حال باشد (`il dit que`)، زمان‌ها تغییر نمی‌کنند."
+            },
+            {
+              "kind": "li",
+              "text": "ضمیرها و صفت‌های ملکی با گوینده عوض می‌شوند: `« Je suis prêt. »` می‌شود `Il dit qu'il est prêt.`"
+            },
+            {
+              "kind": "li",
+              "text": "`qu'est-ce que` به `ce que` و `qu'est-ce qui` به `ce qui` تبدیل می‌شود: `Il demande ce qui se passe.`"
+            },
+            {
+              "kind": "li",
+              "text": "کلمه‌های پرسشی دیگر می‌مانند: `Il demande où tu habites.`"
+            },
+            {
+              "kind": "li",
+              "text": "`si` پیش از `il` و `ils` به `s'` تبدیل می‌شود: `Elle demande s'il vient.`"
+            },
+            {
+              "kind": "li",
+              "text": "قیدهای زمان هم معمولاً عوض می‌شوند: `demain` به `le lendemain`، `hier` به `la veille`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "گفتهٔ اصلی",
+              "highlights": []
+            },
+            {
+              "text": "بعد از فعل نقل در گذشته",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "présent",
+                "highlights": []
+              },
+              {
+                "text": "imparfait",
+                "highlights": []
+              },
+              {
+                "text": "Il a dit qu'il était prêt.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "passé composé",
+                "highlights": []
+              },
+              {
+                "text": "plus-que-parfait",
+                "highlights": []
+              },
+              {
+                "text": "Il a dit qu'il avait fini.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "futur simple",
+                "highlights": []
+              },
+              {
+                "text": "conditionnel présent",
+                "highlights": []
+              },
+              {
+                "text": "Il a dit qu'il viendrait.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gerondif",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Le gérondif : en + participe présent",
+      "titleFa": "gérondif: در حالِ …، با …کردن",
+      "aliasesFr": [
+        "gérondif",
+        "en faisant",
+        "participe présent",
+        "en + -ant",
+        "tout en"
+      ],
+      "aliasesFa": [
+        "در حال",
+        "همزمان",
+        "با انجام دادن",
+        "وجه وصفی",
+        "قید حالت فعلی"
+      ],
+      "related": [
+        "present",
+        "avant-que",
+        "pronom-en"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "gérondif با `en` و شکل ‎-ant فعل ساخته می‌شود: `en parlant`. نشان می‌دهد دو کار همزمان از یک فاعل سر می‌زند، یا کاری به چه شیوه‌ای انجام می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "همزمانی: «در حال گوش دادن به موسیقی کار می‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "شیوه یا وسیله: «با تماشای فیلم فرانسوی یاد گرفتم.»"
+            },
+            {
+              "kind": "li",
+              "text": "زمان: «وقتی به ایستگاه رسیدم، پل را دیدم.»"
+            },
+            {
+              "kind": "li",
+              "text": "گاهی شرط: «اگر زودتر راه بیفتی، به ترافیک نمی‌خوری.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "en + radical de « nous » au présent + -ant"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "ریشه را از صرف `nous` در زمان حال بگیرید و به‌جای `-ons` پایانهٔ `-ant` بگذارید: `nous parlons → en parlant`، `nous finissons → en finissant`، `nous prenons → en prenant`. فاعلِ gérondif همان فاعلِ فعل اصلی است."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il travaille en écoutant de la musique.",
+              "fa": "او در حال گوش دادن به موسیقی کار می‌کند.",
+              "highlights": [
+                [
+                  13,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "J'ai appris le français en regardant des films.",
+              "fa": "با تماشای فیلم، فرانسوی یاد گرفتم.",
+              "highlights": [
+                [
+                  24,
+                  36
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "En arrivant à la gare, j'ai vu Paul.",
+              "fa": "وقتی به ایستگاه رسیدم، پل را دیدم.",
+              "highlights": [
+                [
+                  0,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle s'est blessée en faisant du ski.",
+              "fa": "او هنگام اسکی کردن آسیب دید.",
+              "highlights": [
+                [
+                  19,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "En partant plus tôt, tu éviteras les embouteillages.",
+              "fa": "اگر زودتر راه بیفتی، به ترافیک نمی‌خوری.",
+              "highlights": [
+                [
+                  0,
+                  10
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il travaille en écouter de la musique.",
+          "right": "Il travaille en écoutant de la musique.",
+          "why": "در gérondif بعد از en شکل ‎-ant فعل می‌آید، نه مصدر."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "سه شکل بی‌قاعده: être `étant`، avoir `ayant`، savoir `sachant`."
+            },
+            {
+              "kind": "li",
+              "text": "تغییر املایی: `en mangeant`، `en commençant`."
+            },
+            {
+              "kind": "li",
+              "text": "ضمیر پیش از شکل ‎-ant می‌آید: `en me levant`، `en le voyant`."
+            },
+            {
+              "kind": "li",
+              "text": "چون فاعل هر دو فعل یکی است، در `J'ai vu Paul en sortant du cinéma` کسی که از سینما بیرون می‌آمد «من» هستم، نه پل."
+            },
+            {
+              "kind": "li",
+              "text": "`tout en` بر همزمانی یا تضاد تأکید می‌کند: `Tout en travaillant, il fait des études.` (در عین حال که کار می‌کند، درس هم می‌خواند.)"
             }
           ]
         }
@@ -5336,6 +7183,228 @@
       ]
     },
     {
+      "id": "voix-passive",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "La voix passive",
+      "titleFa": "جملهٔ مجهول (voix passive)",
+      "aliasesFr": [
+        "voix passive",
+        "passif",
+        "être + participe passé",
+        "par",
+        "a été fait"
+      ],
+      "aliasesFa": [
+        "مجهول",
+        "فعل مجهول",
+        "جمله مجهول",
+        "توسط"
+      ],
+      "related": [
+        "passe-compose",
+        "accord-adjectif",
+        "futur"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "در جملهٔ مجهول، مفعول مستقیمِ جملهٔ معلوم فاعل می‌شود. فعل با `être` و participe passé ساخته می‌شود و کنندهٔ کار، اگر گفته شود، معمولاً با `par` می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "وقتی نتیجه یا چیزی که کار رویش انجام شده مهم‌تر از کنندهٔ کار است: «خانه فروخته شده است.»"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی کنندهٔ کار معلوم نیست یا گفتنش لازم نیست: «نتایج فردا اعلام می‌شود.»"
+            },
+            {
+              "kind": "p",
+              "text": "در گفتار روزمره، فرانسوی اغلب به‌جای مجهول از `on` با جملهٔ معلوم استفاده می‌کند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + être (conjugué) + participe passé + par + agent"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "زمان جمله را فعل `être` نشان می‌دهد و participe passé در جنس و عدد با فاعل هماهنگ می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Ce roman a été écrit par Victor Hugo.",
+              "fa": "این رمان را ویکتور هوگو نوشته است.",
+              "highlights": [
+                [
+                  9,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "La maison est vendue.",
+              "fa": "خانه فروخته شده است.",
+              "highlights": [
+                [
+                  10,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Les résultats seront annoncés demain.",
+              "fa": "نتایج فردا اعلام خواهد شد.",
+              "highlights": [
+                [
+                  14,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "La voiture a été réparée par le garagiste.",
+              "fa": "ماشین را تعمیرکار تعمیر کرد.",
+              "highlights": [
+                [
+                  11,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Le voleur a été arrêté par la police.",
+              "fa": "دزد توسط پلیس دستگیر شد.",
+              "highlights": [
+                [
+                  10,
+                  22
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "La lettre a été écrit par Marie.",
+          "right": "La lettre a été écrite par Marie.",
+          "why": "در مجهول، participe passé با فاعل هماهنگ می‌شود؛ la lettre مؤنث است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "تبدیل معلوم به مجهول: `La police a arrêté le voleur.` می‌شود `Le voleur a été arrêté par la police.`"
+            },
+            {
+              "kind": "li",
+              "text": "فقط فعل‌هایی که مفعول مستقیم دارند مجهول می‌شوند. فعلی مثل `téléphoner à` مجهول ندارد."
+            },
+            {
+              "kind": "li",
+              "text": "کنندهٔ کار اغلب گفته نمی‌شود: `La banque a été cambriolée.` (از بانک سرقت شده است.)"
+            },
+            {
+              "kind": "li",
+              "text": "جایگزین رایج در گفتار، `on` با جملهٔ معلوم است: `On a volé mon vélo.` (دوچرخه‌ام را دزدیده‌اند.)"
+            },
+            {
+              "kind": "li",
+              "text": "با بعضی فعل‌های احساس و حالت، به‌جای `par` گاهی `de` می‌آید: `Il est aimé de tous.`"
+            },
+            {
+              "kind": "li",
+              "text": "مجهول را با passé composéِ فعل‌هایی که با `être` صرف می‌شوند اشتباه نگیرید: `Elle est arrivée.` معلوم است."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "زمان",
+              "highlights": []
+            },
+            {
+              "text": "معلوم",
+              "highlights": []
+            },
+            {
+              "text": "مجهول",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "présent",
+                "highlights": []
+              },
+              {
+                "text": "On vend la maison.",
+                "highlights": []
+              },
+              {
+                "text": "La maison est vendue.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "passé composé",
+                "highlights": []
+              },
+              {
+                "text": "On a vendu la maison.",
+                "highlights": []
+              },
+              {
+                "text": "La maison a été vendue.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "futur simple",
+                "highlights": []
+              },
+              {
+                "text": "On vendra la maison.",
+                "highlights": []
+              },
+              {
+                "text": "La maison sera vendue.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "conditionnel-present",
       "group": "tenses",
       "level": "B1",
@@ -5359,7 +7428,8 @@
       "related": [
         "futur",
         "phrases-avec-si",
-        "imparfait"
+        "imparfait",
+        "discours-indirect"
       ],
       "blocks": [
         {
@@ -5520,7 +7590,8 @@
       "related": [
         "present",
         "conditionnel-present",
-        "phrases-avec-si"
+        "phrases-avec-si",
+        "passe-recent"
       ],
       "blocks": [
         {
@@ -5766,7 +7837,8 @@
         "depuis-pendant-il-y-a",
         "present",
         "conditionnel-present",
-        "plus-que-parfait"
+        "plus-que-parfait",
+        "discours-indirect"
       ],
       "blocks": [
         {
@@ -6173,7 +8245,9 @@
         "negation",
         "pronoms-cod-coi",
         "plus-que-parfait",
-        "verbes-pronominaux"
+        "verbes-pronominaux",
+        "voix-passive",
+        "passe-recent"
       ],
       "blocks": [
         {
@@ -6332,6 +8406,223 @@
       ]
     },
     {
+      "id": "passe-recent",
+      "group": "tenses",
+      "level": "A2",
+      "titleFr": "Venir de et être en train de",
+      "titleFa": "venir de و être en train de: همین الان",
+      "aliasesFr": [
+        "passé récent",
+        "venir de",
+        "je viens de",
+        "présent progressif",
+        "être en train de"
+      ],
+      "aliasesFa": [
+        "گذشته نزدیک",
+        "همین الان",
+        "تازه",
+        "در حال انجام",
+        "دارم … می‌کنم"
+      ],
+      "related": [
+        "present",
+        "futur",
+        "passe-compose",
+        "imparfait"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`venir de` + مصدر یعنی کاری همین الان تمام شده است («تازه …»). `être en train de` + مصدر یعنی کاری همین حالا در جریان است («دارم … می‌کنم»)."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "کاری که چند لحظه پیش تمام شده: «همین الان کارم را تمام کردم.»"
+            },
+            {
+              "kind": "li",
+              "text": "کاری که در همین لحظه در جریان است و می‌خواهیم بر آن تأکید کنیم: «دارد تلفن می‌زند.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "venir (présent) + de + infinitif",
+            "être (présent) + en train de + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "فقط `venir` یا `être` صرف می‌شود و فعل اصلی به شکل مصدر می‌ماند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je viens de finir mon travail.",
+              "fa": "همین الان کارم را تمام کردم.",
+              "highlights": [
+                [
+                  3,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Le train vient de partir.",
+              "fa": "قطار همین الان حرکت کرد.",
+              "highlights": [
+                [
+                  9,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Elle est en train de téléphoner.",
+              "fa": "او دارد تلفن می‌زند.",
+              "highlights": [
+                [
+                  5,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Nous venons d'arriver à l'hôtel.",
+              "fa": "ما تازه به هتل رسیده‌ایم.",
+              "highlights": [
+                [
+                  5,
+                  21
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Ne le dérange pas, il est en train de travailler.",
+              "fa": "مزاحمش نشو، دارد کار می‌کند.",
+              "highlights": [
+                [
+                  22,
+                  48
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je viens de fini mon travail.",
+          "right": "Je viens de finir mon travail.",
+          "why": "بعد از venir de مصدر می‌آید، نه participe passé."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`de` پیش از مصوت یا h بی‌صدا به `d'` تبدیل می‌شود: `Je viens d'arriver.`"
+            },
+            {
+              "kind": "li",
+              "text": "ضمیر مفعولی پیش از مصدر می‌آید: `Je viens de le voir.`، `Il est en train de se préparer.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای گذشته، فعل اول در imparfait می‌آید: `Je venais de sortir quand il a appelé.` (تازه بیرون رفته بودم که زنگ زد.)"
+            },
+            {
+              "kind": "li",
+              "text": "`venir de` + مکان معنای دیگری دارد: `Je viens de Paris.` (از پاریس می‌آیم.)"
+            },
+            {
+              "kind": "li",
+              "text": "زمان حالِ ساده هم کار در جریان را بیان می‌کند؛ `être en train de` فقط برای تأکید است."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "timeline",
+          "header": [
+            {
+              "text": "زمان",
+              "highlights": []
+            },
+            {
+              "text": "ساختار",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "تازه تمام شده",
+                "highlights": []
+              },
+              {
+                "text": "venir de + infinitif",
+                "highlights": []
+              },
+              {
+                "text": "Je viens de manger.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "در جریان",
+                "highlights": []
+              },
+              {
+                "text": "être en train de + infinitif",
+                "highlights": []
+              },
+              {
+                "text": "Je suis en train de manger.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "به‌زودی",
+                "highlights": []
+              },
+              {
+                "text": "aller + infinitif",
+                "highlights": []
+              },
+              {
+                "text": "Je vais manger.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "plus-que-parfait",
       "group": "tenses",
       "level": "B1",
@@ -6351,7 +8642,8 @@
         "passe-compose",
         "imparfait",
         "phrases-avec-si",
-        "passe-compose-vs-imparfait"
+        "passe-compose-vs-imparfait",
+        "discours-indirect"
       ],
       "blocks": [
         {
@@ -6520,7 +8812,9 @@
         "depuis-pendant-il-y-a",
         "imperatif",
         "verbes-pronominaux",
-        "subjonctif-emplois"
+        "subjonctif-emplois",
+        "passe-recent",
+        "gerondif"
       ],
       "blocks": [
         {

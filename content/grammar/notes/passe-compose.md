@@ -6,7 +6,7 @@ title_fr: "Le passé composé"
 title_fa: "زمان passé composé: گذشتهٔ مرکب"
 aliases_fr: [passé composé, passe compose, avoir ou être, participe passé]
 aliases_fa: [گذشته ساده, ماضی مرکب, فعل کمکی avoir یا être, اسم مفعول]
-related: [imparfait, passe-compose-vs-imparfait, depuis-pendant-il-y-a, qui-vs-que, pronom-en, negation, pronoms-cod-coi, plus-que-parfait, verbes-pronominaux]
+related: [imparfait, passe-compose-vs-imparfait, depuis-pendant-il-y-a, qui-vs-que, pronom-en, negation, pronoms-cod-coi, plus-que-parfait, verbes-pronominaux, voix-passive, passe-recent]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

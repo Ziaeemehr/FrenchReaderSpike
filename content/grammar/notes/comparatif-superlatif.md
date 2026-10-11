@@ -6,7 +6,7 @@ title_fr: "Le comparatif et le superlatif"
 title_fa: "مقایسه: صفت تفضیلی و عالی"
 aliases_fr: [comparatif, superlatif, plus que, moins que, aussi que, autant que, meilleur, mieux, le plus]
 aliases_fa: [صفت تفضیلی, صفت عالی, مقایسه کردن, بیشتر از, کمتر از, به اندازه, فرق meilleur و mieux]
-related: [accord-adjectif, articles]
+related: [accord-adjectif, articles, adverbes, pronoms-toniques]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

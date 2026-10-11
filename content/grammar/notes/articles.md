@@ -6,7 +6,7 @@ title_fr: "Les articles : défini, indéfini, partitif"
 title_fa: "حرف‌های تعریف: le، un، du"
 aliases_fr: [articles, article défini, article indéfini, article partitif, le la les, un une des, du de la]
 aliases_fa: [حرف تعریف, حرف تعریف معین, حرف تعریف نامعین, فرق le و un, du یعنی چه]
-related: [genre-et-nombre, negation, pronom-en, accord-adjectif, adjectifs-possessifs, demonstratifs, prepositions-de-lieu, comparatif-superlatif]
+related: [genre-et-nombre, negation, pronom-en, accord-adjectif, adjectifs-possessifs, demonstratifs, prepositions-de-lieu, comparatif-superlatif, quantite, tout]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

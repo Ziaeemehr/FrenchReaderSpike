@@ -6,7 +6,7 @@ title_fr: "Le pronom « en »"
 title_fa: "ضمیر en"
 aliases_fr: [en, pronom en, j'en ai, il y en a]
 aliases_fa: [ضمیر en, کاربرد en, جایگزین de, en یعنی چه]
-related: [pronom-y, passe-compose, articles, dont-et-ou, pronoms-cod-coi]
+related: [pronom-y, passe-compose, articles, dont-et-ou, pronoms-cod-coi, quantite, pronoms-toniques]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
