@@ -16,7 +16,7 @@ from pathlib import Path
 
 from PIL import Image
 
-DATASET_VERSION = 2
+DATASET_VERSION = 3
 UNLEVELED = "Divers"  # level folder for stories without a CEFR level
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "app/src/main/assets/dataset"
@@ -32,6 +32,8 @@ DECKS = [
     ("Vocab_Prog_A2B1", "voc-prog-a2b1-phrases", "Vocabulaire progressif A2-B1 · Phrases", "A2-B1", "phrases"),
     ("Communication essentielle A1", "comm-ess-a1-phrases", "Communication essentielle A1 · Phrases", "A1", "phrases"),
     ("Communication essentielle A2", "comm-ess-a2-phrases", "Communication essentielle A2 · Phrases", "A2", "phrases"),
+    # Exported from the app's own cards (one "ChNN - title" list per chapter), not from Anki: keep with --reuse-decks.
+    ("Communication en dialogues A2-B1", "comm-dial-a2b1-phrases", "Communication en dialogues A2-B1", "A2-B1", "phrases"),
 ]
 
 # Phrase decks studied Persian -> French: the Persian prompt is the card front and the French line

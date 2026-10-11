@@ -1,5 +1,5 @@
 {
- "version": 2,
+ "version": 3,
  "decks": [
   {
    "id": "gram-dial-a1-vocab",
@@ -64,6 +64,14 @@
    "kind": "phrases",
    "file": "decks/comm-ess-a2-phrases.json",
    "count": 569
+  },
+  {
+   "id": "comm-dial-a2b1-phrases",
+   "name": "Communication en dialogues A2-B1",
+   "level": "A2-B1",
+   "kind": "phrases",
+   "file": "decks/comm-dial-a2b1-phrases.json",
+   "count": 1354
   }
  ],
  "stories": [

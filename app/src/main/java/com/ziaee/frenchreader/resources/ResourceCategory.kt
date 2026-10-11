@@ -383,6 +383,13 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
         imageUrl = "https://covers.openlibrary.org/b/id/7735067-M.jpg"
     ),
     DefaultResource(
+        "Communication en dialogues", "https://www.google.com/search?q=Communication+en+dialogues+CLE+International",
+        ResourceCategory.TEXTBOOKS, 83, "A2–B1",
+        d("Everyday communication through dialogues: inviting, thanking, complaining, giving an opinion; with audio.",
+            "La communication du quotidien à travers des dialogues : inviter, remercier, réclamer, donner son avis ; avec audio.",
+            "ارتباط روزمره از راه گفت‌وگو: دعوت، تشکر، شکایت، بیان نظر؛ با فایل صوتی.")
+    ),
+    DefaultResource(
         "Bescherelle : La conjugaison pour tous", "https://www.google.com/search?q=Bescherelle+%3A+La+conjugaison+pour+tous+Hatier",
         ResourceCategory.TEXTBOOKS, 82, "A1–C2",
         d("The reference conjugation tables for every French verb.",
