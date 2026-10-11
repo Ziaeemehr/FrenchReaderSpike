@@ -6,7 +6,7 @@ title_fr: "La phrase interrogative"
 title_fa: "سؤال‌پرسیدن"
 aliases_fr: [interrogation, question, est-ce que, inversion, qu'est-ce que, quel, pourquoi, comment]
 aliases_fa: [جمله سؤالی, سؤال پرسیدن, est-ce que یعنی چه, کلمات پرسشی, وارونگی]
-related: [negation, qui-vs-que, discours-indirect]
+related: [negation, qui-vs-que, discours-indirect, interrogation-avancee]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

@@ -486,7 +486,8 @@
         "comparatif-superlatif",
         "quantite",
         "passe-compose",
-        "bon-vs-bien"
+        "bon-vs-bien",
+        "deja-encore-toujours"
       ],
       "blocks": [
         {
@@ -654,7 +655,8 @@
         "comparatif-superlatif",
         "quantite",
         "tout",
-        "negation-avancee"
+        "negation-avancee",
+        "absence-article"
       ],
       "blocks": [
         {
@@ -908,7 +910,8 @@
         "adverbes",
         "pronoms-toniques",
         "bon-vs-bien",
-        "ne-expletif"
+        "ne-expletif",
+        "comparaison-progressive"
       ],
       "blocks": [
         {
@@ -1161,7 +1164,8 @@
         "articles",
         "c-est-vs-il-est",
         "an-vs-annee",
-        "en-vs-dans"
+        "en-vs-dans",
+        "nombres"
       ],
       "blocks": [
         {
@@ -2119,7 +2123,8 @@
       "related": [
         "negation",
         "qui-vs-que",
-        "discours-indirect"
+        "discours-indirect",
+        "interrogation-avancee"
       ],
       "blocks": [
         {
@@ -2354,7 +2359,8 @@
         "verbes-pronominaux",
         "indefinis",
         "negation-avancee",
-        "ne-expletif"
+        "ne-expletif",
+        "deja-encore-toujours"
       ],
       "blocks": [
         {
@@ -2611,6 +2617,261 @@
               },
               {
                 "text": "Je n'ai que dix euros.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nombres",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "Les nombres",
+      "titleFa": "عددها",
+      "aliasesFr": [
+        "nombres",
+        "chiffres",
+        "soixante-dix",
+        "quatre-vingts",
+        "quatre-vingt-dix",
+        "vingt et un",
+        "premier",
+        "deuxième",
+        "cent",
+        "mille"
+      ],
+      "aliasesFa": [
+        "اعداد",
+        "شمارش",
+        "هفتاد",
+        "هشتاد",
+        "نود",
+        "عدد ترتیبی",
+        "اول دوم سوم"
+      ],
+      "related": [
+        "date-et-heure",
+        "quantite",
+        "an-vs-annee"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "عددهای ۰ تا ۱۶ و نام دهگان‌ها را باید حفظ کرد. از ۲۰ تا ۶۹ عددها با ترکیب دهگان و یکان ساخته می‌شوند، ولی از ۷۰ به بعد جمع و ضرب می‌شوند: ۷۰ یعنی «شصت‌ودَه» (`soixante-dix`)، ۸۰ یعنی «چهار بیست» (`quatre-vingts`) و ۹۰ یعنی «چهار بیست و دَه» (`quatre-vingt-dix`). عدد ترتیبی با پسوند `-ième` ساخته می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شمردن، سن، قیمت، تاریخ و ساعت با عدد اصلی."
+            },
+            {
+              "kind": "li",
+              "text": "ترتیب (طبقه، ردیف، قرن) با عدد ترتیبی: «طبقهٔ سوم»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "dizaine + trait d'union + unité",
+            "nombre (sans e final) + -ième"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در ۲۱، ۳۱، ۴۱، ۵۱، ۶۱ و ۷۱ کلمهٔ `et` می‌آید: `vingt et un`، `soixante et onze`. در املای سنتی بدون خط تیره نوشته می‌شود؛ املای اصلاح‌شدهٔ ۱۹۹۰ شکل `vingt-et-un` را هم می‌پذیرد."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'ai vingt et un ans.",
+              "fa": "من بیست و یک سال دارم.",
+              "highlights": [
+                [
+                  5,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Ce livre coûte quatre-vingts euros.",
+              "fa": "این کتاب هشتاد یورو قیمت دارد.",
+              "highlights": [
+                [
+                  15,
+                  28
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il y a soixante-quinze étudiants.",
+              "fa": "هفتاد و پنج دانشجو هست.",
+              "highlights": [
+                [
+                  7,
+                  22
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "J'habite au troisième étage.",
+              "fa": "من در طبقهٔ سوم زندگی می‌کنم.",
+              "highlights": [
+                [
+                  12,
+                  21
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Le village compte deux cents habitants.",
+              "fa": "این روستا دویست نفر جمعیت دارد.",
+              "highlights": [
+                [
+                  18,
+                  28
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "J'ai vingt-un ans.",
+          "right": "J'ai vingt et un ans.",
+          "why": "در ۲۱، ۳۱، ۴۱، ۵۱ و ۶۱ بین دهگان و un کلمهٔ et لازم است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "از ۷۰ تا ۷۹ به `soixante` عددهای ۱۰ تا ۱۹ اضافه می‌شود: `soixante-douze` (۷۲). از ۹۰ تا ۹۹ به `quatre-vingt`: `quatre-vingt-douze` (۹۲)."
+            },
+            {
+              "kind": "li",
+              "text": "۸۱ و ۹۱ بدون `et` هستند: `quatre-vingt-un`، `quatre-vingt-onze`."
+            },
+            {
+              "kind": "li",
+              "text": "`quatre-vingts` فقط وقتی s می‌گیرد که عدد دیگری بعدش نیاید: `quatre-vingts` ولی `quatre-vingt-trois`."
+            },
+            {
+              "kind": "li",
+              "text": "`cent` در ضرب s می‌گیرد اگر عدد دیگری بعدش نیاید: `deux cents` ولی `deux cent dix`. `mille` هیچ‌وقت تغییر نمی‌کند: `deux mille`."
+            },
+            {
+              "kind": "li",
+              "text": "عددهای ترتیبی با `-ième` ساخته می‌شوند و e پایانی حذف می‌شود: `quatre → quatrième`. «اول» شکل `premier / première` دارد؛ در `cinquième` و `neuvième` هم املا تغییر می‌کند."
+            },
+            {
+              "kind": "li",
+              "text": "`un` با اسم مؤنث به `une` تبدیل می‌شود: `vingt et une personnes`."
+            },
+            {
+              "kind": "li",
+              "text": "اعشار با ویرگول نوشته می‌شود: `3,5` خوانده می‌شود `trois virgule cinq`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "عدد",
+              "highlights": []
+            },
+            {
+              "text": "فرانسوی",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "21",
+                "highlights": []
+              },
+              {
+                "text": "vingt et un",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "70",
+                "highlights": []
+              },
+              {
+                "text": "soixante-dix",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "71",
+                "highlights": []
+              },
+              {
+                "text": "soixante et onze",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "80",
+                "highlights": []
+              },
+              {
+                "text": "quatre-vingts",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "81",
+                "highlights": []
+              },
+              {
+                "text": "quatre-vingt-un",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "90",
+                "highlights": []
+              },
+              {
+                "text": "quatre-vingt-dix",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "100",
+                "highlights": []
+              },
+              {
+                "text": "cent",
                 "highlights": []
               }
             ]
@@ -2907,7 +3168,9 @@
         "articles",
         "pronom-en",
         "adverbes",
-        "comparatif-superlatif"
+        "comparatif-superlatif",
+        "intensite-consequence",
+        "nombres"
       ],
       "blocks": [
         {
@@ -3164,7 +3427,8 @@
         "accord-adjectif",
         "articles",
         "quantite",
-        "indefinis"
+        "indefinis",
+        "accord-du-verbe"
       ],
       "blocks": [
         {
@@ -3905,6 +4169,217 @@
       ]
     },
     {
+      "id": "amener-apporter",
+      "group": "comparisons",
+      "level": "B1",
+      "titleFr": "Amener, emmener, apporter, emporter",
+      "titleFa": "فرق amener، emmener، apporter و emporter",
+      "aliasesFr": [
+        "amener",
+        "emmener",
+        "apporter",
+        "emporter",
+        "ramener",
+        "rapporter",
+        "amener ou apporter"
+      ],
+      "aliasesFa": [
+        "آوردن",
+        "بردن",
+        "فرق amener و apporter",
+        "فرق emmener و emporter"
+      ],
+      "related": [
+        "pronoms-cod-coi",
+        "imperatif",
+        "verbes-deux-prepositions"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "این چهار فعل دو فرق دارند. فعل‌های `-mener` معمولاً برای اشخاص و جانوران‌اند و فعل‌های `-porter` برای چیزهایی که حمل می‌شوند. `amener` و `apporter` بر رساندن به مقصد تأکید دارند و `emmener` و `emporter` بر بردن با خود هنگام رفتن."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "آوردن یا رساندن یک شخص: `amener`. «می‌توانی برادرت را به مهمانی بیاوری.»"
+            },
+            {
+              "kind": "li",
+              "text": "بردن یک شخص با خود: `emmener`. «امشب تو را به سینما می‌برم.»"
+            },
+            {
+              "kind": "li",
+              "text": "آوردن یک چیز: `apporter`. «یک لیوان آب برایم بیاور.»"
+            },
+            {
+              "kind": "li",
+              "text": "بردن یک چیز با خود: `emporter`. «چترت را با خودت ببر.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "amener / emmener + personne",
+            "apporter / emporter + objet"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "برای چیزهای قابل‌حمل معمولاً `apporter / emporter` و برای اشخاص معمولاً `amener / emmener` به کار می‌رود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tu peux amener ton frère à la fête.",
+              "fa": "می‌توانی برادرت را به مهمانی بیاوری.",
+              "highlights": [
+                [
+                  8,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Je t'emmène au cinéma ce soir.",
+              "fa": "امشب تو را به سینما می‌برم.",
+              "highlights": [
+                [
+                  5,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Apporte-moi un verre d'eau, s'il te plaît.",
+              "fa": "لطفاً یک لیوان آب برایم بیاور.",
+              "highlights": [
+                [
+                  0,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "N'oublie pas d'emporter ton parapluie.",
+              "fa": "فراموش نکن چترت را با خودت ببری.",
+              "highlights": [
+                [
+                  15,
+                  23
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "J'ai apporté un gâteau pour le dessert.",
+              "fa": "برای دسر یک کیک آورده‌ام.",
+              "highlights": [
+                [
+                  5,
+                  12
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Tu peux apporter ton frère à la fête.",
+          "right": "Tu peux amener ton frère à la fête.",
+          "why": "apporter برای چیزهایی است که حمل می‌شوند. برای اشخاص amener به کار می‌رود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "برای «برگرداندن»: `ramener` برای اشخاص و `rapporter` برای چیزها. `Je te ramène chez toi.`، `Rapporte-moi ce livre demain.`"
+            },
+            {
+              "kind": "li",
+              "text": "`amener` برای چیزهایی که هدایت یا جابه‌جا می‌شوند هم درست است: `amener une voiture au garage`. برای چیزهای قابل‌حمل مثل کتاب یا کیک، در نوشتار معیار `apporter` به کار می‌رود."
+            },
+            {
+              "kind": "li",
+              "text": "`à emporter` روی منوی رستوران یعنی «بیرون‌بر»."
+            },
+            {
+              "kind": "li",
+              "text": "تغییر املایی در صرف: `j'amène` ولی `nous amenons`؛ `j'emmène` ولی `nous emmenons`."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌های پایه: `mener` (هدایت کردن) و `porter` (حمل کردن، پوشیدن)."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "رساندن به مقصد",
+              "highlights": []
+            },
+            {
+              "text": "بردن با خود",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "شخص",
+                "highlights": []
+              },
+              {
+                "text": "amener",
+                "highlights": []
+              },
+              {
+                "text": "emmener",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "چیز",
+                "highlights": []
+              },
+              {
+                "text": "apporter",
+                "highlights": []
+              },
+              {
+                "text": "emporter",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "an-vs-annee",
       "group": "comparisons",
       "level": "B1",
@@ -4392,7 +4867,8 @@
         "accord-adjectif",
         "pronoms-toniques",
         "mise-en-relief",
-        "verbes-impersonnels"
+        "verbes-impersonnels",
+        "absence-article"
       ],
       "blocks": [
         {
@@ -4591,6 +5067,241 @@
               },
               {
                 "text": "Elle est belle.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deja-encore-toujours",
+      "group": "comparisons",
+      "level": "A2",
+      "titleFr": "Déjà, encore, toujours, ne … plus",
+      "titleFa": "déjà، encore، toujours و ne … plus",
+      "aliasesFr": [
+        "déjà",
+        "encore",
+        "toujours",
+        "pas encore",
+        "ne plus",
+        "toujours pas",
+        "déjà ou encore"
+      ],
+      "aliasesFa": [
+        "هنوز",
+        "دیگر",
+        "قبلاً",
+        "همیشه",
+        "هنوز نه",
+        "دیگر نه",
+        "فرق encore و toujours"
+      ],
+      "related": [
+        "negation",
+        "adverbes",
+        "negation-avancee",
+        "passe-compose"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`déjà` یعنی «تا الان، از قبل» و در برابرش `pas encore` (هنوز نه) قرار دارد. `encore` و `toujours` در معنی «هنوز» در برابر `ne … plus` (دیگر نه) قرار دارند. `toujours` به معنی «همیشه» هم هست و متضادش `ne … jamais` (هرگز) است."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "کاری که تا الان انجام شده: «تا الان غذا خورده‌ای؟»"
+            },
+            {
+              "kind": "li",
+              "text": "وضعیتی که ادامه دارد: «هنوز پیش پدر و مادرش زندگی می‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "وضعیتی که تمام شده: «دیگر اینجا کار نمی‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "عادت همیشگی: «همیشه دیر می‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "مقدار بیشتر یا تکرار: «باز هم قهوه می‌خواهی؟»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "verbe + déjà / encore / toujours",
+            "ne + verbe + pas encore / plus / jamais"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در زمان‌های مرکب این قیدها بین فعل کمکی و participe passé می‌آیند: `J'ai déjà vu ce film.`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tu as déjà mangé ? — Non, pas encore.",
+              "fa": "تا الان غذا خورده‌ای؟ — نه، هنوز نه.",
+              "highlights": [
+                [
+                  6,
+                  10
+                ],
+                [
+                  26,
+                  36
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il habite encore chez ses parents.",
+              "fa": "او هنوز پیش پدر و مادرش زندگی می‌کند.",
+              "highlights": [
+                [
+                  10,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Elle ne travaille plus ici.",
+              "fa": "او دیگر اینجا کار نمی‌کند.",
+              "highlights": [
+                [
+                  5,
+                  7
+                ],
+                [
+                  18,
+                  22
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il est toujours en retard.",
+              "fa": "او همیشه دیر می‌کند.",
+              "highlights": [
+                [
+                  7,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Tu veux encore du café ?",
+              "fa": "باز هم قهوه می‌خواهی؟",
+              "highlights": [
+                [
+                  8,
+                  14
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je ne plus travaille ici.",
+          "right": "Je ne travaille plus ici.",
+          "why": "ne پیش از فعل صرف‌شده می‌آید و plus بعد از آن."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`toujours` دو معنی دارد: «همیشه» و «هنوز». در معنی «هنوز» با `encore` برابر است: `Il est toujours malade.`"
+            },
+            {
+              "kind": "li",
+              "text": "`encore` هم دو معنی دارد: «هنوز» و «باز هم، دوباره»: `encore une fois` (یک بار دیگر)."
+            },
+            {
+              "kind": "li",
+              "text": "در سؤال دربارهٔ تجربه، `déjà` معنی «تا حالا» می‌دهد و جواب منفی‌اش `jamais` است: `Tu es déjà allé à Paris ? — Non, jamais.`"
+            },
+            {
+              "kind": "li",
+              "text": "`ne … toujours pas` یعنی «هنوز هم نه» و بی‌صبری را نشان می‌دهد: `Il n'est toujours pas arrivé.`"
+            },
+            {
+              "kind": "li",
+              "text": "`pas toujours` یعنی «نه همیشه»: `Ce n'est pas toujours facile.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "مثبت",
+              "highlights": []
+            },
+            {
+              "text": "منفی",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "déjà (تا الان)",
+                "highlights": []
+              },
+              {
+                "text": "ne … pas encore (هنوز نه)",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "déjà در سؤالِ تجربه (تا حالا)",
+                "highlights": []
+              },
+              {
+                "text": "ne … jamais (هرگز)",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "encore, toujours (هنوز)",
+                "highlights": []
+              },
+              {
+                "text": "ne … plus (دیگر نه)",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "toujours (همیشه)",
+                "highlights": []
+              },
+              {
+                "text": "ne … jamais (هرگز)",
                 "highlights": []
               }
             ]
@@ -5651,7 +6362,8 @@
         "pronoms-cod-coi",
         "relatifs-composes",
         "accord-participe-passe",
-        "mise-en-relief"
+        "mise-en-relief",
+        "ce-qui-ce-que"
       ],
       "blocks": [
         {
@@ -6584,6 +7296,473 @@
       ]
     },
     {
+      "id": "verbes-deux-prepositions",
+      "group": "comparisons",
+      "level": "B1",
+      "titleFr": "Penser à ou penser de ? Jouer à ou jouer de ?",
+      "titleFa": "فعل‌هایی که با à و de معنی‌شان فرق می‌کند",
+      "aliasesFr": [
+        "penser à",
+        "penser de",
+        "parler à",
+        "parler de",
+        "jouer à",
+        "jouer de",
+        "manquer à",
+        "manquer de",
+        "tu me manques"
+      ],
+      "aliasesFa": [
+        "فرق penser à و penser de",
+        "jouer à یا jouer de",
+        "tu me manques یعنی چه",
+        "دلتنگ شدن"
+      ],
+      "related": [
+        "verbes-a-de-infinitif",
+        "pronom-y",
+        "pronom-en",
+        "pronoms-cod-coi",
+        "prepositions-de-lieu"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "چند فعل پرکاربرد با `à` یک معنی دارند و با `de` معنی دیگر: `penser à` (فکر کردن به) و `penser de` (نظر داشتن دربارهٔ)، `jouer à` (بازی و ورزش) و `jouer de` (ساز زدن)، `manquer à` (جای کسی خالی بودن) و `manquer de` (کم داشتن)."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`penser à`: چیزی در ذهن داشتن. `penser de`: نظر و قضاوت، معمولاً در سؤال."
+            },
+            {
+              "kind": "li",
+              "text": "`parler à`: مخاطبِ حرف. `parler de`: موضوعِ حرف."
+            },
+            {
+              "kind": "li",
+              "text": "`jouer à`: بازی یا ورزش. `jouer de`: ساز موسیقی."
+            },
+            {
+              "kind": "li",
+              "text": "`manquer à`: دلتنگی. `manquer de`: کمبود."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "verbe + à + nom",
+            "verbe + de + nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "حرف اضافه با حرف تعریف ادغام می‌شود: `à + le = au` و `de + le = du`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je pense à mes vacances.",
+              "fa": "به تعطیلاتم فکر می‌کنم.",
+              "highlights": [
+                [
+                  3,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Qu'est-ce que tu penses de ce film ?",
+              "fa": "نظرت دربارهٔ این فیلم چیست؟",
+              "highlights": [
+                [
+                  17,
+                  26
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Je joue au tennis et je joue du piano.",
+              "fa": "من تنیس بازی می‌کنم و پیانو می‌زنم.",
+              "highlights": [
+                [
+                  3,
+                  10
+                ],
+                [
+                  24,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Tu me manques.",
+              "fa": "دلم برایت تنگ شده است.",
+              "highlights": [
+                [
+                  3,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Nous manquons de temps.",
+              "fa": "ما وقت کم داریم.",
+              "highlights": [
+                [
+                  5,
+                  16
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je joue le piano.",
+          "right": "Je joue du piano.",
+          "why": "برای ساز موسیقی، jouer با de می‌آید، نه با مفعول مستقیم."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "در `manquer à`، کسی که جایش خالی است فاعل جمله است: `Tu me manques.` یعنی «من دلتنگ تو هستم»، و `Paris manque à Marie.` یعنی «ماری دلتنگ پاریس است»."
+            },
+            {
+              "kind": "li",
+              "text": "`manquer` با مفعول مستقیم یعنی «از دست دادن»: `J'ai manqué le train.`"
+            },
+            {
+              "kind": "li",
+              "text": "`à` + چیز با `y` جایگزین می‌شود و `de` + چیز با `en`: `J'y pense.`، `Qu'en penses-tu ?`"
+            },
+            {
+              "kind": "li",
+              "text": "چند جفت دیگر: `tenir à` (اهمیت دادن به) و `tenir de` (شبیه بودن به)؛ `servir à` (به کارِ … آمدن) و `se servir de` (استفاده کردن از)."
+            },
+            {
+              "kind": "li",
+              "text": "`parler` با هر دو با هم: `Je parle de mon projet à mon professeur.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "فعل",
+              "highlights": []
+            },
+            {
+              "text": "با à",
+              "highlights": []
+            },
+            {
+              "text": "با de",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "penser",
+                "highlights": []
+              },
+              {
+                "text": "فکر کردن به",
+                "highlights": []
+              },
+              {
+                "text": "نظر داشتن دربارهٔ",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "parler",
+                "highlights": []
+              },
+              {
+                "text": "حرف زدن با",
+                "highlights": []
+              },
+              {
+                "text": "حرف زدن دربارهٔ",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "jouer",
+                "highlights": []
+              },
+              {
+                "text": "بازی یا ورزش",
+                "highlights": []
+              },
+              {
+                "text": "ساز",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "manquer",
+                "highlights": []
+              },
+              {
+                "text": "جای کسی خالی بودن",
+                "highlights": []
+              },
+              {
+                "text": "کم داشتن",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ce-qui-ce-que",
+      "group": "pronouns",
+      "level": "B1",
+      "titleFr": "Ce qui, ce que, ce dont",
+      "titleFa": "ce qui، ce que و ce dont: آنچه، چیزی که",
+      "aliasesFr": [
+        "ce qui",
+        "ce que",
+        "ce dont",
+        "tout ce que",
+        "tout ce qui",
+        "ce à quoi"
+      ],
+      "aliasesFa": [
+        "آنچه",
+        "چیزی که",
+        "هر چه",
+        "ce que یعنی چه",
+        "فرق ce qui و ce que"
+      ],
+      "related": [
+        "qui-vs-que",
+        "dont-et-ou",
+        "mise-en-relief",
+        "discours-indirect",
+        "interrogation-avancee"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`ce qui`، `ce que` و `ce dont` یعنی «آنچه» یا «چیزی که» و وقتی می‌آیند که اسم مشخصی پیش از ضمیر موصولی نیست. انتخابشان مثل `qui`، `que` و `dont` است: `ce qui` برای فاعل، `ce que` برای مفعول مستقیم و `ce dont` با فعل‌هایی که `de` دارند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "اشاره به چیزی نامشخص یا کلی: «به من بگو چه می‌خواهی.»"
+            },
+            {
+              "kind": "li",
+              "text": "در سؤال غیرمستقیم به‌جای `qu'est-ce qui` و `qu'est-ce que`: «نمی‌فهمم چه اتفاقی دارد می‌افتد.»"
+            },
+            {
+              "kind": "li",
+              "text": "برای تأکید در آغاز جمله: «آنچه مهم است سلامتی است.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "ce qui + verbe",
+            "ce que + sujet + verbe",
+            "ce dont + sujet + verbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "اگر پیش از ضمیر یک اسم مشخص باشد، `ce` نمی‌آید: `le livre que je veux` در برابر `ce que je veux`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je ne comprends pas ce qui se passe.",
+              "fa": "نمی‌فهمم چه اتفاقی دارد می‌افتد.",
+              "highlights": [
+                [
+                  20,
+                  26
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Dis-moi ce que tu veux.",
+              "fa": "به من بگو چه می‌خواهی.",
+              "highlights": [
+                [
+                  8,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "C'est exactement ce dont j'ai besoin.",
+              "fa": "این دقیقاً همان چیزی است که لازم دارم.",
+              "highlights": [
+                [
+                  17,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Ce qui est important, c'est la santé.",
+              "fa": "آنچه مهم است سلامتی است.",
+              "highlights": [
+                [
+                  0,
+                  6
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Fais ce que tu veux.",
+              "fa": "هر کاری می‌خواهی بکن.",
+              "highlights": [
+                [
+                  5,
+                  11
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je ne comprends pas ce que se passe.",
+          "right": "Je ne comprends pas ce qui se passe.",
+          "why": "«آنچه» در اینجا فاعلِ فعل se passe است؛ برای فاعل ce qui لازم است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`ce que` پیش از مصوت به `ce qu'` تبدیل می‌شود: `ce qu'il dit`. ولی `ce qui` هیچ‌وقت کوتاه نمی‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "با `tout` یعنی «هر چه، همهٔ آنچه»: `tout ce que je sais`، `tout ce qui brille`."
+            },
+            {
+              "kind": "li",
+              "text": "با فعل‌هایی که `à` دارند `ce à quoi` می‌آید: `ce à quoi je pense`."
+            },
+            {
+              "kind": "li",
+              "text": "`ce qui` و `ce que` می‌توانند به کل جملهٔ قبلی برگردند: `Il est arrivé en retard, ce qui m'a énervé.` (دیر رسید، و این مرا عصبانی کرد.)"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "decision",
+          "header": [
+            {
+              "text": "نقش در جملهٔ بعدی",
+              "highlights": []
+            },
+            {
+              "text": "انتخاب",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "فاعل",
+                "highlights": []
+              },
+              {
+                "text": "ce qui",
+                "highlights": []
+              },
+              {
+                "text": "ce qui m'intéresse",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "مفعول مستقیم",
+                "highlights": []
+              },
+              {
+                "text": "ce que",
+                "highlights": []
+              },
+              {
+                "text": "ce que je veux",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "متمم با de",
+                "highlights": []
+              },
+              {
+                "text": "ce dont",
+                "highlights": []
+              },
+              {
+                "text": "ce dont je parle",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "dont-et-ou",
       "group": "pronouns",
       "level": "B1",
@@ -6608,7 +7787,8 @@
       "related": [
         "qui-vs-que",
         "pronom-en",
-        "relatifs-composes"
+        "relatifs-composes",
+        "ce-qui-ce-que"
       ],
       "blocks": [
         {
@@ -6869,7 +8049,8 @@
         "pronoms-cod-coi",
         "quantite",
         "pronoms-toniques",
-        "pronoms-doubles"
+        "pronoms-doubles",
+        "verbes-deux-prepositions"
       ],
       "blocks": [
         {
@@ -7041,7 +8222,8 @@
         "indefinis",
         "pronoms-toniques",
         "accord-participe-passe",
-        "accord-adjectif"
+        "accord-adjectif",
+        "accord-du-verbe"
       ],
       "blocks": [
         {
@@ -7202,7 +8384,8 @@
         "pronoms-cod-coi",
         "prepositions-de-lieu",
         "pronoms-toniques",
-        "pronoms-doubles"
+        "pronoms-doubles",
+        "verbes-deux-prepositions"
       ],
       "blocks": [
         {
@@ -8651,6 +9834,502 @@
       ]
     },
     {
+      "id": "absence-article",
+      "group": "structures",
+      "level": "B2",
+      "titleFr": "L'absence d'article",
+      "titleFa": "جاهایی که حرف تعریف نمی‌آید",
+      "aliasesFr": [
+        "absence d'article",
+        "sans article",
+        "article zéro",
+        "il est médecin",
+        "avoir faim",
+        "en voiture",
+        "sans sucre"
+      ],
+      "aliasesFa": [
+        "بدون حرف تعریف",
+        "حذف حرف تعریف",
+        "کی حرف تعریف نمی‌آید"
+      ],
+      "related": [
+        "articles",
+        "c-est-vs-il-est",
+        "quantite",
+        "negation",
+        "en-vs-dans",
+        "negation-avancee"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "در فرانسوی اسم معمولاً با حرف تعریف یا کلمه‌ای مثل صفت ملکی می‌آید. در چند کاربرد مشخص حرف تعریف نمی‌آید: بیان سادهٔ شغل بعد از `être`، عبارت‌های رایج با `en` و `sans`، مقدار نامشخص و نفی با `de`، و بعضی عبارت‌های ثابت."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شغل، ملیت یا مذهب بعد از `être`: «او پزشک است.»"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `en`: «با قطار سفر می‌کنم.»"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `sans`: «قهوهٔ بدون شکر»."
+            },
+            {
+              "kind": "li",
+              "text": "`avec` + اسم معنا برای بیان شیوه: «با صبر جواب داد.»"
+            },
+            {
+              "kind": "li",
+              "text": "اسم دوم در ترکیب «اسم + `de` + اسم»: «دو فنجان قهوه»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "être + profession",
+            "en / sans / par + nom",
+            "nom + de + nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "اگر اسم صفت یا توضیح بگیرد، حرف تعریف اغلب برمی‌گردد: `avec patience` ولی `avec une grande patience`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Elle est médecin.",
+              "fa": "او پزشک است.",
+              "highlights": [
+                [
+                  9,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Je voyage en train.",
+              "fa": "با قطار سفر می‌کنم.",
+              "highlights": [
+                [
+                  10,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Un café sans sucre, s'il vous plaît.",
+              "fa": "یک قهوهٔ بدون شکر، لطفاً.",
+              "highlights": [
+                [
+                  8,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il a répondu avec patience.",
+              "fa": "او با صبر جواب داد.",
+              "highlights": [
+                [
+                  13,
+                  26
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je bois deux tasses de café par jour.",
+              "fa": "روزی دو فنجان قهوه می‌خورم.",
+              "highlights": [
+                [
+                  20,
+                  27
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Elle est une médecin.",
+          "right": "Elle est médecin.",
+          "why": "برای بیان سادهٔ شغل، بعد از elle est حرف تعریف نمی‌آید."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "عبارت‌های ثابت با `avoir`: `avoir faim`، `avoir soif`، `avoir peur`، `avoir besoin`، `avoir envie`، `avoir raison`، `avoir tort`."
+            },
+            {
+              "kind": "li",
+              "text": "عبارت‌های ثابت دیگر: `faire attention`، `prendre rendez-vous`، `rendre service`."
+            },
+            {
+              "kind": "li",
+              "text": "`par` برای تکرار در واحد زمان: `trois fois par semaine`، `deux tasses par jour`."
+            },
+            {
+              "kind": "li",
+              "text": "ترکیب «اسم + `de` + اسم» نوع یا محتوا را می‌گوید: `un cours de français`، `une carte de crédit`."
+            },
+            {
+              "kind": "li",
+              "text": "برای مقدار نامشخص، بعد از کلمه‌هایی مثل `beaucoup` معمولاً `de` بدون حرف تعریف می‌آید: `beaucoup de livres`. در نفی هم حرف تعریف نامعین یا جزئی معمولاً به `de` تبدیل می‌شود: `pas de pain`؛ ولی حرف تعریف معین می‌ماند."
+            },
+            {
+              "kind": "li",
+              "text": "نام شهرها، ماه‌ها و روزهای هفته معمولاً حرف تعریف ندارند: `à Paris`، `en mai`، `lundi`."
+            },
+            {
+              "kind": "li",
+              "text": "در تابلوها و تیترها هم حرف تعریف حذف می‌شود: `Entrée interdite`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "موقعیت",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "شغل بعد از être",
+                "highlights": []
+              },
+              {
+                "text": "Il est professeur.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "بعد از en",
+                "highlights": []
+              },
+              {
+                "text": "en voiture, en été",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "بعد از sans",
+                "highlights": []
+              },
+              {
+                "text": "sans sucre",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "بعد از مقدار و نفی",
+                "highlights": []
+              },
+              {
+                "text": "beaucoup de livres, pas de pain",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "عبارت‌های ثابت با avoir",
+                "highlights": []
+              },
+              {
+                "text": "avoir faim, avoir peur",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "اسم + de + اسم",
+                "highlights": []
+              },
+              {
+                "text": "un cours de français",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "accord-du-verbe",
+      "group": "structures",
+      "level": "B2",
+      "titleFr": "L'accord du verbe avec le sujet : cas particuliers",
+      "titleFa": "هماهنگی فعل با فاعل: موارد خاص",
+      "aliasesFr": [
+        "accord du verbe",
+        "accord sujet verbe",
+        "tout le monde est",
+        "la plupart des",
+        "beaucoup de",
+        "c'est moi qui"
+      ],
+      "aliasesFa": [
+        "هماهنگی فعل و فاعل",
+        "فعل مفرد یا جمع",
+        "tout le monde مفرد یا جمع"
+      ],
+      "related": [
+        "present",
+        "pronom-on",
+        "tout",
+        "mise-en-relief",
+        "quantite",
+        "indefinis",
+        "verbes-impersonnels"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "فعل در شخص و عدد با فاعل هماهنگ می‌شود. چند فاعل زبان‌آموز را به اشتباه می‌اندازند: `tout le monde`، `chacun` و `on` فعل مفرد می‌گیرند؛ `la plupart des` و `beaucoup de` با اسم جمع، فعل جمع؛ و بعد از `c'est moi qui` فعل اول‌شخص می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "فاعلی که معنی جمع دارد ولی دستوری مفرد است: «همه اینجا هستند.»"
+            },
+            {
+              "kind": "li",
+              "text": "عبارت مقدار با اسم جمع: «بیشتر دانشجویان قبول شدند.»"
+            },
+            {
+              "kind": "li",
+              "text": "چند فاعل با شخص‌های مختلف: «من و برادرم فردا می‌رویم.»"
+            },
+            {
+              "kind": "li",
+              "text": "فعلِ بعد از `qui`: «حق با توست.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "tout le monde / chacun / on + verbe au singulier",
+            "la plupart des / beaucoup de + nom pluriel + verbe au pluriel",
+            "c'est moi qui + verbe à la 1re personne"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "با `la plupart des` و `beaucoup de`، فعل با اسمِ بعد از آن‌ها هماهنگ می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tout le monde est là.",
+              "fa": "همه اینجا هستند.",
+              "highlights": [
+                [
+                  14,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "La plupart des étudiants ont réussi.",
+              "fa": "بیشتر دانشجویان قبول شدند.",
+              "highlights": [
+                [
+                  25,
+                  28
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Beaucoup de gens pensent comme toi.",
+              "fa": "خیلی‌ها مثل تو فکر می‌کنند.",
+              "highlights": [
+                [
+                  17,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Mon frère et moi partons demain.",
+              "fa": "من و برادرم فردا می‌رویم.",
+              "highlights": [
+                [
+                  17,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "C'est toi qui as raison.",
+              "fa": "حق با توست.",
+              "highlights": [
+                [
+                  14,
+                  16
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Tout le monde sont là.",
+          "right": "Tout le monde est là.",
+          "why": "tout le monde از نظر دستوری مفرد است، هرچند معنی «همه» دارد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "وقتی فاعل‌ها شخص‌های مختلف دارند: با `moi` فعل `nous` می‌آید (`Paul et moi sommes prêts.`) و با `toi` بدون `moi` فعل `vous` (`Toi et lui êtes invités.`)."
+            },
+            {
+              "kind": "li",
+              "text": "اسم‌های جمعی مثل `la famille`، `l'équipe`، `la police` و `le public` فعل مفرد می‌گیرند: `La police est arrivée.`"
+            },
+            {
+              "kind": "li",
+              "text": "`les gens` همیشه جمع است: `Les gens sont gentils ici.`"
+            },
+            {
+              "kind": "li",
+              "text": "در جملهٔ موصولی، فعلِ بعد از `qui` با اسم یا ضمیرِ پیش از آن هماهنگ می‌شود: `les amis qui viennent`، `moi qui suis`."
+            },
+            {
+              "kind": "li",
+              "text": "`il y a` و دیگر ساخت‌های بدون فاعل واقعی همیشه مفرد می‌مانند."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "فاعل",
+              "highlights": []
+            },
+            {
+              "text": "فعل",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "tout le monde, chacun, on",
+                "highlights": []
+              },
+              {
+                "text": "مفرد",
+                "highlights": []
+              },
+              {
+                "text": "Tout le monde est content.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "la plupart des, beaucoup de + جمع",
+                "highlights": []
+              },
+              {
+                "text": "جمع",
+                "highlights": []
+              },
+              {
+                "text": "La plupart des gens sont partis.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "… et moi",
+                "highlights": []
+              },
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "Paul et moi sommes prêts.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "la famille, la police",
+                "highlights": []
+              },
+              {
+                "text": "مفرد",
+                "highlights": []
+              },
+              {
+                "text": "La police est arrivée.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "avant-que",
       "group": "structures",
       "level": "B1",
@@ -9065,7 +10744,8 @@
         "opposition-concession",
         "pour-que",
         "bien-que",
-        "connecteurs-logiques"
+        "connecteurs-logiques",
+        "intensite-consequence"
       ],
       "blocks": [
         {
@@ -9282,6 +10962,184 @@
                 "highlights": []
               }
             ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "comparaison-progressive",
+      "group": "structures",
+      "level": "B2",
+      "titleFr": "De plus en plus, plus … plus, comme si",
+      "titleFa": "de plus en plus، plus … plus، comme si",
+      "aliasesFr": [
+        "de plus en plus",
+        "de moins en moins",
+        "plus plus",
+        "plus moins",
+        "comme si",
+        "de mieux en mieux"
+      ],
+      "aliasesFa": [
+        "روزبه‌روز",
+        "هرچه بیشتر",
+        "بیشتر و بیشتر",
+        "انگار که",
+        "گویی"
+      ],
+      "related": [
+        "comparatif-superlatif",
+        "imparfait",
+        "plus-que-parfait",
+        "bon-vs-bien",
+        "phrases-avec-si"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`de plus en plus` یعنی «روزبه‌روز بیشتر» و `de moins en moins` یعنی «روزبه‌روز کمتر». ساخت `plus …, plus …` یعنی «هرچه … بیشتر، … بیشتر». `comme si` یعنی «انگار که» و بعد از آن imparfait می‌آید، یا plus-que-parfait برای کاری که پیش‌تر انجام شده است."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "تغییر تدریجی: «هوا روزبه‌روز سردتر می‌شود.»"
+            },
+            {
+              "kind": "li",
+              "text": "دو تغییر که با هم پیش می‌روند: «هرچه بیشتر می‌خوانم، بیشتر یاد می‌گیرم.»"
+            },
+            {
+              "kind": "li",
+              "text": "مقایسه با یک وضعیت غیرواقعی: «طوری حرف می‌زند که انگار همه‌چیز را می‌داند.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "de plus en plus / de moins en moins + adjectif, adverbe ou de + nom",
+            "plus + phrase, plus (ou moins) + phrase",
+            "comme si + imparfait / plus-que-parfait"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در ساخت `plus …, plus …` هیچ حرف تعریفی پیش از `plus` نمی‌آید و هر بخش ترتیب عادی جمله را دارد."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il fait de plus en plus froid.",
+              "fa": "هوا روزبه‌روز سردتر می‌شود.",
+              "highlights": [
+                [
+                  8,
+                  23
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "J'ai de moins en moins de temps libre.",
+              "fa": "وقت آزادم روزبه‌روز کمتر می‌شود.",
+              "highlights": [
+                [
+                  5,
+                  25
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Plus je lis, plus j'apprends.",
+              "fa": "هرچه بیشتر می‌خوانم، بیشتر یاد می‌گیرم.",
+              "highlights": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  13,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Plus il travaille, moins il dort.",
+              "fa": "هرچه بیشتر کار می‌کند، کمتر می‌خوابد.",
+              "highlights": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  19,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Il parle comme s'il savait tout.",
+              "fa": "طوری حرف می‌زند که انگار همه‌چیز را می‌داند.",
+              "highlights": [
+                [
+                  9,
+                  17
+                ],
+                [
+                  20,
+                  26
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Le plus je lis, le plus j'apprends.",
+          "right": "Plus je lis, plus j'apprends.",
+          "why": "در این ساخت پیش از plus حرف تعریف نمی‌آید."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "با فعل، `de plus en plus` بعد از فعل می‌آید: `Il travaille de plus en plus.`"
+            },
+            {
+              "kind": "li",
+              "text": "شکل‌های بی‌قاعده: `de mieux en mieux` (روزبه‌روز بهتر) و `de pire en pire` (روزبه‌روز بدتر)."
+            },
+            {
+              "kind": "li",
+              "text": "`moins …, moins …` هم ممکن است: `Moins je dors, moins je travaille bien.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای کاری که پیش از زمانِ جملهٔ اصلی انجام‌شده فرض می‌شود، بعد از `comme si` فعل در plus-que-parfait می‌آید: `Il a réagi comme s'il avait vu un fantôme.`"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `comme si`، مثل `si` شرطی، futur و conditionnel نمی‌آید."
+            },
+            {
+              "kind": "li",
+              "text": "`si` پیش از `il` و `ils` به `s'` تبدیل می‌شود: `comme s'il`."
+            }
           ]
         }
       ]
@@ -10103,7 +11961,8 @@
         "plus-que-parfait",
         "conditionnel-present",
         "imparfait",
-        "interrogation"
+        "interrogation",
+        "ce-qui-ce-que"
       ],
       "blocks": [
         {
@@ -10637,6 +12496,470 @@
       ]
     },
     {
+      "id": "intensite-consequence",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Si … que, tellement … que, tant de … que",
+      "titleFa": "آن‌قدر … که: si … que، tellement … que",
+      "aliasesFr": [
+        "si que",
+        "tellement que",
+        "tant que",
+        "tant de que",
+        "tellement de que",
+        "trop pour",
+        "intensité",
+        "conséquence"
+      ],
+      "aliasesFa": [
+        "آن‌قدر که",
+        "به قدری که",
+        "خیلی … که",
+        "بیان شدت",
+        "نتیجه"
+      ],
+      "related": [
+        "cause-consequence",
+        "quantite",
+        "adverbes"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای گفتن «آن‌قدر … که»، شدت با `si` یا `tellement` بیان می‌شود و نتیجه با `que` می‌آید. `si` معمولاً با صفت و قید می‌آید، `tant` با فعل و اسم، و `tellement` با همه. بعد از `que` فعل در indicatif است."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شدتِ یک صفت یا قید: «آن‌قدر خسته است که خوابش می‌برد.»"
+            },
+            {
+              "kind": "li",
+              "text": "شدتِ یک کار: «آن‌قدر کار کرد که مریض شد.»"
+            },
+            {
+              "kind": "li",
+              "text": "مقدار زیاد از یک چیز: «آن‌قدر سروصدا هست که نمی‌توانم بخوابم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "si / tellement + adjectif ou adverbe + que + indicatif",
+            "verbe + tellement / tant + que + indicatif",
+            "tellement de / tant de + nom + que + indicatif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "برای بیان مقدار با اسم، `tant de` یا `tellement de` می‌آید. در عبارت‌های ثابتی مثل `avoir faim`، `de` نمی‌آید: `J'ai tellement faim !`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il est si fatigué qu'il s'endort devant la télé.",
+              "fa": "آن‌قدر خسته است که جلوی تلویزیون خوابش می‌برد.",
+              "highlights": [
+                [
+                  7,
+                  9
+                ],
+                [
+                  18,
+                  21
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle parle tellement vite que je ne comprends rien.",
+              "fa": "آن‌قدر تند حرف می‌زند که هیچ‌چیز نمی‌فهمم.",
+              "highlights": [
+                [
+                  11,
+                  20
+                ],
+                [
+                  26,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il a tellement travaillé qu'il est tombé malade.",
+              "fa": "آن‌قدر کار کرد که مریض شد.",
+              "highlights": [
+                [
+                  5,
+                  14
+                ],
+                [
+                  25,
+                  28
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il y a tant de bruit que je ne peux pas dormir.",
+              "fa": "آن‌قدر سروصدا هست که نمی‌توانم بخوابم.",
+              "highlights": [
+                [
+                  7,
+                  14
+                ],
+                [
+                  21,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "J'ai tellement de travail que je ne sortirai pas ce week-end.",
+              "fa": "آن‌قدر کار دارم که این آخر هفته بیرون نمی‌روم.",
+              "highlights": [
+                [
+                  5,
+                  17
+                ],
+                [
+                  26,
+                  29
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il y a si de bruit que je ne peux pas dormir.",
+          "right": "Il y a tant de bruit que je ne peux pas dormir.",
+          "why": "برای بیان مقدارِ bruit باید tant de یا tellement de به کار برود؛ si de در این ساخت درست نیست."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "در زمان‌های مرکب، `tellement` و `tant` بین فعل کمکی و participe passé می‌آیند: `Il a tant mangé que …`"
+            },
+            {
+              "kind": "li",
+              "text": "بدون `que`، همین کلمه‌ها جملهٔ تعجبی می‌سازند: `Il est si gentil !`، `J'ai tellement faim !`"
+            },
+            {
+              "kind": "li",
+              "text": "برای «زیادی … برای اینکه»: `trop` + صفت + `pour` + مصدر. `Il est trop fatigué pour sortir.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای «به اندازهٔ کافی … برای اینکه»: `assez` + صفت + `pour` + مصدر. `Elle est assez grande pour comprendre.`"
+            },
+            {
+              "kind": "li",
+              "text": "`que` پیش از مصوت به `qu'` تبدیل می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "شدتِ چه چیزی؟",
+              "highlights": []
+            },
+            {
+              "text": "ساختار",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "صفت یا قید",
+                "highlights": []
+              },
+              {
+                "text": "si / tellement … que",
+                "highlights": []
+              },
+              {
+                "text": "Il est si grand que …",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "فعل",
+                "highlights": []
+              },
+              {
+                "text": "tellement / tant … que",
+                "highlights": []
+              },
+              {
+                "text": "Il mange tellement que …",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "اسم",
+                "highlights": []
+              },
+              {
+                "text": "tellement de / tant de … que",
+                "highlights": []
+              },
+              {
+                "text": "Il a tant d'amis que …",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interrogation-avancee",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Qui est-ce qui, qu'est-ce qui, lequel, à qui",
+      "titleFa": "سؤال دقیق‌تر: qu'est-ce qui، lequel، à qui",
+      "aliasesFr": [
+        "qui est-ce qui",
+        "qui est-ce que",
+        "qu'est-ce qui",
+        "qu'est-ce que",
+        "lequel",
+        "à qui",
+        "de quoi",
+        "avec qui"
+      ],
+      "aliasesFa": [
+        "چه کسی",
+        "چه چیزی",
+        "کدام",
+        "با چه کسی",
+        "دربارهٔ چه",
+        "سؤال با حرف اضافه"
+      ],
+      "related": [
+        "interrogation",
+        "qui-vs-que",
+        "relatifs-composes",
+        "ce-qui-ce-que"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "شکل‌های بلند سؤال دو بخش دارند. کلمهٔ اول می‌گوید دربارهٔ شخص می‌پرسیم (`qui`) یا چیز (`que`)؛ کلمهٔ آخر می‌گوید آن شخص یا چیز فاعل است (`qui`) یا مفعول (`que`). برای «کدام» از `lequel` استفاده می‌شود، و حرف اضافه پیش از کلمهٔ پرسشی می‌آید؛ در سؤال رسمی این گروه در آغاز جمله قرار می‌گیرد."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "چیزی که فاعل است: «چه اتفاقی دارد می‌افتد؟»"
+            },
+            {
+              "kind": "li",
+              "text": "شخصی که مفعول است: «چه کسی را دعوت کرده‌ای؟»"
+            },
+            {
+              "kind": "li",
+              "text": "انتخاب از میان چند مورد: «کدام را ترجیح می‌دهی؟»"
+            },
+            {
+              "kind": "li",
+              "text": "سؤال با حرف اضافه: «با چه کسی حرف می‌زنی؟»، «به چه چیزی نیاز دارید؟»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "qui / qu' + est-ce + qui / que",
+            "lequel / laquelle / lesquels / lesquelles",
+            "préposition + qui / quoi"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از حرف اضافه، برای شخص `qui` و برای چیز `quoi` می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Qu'est-ce qui se passe ?",
+              "fa": "چه اتفاقی دارد می‌افتد؟",
+              "highlights": [
+                [
+                  0,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Qui est-ce que tu as invité ?",
+              "fa": "چه کسی را دعوت کرده‌ای؟",
+              "highlights": [
+                [
+                  0,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il y a deux films : lequel préfères-tu ?",
+              "fa": "دو فیلم هست: کدام را ترجیح می‌دهی؟",
+              "highlights": [
+                [
+                  20,
+                  26
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "À qui parles-tu ?",
+              "fa": "با چه کسی حرف می‌زنی؟",
+              "highlights": [
+                [
+                  0,
+                  5
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "De quoi avez-vous besoin ?",
+              "fa": "به چه چیزی نیاز دارید؟",
+              "highlights": [
+                [
+                  0,
+                  7
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Qu'est-ce que se passe ?",
+          "right": "Qu'est-ce qui se passe ?",
+          "why": "«چه چیزی» در این جمله فاعلِ فعل se passe است؛ برای فاعل، کلمهٔ آخر باید qui باشد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شکل‌های کوتاه: `Qui vient ?` (برابر با `Qui est-ce qui vient ?`) و `Que fais-tu ?` (برابر با `Qu'est-ce que tu fais ?`)."
+            },
+            {
+              "kind": "li",
+              "text": "برای چیزی که فاعل است، شکل کوتاه وجود ندارد و فقط `qu'est-ce qui` می‌آید."
+            },
+            {
+              "kind": "li",
+              "text": "`quel` پیش از اسم می‌آید و `lequel` جای اسم را می‌گیرد: `Quel film ?` در برابر `Lequel ?`"
+            },
+            {
+              "kind": "li",
+              "text": "`lequel` با `à` و `de` ادغام می‌شود: `Auquel penses-tu ?`، `Duquel parles-tu ?`"
+            },
+            {
+              "kind": "li",
+              "text": "حرف اضافه از کلمهٔ پرسشی جدا نمی‌شود: `Avec qui sors-tu ?` و در گفتار `Tu sors avec qui ?`"
+            },
+            {
+              "kind": "li",
+              "text": "در گفتار، `quoi` در پایان جمله هم می‌آید: `Tu fais quoi ?`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "فاعل",
+              "highlights": []
+            },
+            {
+              "text": "مفعول",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "شخص",
+                "highlights": []
+              },
+              {
+                "text": "qui est-ce qui",
+                "highlights": []
+              },
+              {
+                "text": "qui est-ce que",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "چیز",
+                "highlights": []
+              },
+              {
+                "text": "qu'est-ce qui",
+                "highlights": []
+              },
+              {
+                "text": "qu'est-ce que",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "mise-en-relief",
       "group": "structures",
       "level": "B2",
@@ -10662,7 +12985,8 @@
         "qui-vs-que",
         "pronoms-toniques",
         "dont-et-ou",
-        "c-est-vs-il-est"
+        "c-est-vs-il-est",
+        "ce-qui-ce-que"
       ],
       "blocks": [
         {
@@ -12013,7 +14337,8 @@
         "futur",
         "plus-que-parfait",
         "conditionnel-passe",
-        "condition-sans-si"
+        "condition-sans-si",
+        "comparaison-progressive"
       ],
       "blocks": [
         {
@@ -12691,7 +15016,8 @@
         "verbes-modaux",
         "pronoms-cod-coi",
         "avant-que",
-        "pour-que"
+        "pour-que",
+        "verbes-deux-prepositions"
       ],
       "blocks": [
         {
@@ -15755,7 +18081,8 @@
         "gerondif",
         "verbes-modaux",
         "pronom-on",
-        "tu-vs-vous"
+        "tu-vs-vous",
+        "accord-du-verbe"
       ],
       "blocks": [
         {

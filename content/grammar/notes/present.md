@@ -6,7 +6,7 @@ title_fr: "Le présent de l'indicatif"
 title_fa: "زمان حال (présent)"
 aliases_fr: [présent, présent de l'indicatif, conjugaison au présent, verbes en -er]
 aliases_fa: [زمان حال, حال ساده, صرف فعل در حال, مضارع]
-related: [futur, imparfait, depuis-pendant-il-y-a, imperatif, verbes-pronominaux, subjonctif-emplois, passe-recent, gerondif, verbes-modaux, pronom-on, tu-vs-vous]
+related: [futur, imparfait, depuis-pendant-il-y-a, imperatif, verbes-pronominaux, subjonctif-emplois, passe-recent, gerondif, verbes-modaux, pronom-on, tu-vs-vous, accord-du-verbe]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

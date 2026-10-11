@@ -6,7 +6,7 @@ title_fr: "L'expression de la quantité"
 title_fa: "بیان مقدار: beaucoup de، trop، assez، peu"
 aliases_fr: [quantité, beaucoup de, trop de, assez de, peu de, un peu de, un kilo de, quelques, plusieurs]
 aliases_fa: [مقدار, خیلی, زیاد, کافی, کم, چند, فرق très و beaucoup]
-related: [articles, pronom-en, adverbes, comparatif-superlatif]
+related: [articles, pronom-en, adverbes, comparatif-superlatif, intensite-consequence, nombres]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

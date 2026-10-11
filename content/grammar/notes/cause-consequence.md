@@ -6,7 +6,7 @@ title_fr: "La cause et la conséquence"
 title_fa: "دلیل و نتیجه: parce que، comme، donc"
 aliases_fr: [cause, conséquence, parce que, car, comme, puisque, donc, alors, à cause de, grâce à]
 aliases_fa: [چون, زیرا, به خاطر, پس, بنابراین, بیان دلیل, بیان نتیجه, فرق parce que و car]
-related: [opposition-concession, pour-que, bien-que, connecteurs-logiques]
+related: [opposition-concession, pour-que, bien-que, connecteurs-logiques, intensite-consequence]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

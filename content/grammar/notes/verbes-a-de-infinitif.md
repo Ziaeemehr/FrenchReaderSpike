@@ -6,7 +6,7 @@ title_fr: "Verbe + à ou de + infinitif"
 title_fa: "فعل + à یا de + مصدر"
 aliases_fr: [verbe + infinitif, commencer à, décider de, essayer de, apprendre à, verbes suivis de à, verbes suivis de de]
 aliases_fa: [فعل با حرف اضافه, بعد از فعل à یا de, commencer à, décider de, مصدر بعد از فعل]
-related: [verbes-modaux, pronoms-cod-coi, avant-que, pour-que]
+related: [verbes-modaux, pronoms-cod-coi, avant-que, pour-que, verbes-deux-prepositions]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

@@ -6,7 +6,7 @@ title_fr: "Les pronoms relatifs « dont » et « où »"
 title_fa: "ضمیرهای موصولی dont و où"
 aliases_fr: [dont, où, pronoms relatifs, pronom relatif dont, le jour où, ce dont]
 aliases_fa: [dont یعنی چه, کاربرد dont, ضمیر موصولی, که … ـش, جایی که, روزی که]
-related: [qui-vs-que, pronom-en, relatifs-composes]
+related: [qui-vs-que, pronom-en, relatifs-composes, ce-qui-ce-que]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

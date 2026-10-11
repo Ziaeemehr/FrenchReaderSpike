@@ -6,7 +6,7 @@ title_fr: "Le discours indirect"
 title_fa: "نقل قول غیرمستقیم"
 aliases_fr: [discours indirect, discours rapporté, il dit que, il a dit que, demander si, ce que, concordance des temps]
 aliases_fa: [نقل قول غیرمستقیم, نقل قول, گفت که, پرسید که آیا, تطابق زمان‌ها]
-related: [plus-que-parfait, conditionnel-present, imparfait, interrogation]
+related: [plus-que-parfait, conditionnel-present, imparfait, interrogation, ce-qui-ce-que]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

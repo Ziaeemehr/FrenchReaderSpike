@@ -6,7 +6,7 @@ title_fr: "La mise en relief : c'est … qui, c'est … que"
 title_fa: "تأکید: c'est … qui، c'est … que"
 aliases_fr: [mise en relief, c'est qui, c'est que, ce qui c'est, ce que c'est, ce dont, c'est moi qui]
 aliases_fa: [تأکید کردن, برجسته‌سازی, بود که, چیزی که, c'est moi qui]
-related: [qui-vs-que, pronoms-toniques, dont-et-ou, c-est-vs-il-est]
+related: [qui-vs-que, pronoms-toniques, dont-et-ou, c-est-vs-il-est, ce-qui-ce-que]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
