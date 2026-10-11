@@ -724,6 +724,8 @@
         <item quantity="other">%d résultats</item>
     </plurals>
     <string name="grammar_favourites">Favoris</string>
+    <string name="grammar_favourites_empty">Aucun favori pour l\'instant. Touchez l\'étoile d\'une fiche pour l\'ajouter.</string>
+    <string name="grammar_recent_empty">Vous n\'avez encore ouvert aucune fiche.</string>
     <string name="grammar_recently_opened">Notes récentes</string>
     <string name="grammar_add_favourite">Ajouter aux favoris</string>
     <string name="grammar_remove_favourite">Retirer des favoris</string>

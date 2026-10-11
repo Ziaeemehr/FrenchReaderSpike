@@ -29,13 +29,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -117,6 +119,10 @@ private fun grammarNotes(): State<List<GrammarNote>?> {
     }
 }
 
+private const val VIEW_ALL = "all"
+private const val VIEW_FAVOURITES = "favourites"
+private const val VIEW_RECENT = "recent"
+
 @Composable
 fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
     val notes by grammarNotes()
@@ -131,7 +137,19 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
     // Empty means every level; the levels are few, so a plain list is enough to save and restore.
     var levels by rememberSaveable { mutableStateOf(listOf<String>()) }
     val allLevels = remember(notes) { notes.orEmpty().map { it.level }.distinct().sorted() }
-    fun shown(note: GrammarNote) = levels.isEmpty() || note.level in levels
+    // Favourites and recents are views over the same list, switched by a chip, not extra sections.
+    var view by rememberSaveable { mutableStateOf(VIEW_ALL) }
+    fun shown(note: GrammarNote) = (levels.isEmpty() || note.level in levels) && when (view) {
+        VIEW_FAVOURITES -> note.id in prefs.favourites
+        VIEW_RECENT -> prefs.recents.any { it.id == note.id }
+        else -> true
+    }
+    // Selected chips use the grammar violet rather than the app-wide teal.
+    val chipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = LocalGrammarColors.current.accentContainer,
+        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+        selectedLeadingIconColor = LocalGrammarColors.current.accent
+    )
     val results by remember(index) { derivedStateOf { index.search(query).filter { shown(it.note) } } }
     GrammarPage { padding ->
         if (notes == null) {
@@ -164,41 +182,63 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                         keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() })
                     )
                 }
-                if (allLevels.size > 1) item(key = "levels") {
-                    // Level names are Latin (A1, B1), so the row reads left to right in every UI language.
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            allLevels.forEach { level ->
-                                FilterChip(
-                                    selected = level in levels,
-                                    onClick = { levels = if (level in levels) levels - level else levels + level },
-                                    label = { Text(level) }
-                                )
-                            }
+                item(key = "filters") {
+                    // One scrolling row: the two personal views first, then the level chips.
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = view == VIEW_FAVOURITES,
+                            onClick = { view = if (view == VIEW_FAVOURITES) VIEW_ALL else VIEW_FAVOURITES },
+                            label = { Text(stringResource(R.string.grammar_favourites)) },
+                            colors = chipColors,
+                            leadingIcon = { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                        )
+                        FilterChip(
+                            selected = view == VIEW_RECENT,
+                            onClick = { view = if (view == VIEW_RECENT) VIEW_ALL else VIEW_RECENT },
+                            label = { Text(stringResource(R.string.grammar_recently_opened)) },
+                            colors = chipColors,
+                            leadingIcon = { Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                        )
+                        if (allLevels.size > 1) allLevels.forEach { level ->
+                            FilterChip(
+                                selected = level in levels,
+                                onClick = { levels = if (level in levels) levels - level else levels + level },
+                                label = { Text(level) },
+                                colors = chipColors
+                            )
                         }
                     }
                 }
                 if (query.isBlank()) {
-                    if (notes!!.isEmpty()) item(key = "empty") { Text(stringResource(R.string.grammar_empty)) }
-                    val favourites = notes!!.filter { it.id in prefs.favourites && shown(it) }
-                    val byId = notes!!.associateBy { it.id }
-                    val recents = prefs.recents.mapNotNull { byId[it.id] }.filter(::shown).take(5)
-                    if (favourites.isNotEmpty()) {
-                        item(key = "fav-header") { GrammarListHeader(stringResource(R.string.grammar_favourites)) }
-                        items(favourites, key = { "fav:${it.id}" }) { note ->
-                            GrammarNoteCard(note, onOpenNote, favourite = true)
-                        }
+                    val visible = notes!!.filter(::shown)
+                    if (visible.isEmpty()) item(key = "empty") {
+                        Text(
+                            stringResource(
+                                when {
+                                    notes!!.isEmpty() -> R.string.grammar_empty
+                                    view == VIEW_FAVOURITES -> R.string.grammar_favourites_empty
+                                    view == VIEW_RECENT -> R.string.grammar_recent_empty
+                                    else -> R.string.grammar_search_no_results
+                                }
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    if (recents.isNotEmpty()) {
-                        item(key = "recent-header") { GrammarListHeader(stringResource(R.string.grammar_recently_opened)) }
-                        items(recents, key = { "recent:${it.id}" }) { note ->
+                    if (view == VIEW_RECENT) {
+                        // Most recently opened first, without group headers.
+                        val byId = visible.associateBy { it.id }
+                        items(prefs.recents.mapNotNull { byId[it.id] }, key = { "recent:${it.id}" }) { note ->
                             GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
                         }
-                    }
-                    notes!!.filter(::shown).groupBy { it.group }.forEach { (group, entries) ->
-                        item(key = "group-header:$group") { GrammarListHeader(stringResource(groupTitle(group))) }
-                        items(entries, key = { "group:${it.id}" }) { note ->
-                            GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
+                    } else {
+                        visible.groupBy { it.group }.forEach { (group, entries) ->
+                            item(key = "group-header:$group") { GrammarListHeader(stringResource(groupTitle(group))) }
+                            items(entries, key = { "group:${it.id}" }) { note ->
+                                GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
+                            }
                         }
                     }
                 } else {
