@@ -15,25 +15,36 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,9 +52,12 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.Constraints
@@ -90,30 +104,79 @@ private fun grammarNotes(): State<List<GrammarNote>?> {
 fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
     val notes by grammarNotes()
     val title = stringResource(R.string.grammar_title)
+    var query by rememberSaveable { mutableStateOf("") }
+    val listState = rememberLazyListState()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val index = remember(notes) { GrammarSearchIndex(notes.orEmpty()) }
+    val results by remember(index) { derivedStateOf { index.search(query) } }
     GrammarPage { padding ->
         if (notes == null) {
             CircularProgressIndicator(Modifier.padding(padding).padding(FrenchReaderDesign.spacing.small))
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(FrenchReaderDesign.spacing.small),
                 verticalArrangement = Arrangement.spacedBy(FrenchReaderDesign.spacing.xSmall)
             ) {
-                item { GrammarBackRow(onBack, title) }
-                if (notes!!.isEmpty()) item { Text(stringResource(R.string.grammar_empty)) }
-                notes!!.groupBy { it.group }.forEach { (group, entries) ->
-                    item { EditorialSectionHeader(stringResource(groupTitle(group))) }
-                    items(entries, key = { it.id }) { note ->
-                        Card(onClick = { onOpenNote(note.id) }, modifier = Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(FrenchReaderDesign.spacing.small), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                GrammarText(GrammarCell(note.titleFr), rtl = false)
-                                GrammarText(GrammarCell(note.titleFa), rtl = true, secondary = true)
-                                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) { MetadataBadge(note.level) }
+                item(key = "back") { GrammarBackRow(onBack, title) }
+                item(key = "search") {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(textDirection = TextDirection.Content),
+                        placeholder = { Text(stringResource(R.string.grammar_search_placeholder)) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = if (query.isNotEmpty()) {
+                            {
+                                IconButton(onClick = { query = "" }) {
+                                    Icon(Icons.Default.Close, stringResource(R.string.grammar_search_clear))
+                                }
                             }
+                        } else null,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() })
+                    )
+                }
+                if (query.isBlank()) {
+                    if (notes!!.isEmpty()) item(key = "empty") { Text(stringResource(R.string.grammar_empty)) }
+                    notes!!.groupBy { it.group }.forEach { (group, entries) ->
+                        item(key = "group:$group") { EditorialSectionHeader(stringResource(groupTitle(group))) }
+                        items(entries, key = { it.id }) { note -> GrammarNoteCard(note, onOpenNote) }
+                    }
+                } else {
+                    item(key = "result-count") {
+                        Text(
+                            pluralStringResource(R.plurals.grammar_search_results, results.size, results.size),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (results.isEmpty()) item(key = "no-results") {
+                        Column {
+                            Text(stringResource(R.string.grammar_search_no_results))
+                            TextButton(onClick = { query = "" }) { Text(stringResource(R.string.grammar_search_clear)) }
                         }
+                    }
+                    items(results, key = { it.note.id }) { result ->
+                        GrammarNoteCard(result.note, onOpenNote, result.snippet)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun GrammarNoteCard(note: GrammarNote, onOpenNote: (String) -> Unit, snippet: GrammarCell? = null) {
+    Card(onClick = { onOpenNote(note.id) }, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(FrenchReaderDesign.spacing.small), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            GrammarText(GrammarCell(note.titleFr), rtl = false)
+            GrammarText(GrammarCell(note.titleFa), rtl = true, secondary = true)
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) { MetadataBadge(note.level) }
+            if (snippet != null) GrammarText(snippet, rtl = isRtlText(snippet.text), secondary = true)
         }
     }
 }

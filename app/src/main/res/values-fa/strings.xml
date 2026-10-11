@@ -712,4 +712,12 @@
     <string name="grammar_decision">انتخاب ساختار</string>
     <string name="grammar_steps">مراحل</string>
     <string name="grammar_comparison">مقایسه</string>
+
+    <string name="grammar_search_placeholder">جست‌وجوی دستور زبان به فارسی یا فرانسوی</string>
+    <string name="grammar_search_clear">پاک کردن جست‌وجو</string>
+    <string name="grammar_search_no_results">هیچ یادداشت دستوری با جست‌وجوی شما مطابقت ندارد.</string>
+    <plurals name="grammar_search_results">
+        <item quantity="one">%d نتیجه</item>
+        <item quantity="other">%d نتیجه</item>
+    </plurals>
 </resources>

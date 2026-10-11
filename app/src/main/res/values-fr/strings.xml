@@ -714,4 +714,12 @@
     <string name="grammar_decision">Choisir une structure</string>
     <string name="grammar_steps">Étapes</string>
     <string name="grammar_comparison">Comparaison</string>
+
+    <string name="grammar_search_placeholder">Rechercher en français ou en persan</string>
+    <string name="grammar_search_clear">Effacer la recherche</string>
+    <string name="grammar_search_no_results">Aucune fiche de grammaire ne correspond à votre recherche.</string>
+    <plurals name="grammar_search_results">
+        <item quantity="one">%d résultat</item>
+        <item quantity="other">%d résultats</item>
+    </plurals>
 </resources>

@@ -714,4 +714,12 @@
     <string name="grammar_decision">Choosing a structure</string>
     <string name="grammar_steps">Steps</string>
     <string name="grammar_comparison">Comparison</string>
+
+    <string name="grammar_search_placeholder">Search grammar in French or Persian</string>
+    <string name="grammar_search_clear">Clear search</string>
+    <string name="grammar_search_no_results">No grammar notes match your search.</string>
+    <plurals name="grammar_search_results">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
 </resources>
