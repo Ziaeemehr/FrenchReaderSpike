@@ -6,7 +6,7 @@ title_fr: "Les pronoms toniques : moi, toi, lui, eux"
 title_fa: "ضمیرهای تأکیدی: moi، toi، lui، eux"
 aliases_fr: [pronoms toniques, moi toi lui elle, nous vous eux elles, avec moi, c'est moi, moi aussi]
 aliases_fa: [ضمیر تأکیدی, ضمیر منفصل, moi یعنی چه, بعد از حرف اضافه, فرق je و moi]
-related: [pronoms-cod-coi, pronom-y, comparatif-superlatif, imperatif, pronom-en, pronoms-possessifs]
+related: [pronoms-cod-coi, pronom-y, comparatif-superlatif, imperatif, pronom-en, pronoms-possessifs, mise-en-relief]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

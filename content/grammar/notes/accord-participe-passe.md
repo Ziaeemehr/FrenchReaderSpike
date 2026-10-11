@@ -6,7 +6,7 @@ title_fr: "L'accord du participe passé"
 title_fa: "هماهنگی participe passé"
 aliases_fr: [accord du participe passé, participe passé avec être, participe passé avec avoir, COD placé avant]
 aliases_fa: [هماهنگی اسم مفعول, تطابق participe passé, کی e می‌گیرد, مفعول مستقیم قبل از فعل]
-related: [passe-compose, pronoms-cod-coi, qui-vs-que, verbes-pronominaux, voix-passive, plus-que-parfait, conditionnel-passe, pronom-en]
+related: [passe-compose, pronoms-cod-coi, qui-vs-que, verbes-pronominaux, voix-passive, plus-que-parfait, conditionnel-passe, pronom-en, faire-causatif]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
@@ -62,6 +62,7 @@ WHY: با être، participe passé با فاعل هماهنگ می‌شود؛ el
 
 - مفعول مستقیم در سه حالت پیش از فعل می‌آید: ضمیر (`le, la, les, me, te, nous, vous`)، ضمیر موصولی `que`، و سؤال با `quel` یا `combien de`: `Quelle robe as-tu choisie ?`
 - با مفعول غیرمستقیم هماهنگی نیست: `Je leur ai parlé.`
+- `fait` پیش از مصدر همیشه بدون هماهنگی می‌ماند: `Je les ai fait venir.`
 - وقتی `en` مفعول مستقیم است، participe passé معمولاً بدون هماهنگی می‌ماند: `Des pommes ? J'en ai mangé.`
 - هماهنگی گاهی در تلفظ هم شنیده می‌شود، چون صامتِ پایانیِ خاموشِ شکل مذکر در شکل مؤنث تلفظ می‌شود: `pris, prise`؛ `fait, faite`؛ `écrit, écrite`؛ `mis, mise`.
 - در فعل‌های دوضمیره هماهنگی معمولاً با فاعل است، ولی نه وقتی مفعول مستقیم بعد از فعل آمده یا ضمیر نقش غیرمستقیم دارد: `Elle s'est lavé les mains.`، `Elles se sont parlé.`

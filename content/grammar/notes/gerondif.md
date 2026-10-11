@@ -6,7 +6,7 @@ title_fr: "Le gérondif : en + participe présent"
 title_fa: "gérondif: در حالِ …، با …کردن"
 aliases_fr: [gérondif, en faisant, participe présent, en + -ant, tout en]
 aliases_fa: [در حال, همزمان, با انجام دادن, وجه وصفی, قید حالت فعلی]
-related: [present, avant-que, pronom-en]
+related: [present, avant-que, pronom-en, participe-present]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

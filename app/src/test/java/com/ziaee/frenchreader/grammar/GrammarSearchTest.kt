@@ -30,6 +30,9 @@ class GrammarSearchTest {
     @Test
     fun `golden queries appear in top three`() {
         val queries = listOf(
+            // Aliases with an apostrophe were once merged into one item by the build script.
+            "qu'est-ce que" to "interrogation", "j'en ai" to "pronom-en", "c'est" to "c-est-vs-il-est",
+            "quelqu'un" to "indefinis", "s'appeler" to "verbes-pronominaux",
             "subjonctif" to "subjonctif-emplois", "وجه التزامی" to "subjonctif-emplois",
             "il faut que" to "subjonctif-emplois", "si" to "phrases-avec-si", "اگر" to "phrases-avec-si",
             "j'aurais" to "conditionnel-present", "j’aurais" to "conditionnel-present",

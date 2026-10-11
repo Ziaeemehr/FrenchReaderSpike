@@ -6,7 +6,7 @@ title_fr: "Le futur proche et le futur simple"
 title_fa: "زمان آینده: futur proche و futur simple"
 aliases_fr: [futur, futur simple, futur proche, aller + infinitif, je vais faire, je ferai]
 aliases_fa: [زمان آینده, آینده نزدیک, آینده ساده, فرق futur proche و futur simple]
-related: [present, conditionnel-present, phrases-avec-si, passe-recent]
+related: [present, conditionnel-present, phrases-avec-si, passe-recent, futur-anterieur]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

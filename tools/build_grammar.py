@@ -14,7 +14,8 @@ SECTIONS = REQUIRED | {'mistake', 'more', 'infographic'}
 def scalar(value):
     value = value.strip()
     if value.startswith('[') and value.endswith(']'):
-        return [scalar(v) for v in re.split(r''',(?=(?:[^"']|"[^"]*"|'[^']*')*$)''', value[1:-1]) if v.strip()]
+        # Only double quotes group an item: French items are full of apostrophes (j'en ai, qu'il).
+        return [scalar(v) for v in re.split(r',(?=(?:[^"]|"[^"]*")*$)', value[1:-1]) if v.strip()]
     if value.startswith('"'):
         return json.loads(value)
     if value.startswith("'") and value.endswith("'"):
@@ -115,6 +116,10 @@ def parse_note(path):
     note = {key: meta[key] for key in ('id', 'group', 'level')}
     for source_key, target in [('title_fr', 'titleFr'), ('title_fa', 'titleFa'), ('aliases_fr', 'aliasesFr'), ('aliases_fa', 'aliasesFa'), ('related', 'related')]:
         note[target] = meta[source_key]
+    for key in ('aliasesFr', 'aliasesFa'):
+        # A comma inside an alias means the list was not split into separate items.
+        if any(',' in alias or '،' in alias for alias in note[key]):
+            raise ValueError(f'{path.name}: alias list in {key} was not split correctly')
     note['blocks'] = blocks
     return note, meta.get('status')
 

@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -165,7 +166,10 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, onOpenPo
             ) {
                 item(key = "back") {
                     GrammarBackRow(onBack, title) {
-                        TextButton(onClick = onOpenPosters) {
+                        TextButton(
+                            onClick = onOpenPosters,
+                            colors = ButtonDefaults.textButtonColors(contentColor = LocalGrammarColors.current.accent)
+                        ) {
                             Icon(Icons.Default.Collections, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
                             Text(stringResource(R.string.grammar_posters))

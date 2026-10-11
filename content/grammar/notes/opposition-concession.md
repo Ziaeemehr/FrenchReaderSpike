@@ -6,7 +6,7 @@ title_fr: "L'opposition : mais, pourtant, alors que, malgré"
 title_fa: "تضاد: mais، pourtant، alors que، malgré"
 aliases_fr: [opposition, concession, mais, pourtant, cependant, alors que, tandis que, malgré, par contre, quand même]
 aliases_fa: [اما, ولی, با این حال, در حالی که, با وجود, در عوض, بیان تضاد]
-related: [bien-que, cause-consequence, phrases-avec-si]
+related: [bien-que, cause-consequence, phrases-avec-si, connecteurs-logiques]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

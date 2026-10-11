@@ -6,7 +6,7 @@ title_fr: "Le plus-que-parfait"
 title_fa: "ماضی بعید (plus-que-parfait)"
 aliases_fr: [plus-que-parfait, j'avais fait, j'étais allé, antériorité dans le passé]
 aliases_fa: [ماضی بعید, گذشته در گذشته, رفته بودم]
-related: [passe-compose, imparfait, phrases-avec-si, passe-compose-vs-imparfait, discours-indirect, conditionnel-passe, accord-participe-passe]
+related: [passe-compose, imparfait, phrases-avec-si, passe-compose-vs-imparfait, discours-indirect, conditionnel-passe, accord-participe-passe, futur-anterieur]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
