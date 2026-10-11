@@ -6,7 +6,7 @@ title_fr: "L'impératif"
 title_fa: "وجه امری (impératif)"
 aliases_fr: [impératif, donner un ordre, écoute, allons-y, ne parle pas, asseyez-vous]
 aliases_fa: [فعل امر, دستور دادن, امر منفی, نهی]
-related: [present, pronoms-cod-coi, verbes-pronominaux, negation, pronoms-doubles]
+related: [present, pronoms-cod-coi, verbes-pronominaux, negation, pronoms-doubles, tu-vs-vous]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

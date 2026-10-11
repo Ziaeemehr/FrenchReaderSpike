@@ -6,7 +6,7 @@ title_fr: "La condition sans « si » : à condition que, à moins que, au cas o
 title_fa: "شرط بدون si: à condition que، à moins que، au cas où"
 aliases_fr: [condition, à condition que, à moins que, au cas où, pourvu que, sinon, en cas de]
 aliases_fa: [به شرطی که, مگر اینکه, در صورتی که, وگرنه, مبادا, شرط]
-related: [phrases-avec-si, subjonctif-emplois, conditionnel-present, pour-que]
+related: [phrases-avec-si, subjonctif-emplois, conditionnel-present, pour-que, ne-expletif]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

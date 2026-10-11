@@ -6,7 +6,7 @@ title_fr: "Le futur antérieur"
 title_fa: "آیندهٔ کامل (futur antérieur)"
 aliases_fr: [futur antérieur, j'aurai fini, je serai parti, quand j'aurai, dès que]
 aliases_fa: [آینده کامل, آینده پیشین, تا آن موقع تمام شده, وقتی تمام کردم]
-related: [futur, plus-que-parfait, accord-participe-passe, conditionnel-passe]
+related: [futur, plus-que-parfait, accord-participe-passe, conditionnel-passe, conjonctions-de-temps]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

@@ -6,7 +6,7 @@ title_fr: "Le genre et le pluriel des noms"
 title_fa: "جنس و جمع اسم‌ها"
 aliases_fr: [genre des noms, masculin féminin, pluriel des noms, pluriel en x]
 aliases_fa: [مذکر و مؤنث, جنس اسم, جمع بستن, جمع اسم]
-related: [articles, accord-adjectif, adjectifs-possessifs, demonstratifs, prepositions-de-lieu]
+related: [articles, accord-adjectif, adjectifs-possessifs, demonstratifs, prepositions-de-lieu, nominalisation]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

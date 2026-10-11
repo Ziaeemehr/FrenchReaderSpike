@@ -6,7 +6,7 @@ title_fr: "Les indéfinis : quelqu'un, quelque chose, chaque, aucun"
 title_fa: "مبهم‌ها: quelqu'un، quelque chose، chaque، aucun"
 aliases_fr: [indéfinis, quelqu'un, quelque chose, chaque, chacun, aucun, plusieurs, certains, quelques]
 aliases_fa: [کسی, چیزی, هر, هر کدام, هیچ, بعضی, چند, ضمیر مبهم]
-related: [negation, tout, quantite, pronom-on]
+related: [negation, tout, quantite, pronom-on, negation-avancee]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

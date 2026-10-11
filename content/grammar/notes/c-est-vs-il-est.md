@@ -6,7 +6,7 @@ title_fr: "C'est ou il est ?"
 title_fa: "فرق c'est و il est"
 aliases_fr: [c'est ou il est, c'est vs il est, c'est un, il est médecin, ce sont]
 aliases_fa: [فرق c'est و il est, c'est یا il est, این است, او است]
-related: [articles, demonstratifs, accord-adjectif, pronoms-toniques, mise-en-relief]
+related: [articles, demonstratifs, accord-adjectif, pronoms-toniques, mise-en-relief, verbes-impersonnels]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

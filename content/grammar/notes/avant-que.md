@@ -6,7 +6,7 @@ title_fr: "Avant que, avant de, après"
 title_fa: "avant que، avant de و après: قبل و بعد از"
 aliases_fr: [avant que, avant de, après, après avoir, après que, infinitif passé]
 aliases_fa: [قبل از اینکه, بعد از اینکه, پیش از, پس از]
-related: [subjonctif-emplois, pour-que, bien-que]
+related: [subjonctif-emplois, pour-que, bien-que, ne-expletif, conjonctions-de-temps]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

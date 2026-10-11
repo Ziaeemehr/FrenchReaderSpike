@@ -6,7 +6,7 @@ title_fr: "Le subjonctif présent : formation et emplois"
 title_fa: "وجه التزامی (subjonctif): ساخت و کاربردها"
 aliases_fr: [subjonctif, subjonctif présent, il faut que, je veux que, que je sois, que j'aie]
 aliases_fa: [وجه التزامی, مضارع التزامی, کاربرد subjonctif, بعد از que چه می‌آید]
-related: [bien-que, pour-que, avant-que, present, verbes-modaux, subjonctif-passe, subjonctif-vs-indicatif, condition-sans-si]
+related: [bien-que, pour-que, avant-que, present, verbes-modaux, subjonctif-passe, subjonctif-vs-indicatif, condition-sans-si, ne-expletif, conjonctions-de-temps, verbes-impersonnels]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

@@ -26,7 +26,9 @@
         "articles",
         "comparatif-superlatif",
         "adverbes",
-        "tout"
+        "tout",
+        "place-et-sens-adjectif",
+        "bon-vs-bien"
       ],
       "blocks": [
         {
@@ -190,7 +192,8 @@
         "articles",
         "genre-et-nombre",
         "demonstratifs",
-        "pronoms-possessifs"
+        "pronoms-possessifs",
+        "tu-vs-vous"
       ],
       "blocks": [
         {
@@ -482,7 +485,8 @@
         "accord-adjectif",
         "comparatif-superlatif",
         "quantite",
-        "passe-compose"
+        "passe-compose",
+        "bon-vs-bien"
       ],
       "blocks": [
         {
@@ -649,7 +653,8 @@
         "prepositions-de-lieu",
         "comparatif-superlatif",
         "quantite",
-        "tout"
+        "tout",
+        "negation-avancee"
       ],
       "blocks": [
         {
@@ -901,7 +906,9 @@
         "accord-adjectif",
         "articles",
         "adverbes",
-        "pronoms-toniques"
+        "pronoms-toniques",
+        "bon-vs-bien",
+        "ne-expletif"
       ],
       "blocks": [
         {
@@ -1152,7 +1159,9 @@
         "depuis-pendant-il-y-a",
         "prepositions-de-lieu",
         "articles",
-        "c-est-vs-il-est"
+        "c-est-vs-il-est",
+        "an-vs-annee",
+        "en-vs-dans"
       ],
       "blocks": [
         {
@@ -1653,7 +1662,8 @@
         "accord-adjectif",
         "adjectifs-possessifs",
         "demonstratifs",
-        "prepositions-de-lieu"
+        "prepositions-de-lieu",
+        "nominalisation"
       ],
       "blocks": [
         {
@@ -1892,7 +1902,8 @@
         "negation",
         "tout",
         "quantite",
-        "pronom-on"
+        "pronom-on",
+        "negation-avancee"
       ],
       "blocks": [
         {
@@ -2341,7 +2352,9 @@
         "pronoms-cod-coi",
         "imperatif",
         "verbes-pronominaux",
-        "indefinis"
+        "indefinis",
+        "negation-avancee",
+        "ne-expletif"
       ],
       "blocks": [
         {
@@ -2632,7 +2645,8 @@
         "articles",
         "pronom-y",
         "genre-et-nombre",
-        "date-et-heure"
+        "date-et-heure",
+        "en-vs-dans"
       ],
       "blocks": [
         {
@@ -3370,7 +3384,8 @@
         "savoir-vs-connaitre",
         "subjonctif-emplois",
         "conditionnel-present",
-        "verbes-a-de-infinitif"
+        "verbes-a-de-infinitif",
+        "verbes-impersonnels"
       ],
       "blocks": [
         {
@@ -3890,6 +3905,469 @@
       ]
     },
     {
+      "id": "an-vs-annee",
+      "group": "comparisons",
+      "level": "B1",
+      "titleFr": "An ou année ? Jour ou journée ?",
+      "titleFa": "فرق an و année، jour و journée",
+      "aliasesFr": [
+        "an ou année",
+        "jour ou journée",
+        "soir ou soirée",
+        "matin ou matinée",
+        "bonne journée",
+        "bonne soirée"
+      ],
+      "aliasesFa": [
+        "فرق an و année",
+        "فرق jour و journée",
+        "سال",
+        "روز",
+        "شب خوش"
+      ],
+      "related": [
+        "date-et-heure",
+        "depuis-pendant-il-y-a",
+        "tout"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`an`، `jour`، `matin` و `soir` معمولاً برای شمردن واحدهای زمان یا مشخص‌کردن زمان به کار می‌روند. `année`، `journée`، `matinée` و `soirée` به طول و محتوای آن مدت نگاه می‌کنند و معمولاً با صفت یا توصیف می‌آیند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شمردن: «بیست سال دارم.»، «هفته‌ای سه روز کار می‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "مدت و آنچه در آن گذشته: «سال فوق‌العاده‌ای در پاریس گذراندم.»، «تمام روز کار کردم.»"
+            },
+            {
+              "kind": "li",
+              "text": "آرزوی خوب هنگام خداحافظی: `Bonne journée !`، `Bonne soirée !`"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "nombre + an / jour",
+            "adjectif ou déterminant + année / journée"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از عدد معمولاً شکل کوتاه می‌آید و با صفت یا `toute la` معمولاً شکل بلند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'ai vingt ans.",
+              "fa": "من بیست سال دارم.",
+              "highlights": [
+                [
+                  11,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "J'ai passé une année merveilleuse à Paris.",
+              "fa": "سال فوق‌العاده‌ای را در پاریس گذراندم.",
+              "highlights": [
+                [
+                  15,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il travaille trois jours par semaine.",
+              "fa": "او هفته‌ای سه روز کار می‌کند.",
+              "highlights": [
+                [
+                  19,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "J'ai travaillé toute la journée.",
+              "fa": "تمام روز کار کردم.",
+              "highlights": [
+                [
+                  24,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Bonne soirée !",
+              "fa": "شب خوبی داشته باشید!",
+              "highlights": [
+                [
+                  6,
+                  12
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "J'ai vingt années.",
+          "right": "J'ai vingt ans.",
+          "why": "برای گفتن سن همیشه an به کار می‌رود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "هر دو شکل ممکن است: `l'an dernier` و `l'année dernière`؛ `tous les ans` و `chaque année`."
+            },
+            {
+              "kind": "li",
+              "text": "با `cette` فقط `année` می‌آید: `cette année`."
+            },
+            {
+              "kind": "li",
+              "text": "با `quelques`، `plusieurs` و `combien de` معمولاً `années` می‌آید: `quelques années`."
+            },
+            {
+              "kind": "li",
+              "text": "`ce matin` و `ce soir` بخش مشخصی از روز را نشان می‌دهند؛ `toute la matinée` و `toute la soirée` بر تمام مدتِ آن بخش تأکید می‌کنند."
+            },
+            {
+              "kind": "li",
+              "text": "`une soirée` به معنی مهمانی شبانه هم هست."
+            },
+            {
+              "kind": "li",
+              "text": "`bonjour` هنگام رسیدن گفته می‌شود و `bonne journée` هنگام رفتن."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "شمارش یا مشخص‌کردن زمان",
+              "highlights": []
+            },
+            {
+              "text": "مدت، با توصیف",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "سال",
+                "highlights": []
+              },
+              {
+                "text": "an",
+                "highlights": []
+              },
+              {
+                "text": "année",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "روز",
+                "highlights": []
+              },
+              {
+                "text": "jour",
+                "highlights": []
+              },
+              {
+                "text": "journée",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "صبح",
+                "highlights": []
+              },
+              {
+                "text": "matin",
+                "highlights": []
+              },
+              {
+                "text": "matinée",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "شب",
+                "highlights": []
+              },
+              {
+                "text": "soir",
+                "highlights": []
+              },
+              {
+                "text": "soirée",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bon-vs-bien",
+      "group": "comparisons",
+      "level": "A2",
+      "titleFr": "Bon ou bien ? Meilleur ou mieux ?",
+      "titleFa": "فرق bon و bien، meilleur و mieux",
+      "aliasesFr": [
+        "bon ou bien",
+        "mauvais ou mal",
+        "meilleur ou mieux",
+        "c'est bon",
+        "c'est bien"
+      ],
+      "aliasesFa": [
+        "فرق bon و bien",
+        "خوب",
+        "بد",
+        "بهتر",
+        "فرق meilleur و mieux"
+      ],
+      "related": [
+        "adverbes",
+        "comparatif-superlatif",
+        "accord-adjectif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`bon` صفت است و اسم را توصیف می‌کند؛ `bien` قید است و فعل را توصیف می‌کند. همین فرق بین `mauvais` و `mal`، و بین `meilleur` و `mieux` هم هست."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "کیفیتِ یک چیز یا یک شخص: `bon`. «فیلم خوبی است.»"
+            },
+            {
+              "kind": "li",
+              "text": "شیوهٔ انجام یک کار: `bien`. «خوب آواز می‌خواند.»"
+            },
+            {
+              "kind": "li",
+              "text": "مقایسه: `meilleur` برای اسم و `mieux` برای فعل."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "bon / bonne / bons / bonnes + nom",
+            "verbe + bien"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "`bon` با اسمش هماهنگ می‌شود؛ `bien` هیچ‌وقت تغییر نمی‌کند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "C'est un bon film.",
+              "fa": "فیلم خوبی است.",
+              "highlights": [
+                [
+                  9,
+                  12
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle chante bien.",
+              "fa": "او خوب آواز می‌خواند.",
+              "highlights": [
+                [
+                  12,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Ce gâteau est très bon.",
+              "fa": "این کیک خیلی خوشمزه است.",
+              "highlights": [
+                [
+                  19,
+                  22
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Tu vas bien ?",
+              "fa": "حالت خوب است؟",
+              "highlights": [
+                [
+                  7,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Ton idée est meilleure que la mienne.",
+              "fa": "ایدهٔ تو از مال من بهتر است.",
+              "highlights": [
+                [
+                  13,
+                  22
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Elle chante bon.",
+          "right": "Elle chante bien.",
+          "why": "برای توصیف شیوهٔ انجام یک کار قید لازم است، یعنی bien."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`mauvais` صفت است و `mal` قید: `un mauvais film`، `Il chante mal.`"
+            },
+            {
+              "kind": "li",
+              "text": "`meilleur` صفت است و `mieux` قید: `un meilleur film`، `Elle chante mieux que moi.`"
+            },
+            {
+              "kind": "li",
+              "text": "`C'est bon.` دربارهٔ مزه یا درست‌بودنِ چیزی است؛ `C'est bien.` تأیید و رضایت را نشان می‌دهد."
+            },
+            {
+              "kind": "li",
+              "text": "در گفتار، `bien` بعد از `être` به‌عنوان صفتِ بدون تغییر هم می‌آید: `Ce film est bien.`، `C'est quelqu'un de bien.`"
+            },
+            {
+              "kind": "li",
+              "text": "`bon` در چند عبارت ثابت نقش قید دارد: `sentir bon` (بوی خوب دادن)، `Il fait bon.` (هوا مطبوع است.)"
+            },
+            {
+              "kind": "li",
+              "text": "`bien` پیش از صفت یعنی «خیلی»: `bien content`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "صفت، با اسم",
+              "highlights": []
+            },
+            {
+              "text": "قید، با فعل",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "خوب",
+                "highlights": []
+              },
+              {
+                "text": "bon",
+                "highlights": []
+              },
+              {
+                "text": "bien",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "بد",
+                "highlights": []
+              },
+              {
+                "text": "mauvais",
+                "highlights": []
+              },
+              {
+                "text": "mal",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "بهتر",
+                "highlights": []
+              },
+              {
+                "text": "meilleur",
+                "highlights": []
+              },
+              {
+                "text": "mieux",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "c-est-vs-il-est",
       "group": "comparisons",
       "level": "A2",
@@ -3913,7 +4391,8 @@
         "demonstratifs",
         "accord-adjectif",
         "pronoms-toniques",
-        "mise-en-relief"
+        "mise-en-relief",
+        "verbes-impersonnels"
       ],
       "blocks": [
         {
@@ -4146,7 +4625,9 @@
         "passe-compose",
         "imparfait",
         "present",
-        "date-et-heure"
+        "date-et-heure",
+        "conjonctions-de-temps",
+        "en-vs-dans"
       ],
       "blocks": [
         {
@@ -4387,6 +4868,237 @@
               },
               {
                 "text": "Je pars dans deux jours.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "en-vs-dans",
+      "group": "comparisons",
+      "level": "B1",
+      "titleFr": "En ou dans ?",
+      "titleFa": "فرق en و dans",
+      "aliasesFr": [
+        "en ou dans",
+        "en deux heures",
+        "dans deux heures",
+        "en ville",
+        "dans la ville",
+        "en train"
+      ],
+      "aliasesFa": [
+        "فرق en و dans",
+        "در",
+        "داخل",
+        "دو ساعت دیگر",
+        "در دو ساعت"
+      ],
+      "related": [
+        "prepositions-de-lieu",
+        "date-et-heure",
+        "depuis-pendant-il-y-a"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای زمان، `en` مدتِ لازم برای انجام کار را می‌گوید و `dans` فاصله تا یک رویداد در آینده را. برای مکان، `dans` معمولاً یعنی داخل یک فضای مشخص و پیش از اسمی می‌آید که حرف تعریف یا صفت ملکی دارد؛ `en` در کاربردهای رایج بدون حرف تعریف می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "مدتِ لازم برای انجام کار: `en`. «این کتاب را در دو روز خواندم.»"
+            },
+            {
+              "kind": "li",
+              "text": "چه مدت دیگر: `dans`. «قطار ده دقیقهٔ دیگر حرکت می‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "داخلِ جایی مشخص: `dans`. «کلیدها در کیفم هستند.»"
+            },
+            {
+              "kind": "li",
+              "text": "کشور مؤنث و وسیلهٔ نقلیه: `en`. «در ایتالیا زندگی می‌کند.»، «با مترو می‌روم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "en + durée",
+            "dans + durée",
+            "dans + déterminant + lieu",
+            "en + nom sans article"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از `dans` اسم معمولاً حرف تعریف یا صفت ملکی دارد؛ بعد از `en` معمولاً ندارد."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'ai lu ce livre en deux jours.",
+              "fa": "این کتاب را در دو روز خواندم.",
+              "highlights": [
+                [
+                  17,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Le train part dans dix minutes.",
+              "fa": "قطار ده دقیقهٔ دیگر حرکت می‌کند.",
+              "highlights": [
+                [
+                  14,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Les clés sont dans mon sac.",
+              "fa": "کلیدها در کیفم هستند.",
+              "highlights": [
+                [
+                  14,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle habite en Italie.",
+              "fa": "او در ایتالیا زندگی می‌کند.",
+              "highlights": [
+                [
+                  12,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je vais au travail en métro.",
+              "fa": "با مترو سر کار می‌روم.",
+              "highlights": [
+                [
+                  19,
+                  21
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Les clés sont en mon sac.",
+          "right": "Les clés sont dans mon sac.",
+          "why": "برای «داخلِ» یک چیز مشخص که حرف تعریف یا صفت ملکی دارد، dans به کار می‌رود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "تفاوت زمانی در یک نگاه: `Je ferai ce travail en une heure.` (یک ساعت طول می‌کشد) در برابر `Je ferai ce travail dans une heure.` (یک ساعت دیگر این کار را انجام می‌دهم)."
+            },
+            {
+              "kind": "li",
+              "text": "`en` بدون حرف تعریف در عبارت‌های ثابت: `en ville`، `en classe`، `en vacances`، `en prison`."
+            },
+            {
+              "kind": "li",
+              "text": "وسیلهٔ نقلیه: `en voiture`، `en train`، `en avion`؛ ولی `à pied` و `à vélo`."
+            },
+            {
+              "kind": "li",
+              "text": "`dans le train` یعنی «داخل قطار»، نه «با قطار»."
+            },
+            {
+              "kind": "li",
+              "text": "`en` برای ماه، سال و بیشتر فصل‌ها هم می‌آید: `en mai`، `en 2024`، `en été`."
+            },
+            {
+              "kind": "li",
+              "text": "برای دهه‌ها `dans` می‌آید: `dans les années 80`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "en",
+              "highlights": []
+            },
+            {
+              "text": "dans",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "زمان",
+                "highlights": []
+              },
+              {
+                "text": "مدتِ لازم: en deux heures",
+                "highlights": []
+              },
+              {
+                "text": "فاصله تا آینده: dans deux heures",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "مکان",
+                "highlights": []
+              },
+              {
+                "text": "بدون حرف تعریف: en ville",
+                "highlights": []
+              },
+              {
+                "text": "با حرف تعریف: dans la ville",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "وسیله",
+                "highlights": []
+              },
+              {
+                "text": "با قطار: en train",
+                "highlights": []
+              },
+              {
+                "text": "داخل قطار: dans le train",
                 "highlights": []
               }
             ]
@@ -4648,6 +5360,265 @@
               },
               {
                 "text": "Il pleuvait.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "place-et-sens-adjectif",
+      "group": "comparisons",
+      "level": "B2",
+      "titleFr": "Les adjectifs qui changent de sens selon leur place",
+      "titleFa": "صفت‌هایی که با جایشان معنی‌شان عوض می‌شود",
+      "aliasesFr": [
+        "place de l'adjectif",
+        "ancien",
+        "propre",
+        "cher",
+        "pauvre",
+        "seul",
+        "dernier",
+        "un grand homme",
+        "un homme grand"
+      ],
+      "aliasesFa": [
+        "صفت قبل یا بعد از اسم",
+        "تغییر معنی صفت",
+        "ancien یعنی چه",
+        "propre یعنی چه"
+      ],
+      "related": [
+        "accord-adjectif",
+        "adjectifs-possessifs",
+        "bon-vs-bien"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "چند صفت پرکاربرد بسته به اینکه پیش از اسم بیایند یا بعد از آن، دو معنی متفاوت دارند. معمولاً پیش از اسم معنی ذهنی یا مجازی می‌دهند و بعد از اسم معنی عینی و واقعی."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "این تفاوت در خواندن و نوشتن دقیق اهمیت دارد: `mon ancien professeur` یعنی «استاد سابقم»، نه «استاد پیرم»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "adjectif + nom = sens figuré ou subjectif",
+            "nom + adjectif = sens propre ou objectif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "این تفاوت‌های معنایی را باید برای هر صفت جداگانه یاد گرفت. همهٔ صفت‌ها با جابه‌جایی معنی‌شان عوض نمی‌شود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "C'est mon ancien professeur.",
+              "fa": "او استاد سابق من است.",
+              "highlights": [
+                [
+                  10,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Nous avons visité une église ancienne.",
+              "fa": "از یک کلیسای قدیمی دیدن کردیم.",
+              "highlights": [
+                [
+                  29,
+                  37
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "J'ai ma propre chambre.",
+              "fa": "من اتاق خودم را دارم.",
+              "highlights": [
+                [
+                  8,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il porte une chemise propre.",
+              "fa": "او پیراهن تمیزی پوشیده است.",
+              "highlights": [
+                [
+                  21,
+                  27
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "C'est un grand écrivain.",
+              "fa": "او نویسندهٔ بزرگی است.",
+              "highlights": [
+                [
+                  9,
+                  14
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`cher`: پیش از اسم «عزیز» (`mon cher ami`) و بعد از اسم «گران» (`une voiture chère`)."
+            },
+            {
+              "kind": "li",
+              "text": "`pauvre`: پیش از اسم «بیچاره» (`ce pauvre homme`) و بعد از اسم «فقیر» (`un homme pauvre`)."
+            },
+            {
+              "kind": "li",
+              "text": "`seul`: پیش از اسم «تنها یک» (`un seul homme`) و بعد از اسم «تنها، بی‌همراه» (`un homme seul`)."
+            },
+            {
+              "kind": "li",
+              "text": "`dernier` در عبارت‌های زمانی: پیش از اسم «آخرین» (`la dernière semaine du mois`) و بعد از اسم‌هایی مثل `semaine`، `mois` و `année` «گذشته» (`la semaine dernière`)."
+            },
+            {
+              "kind": "li",
+              "text": "`grand` برای اشخاص: `un grand homme` یعنی «مرد بزرگ و برجسته» و `un homme grand` یعنی «مرد قدبلند»."
+            },
+            {
+              "kind": "li",
+              "text": "`certain`: پیش از اسم «نوعی، مقداری» (`un certain succès`) و بعد از اسم «قطعی» (`un succès certain`)."
+            },
+            {
+              "kind": "li",
+              "text": "`drôle`: `une drôle d'histoire` یعنی «ماجرای عجیب» و `une histoire drôle` یعنی «ماجرای خنده‌دار»."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "صفت",
+              "highlights": []
+            },
+            {
+              "text": "پیش از اسم",
+              "highlights": []
+            },
+            {
+              "text": "بعد از اسم",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "ancien",
+                "highlights": []
+              },
+              {
+                "text": "سابق",
+                "highlights": []
+              },
+              {
+                "text": "قدیمی",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "propre",
+                "highlights": []
+              },
+              {
+                "text": "خودِ",
+                "highlights": []
+              },
+              {
+                "text": "تمیز",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "cher",
+                "highlights": []
+              },
+              {
+                "text": "عزیز",
+                "highlights": []
+              },
+              {
+                "text": "گران",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "pauvre",
+                "highlights": []
+              },
+              {
+                "text": "بیچاره",
+                "highlights": []
+              },
+              {
+                "text": "فقیر",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "seul",
+                "highlights": []
+              },
+              {
+                "text": "تنها یک",
+                "highlights": []
+              },
+              {
+                "text": "تنها، بی‌همراه",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "dernier، در عبارت‌های زمانی",
+                "highlights": []
+              },
+              {
+                "text": "آخرین",
+                "highlights": []
+              },
+              {
+                "text": "گذشته",
                 "highlights": []
               }
             ]
@@ -5365,6 +6336,246 @@
               },
               {
                 "text": "bien que, pour que, avant que",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tu-vs-vous",
+      "group": "comparisons",
+      "level": "A1",
+      "titleFr": "Tu ou vous ?",
+      "titleFa": "فرق tu و vous",
+      "aliasesFr": [
+        "tu ou vous",
+        "tutoyer",
+        "vouvoyer",
+        "tutoiement",
+        "vouvoiement",
+        "s'il te plaît",
+        "s'il vous plaît"
+      ],
+      "aliasesFa": [
+        "تو یا شما",
+        "فرق tu و vous",
+        "خطاب مؤدبانه",
+        "tutoyer یعنی چه"
+      ],
+      "related": [
+        "present",
+        "imperatif",
+        "adjectifs-possessifs",
+        "pronoms-toniques"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`tu` برای خطاب به یک نفرِ نزدیک است: دوست، عضو خانواده، بچه. `vous` برای چند نفر است، و برای یک نفر در رابطهٔ رسمی یا با کسی که نمی‌شناسیم. تقریباً مثل «تو» و «شما» در فارسی."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "دوستان، خانواده و بچه‌ها: `tu`. بین جوان‌ها هم رایج است، ولی هم‌سن‌بودنِ دو بزرگسال به‌تنهایی دلیل استفاده از `tu` نیست."
+            },
+            {
+              "kind": "li",
+              "text": "غریبه‌ها، فروشنده، استاد، مدیر، افراد مسن‌تر: `vous`."
+            },
+            {
+              "kind": "li",
+              "text": "هر گروهی از دو نفر به بالا: `vous`."
+            },
+            {
+              "kind": "p",
+              "text": "وقتی مطمئن نیستید، `vous` انتخاب امن‌تری است."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "tu + verbe à la 2e personne du singulier",
+            "vous + verbe à la 2e personne du pluriel"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "حتی وقتی `vous` به یک نفر اشاره دارد، فعل جمع می‌ماند؛ ولی صفت با همان یک نفر هماهنگ می‌شود: `Vous êtes prête, madame ?`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tu viens avec moi, Paul ?",
+              "fa": "پل، با من می‌آیی؟",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Vous parlez français, madame ?",
+              "fa": "خانم، شما فرانسوی حرف می‌زنید؟",
+              "highlights": [
+                [
+                  0,
+                  4
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Les enfants, vous êtes prêts ?",
+              "fa": "بچه‌ها، آماده‌اید؟",
+              "highlights": [
+                [
+                  13,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Excusez-moi, vous avez l'heure ?",
+              "fa": "ببخشید، ساعت دارید؟",
+              "highlights": [
+                [
+                  13,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "On peut se tutoyer ?",
+              "fa": "می‌توانیم همدیگر را «تو» خطاب کنیم؟",
+              "highlights": [
+                [
+                  8,
+                  18
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Vous es très gentil.",
+          "right": "Vous êtes très gentil.",
+          "why": "فعلِ vous همیشه دوم‌شخص جمع است، حتی وقتی مخاطب یک نفر است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "دو فعل برای این کار هست: `tutoyer` (با «تو» خطاب کردن) و `vouvoyer` (با «شما» خطاب کردن)."
+            },
+            {
+              "kind": "li",
+              "text": "بقیهٔ کلمه‌ها هم هماهنگ می‌شوند: `te, toi, ton, ta, tes` در برابر `vous, votre, vos`."
+            },
+            {
+              "kind": "li",
+              "text": "«لطفاً» دو شکل دارد: `s'il te plaît` و `s'il vous plaît`."
+            },
+            {
+              "kind": "li",
+              "text": "در امر: `Viens !` در برابر `Venez !`"
+            },
+            {
+              "kind": "li",
+              "text": "بین جوان‌ها و در بسیاری از محیط‌های کاری، زود به `tu` می‌رسند؛ معمولاً فرد بزرگ‌تر یا ارشدتر پیشنهادش را می‌دهد."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "tu",
+              "highlights": []
+            },
+            {
+              "text": "vous",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "با چه کسی؟",
+                "highlights": []
+              },
+              {
+                "text": "دوست، خانواده، بچه",
+                "highlights": []
+              },
+              {
+                "text": "غریبه، رابطهٔ رسمی، چند نفر",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "فعل",
+                "highlights": []
+              },
+              {
+                "text": "tu parles",
+                "highlights": []
+              },
+              {
+                "text": "vous parlez",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "صفت ملکی",
+                "highlights": []
+              },
+              {
+                "text": "ton, ta, tes",
+                "highlights": []
+              },
+              {
+                "text": "votre, vos",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "لطفاً",
+                "highlights": []
+              },
+              {
+                "text": "s'il te plaît",
+                "highlights": []
+              },
+              {
+                "text": "s'il vous plaît",
                 "highlights": []
               }
             ]
@@ -7462,7 +8673,9 @@
       "related": [
         "subjonctif-emplois",
         "pour-que",
-        "bien-que"
+        "bien-que",
+        "ne-expletif",
+        "conjonctions-de-temps"
       ],
       "blocks": [
         {
@@ -8100,7 +9313,8 @@
         "phrases-avec-si",
         "subjonctif-emplois",
         "conditionnel-present",
-        "pour-que"
+        "pour-que",
+        "ne-expletif"
       ],
       "blocks": [
         {
@@ -8333,6 +9547,282 @@
       ]
     },
     {
+      "id": "conjonctions-de-temps",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Quand, pendant que, dès que, jusqu'à ce que",
+      "titleFa": "حروف ربط زمان: quand، pendant que، dès que، jusqu'à ce que",
+      "aliasesFr": [
+        "conjonctions de temps",
+        "quand",
+        "lorsque",
+        "pendant que",
+        "dès que",
+        "depuis que",
+        "jusqu'à ce que",
+        "tant que"
+      ],
+      "aliasesFa": [
+        "وقتی",
+        "در حالی که",
+        "به محض اینکه",
+        "از وقتی که",
+        "تا وقتی که",
+        "حروف ربط زمان"
+      ],
+      "related": [
+        "avant-que",
+        "futur",
+        "futur-anterieur",
+        "depuis-pendant-il-y-a",
+        "subjonctif-emplois"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "این حروف ربط رابطهٔ زمانی دو جمله را نشان می‌دهند. بیشترشان با indicatif می‌آیند: `quand` (وقتی)، `pendant que` (در حالی که)، `dès que` (به‌محض اینکه)، `depuis que` (از وقتی که). ولی `jusqu'à ce que` (تا وقتی که) و `avant que` با subjonctif می‌آیند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "همزمانی: «در حالی که من آشپزی می‌کنم، او میز را می‌چیند.»"
+            },
+            {
+              "kind": "li",
+              "text": "بلافاصله بعد: «به‌محض اینکه برسم زنگ می‌زنم.»"
+            },
+            {
+              "kind": "li",
+              "text": "نقطهٔ شروع: «از وقتی در پاریس زندگی می‌کند خوشحال‌تر است.»"
+            },
+            {
+              "kind": "li",
+              "text": "نقطهٔ پایان: «همین‌جا منتظر بمان تا برگردم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "quand / pendant que / dès que / depuis que + indicatif",
+            "jusqu'à ce que / avant que + subjonctif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "این‌ها با جملهٔ کامل می‌آیند. پیش از اسم شکل دیگری دارند: `pendant`، `dès`، `depuis`، `jusqu'à`، `avant`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Pendant que je cuisine, il met la table.",
+              "fa": "در حالی که من آشپزی می‌کنم، او میز را می‌چیند.",
+              "highlights": [
+                [
+                  0,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Dès que j'arrive, je t'appelle.",
+              "fa": "به‌محض اینکه برسم به تو زنگ می‌زنم.",
+              "highlights": [
+                [
+                  0,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Depuis qu'il habite à Paris, il est plus heureux.",
+              "fa": "از وقتی در پاریس زندگی می‌کند خوشحال‌تر است.",
+              "highlights": [
+                [
+                  0,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Attends ici jusqu'à ce que je revienne.",
+              "fa": "همین‌جا منتظر بمان تا برگردم.",
+              "highlights": [
+                [
+                  12,
+                  26
+                ],
+                [
+                  30,
+                  38
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Quand j'étais étudiant, je sortais beaucoup.",
+              "fa": "وقتی دانشجو بودم، زیاد بیرون می‌رفتم.",
+              "highlights": [
+                [
+                  0,
+                  5
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Attends ici jusqu'à ce que je reviens.",
+          "right": "Attends ici jusqu'à ce que je revienne.",
+          "why": "بعد از jusqu'à ce que، subjonctif می‌آید."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`lorsque` همان `quand` است و رسمی‌تر؛ `aussitôt que` همان `dès que`."
+            },
+            {
+              "kind": "li",
+              "text": "`tant que` یعنی «تا وقتی که، مادامی که» و با indicatif می‌آید: `Tant qu'il pleut, je reste ici.`"
+            },
+            {
+              "kind": "li",
+              "text": "`chaque fois que` (هر بار که) و `une fois que` (همین که، وقتی که) هم با indicatif می‌آیند."
+            },
+            {
+              "kind": "li",
+              "text": "برای رویداد آینده، بعد از `quand` و `dès que` معمولاً futur می‌آید: `Quand tu arriveras, nous mangerons.` در گفتار، زمان حال با معنای آینده هم به کار می‌رود: `Dès que j'arrive, je t'appelle.`"
+            },
+            {
+              "kind": "li",
+              "text": "`après que` در فرانسوی معیار با indicatif می‌آید و `avant que` با subjonctif."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "حرف ربط",
+              "highlights": []
+            },
+            {
+              "text": "معنی",
+              "highlights": []
+            },
+            {
+              "text": "وجه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "quand, lorsque",
+                "highlights": []
+              },
+              {
+                "text": "وقتی",
+                "highlights": []
+              },
+              {
+                "text": "indicatif",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "pendant que",
+                "highlights": []
+              },
+              {
+                "text": "در حالی که",
+                "highlights": []
+              },
+              {
+                "text": "indicatif",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "dès que",
+                "highlights": []
+              },
+              {
+                "text": "به‌محض اینکه",
+                "highlights": []
+              },
+              {
+                "text": "indicatif",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "depuis que",
+                "highlights": []
+              },
+              {
+                "text": "از وقتی که",
+                "highlights": []
+              },
+              {
+                "text": "indicatif",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "jusqu'à ce que",
+                "highlights": []
+              },
+              {
+                "text": "تا وقتی که",
+                "highlights": []
+              },
+              {
+                "text": "subjonctif",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "avant que",
+                "highlights": []
+              },
+              {
+                "text": "قبل از اینکه",
+                "highlights": []
+              },
+              {
+                "text": "subjonctif",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "connecteurs-logiques",
       "group": "structures",
       "level": "B2",
@@ -8364,7 +9854,8 @@
       "related": [
         "cause-consequence",
         "opposition-concession",
-        "bien-que"
+        "bien-que",
+        "nominalisation"
       ],
       "blocks": [
         {
@@ -9394,6 +10885,714 @@
       ]
     },
     {
+      "id": "ne-expletif",
+      "group": "structures",
+      "level": "B2",
+      "titleFr": "Le « ne » explétif",
+      "titleFa": "ne بدون معنای منفی (ne explétif)",
+      "aliasesFr": [
+        "ne explétif",
+        "avant qu'il ne",
+        "à moins qu'il ne",
+        "de peur que ne",
+        "plus que je ne pensais"
+      ],
+      "aliasesFa": [
+        "ne اضافی",
+        "ne بدون pas",
+        "ne زائد",
+        "نفی ظاهری"
+      ],
+      "related": [
+        "negation",
+        "avant-que",
+        "condition-sans-si",
+        "comparatif-superlatif",
+        "subjonctif-emplois"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "در زبان رسمی، گاهی یک `ne` تنها و بدون `pas` می‌آید که جمله را منفی نمی‌کند. بعد از `avant que`، `à moins que`، `de peur que` و فعل‌های ترس دیده می‌شود، و در مقایسه بعد از `plus … que`. اختیاری است و حذفش معنی را عوض نمی‌کند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بعد از `avant que` و `à moins que`: «قبل از اینکه باران ببارد برویم.»"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از فعل‌ها و عبارت‌های ترس: «می‌ترسم خیلی دیر شده باشد.»"
+            },
+            {
+              "kind": "li",
+              "text": "در مقایسهٔ نابرابر: «از آنچه فکر می‌کردم سخت‌تر است.»"
+            },
+            {
+              "kind": "p",
+              "text": "کافی است هنگام خواندن آن را بشناسید و با نفی واقعی اشتباه نگیرید."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "avant que / à moins que / de peur que + sujet + ne + subjonctif",
+            "plus / moins … que + sujet + ne + verbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "این `ne` تنها می‌آید. اگر `pas` هم بیاید، جمله واقعاً منفی است."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Partons avant qu'il ne pleuve.",
+              "fa": "قبل از اینکه باران ببارد برویم.",
+              "highlights": [
+                [
+                  20,
+                  22
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "J'ai peur qu'il ne soit trop tard.",
+              "fa": "می‌ترسم خیلی دیر شده باشد.",
+              "highlights": [
+                [
+                  16,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Je viendrai, à moins que je ne sois malade.",
+              "fa": "می‌آیم، مگر اینکه مریض باشم.",
+              "highlights": [
+                [
+                  28,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "C'est plus difficile que je ne pensais.",
+              "fa": "از آنچه فکر می‌کردم سخت‌تر است.",
+              "highlights": [
+                [
+                  28,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Il parle doucement de peur qu'on ne l'entende.",
+              "fa": "آهسته حرف می‌زند از ترس اینکه صدایش را بشنوند.",
+              "highlights": [
+                [
+                  33,
+                  35
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "J'espère qu'il ne vienne.",
+          "right": "J'espère qu'il viendra.",
+          "why": "در این جملهٔ مثبت، espérer que با indicatif می‌آید و ne explétif نمی‌گیرد. این ne فقط بعد از چند عبارت مشخص می‌آید."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بدون این `ne` هم جمله درست است و همان معنی را دارد: `avant qu'il pleuve`."
+            },
+            {
+              "kind": "li",
+              "text": "فرق با نفی واقعی: `J'ai peur qu'il ne vienne.` یعنی «می‌ترسم بیاید»، ولی `J'ai peur qu'il ne vienne pas.` یعنی «می‌ترسم نیاید»."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌ها و عبارت‌های رایج: `craindre que`، `avoir peur que`، `de peur que`، `de crainte que`، `éviter que`، `empêcher que`."
+            },
+            {
+              "kind": "li",
+              "text": "در مقایسهٔ نابرابر، بعد از `plus … que`، `moins … que`، `mieux … que` و `meilleur … que` می‌آید. در مقایسهٔ برابر با `aussi … que` معمولاً نمی‌آید."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `après que` و `bien que` نمی‌آید."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "negation-avancee",
+      "group": "structures",
+      "level": "B2",
+      "titleFr": "La négation : ni … ni, ne … que, sans",
+      "titleFa": "نفی پیشرفته: ni … ni، ne … que، sans",
+      "aliasesFr": [
+        "ni ni",
+        "ne que",
+        "nulle part",
+        "sans",
+        "ne plus jamais",
+        "ne guère",
+        "non plus",
+        "pas encore"
+      ],
+      "aliasesFa": [
+        "نه … نه",
+        "فقط",
+        "هیچ‌جا",
+        "بدونِ",
+        "دیگر هرگز",
+        "هنوز نه",
+        "من هم نه"
+      ],
+      "related": [
+        "negation",
+        "indefinis",
+        "articles",
+        "ne-expletif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "غیر از `ne … pas` چند ساخت منفی دیگر هم هست: `ne … ni … ni` (نه … نه)، `ne … nulle part` (هیچ‌جا)، `sans` + مصدر (بدونِ)، و ترکیب دو کلمهٔ منفی مثل `plus jamais`. ساخت `ne … que` شبیه نفی است ولی یعنی «فقط»."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "نفی دو چیز با هم: «نه چای می‌خورد نه قهوه.»"
+            },
+            {
+              "kind": "li",
+              "text": "محدودکردن: «فقط ده دقیقه وقت دارم.»"
+            },
+            {
+              "kind": "li",
+              "text": "نبودِ مکان: «کلیدهایم را هیچ‌جا پیدا نمی‌کنم.»"
+            },
+            {
+              "kind": "li",
+              "text": "انجام‌ندادن کاری همراه کار دیگر: «بدون خداحافظی رفت.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "ne + verbe + ni … ni …",
+            "ne + verbe + que …",
+            "sans + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در این ساخت‌ها `pas` نمی‌آید."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il ne boit ni thé ni café.",
+              "fa": "او نه چای می‌خورد نه قهوه.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  11,
+                  13
+                ],
+                [
+                  18,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Je n'ai que dix minutes.",
+              "fa": "فقط ده دقیقه وقت دارم.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  8,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Je ne trouve mes clés nulle part.",
+              "fa": "کلیدهایم را هیچ‌جا پیدا نمی‌کنم.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  22,
+                  32
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle est partie sans dire au revoir.",
+              "fa": "او بدون خداحافظی رفت.",
+              "highlights": [
+                [
+                  16,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je ne vois plus personne.",
+              "fa": "دیگر هیچ‌کس را نمی‌بینم.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  11,
+                  24
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il ne boit pas ni thé ni café.",
+          "right": "Il ne boit ni thé ni café.",
+          "why": "در ساخت ne … ni … ni، کلمهٔ pas نمی‌آید."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بعد از `ni … ni` حرف تعریف جزئی و نامعین حذف می‌شود (`ni thé ni café`)، ولی حرف تعریف معین می‌ماند: `Je n'aime ni le thé ni le café.`"
+            },
+            {
+              "kind": "li",
+              "text": "`ne … que` نفی نیست، پس حرف تعریف تغییر نمی‌کند: `Je ne bois que du thé.` کلمهٔ `que` درست پیش از بخشی می‌آید که محدود می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "دو کلمهٔ منفی می‌توانند با هم بیایند و همچنان `pas` نمی‌آید: `plus jamais`، `plus rien`، `jamais rien`، `jamais personne`."
+            },
+            {
+              "kind": "li",
+              "text": "`pas encore` یعنی «هنوز نه»: `Il n'est pas encore arrivé.`"
+            },
+            {
+              "kind": "li",
+              "text": "`non plus` یعنی «هم نه»: `Moi non plus.`، `Je ne le connais pas non plus.`"
+            },
+            {
+              "kind": "li",
+              "text": "`sans` پیش از اسم معمولاً بدون حرف تعریف می‌آید: `un café sans sucre`."
+            },
+            {
+              "kind": "li",
+              "text": "`ne … guère` ادبی است و یعنی «چندان نه»."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "نفی",
+              "highlights": []
+            },
+            {
+              "text": "معنی",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "ne … ni … ni",
+                "highlights": []
+              },
+              {
+                "text": "نه … نه",
+                "highlights": []
+              },
+              {
+                "text": "Je n'ai ni frère ni sœur.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … que",
+                "highlights": []
+              },
+              {
+                "text": "فقط",
+                "highlights": []
+              },
+              {
+                "text": "Il ne mange que des légumes.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … nulle part",
+                "highlights": []
+              },
+              {
+                "text": "هیچ‌جا",
+                "highlights": []
+              },
+              {
+                "text": "Je ne vais nulle part.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … pas encore",
+                "highlights": []
+              },
+              {
+                "text": "هنوز نه",
+                "highlights": []
+              },
+              {
+                "text": "Il n'est pas encore arrivé.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … plus jamais",
+                "highlights": []
+              },
+              {
+                "text": "دیگر هرگز",
+                "highlights": []
+              },
+              {
+                "text": "Je n'y vais plus jamais.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nominalisation",
+      "group": "structures",
+      "level": "B2",
+      "titleFr": "La nominalisation",
+      "titleFa": "اسم‌سازی از فعل و صفت (nominalisation)",
+      "aliasesFr": [
+        "nominalisation",
+        "noms en -tion",
+        "noms en -ment",
+        "noms en -age",
+        "du verbe au nom",
+        "titres de presse"
+      ],
+      "aliasesFa": [
+        "اسم‌سازی",
+        "ساخت اسم از فعل",
+        "پسوند اسم‌ساز",
+        "تیتر خبر"
+      ],
+      "related": [
+        "genre-et-nombre",
+        "connecteurs-logiques",
+        "voix-passive"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "nominalisation یعنی ساختن اسم از فعل یا صفت: `augmenter` می‌شود `l'augmentation`. در نوشتار رسمی، گزارش و تیتر خبر بسیار رایج است و جمله را فشرده‌تر می‌کند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "تیتر خبر: «افتتاح موزهٔ جدید، شنبهٔ آینده»."
+            },
+            {
+              "kind": "li",
+              "text": "نوشتار رسمی و دانشگاهی: «افزایش قیمت‌ها مصرف‌کنندگان را نگران می‌کند.»"
+            },
+            {
+              "kind": "li",
+              "text": "خلاصه‌کردن یک جمله در یک گروه اسمی."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "verbe + -tion / -ment / -age / -ure = nom",
+            "adjectif + -té / -esse / -eur = nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "پسوند سرنخی برای جنس اسم هم هست: اسم‌هایی که با ‎-tion، ‎-ure، ‎-té و ‎-esse ساخته می‌شوند معمولاً مؤنث‌اند و اسم‌هایی که با ‎-ment و ‎-age ساخته می‌شوند معمولاً مذکر."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "L'augmentation des prix inquiète les consommateurs.",
+              "fa": "افزایش قیمت‌ها مصرف‌کنندگان را نگران می‌کند.",
+              "highlights": [
+                [
+                  2,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Le développement de la ville est rapide.",
+              "fa": "توسعهٔ شهر سریع است.",
+              "highlights": [
+                [
+                  3,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Le départ du train est prévu à huit heures.",
+              "fa": "حرکت قطار برای ساعت هشت پیش‌بینی شده است.",
+              "highlights": [
+                [
+                  3,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Tout le monde admire la beauté de ce paysage.",
+              "fa": "همه زیبایی این منظره را تحسین می‌کنند.",
+              "highlights": [
+                [
+                  24,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Ouverture du nouveau musée samedi prochain.",
+              "fa": "افتتاح موزهٔ جدید، شنبهٔ آینده.",
+              "highlights": [
+                [
+                  0,
+                  9
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Le solution de ce problème est simple.",
+          "right": "La solution de ce problème est simple.",
+          "why": "solution مؤنث است و حرف تعریف la می‌گیرد؛ پسوند اسم‌سازِ ‎-tion اسم مؤنث می‌سازد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بعضی اسم‌ها بدون پسوند یا با شکل بی‌قاعده ساخته می‌شوند: `partir, le départ`؛ `arriver, l'arrivée`؛ `choisir, le choix`؛ `lire, la lecture`؛ `perdre, la perte`؛ `vendre, la vente`؛ `acheter, l'achat`."
+            },
+            {
+              "kind": "li",
+              "text": "از صفت: `beau, la beauté`؛ `libre, la liberté`؛ `triste, la tristesse`؛ `jeune, la jeunesse`؛ `long, la longueur`."
+            },
+            {
+              "kind": "li",
+              "text": "مفعول یا فاعلِ فعل با `de` به اسم وصل می‌شود: `construire un pont` می‌شود `la construction d'un pont`؛ `les prix augmentent` می‌شود `l'augmentation des prix`."
+            },
+            {
+              "kind": "li",
+              "text": "در تیتر خبر معمولاً حرف تعریف حذف می‌شود: `Ouverture du musée`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "پسوند",
+              "highlights": []
+            },
+            {
+              "text": "جنس",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "-tion",
+                "highlights": []
+              },
+              {
+                "text": "مؤنث",
+                "highlights": []
+              },
+              {
+                "text": "augmenter, l'augmentation",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "-ment",
+                "highlights": []
+              },
+              {
+                "text": "مذکر",
+                "highlights": []
+              },
+              {
+                "text": "développer, le développement",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "-age",
+                "highlights": []
+              },
+              {
+                "text": "مذکر",
+                "highlights": []
+              },
+              {
+                "text": "laver, le lavage",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "-ure",
+                "highlights": []
+              },
+              {
+                "text": "مؤنث",
+                "highlights": []
+              },
+              {
+                "text": "ouvrir, l'ouverture",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "-té",
+                "highlights": []
+              },
+              {
+                "text": "مؤنث",
+                "highlights": []
+              },
+              {
+                "text": "beau, la beauté",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "-esse",
+                "highlights": []
+              },
+              {
+                "text": "مؤنث",
+                "highlights": []
+              },
+              {
+                "text": "triste, la tristesse",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "opposition-concession",
       "group": "structures",
       "level": "B1",
@@ -10216,7 +12415,10 @@
         "verbes-modaux",
         "subjonctif-passe",
         "subjonctif-vs-indicatif",
-        "condition-sans-si"
+        "condition-sans-si",
+        "ne-expletif",
+        "conjonctions-de-temps",
+        "verbes-impersonnels"
       ],
       "blocks": [
         {
@@ -10688,6 +12890,291 @@
               },
               {
                 "text": "J'essaie de dormir.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verbes-impersonnels",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Les constructions impersonnelles",
+      "titleFa": "ساخت‌های بدون فاعل واقعی: il faut، il y a، il reste",
+      "aliasesFr": [
+        "verbes impersonnels",
+        "constructions impersonnelles",
+        "il y a",
+        "il faut",
+        "il pleut",
+        "il reste",
+        "il manque",
+        "il s'agit de",
+        "il vaut mieux"
+      ],
+      "aliasesFa": [
+        "فعل غیرشخصی",
+        "il غیرشخصی",
+        "وجود دارد",
+        "لازم است",
+        "مانده است",
+        "بهتر است"
+      ],
+      "related": [
+        "verbes-modaux",
+        "c-est-vs-il-est",
+        "date-et-heure",
+        "depuis-pendant-il-y-a",
+        "subjonctif-emplois"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "در این ساخت‌ها `il` به هیچ شخص یا چیزی اشاره نمی‌کند و فقط جای فاعل را پر می‌کند. فعل همیشه سوم‌شخص مفرد است: `il y a`، `il faut`، `il pleut`، `il reste`، `il s'agit de`."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "وجود داشتن: «در خیابان آدم‌های زیادی هستند.»"
+            },
+            {
+              "kind": "li",
+              "text": "هوا: «از صبح باران می‌بارد.»"
+            },
+            {
+              "kind": "li",
+              "text": "لزوم و ارزیابی: «خوب خوابیدن مهم است.»"
+            },
+            {
+              "kind": "li",
+              "text": "آنچه مانده یا کم است: «دو جا مانده است.»"
+            },
+            {
+              "kind": "li",
+              "text": "موضوعِ یک متن یا فیلم: «این فیلم دربارهٔ یک داستان عاشقانه است.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "il + verbe à la 3e personne du singulier",
+            "il est + adjectif + de + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "فعل هیچ‌وقت جمع بسته نمی‌شود، حتی اگر اسمِ بعد از آن جمع باشد."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il y a beaucoup de monde dans la rue.",
+              "fa": "در خیابان آدم‌های زیادی هستند.",
+              "highlights": [
+                [
+                  0,
+                  6
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il pleut depuis ce matin.",
+              "fa": "از صبح باران می‌بارد.",
+              "highlights": [
+                [
+                  0,
+                  8
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il est important de bien dormir.",
+              "fa": "خوب خوابیدن مهم است.",
+              "highlights": [
+                [
+                  0,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il reste deux places.",
+              "fa": "دو جا مانده است.",
+              "highlights": [
+                [
+                  0,
+                  8
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Dans ce film, il s'agit d'une histoire d'amour.",
+              "fa": "این فیلم دربارهٔ یک داستان عاشقانه است.",
+              "highlights": [
+                [
+                  14,
+                  26
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il y ont beaucoup de problèmes.",
+          "right": "Il y a beaucoup de problèmes.",
+          "why": "il y a همیشه مفرد می‌ماند، حتی وقتی اسمِ بعد از آن جمع است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "هوا: `il pleut`، `il neige`، `il fait beau`، `il fait froid`، `il y a du vent`."
+            },
+            {
+              "kind": "li",
+              "text": "`il faut` با مصدر، با اسم، یا با `que` + subjonctif می‌آید: `Il faut partir.`، `Il faut du temps.`"
+            },
+            {
+              "kind": "li",
+              "text": "`il est` + صفت + `de` رسمی‌تر است؛ در گفتار `c'est` رایج است: `C'est important de bien dormir.`"
+            },
+            {
+              "kind": "li",
+              "text": "`il vaut mieux` + مصدر یعنی «بهتر است»: `Il vaut mieux attendre.`"
+            },
+            {
+              "kind": "li",
+              "text": "`il manque` یعنی «کم است»: `Il manque une chaise.`"
+            },
+            {
+              "kind": "li",
+              "text": "`il s'agit de` فاعل دیگری نمی‌پذیرد؛ `Ce film s'agit de …` غلط است."
+            },
+            {
+              "kind": "li",
+              "text": "`il y a` در زمان‌های دیگر: `il y avait`، `il y a eu`، `il y aura`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "عبارت",
+              "highlights": []
+            },
+            {
+              "text": "معنی",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "il y a",
+                "highlights": []
+              },
+              {
+                "text": "هست، وجود دارد",
+                "highlights": []
+              },
+              {
+                "text": "Il y a un problème.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il faut",
+                "highlights": []
+              },
+              {
+                "text": "باید، لازم است",
+                "highlights": []
+              },
+              {
+                "text": "Il faut partir.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il reste",
+                "highlights": []
+              },
+              {
+                "text": "مانده است",
+                "highlights": []
+              },
+              {
+                "text": "Il reste du pain.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il manque",
+                "highlights": []
+              },
+              {
+                "text": "کم است",
+                "highlights": []
+              },
+              {
+                "text": "Il manque une chaise.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il vaut mieux",
+                "highlights": []
+              },
+              {
+                "text": "بهتر است",
+                "highlights": []
+              },
+              {
+                "text": "Il vaut mieux attendre.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il s'agit de",
+                "highlights": []
+              },
+              {
+                "text": "موضوع … است",
+                "highlights": []
+              },
+              {
+                "text": "Il s'agit d'un roman.",
                 "highlights": []
               }
             ]
@@ -11557,7 +14044,8 @@
         "conditionnel-present",
         "phrases-avec-si",
         "passe-recent",
-        "futur-anterieur"
+        "futur-anterieur",
+        "conjonctions-de-temps"
       ],
       "blocks": [
         {
@@ -11803,7 +14291,8 @@
         "futur",
         "plus-que-parfait",
         "accord-participe-passe",
-        "conditionnel-passe"
+        "conditionnel-passe",
+        "conjonctions-de-temps"
       ],
       "blocks": [
         {
@@ -12174,7 +14663,8 @@
         "pronoms-cod-coi",
         "verbes-pronominaux",
         "negation",
-        "pronoms-doubles"
+        "pronoms-doubles",
+        "tu-vs-vous"
       ],
       "blocks": [
         {
@@ -13264,7 +15754,8 @@
         "passe-recent",
         "gerondif",
         "verbes-modaux",
-        "pronom-on"
+        "pronom-on",
+        "tu-vs-vous"
       ],
       "blocks": [
         {

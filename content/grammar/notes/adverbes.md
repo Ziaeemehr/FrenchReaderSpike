@@ -6,7 +6,7 @@ title_fr: "Les adverbes en -ment et la place de l'adverbe"
 title_fa: "قیدها: ساخت با ‎-ment و جای قید"
 aliases_fr: [adverbes, adverbes en -ment, place de l'adverbe, lentement, vraiment, bien, souvent]
 aliases_fa: [قید, قید حالت, ساخت قید, جای قید در جمله, فرق bon و bien]
-related: [accord-adjectif, comparatif-superlatif, quantite, passe-compose]
+related: [accord-adjectif, comparatif-superlatif, quantite, passe-compose, bon-vs-bien]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

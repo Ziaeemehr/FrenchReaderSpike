@@ -6,7 +6,7 @@ title_fr: "Pouvoir, vouloir, devoir, savoir + infinitif"
 title_fa: "pouvoir، vouloir، devoir، savoir + مصدر"
 aliases_fr: [pouvoir, vouloir, devoir, savoir, il faut, verbes modaux, je peux, je veux, je dois]
 aliases_fa: [توانستن, خواستن, بایستن, باید, بلد بودن, فعل وجهی]
-related: [present, savoir-vs-connaitre, subjonctif-emplois, conditionnel-present, verbes-a-de-infinitif]
+related: [present, savoir-vs-connaitre, subjonctif-emplois, conditionnel-present, verbes-a-de-infinitif, verbes-impersonnels]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

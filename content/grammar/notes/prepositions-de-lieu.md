@@ -6,7 +6,7 @@ title_fr: "Les prépositions de lieu : à, en, au, aux, chez"
 title_fa: "حرف اضافهٔ مکان: à، en، au، aux، chez"
 aliases_fr: [prépositions de lieu, à Paris, en France, au Canada, aux États-Unis, chez, villes et pays]
 aliases_fa: [حرف اضافه مکان, در و به, قبل از اسم کشور, قبل از اسم شهر, en یا au, chez یعنی چه]
-related: [articles, pronom-y, genre-et-nombre, date-et-heure]
+related: [articles, pronom-y, genre-et-nombre, date-et-heure, en-vs-dans]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

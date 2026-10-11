@@ -6,7 +6,7 @@ title_fr: "La date, l'heure et les prépositions de temps"
 title_fa: "تاریخ، ساعت و حرف اضافهٔ زمان"
 aliases_fr: [date, heure, quelle heure est-il, il est huit heures, à huit heures, en août, le lundi, au printemps]
 aliases_fa: [ساعت چند است, تاریخ, روزهای هفته, ماه‌ها, فصل‌ها, حرف اضافه زمان, en یا au]
-related: [depuis-pendant-il-y-a, prepositions-de-lieu, articles, c-est-vs-il-est]
+related: [depuis-pendant-il-y-a, prepositions-de-lieu, articles, c-est-vs-il-est, an-vs-annee, en-vs-dans]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
