@@ -1119,6 +1119,288 @@
       ]
     },
     {
+      "id": "date-et-heure",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "La date, l'heure et les prépositions de temps",
+      "titleFa": "تاریخ، ساعت و حرف اضافهٔ زمان",
+      "aliasesFr": [
+        "date",
+        "heure",
+        "quelle heure est-il",
+        "il est huit heures",
+        "à huit heures",
+        "en août",
+        "le lundi",
+        "au printemps"
+      ],
+      "aliasesFa": [
+        "ساعت چند است",
+        "تاریخ",
+        "روزهای هفته",
+        "ماه‌ها",
+        "فصل‌ها",
+        "حرف اضافه زمان",
+        "en یا au"
+      ],
+      "related": [
+        "depuis-pendant-il-y-a",
+        "prepositions-de-lieu",
+        "articles",
+        "c-est-vs-il-est"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای گفتن ساعت `il est` می‌آید و برای «در ساعتِ …» حرف اضافهٔ `à`. تاریخ با `le` گفته می‌شود، ماه و سال با `en`، و روز هفته بدون حرف اضافه می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ساعتِ الان: «ساعت هشت و نیم است.»"
+            },
+            {
+              "kind": "li",
+              "text": "زمان یک رویداد: «کلاس ساعت نه شروع می‌شود.»"
+            },
+            {
+              "kind": "li",
+              "text": "تاریخ: «سوم مارس ۱۹۹۰ به دنیا آمدم.»"
+            },
+            {
+              "kind": "li",
+              "text": "ماه، سال، فصل: «در اوت به تعطیلات می‌رویم.»"
+            },
+            {
+              "kind": "li",
+              "text": "عادتِ هفتگی: «دوشنبه‌ها در خانه کار می‌کنم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "Il est + heure",
+            "à + heure",
+            "le + date",
+            "en + mois / année"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "برای تاریخ از عدد اصلی استفاده می‌شود (`le 3 mars`)، به‌جز روز اول ماه که `le premier` است."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il est huit heures et demie.",
+              "fa": "ساعت هشت و نیم است.",
+              "highlights": [
+                [
+                  0,
+                  6
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Le cours commence à neuf heures.",
+              "fa": "کلاس ساعت نه شروع می‌شود.",
+              "highlights": [
+                [
+                  18,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Je suis né le 3 mars 1990.",
+              "fa": "من سوم مارس ۱۹۹۰ به دنیا آمدم.",
+              "highlights": [
+                [
+                  11,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Nous partons en vacances en août.",
+              "fa": "ما در ماه اوت به تعطیلات می‌رویم.",
+              "highlights": [
+                [
+                  25,
+                  27
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Le lundi, je travaille à la maison.",
+              "fa": "دوشنبه‌ها در خانه کار می‌کنم.",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je suis né en 3 mars.",
+          "right": "Je suis né le 3 mars.",
+          "why": "پیش از تاریخ (روز + ماه) حرف تعریف le می‌آید. en برای ماه یا سالِ تنهاست."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ساعت: `et quart` (و ربع)، `et demie` (و نیم؛ بعد از `midi` و `minuit` به شکل `et demi`)، `moins le quart` (یک ربع به)، `midi` (ظهر)، `minuit` (نیمه‌شب)."
+            },
+            {
+              "kind": "li",
+              "text": "`lundi` بدون حرف تعریف به یک دوشنبهٔ مشخص اشاره می‌کند؛ گذشته یا آینده بودنش از زمان فعل معلوم می‌شود. `le lundi` یعنی دوشنبه‌ها."
+            },
+            {
+              "kind": "li",
+              "text": "فصل‌ها: `en été`، `en automne`، `en hiver`، ولی `au printemps`."
+            },
+            {
+              "kind": "li",
+              "text": "بخش‌های روز بدون حرف اضافه می‌آیند: `le matin`، `l'après-midi`، `le soir`. `Je travaille le matin.`"
+            },
+            {
+              "kind": "li",
+              "text": "بازهٔ زمانی: `de 9 heures à 17 heures`. زمان تقریبی: `vers midi`."
+            },
+            {
+              "kind": "li",
+              "text": "دو سؤال پرکاربرد: `Quelle heure est-il ?` (ساعت چند است؟) و `À quelle heure … ?` (چه ساعتی …؟)"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "زمان",
+              "highlights": []
+            },
+            {
+              "text": "کلمهٔ پیش از آن",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "ساعت",
+                "highlights": []
+              },
+              {
+                "text": "à",
+                "highlights": []
+              },
+              {
+                "text": "à huit heures",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "تاریخ",
+                "highlights": []
+              },
+              {
+                "text": "le",
+                "highlights": []
+              },
+              {
+                "text": "le 3 mars",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ماه",
+                "highlights": []
+              },
+              {
+                "text": "en",
+                "highlights": []
+              },
+              {
+                "text": "en août",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "سال",
+                "highlights": []
+              },
+              {
+                "text": "en",
+                "highlights": []
+              },
+              {
+                "text": "en 2024",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "فصل",
+                "highlights": []
+              },
+              {
+                "text": "en / au",
+                "highlights": []
+              },
+              {
+                "text": "en été, au printemps",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "هر هفته",
+                "highlights": []
+              },
+              {
+                "text": "le",
+                "highlights": []
+              },
+              {
+                "text": "le lundi",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "demonstratifs",
       "group": "basics",
       "level": "A1",
@@ -1143,7 +1425,8 @@
         "articles",
         "adjectifs-possessifs",
         "genre-et-nombre",
-        "pronoms-possessifs"
+        "pronoms-possessifs",
+        "c-est-vs-il-est"
       ],
       "blocks": [
         {
@@ -1574,6 +1857,226 @@
       ]
     },
     {
+      "id": "indefinis",
+      "group": "basics",
+      "level": "A2",
+      "titleFr": "Les indéfinis : quelqu'un, quelque chose, chaque, aucun",
+      "titleFa": "مبهم‌ها: quelqu'un، quelque chose، chaque، aucun",
+      "aliasesFr": [
+        "indéfinis, quelqu'un",
+        "quelque chose",
+        "chaque",
+        "chacun",
+        "aucun",
+        "plusieurs",
+        "certains",
+        "quelques"
+      ],
+      "aliasesFa": [
+        "کسی",
+        "چیزی",
+        "هر",
+        "هر کدام",
+        "هیچ",
+        "بعضی",
+        "چند",
+        "ضمیر مبهم"
+      ],
+      "related": [
+        "negation",
+        "tout",
+        "quantite",
+        "pronom-on"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "این کلمه‌ها از کسی یا چیزی حرف می‌زنند بدون اینکه دقیق مشخصش کنند: `quelqu'un` (کسی)، `quelque chose` (چیزی)، `chaque` (هر)، `chacun` (هر کدام)، `aucun` (هیچ)، `certains` (بعضی)، `plusieurs` (چندین)."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شخص یا چیز نامشخص: «کسی در زد.»، «چیزی می‌خوری؟»"
+            },
+            {
+              "kind": "li",
+              "text": "تک‌تک اعضای یک گروه: «هر دانشجو یک کتاب دارد.»"
+            },
+            {
+              "kind": "li",
+              "text": "نبودِ کامل: «هیچ ایده‌ای ندارم.»"
+            },
+            {
+              "kind": "li",
+              "text": "بخشی از یک گروه: «بعضی‌ها فکر می‌کنند …»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "quelqu'un / quelque chose + verbe au singulier",
+            "chaque + nom singulier",
+            "ne … aucun(e) + nom singulier"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از `quelqu'un`، `quelque chose`، `chaque` و `chacun` فعل مفرد می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Quelqu'un a frappé à la porte.",
+              "fa": "کسی در زد.",
+              "highlights": [
+                [
+                  0,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Tu veux boire quelque chose ?",
+              "fa": "چیزی می‌خوری؟",
+              "highlights": [
+                [
+                  14,
+                  27
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Chaque étudiant a un livre.",
+              "fa": "هر دانشجو یک کتاب دارد.",
+              "highlights": [
+                [
+                  0,
+                  6
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Je n'ai aucune idée.",
+              "fa": "هیچ ایده‌ای ندارم.",
+              "highlights": [
+                [
+                  8,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Certains pensent que c'est trop cher.",
+              "fa": "بعضی‌ها فکر می‌کنند خیلی گران است.",
+              "highlights": [
+                [
+                  0,
+                  8
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Chaque étudiants ont un livre.",
+          "right": "Chaque étudiant a un livre.",
+          "why": "بعد از chaque اسم و فعل هر دو مفرد می‌آیند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شکل منفی: `quelqu'un` می‌شود `ne … personne` و `quelque chose` می‌شود `ne … rien`."
+            },
+            {
+              "kind": "li",
+              "text": "پیش از صفت `de` می‌آید و صفت مذکر مفرد می‌ماند: `quelque chose d'intéressant`، `quelqu'un de sympathique`، `rien de spécial`."
+            },
+            {
+              "kind": "li",
+              "text": "`chaque` پیش از اسم می‌آید و `chacun / chacune` جای اسم را می‌گیرد: `Chacun a son livre.`"
+            },
+            {
+              "kind": "li",
+              "text": "`aucun` با `ne` می‌آید و `pas` نمی‌گیرد: `Je n'ai aucun problème.`"
+            },
+            {
+              "kind": "li",
+              "text": "`quelques` و `plusieurs` با اسم جمع می‌آیند: `quelques jours`، `plusieurs personnes`."
+            },
+            {
+              "kind": "li",
+              "text": "`n'importe qui` (هر کسی) و `n'importe quoi` (هر چیزی) بی‌تفاوتی در انتخاب را نشان می‌دهند."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "مثبت",
+              "highlights": []
+            },
+            {
+              "text": "منفی",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "quelqu'un (کسی)",
+                "highlights": []
+              },
+              {
+                "text": "ne … personne (هیچ‌کس)",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "quelque chose (چیزی)",
+                "highlights": []
+              },
+              {
+                "text": "ne … rien (هیچ‌چیز)",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "quelques (چند)",
+                "highlights": []
+              },
+              {
+                "text": "ne … aucun (هیچ)",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "interrogation",
       "group": "basics",
       "level": "A1",
@@ -1827,7 +2330,8 @@
         "passe-compose",
         "pronoms-cod-coi",
         "imperatif",
-        "verbes-pronominaux"
+        "verbes-pronominaux",
+        "indefinis"
       ],
       "blocks": [
         {
@@ -2117,7 +2621,8 @@
       "related": [
         "articles",
         "pronom-y",
-        "genre-et-nombre"
+        "genre-et-nombre",
+        "date-et-heure"
       ],
       "blocks": [
         {
@@ -2634,7 +3139,8 @@
       "related": [
         "accord-adjectif",
         "articles",
-        "quantite"
+        "quantite",
+        "indefinis"
       ],
       "blocks": [
         {
@@ -2825,6 +3331,319 @@
       ]
     },
     {
+      "id": "verbes-modaux",
+      "group": "basics",
+      "level": "A2",
+      "titleFr": "Pouvoir, vouloir, devoir, savoir + infinitif",
+      "titleFa": "pouvoir، vouloir، devoir، savoir + مصدر",
+      "aliasesFr": [
+        "pouvoir",
+        "vouloir",
+        "devoir",
+        "savoir",
+        "il faut",
+        "verbes modaux",
+        "je peux",
+        "je veux",
+        "je dois"
+      ],
+      "aliasesFa": [
+        "توانستن",
+        "خواستن",
+        "بایستن",
+        "باید",
+        "بلد بودن",
+        "فعل وجهی"
+      ],
+      "related": [
+        "present",
+        "savoir-vs-connaitre",
+        "subjonctif-emplois",
+        "conditionnel-present",
+        "verbes-a-de-infinitif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`pouvoir` (توانستن)، `vouloir` (خواستن)، `devoir` (بایستن) و `savoir` (بلد بودن) صرف می‌شوند و فعلِ بعد از آن‌ها به شکل مصدر می‌ماند: `Je peux venir.`"
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "توانایی، امکان یا اجازه: `pouvoir`. «می‌توانم کمکت کنم؟»"
+            },
+            {
+              "kind": "li",
+              "text": "خواسته: `vouloir`. «می‌خواهیم فرانسوی یاد بگیریم.»"
+            },
+            {
+              "kind": "li",
+              "text": "اجبار یا لزوم: `devoir`. «باید الان بروی.»"
+            },
+            {
+              "kind": "li",
+              "text": "مهارتِ آموخته‌شده: `savoir`. «رانندگی بلد است.»"
+            },
+            {
+              "kind": "li",
+              "text": "لزوم کلی و بدون فاعل مشخص: `il faut`. «باید از قبل رزرو کرد.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + pouvoir / vouloir / devoir / savoir (conjugué) + infinitif",
+            "il faut + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "فقط فعل اول صرف می‌شود. در فارسی فعل دوم صرف می‌شود (می‌توانم بروم)، ولی در فرانسوی مصدر می‌ماند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je peux t'aider ?",
+              "fa": "می‌توانم کمکت کنم؟",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Nous voulons apprendre le français.",
+              "fa": "ما می‌خواهیم فرانسوی یاد بگیریم.",
+              "highlights": [
+                [
+                  5,
+                  12
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Tu dois partir maintenant.",
+              "fa": "باید الان بروی.",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle sait conduire.",
+              "fa": "او رانندگی بلد است.",
+              "highlights": [
+                [
+                  5,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Il faut réserver à l'avance.",
+              "fa": "باید از قبل رزرو کرد.",
+              "highlights": [
+                [
+                  0,
+                  7
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je peux parle français.",
+          "right": "Je peux parler français.",
+          "why": "بعد از pouvoir فعل دوم به شکل مصدر می‌آید و صرف نمی‌شود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`savoir` برای مهارتی است که یاد گرفته‌ایم و `pouvoir` برای امکان یا اجازه: `Je sais nager, mais je ne peux pas nager aujourd'hui.`"
+            },
+            {
+              "kind": "li",
+              "text": "نفی دور فعل اول قرار می‌گیرد: `Je ne peux pas venir.`"
+            },
+            {
+              "kind": "li",
+              "text": "ضمیر مفعولی پیش از مصدر می‌آید: `Je peux le faire.`"
+            },
+            {
+              "kind": "li",
+              "text": "`il faut` فقط با `il` صرف می‌شود. با فاعل مشخص: `il faut que` + subjonctif."
+            },
+            {
+              "kind": "li",
+              "text": "شکل‌های مؤدبانه با conditionnel: `Je voudrais …`، `Pourriez-vous … ?`"
+            },
+            {
+              "kind": "li",
+              "text": "در passé composé: `j'ai pu`، `j'ai voulu`، `j'ai dû`، `j'ai su`."
+            },
+            {
+              "kind": "li",
+              "text": "`devoir` + اسم یعنی «بدهکار بودن»: `Je te dois dix euros.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "pouvoir",
+              "highlights": []
+            },
+            {
+              "text": "vouloir",
+              "highlights": []
+            },
+            {
+              "text": "devoir",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "je",
+                "highlights": []
+              },
+              {
+                "text": "peux",
+                "highlights": []
+              },
+              {
+                "text": "veux",
+                "highlights": []
+              },
+              {
+                "text": "dois",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "tu",
+                "highlights": []
+              },
+              {
+                "text": "peux",
+                "highlights": []
+              },
+              {
+                "text": "veux",
+                "highlights": []
+              },
+              {
+                "text": "dois",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il / elle",
+                "highlights": []
+              },
+              {
+                "text": "peut",
+                "highlights": []
+              },
+              {
+                "text": "veut",
+                "highlights": []
+              },
+              {
+                "text": "doit",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "pouvons",
+                "highlights": []
+              },
+              {
+                "text": "voulons",
+                "highlights": []
+              },
+              {
+                "text": "devons",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "vous",
+                "highlights": []
+              },
+              {
+                "text": "pouvez",
+                "highlights": []
+              },
+              {
+                "text": "voulez",
+                "highlights": []
+              },
+              {
+                "text": "devez",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ils / elles",
+                "highlights": []
+              },
+              {
+                "text": "peuvent",
+                "highlights": []
+              },
+              {
+                "text": "veulent",
+                "highlights": []
+              },
+              {
+                "text": "doivent",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "verbes-pronominaux",
       "group": "basics",
       "level": "A2",
@@ -2846,7 +3665,8 @@
         "present",
         "passe-compose",
         "imperatif",
-        "negation"
+        "negation",
+        "accord-participe-passe"
       ],
       "blocks": [
         {
@@ -3057,6 +3877,233 @@
       ]
     },
     {
+      "id": "c-est-vs-il-est",
+      "group": "comparisons",
+      "level": "A2",
+      "titleFr": "C'est ou il est ?",
+      "titleFa": "فرق c'est و il est",
+      "aliasesFr": [
+        "c'est ou il est",
+        "c'est vs il est, c'est un",
+        "il est médecin",
+        "ce sont"
+      ],
+      "aliasesFa": [
+        "فرق c'est و il est, c'est یا il est",
+        "این است",
+        "او است"
+      ],
+      "related": [
+        "articles",
+        "demonstratifs",
+        "accord-adjectif",
+        "pronoms-toniques"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`c'est` پیش از اسمی می‌آید که حرف تعریف یا کلمه‌ای مثل صفت ملکی و اشاره دارد، و پیش از اسم خاص و ضمیر تأکیدی. `il est` و `elle est` پیش از صفت می‌آیند، و پیش از شغل یا ملیت بدون حرف تعریف."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "معرفی یا شناساندن کسی یا چیزی: `c'est`. «این برادر من است.»"
+            },
+            {
+              "kind": "li",
+              "text": "توصیف کسی یا چیزی که قبلاً معرفی شده: `il est / elle est`. «او پزشک است.»"
+            },
+            {
+              "kind": "li",
+              "text": "نظر کلی دربارهٔ یک موقعیت: `c'est` + صفت. «سخت است.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "c'est + déterminant + nom",
+            "il / elle est + adjectif",
+            "il / elle est + profession ou nationalité (sans article)"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "برای معرفی یا شناساندن کسی یا چیزی، پیش از اسمی که حرف تعریف یا صفت ملکی دارد معمولاً `c'est` می‌آید. این قاعده مطلق نیست: `Il est le directeur de cette école.` هم درست است."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "C'est mon frère. Il est médecin.",
+              "fa": "این برادر من است. او پزشک است.",
+              "highlights": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  17,
+                  23
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "C'est un bon médecin.",
+              "fa": "او پزشک خوبی است.",
+              "highlights": [
+                [
+                  0,
+                  5
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Regarde cette maison : elle est magnifique.",
+              "fa": "این خانه را نگاه کن: فوق‌العاده است.",
+              "highlights": [
+                [
+                  23,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "C'est Marie ; elle est française.",
+              "fa": "این ماری است؛ او فرانسوی است.",
+              "highlights": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  14,
+                  22
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Apprendre le français, c'est difficile.",
+              "fa": "یاد گرفتن فرانسوی سخت است.",
+              "highlights": [
+                [
+                  23,
+                  28
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il est un médecin.",
+          "right": "Il est médecin.",
+          "why": "بعد از il est شغل بدون حرف تعریف می‌آید. اگر حرف تعریف لازم باشد، c'est به کار می‌رود: C'est un médecin."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "جمع `c'est` می‌شود `ce sont`: `Ce sont mes amis.` در گفتار `c'est` هم شنیده می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "وقتی شغل با صفتی مثل «خوب» یا «معروف» توصیف می‌شود، معمولاً حرف تعریف و `c'est` می‌آید: `C'est une actrice célèbre.` ولی توضیحِ نوع یا تخصصِ شغل می‌تواند بدون حرف تعریف بیاید: `Il est médecin généraliste.`، `Elle est professeur de français.`"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `c'est` ضمیر تأکیدی می‌آید: `C'est moi.`، `C'est lui.`"
+            },
+            {
+              "kind": "li",
+              "text": "`c'est` + صفت برای نظر کلی همیشه مذکر مفرد است: `C'est beau !`، `C'est vrai.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای ساعت `il est` به کار می‌رود (`Il est huit heures.`) و برای روز `c'est` (`C'est lundi.`)."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "c'est",
+              "highlights": []
+            },
+            {
+              "text": "il / elle est",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "بعدش چه می‌آید؟",
+                "highlights": []
+              },
+              {
+                "text": "اسم با حرف تعریف یا صفت ملکی، اسم خاص، ضمیر تأکیدی",
+                "highlights": []
+              },
+              {
+                "text": "صفت، شغل یا ملیت بدون حرف تعریف",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "شغل",
+                "highlights": []
+              },
+              {
+                "text": "C'est un professeur.",
+                "highlights": []
+              },
+              {
+                "text": "Il est professeur.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "توصیف",
+                "highlights": []
+              },
+              {
+                "text": "C'est une belle ville.",
+                "highlights": []
+              },
+              {
+                "text": "Elle est belle.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "depuis-pendant-il-y-a",
       "group": "comparisons",
       "level": "A2",
@@ -3082,7 +4129,8 @@
         "passe-compose-vs-imparfait",
         "passe-compose",
         "imparfait",
-        "present"
+        "present",
+        "date-et-heure"
       ],
       "blocks": [
         {
@@ -3614,7 +4662,8 @@
         "passe-compose",
         "dont-et-ou",
         "pronoms-cod-coi",
-        "relatifs-composes"
+        "relatifs-composes",
+        "accord-participe-passe"
       ],
       "blocks": [
         {
@@ -3846,7 +4895,8 @@
         "تفاوت savoir و connaître"
       ],
       "related": [
-        "passe-compose-vs-imparfait"
+        "passe-compose-vs-imparfait",
+        "verbes-modaux"
       ],
       "blocks": [
         {
@@ -4492,6 +5542,170 @@
       ]
     },
     {
+      "id": "pronom-on",
+      "group": "pronouns",
+      "level": "A1",
+      "titleFr": "Le pronom « on »",
+      "titleFa": "ضمیر on",
+      "aliasesFr": [
+        "on",
+        "pronom on",
+        "on va",
+        "on dit",
+        "on y va"
+      ],
+      "aliasesFa": [
+        "ضمیر on",
+        "on یعنی چه",
+        "ما در محاوره",
+        "مردم",
+        "آدم"
+      ],
+      "related": [
+        "present",
+        "voix-passive",
+        "indefinis",
+        "pronoms-toniques",
+        "accord-participe-passe",
+        "accord-adjectif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`on` همیشه با فعل سوم‌شخص مفرد صرف می‌شود، مثل `il`. سه معنی دارد: «ما» در گفتار روزمره، «مردم / آدم» به‌طور کلی، و «کسی» وقتی کنندهٔ کار نامشخص است."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "«ما» در محاوره: «امشب برویم سینما؟»"
+            },
+            {
+              "kind": "li",
+              "text": "مردم به‌طور کلی یا قاعدهٔ عمومی: «در فرانسه حدود ساعت هشت شام می‌خورند.»"
+            },
+            {
+              "kind": "li",
+              "text": "کنندهٔ نامشخص: «کسی زنگ در را زد.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "on + verbe à la 3e personne du singulier"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "معنی هرچه باشد، فعل همیشه مفرد است: `on va`، `on est`، `on a`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "On va au cinéma ce soir ?",
+              "fa": "امشب برویم سینما؟",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "En France, on dîne vers vingt heures.",
+              "fa": "در فرانسه حدود ساعت هشت شب شام می‌خورند.",
+              "highlights": [
+                [
+                  11,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "On a sonné à la porte.",
+              "fa": "کسی زنگ در را زد.",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "On ne peut pas fumer ici.",
+              "fa": "اینجا نمی‌شود سیگار کشید.",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Ma sœur et moi, on habite ensemble.",
+              "fa": "من و خواهرم با هم زندگی می‌کنیم.",
+              "highlights": [
+                [
+                  16,
+                  18
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "On allons au cinéma ce soir.",
+          "right": "On va au cinéma ce soir.",
+          "why": "حتی وقتی on به معنی «ما» است، فعل سوم‌شخص مفرد می‌ماند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "در گفتار، `on` خیلی بیشتر از `nous` به کار می‌رود؛ در نوشتار رسمی `nous` ترجیح دارد."
+            },
+            {
+              "kind": "li",
+              "text": "وقتی `on` یعنی «ما»، صفت ملکی‌اش `notre / nos` است: `On a pris nos affaires.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای تأکید، `nous` پیش از آن می‌آید: `Nous, on préfère rester.`"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی `on` یعنی «ما»، صفت و participe passé معمولاً جمع نوشته می‌شوند: `On est arrivés.`"
+            },
+            {
+              "kind": "li",
+              "text": "ضمیر انعکاسی‌اش `se` است: `On se voit demain.`"
+            },
+            {
+              "kind": "li",
+              "text": "جملهٔ `on` اغلب جایگزین مجهول می‌شود: `On m'a volé mon sac.` (کیفم را دزدیده‌اند.)"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "pronom-y",
       "group": "pronouns",
       "level": "A2",
@@ -4671,7 +5885,8 @@
         "passe-compose",
         "qui-vs-que",
         "imperatif",
-        "pronoms-toniques"
+        "pronoms-toniques",
+        "accord-participe-passe"
       ],
       "blocks": [
         {
@@ -5984,7 +7199,9 @@
         "phrases-avec-si",
         "subjonctif-emplois",
         "pour-que",
-        "avant-que"
+        "avant-que",
+        "opposition-concession",
+        "cause-consequence"
       ],
       "blocks": [
         {
@@ -6119,6 +7336,258 @@
               "kind": "li",
               "text": "در گفتار، indicatif بعد از `bien que` هم شنیده می‌شود، ولی در نوشتار و آزمون غلط به شمار می‌آید."
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cause-consequence",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "La cause et la conséquence",
+      "titleFa": "دلیل و نتیجه: parce que، comme، donc",
+      "aliasesFr": [
+        "cause",
+        "conséquence",
+        "parce que",
+        "car",
+        "comme",
+        "puisque",
+        "donc",
+        "alors",
+        "à cause de",
+        "grâce à"
+      ],
+      "aliasesFa": [
+        "چون",
+        "زیرا",
+        "به خاطر",
+        "پس",
+        "بنابراین",
+        "بیان دلیل",
+        "بیان نتیجه",
+        "فرق parce que و car"
+      ],
+      "related": [
+        "opposition-concession",
+        "pour-que",
+        "bien-que"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "دلیل با `parce que`، `comme`، `puisque` و `car` بیان می‌شود و نتیجه با `donc`، `alors` و `c'est pourquoi`. بعد از `parce que`، `comme` و `puisque` فعل معمولاً در indicatif می‌آید. پیش از اسم، به‌جای `parce que` از `à cause de` یا `grâce à` استفاده می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`parce que`: دلیل، در جواب «چرا؟»؛ معمولاً بعد از جملهٔ اصلی."
+            },
+            {
+              "kind": "li",
+              "text": "`comme`: دلیلی که اول جمله می‌آید."
+            },
+            {
+              "kind": "li",
+              "text": "`puisque`: دلیلی که شنونده از قبل می‌داند؛ «حالا که»."
+            },
+            {
+              "kind": "li",
+              "text": "`donc`، `alors`: نتیجه؛ «پس، بنابراین»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "conséquence + parce que + cause",
+            "Comme + cause, conséquence",
+            "cause, donc + conséquence",
+            "à cause de / grâce à + nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "`comme` به این معنی همیشه در آغاز جمله می‌آید؛ `parce que` معمولاً بعد از جملهٔ اصلی."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je reste à la maison parce qu'il pleut.",
+              "fa": "در خانه می‌مانم چون باران می‌بارد.",
+              "highlights": [
+                [
+                  21,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Comme il pleut, je reste à la maison.",
+              "fa": "چون باران می‌بارد، در خانه می‌مانم.",
+              "highlights": [
+                [
+                  0,
+                  5
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Puisque tu es fatigué, va te coucher.",
+              "fa": "حالا که خسته‌ای، برو بخواب.",
+              "highlights": [
+                [
+                  0,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il a beaucoup travaillé, donc il a réussi.",
+              "fa": "او زیاد کار کرد، پس موفق شد.",
+              "highlights": [
+                [
+                  25,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Le train a été annulé à cause de la grève.",
+              "fa": "قطار به خاطر اعتصاب لغو شد.",
+              "highlights": [
+                [
+                  22,
+                  32
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je reste à la maison parce que de la pluie.",
+          "right": "Je reste à la maison à cause de la pluie.",
+          "why": "بعد از parce que جملهٔ کامل می‌آید. پیش از اسم باید à cause de به کار برود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`car` گفتهٔ قبلی را توضیح یا توجیه می‌کند و بیشتر در نوشتار دیده می‌شود. اغلب می‌توان آن را با `parce que` جایگزین کرد. بخشِ دارای `car` همیشه بعد از گفته‌ای می‌آید که توضیحش می‌دهد."
+            },
+            {
+              "kind": "li",
+              "text": "`grâce à` برای دلیلِ مثبت است و `à cause de` برای دلیل منفی یا خنثی: `Grâce à toi, j'ai réussi.`"
+            },
+            {
+              "kind": "li",
+              "text": "`parce que` پیش از مصوت به `parce qu'` تبدیل می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "`donc` می‌تواند بعد از فعل هم بیاید: `Il a donc réussi.`"
+            },
+            {
+              "kind": "li",
+              "text": "در گفتار برای نتیجه `alors` و `c'est pour ça que` رایج‌اند: `C'est pour ça que je suis en retard.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای «آن‌قدر … که»: `si` یا `tellement` + صفت + `que`. `Il est si fatigué qu'il s'endort.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "کلمه",
+              "highlights": []
+            },
+            {
+              "text": "کاربرد",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "parce que",
+                "highlights": []
+              },
+              {
+                "text": "دلیل، در جواب «چرا؟»",
+                "highlights": []
+              },
+              {
+                "text": "Je pars parce que je suis fatigué.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "comme",
+                "highlights": []
+              },
+              {
+                "text": "دلیل، در آغاز جمله",
+                "highlights": []
+              },
+              {
+                "text": "Comme je suis fatigué, je pars.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "puisque",
+                "highlights": []
+              },
+              {
+                "text": "دلیلِ معلوم برای شنونده",
+                "highlights": []
+              },
+              {
+                "text": "Puisque tu insistes, je reste.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "donc",
+                "highlights": []
+              },
+              {
+                "text": "نتیجه",
+                "highlights": []
+              },
+              {
+                "text": "Je suis fatigué, donc je pars.",
+                "highlights": []
+              }
+            ]
           ]
         }
       ]
@@ -6518,6 +7987,180 @@
       ]
     },
     {
+      "id": "opposition-concession",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "L'opposition : mais, pourtant, alors que, malgré",
+      "titleFa": "تضاد: mais، pourtant، alors que، malgré",
+      "aliasesFr": [
+        "opposition",
+        "concession",
+        "mais",
+        "pourtant",
+        "cependant",
+        "alors que",
+        "tandis que",
+        "malgré",
+        "par contre",
+        "quand même"
+      ],
+      "aliasesFa": [
+        "اما",
+        "ولی",
+        "با این حال",
+        "در حالی که",
+        "با وجود",
+        "در عوض",
+        "بیان تضاد"
+      ],
+      "related": [
+        "bien-que",
+        "cause-consequence",
+        "phrases-avec-si"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "ساده‌ترین راه بیان تضاد `mais` است. `pourtant` یعنی «با این حال»، `alors que` دو چیز را در برابر هم می‌گذارد («در حالی که») و `malgré` پیش از اسم می‌آید («با وجودِ»). بعد از `alors que` در این کاربرد indicatif می‌آید، برخلاف `bien que` که subjonctif می‌خواهد."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "تضاد ساده: «پولدار است، ولی خوشحال نیست.»"
+            },
+            {
+              "kind": "li",
+              "text": "نتیجه‌ای خلاف انتظار: «خیلی درس خواند؛ با این حال رد شد.»"
+            },
+            {
+              "kind": "li",
+              "text": "مقایسهٔ دو وضعیت متفاوت: «برادرم عاشق ورزش است، در حالی که من مطالعه را ترجیح می‌دهم.»"
+            },
+            {
+              "kind": "li",
+              "text": "مانعی که جلوی کار را نگرفت: «با وجود سرما بیرون رفتند.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "phrase 1, mais / pourtant + phrase 2",
+            "phrase 1 + alors que + phrase 2",
+            "malgré + nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در الگوهای بالا، `mais`، `pourtant` و `alors que` دو جمله را به هم وصل می‌کنند. `mais` می‌تواند دو کلمه را هم وصل کند: `petit mais confortable`. بعد از `malgré` اسم یا ضمیر می‌آید: `malgré le froid`، `malgré tout`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Il est riche, mais il n'est pas heureux.",
+              "fa": "او پولدار است، ولی خوشحال نیست.",
+              "highlights": [
+                [
+                  14,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle a beaucoup étudié ; pourtant, elle a raté son examen.",
+              "fa": "او خیلی درس خواند؛ با این حال در امتحانش رد شد.",
+              "highlights": [
+                [
+                  25,
+                  33
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Mon frère adore le sport, alors que moi, je préfère lire.",
+              "fa": "برادرم عاشق ورزش است، در حالی که من مطالعه را ترجیح می‌دهم.",
+              "highlights": [
+                [
+                  26,
+                  35
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Malgré le froid, ils sont sortis.",
+              "fa": "با وجود سرما بیرون رفتند.",
+              "highlights": [
+                [
+                  0,
+                  6
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je n'aime pas le café ; par contre, j'adore le thé.",
+              "fa": "قهوه دوست ندارم؛ در عوض عاشق چای هستم.",
+              "highlights": [
+                [
+                  24,
+                  34
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Malgré il pleut, nous sortons.",
+          "right": "Malgré la pluie, nous sortons.",
+          "why": "بعد از malgré اسم یا ضمیر می‌آید، نه جملهٔ کامل."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`cependant`، `néanmoins` و `toutefois` همان معنای `pourtant` را دارند و رسمی‌ترند."
+            },
+            {
+              "kind": "li",
+              "text": "`quand même` یعنی «با این همه، باز هم» و معمولاً بعد از فعل می‌آید: `Il pleut, mais je sors quand même.`"
+            },
+            {
+              "kind": "li",
+              "text": "`en revanche` معادل رسمی‌ترِ `par contre` است."
+            },
+            {
+              "kind": "li",
+              "text": "`tandis que` همان کاربرد `alors que` را دارد."
+            },
+            {
+              "kind": "li",
+              "text": "`au lieu de` + مصدر یعنی «به‌جای اینکه»: `Au lieu de travailler, il dort.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای «با اینکه» با جملهٔ کامل، `bien que` با subjonctif می‌آید؛ نکتهٔ bien que را ببینید."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "phrases-avec-si",
       "group": "structures",
       "level": "B1",
@@ -6543,7 +8186,8 @@
         "bien-que",
         "conditionnel-present",
         "futur",
-        "plus-que-parfait"
+        "plus-que-parfait",
+        "conditionnel-passe"
       ],
       "blocks": [
         {
@@ -6784,7 +8428,8 @@
       "related": [
         "subjonctif-emplois",
         "bien-que",
-        "avant-que"
+        "avant-que",
+        "cause-consequence"
       ],
       "blocks": [
         {
@@ -6935,7 +8580,8 @@
         "bien-que",
         "pour-que",
         "avant-que",
-        "present"
+        "present",
+        "verbes-modaux"
       ],
       "blocks": [
         {
@@ -7183,6 +8829,238 @@
       ]
     },
     {
+      "id": "verbes-a-de-infinitif",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Verbe + à ou de + infinitif",
+      "titleFa": "فعل + à یا de + مصدر",
+      "aliasesFr": [
+        "verbe + infinitif",
+        "commencer à",
+        "décider de",
+        "essayer de",
+        "apprendre à",
+        "verbes suivis de à",
+        "verbes suivis de de"
+      ],
+      "aliasesFa": [
+        "فعل با حرف اضافه",
+        "بعد از فعل à یا de",
+        "commencer à",
+        "décider de",
+        "مصدر بعد از فعل"
+      ],
+      "related": [
+        "verbes-modaux",
+        "pronoms-cod-coi",
+        "avant-que",
+        "pour-que"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "وقتی بعد از یک فعل مصدر می‌آید، بعضی فعل‌ها مصدر را مستقیم می‌گیرند، بعضی با `à` و بعضی با `de`. قاعدهٔ کلی ندارد و باید همراه هر فعل یاد گرفته شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بدون حرف اضافه: فعل‌های علاقه و فعل‌های وجهی. «سفر کردن را دوست دارم.»"
+            },
+            {
+              "kind": "li",
+              "text": "با `à`: اغلب شروع، ادامه، یادگیری و موفقیت. «کم‌کم دارد می‌فهمد.»"
+            },
+            {
+              "kind": "li",
+              "text": "با `de`: اغلب تصمیم، تلاش، فراموشی و توقف. «تصمیم گرفتیم برویم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "verbe + infinitif",
+            "verbe + à + infinitif",
+            "verbe + de + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "فقط فعل اول صرف می‌شود و فعل دوم همیشه مصدر می‌ماند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'aime voyager.",
+              "fa": "من سفر کردن را دوست دارم.",
+              "highlights": [
+                [
+                  2,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il commence à comprendre.",
+              "fa": "او کم‌کم دارد می‌فهمد.",
+              "highlights": [
+                [
+                  3,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Nous avons décidé de partir.",
+              "fa": "ما تصمیم گرفتیم برویم.",
+              "highlights": [
+                [
+                  5,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle a oublié de fermer la porte.",
+              "fa": "او فراموش کرد در را ببندد.",
+              "highlights": [
+                [
+                  5,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Tu as réussi à trouver un appartement ?",
+              "fa": "موفق شدی آپارتمان پیدا کنی؟",
+              "highlights": [
+                [
+                  3,
+                  14
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "J'ai décidé partir demain.",
+          "right": "J'ai décidé de partir demain.",
+          "why": "فعل décider پیش از مصدر حرف اضافهٔ de می‌خواهد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بدون حرف اضافه: aimer, adorer, détester, préférer, vouloir, pouvoir, devoir, savoir, aller, espérer."
+            },
+            {
+              "kind": "li",
+              "text": "با `à`: commencer à, continuer à, apprendre à, réussir à, arriver à, hésiter à, s'habituer à."
+            },
+            {
+              "kind": "li",
+              "text": "با `de`: décider de, essayer de, oublier de, finir de, arrêter de, accepter de, refuser de, avoir envie de, avoir peur de."
+            },
+            {
+              "kind": "li",
+              "text": "با شخص: `demander à quelqu'un de` + مصدر. `Je lui ai demandé de venir.` همین الگو برای `dire`، `conseiller` و `proposer` هم هست."
+            },
+            {
+              "kind": "li",
+              "text": "`de` پیش از مصوت به `d'` تبدیل می‌شود: `Il a décidé d'attendre.`"
+            },
+            {
+              "kind": "li",
+              "text": "`à` و `de` با ضمیر مفعولیِ `le` و `les` ادغام نمی‌شوند: `J'ai décidé de le faire.`"
+            },
+            {
+              "kind": "li",
+              "text": "برای منفی‌کردن مصدر، `ne pas` پیش از مصدر می‌آید و حرف اضافهٔ فعل سر جایش می‌ماند: `Il a décidé de ne pas venir.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "فعل‌ها",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "بدون حرف اضافه",
+                "highlights": []
+              },
+              {
+                "text": "aimer, vouloir, pouvoir, espérer",
+                "highlights": []
+              },
+              {
+                "text": "J'espère venir.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "با à",
+                "highlights": []
+              },
+              {
+                "text": "commencer, apprendre, réussir",
+                "highlights": []
+              },
+              {
+                "text": "J'apprends à nager.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "با de",
+                "highlights": []
+              },
+              {
+                "text": "décider, essayer, oublier",
+                "highlights": []
+              },
+              {
+                "text": "J'essaie de dormir.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "voix-passive",
       "group": "structures",
       "level": "B1",
@@ -7204,7 +9082,9 @@
       "related": [
         "passe-compose",
         "accord-adjectif",
-        "futur"
+        "futur",
+        "pronom-on",
+        "accord-participe-passe"
       ],
       "blocks": [
         {
@@ -7405,6 +9285,447 @@
       ]
     },
     {
+      "id": "accord-participe-passe",
+      "group": "tenses",
+      "level": "B1",
+      "titleFr": "L'accord du participe passé",
+      "titleFa": "هماهنگی participe passé",
+      "aliasesFr": [
+        "accord du participe passé",
+        "participe passé avec être",
+        "participe passé avec avoir",
+        "COD placé avant"
+      ],
+      "aliasesFa": [
+        "هماهنگی اسم مفعول",
+        "تطابق participe passé",
+        "کی e می‌گیرد",
+        "مفعول مستقیم قبل از فعل"
+      ],
+      "related": [
+        "passe-compose",
+        "pronoms-cod-coi",
+        "qui-vs-que",
+        "verbes-pronominaux",
+        "voix-passive",
+        "plus-que-parfait",
+        "conditionnel-passe",
+        "pronom-en"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "در فعل‌های غیردوضمیره‌ای که با `être` صرف می‌شوند، participe passé در جنس و عدد با فاعل هماهنگ می‌شود. با `avoir` هماهنگ نمی‌شود، مگر وقتی مفعول مستقیم پیش از فعل آمده باشد؛ در آن صورت با همان مفعول هماهنگ می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "قاعده‌های هماهنگی در همهٔ زمان‌های مرکب، مثل passé composé، plus-que-parfait و conditionnel passé، یکسان‌اند. در جملهٔ مجهول هم participe passé با فاعل هماهنگ می‌شود. بیشتر در نوشتن اهمیت دارد، چون پایانه‌ها اغلب تلفظ نمی‌شوند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "être + participe passé, accordé avec le sujet",
+            "avoir + participe passé invariable (sans COD placé avant)",
+            "COD + avoir + participe passé, accordé avec le COD"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "پایانه‌های هماهنگی: `e` برای مؤنث، `s` برای جمع و `es` برای مؤنث جمع."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Elles sont arrivées hier.",
+              "fa": "آن‌ها دیروز رسیدند.",
+              "highlights": [
+                [
+                  6,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Marie a acheté des fleurs.",
+              "fa": "ماری گل خرید.",
+              "highlights": [
+                [
+                  6,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Les fleurs que Marie a achetées sont belles.",
+              "fa": "گل‌هایی که ماری خرید زیبا هستند.",
+              "highlights": [
+                [
+                  21,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Tu as vu mes clés ? — Oui, je les ai vues sur la table.",
+              "fa": "کلیدهایم را دیدی؟ — بله، آن‌ها را روی میز دیدم.",
+              "highlights": [
+                [
+                  30,
+                  41
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Elle s'est levée tôt.",
+              "fa": "او زود بلند شد.",
+              "highlights": [
+                [
+                  5,
+                  16
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Elles sont arrivé hier.",
+          "right": "Elles sont arrivées hier.",
+          "why": "با être، participe passé با فاعل هماهنگ می‌شود؛ elles مؤنث جمع است، پس es می‌گیرد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "مفعول مستقیم در سه حالت پیش از فعل می‌آید: ضمیر (`le, la, les, me, te, nous, vous`)، ضمیر موصولی `que`، و سؤال با `quel` یا `combien de`: `Quelle robe as-tu choisie ?`"
+            },
+            {
+              "kind": "li",
+              "text": "با مفعول غیرمستقیم هماهنگی نیست: `Je leur ai parlé.`"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی `en` مفعول مستقیم است، participe passé معمولاً بدون هماهنگی می‌ماند: `Des pommes ? J'en ai mangé.`"
+            },
+            {
+              "kind": "li",
+              "text": "هماهنگی گاهی در تلفظ هم شنیده می‌شود، چون صامتِ پایانیِ خاموشِ شکل مذکر در شکل مؤنث تلفظ می‌شود: `pris, prise`؛ `fait, faite`؛ `écrit, écrite`؛ `mis, mise`."
+            },
+            {
+              "kind": "li",
+              "text": "در فعل‌های دوضمیره هماهنگی معمولاً با فاعل است، ولی نه وقتی مفعول مستقیم بعد از فعل آمده یا ضمیر نقش غیرمستقیم دارد: `Elle s'est lavé les mains.`، `Elles se sont parlé.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "فعل کمکی",
+              "highlights": []
+            },
+            {
+              "text": "هماهنگی",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "être، در فعل‌های غیردوضمیره",
+                "highlights": []
+              },
+              {
+                "text": "با فاعل",
+                "highlights": []
+              },
+              {
+                "text": "Elle est partie.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "avoir",
+                "highlights": []
+              },
+              {
+                "text": "بدون هماهنگی",
+                "highlights": []
+              },
+              {
+                "text": "Elle a mangé.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "avoir، با مفعول مستقیمِ پیش از فعل",
+                "highlights": []
+              },
+              {
+                "text": "با مفعول مستقیم",
+                "highlights": []
+              },
+              {
+                "text": "Elle les a mangées.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conditionnel-passe",
+      "group": "tenses",
+      "level": "B1",
+      "titleFr": "Le conditionnel passé",
+      "titleFa": "وجه شرطی گذشته (conditionnel passé)",
+      "aliasesFr": [
+        "conditionnel passé, j'aurais dû",
+        "j'aurais pu, j'aurais voulu",
+        "je serais venu",
+        "regret",
+        "reproche"
+      ],
+      "aliasesFa": [
+        "وجه شرطی گذشته",
+        "حسرت",
+        "سرزنش",
+        "باید می‌کردم",
+        "می‌توانستم",
+        "کاش"
+      ],
+      "related": [
+        "conditionnel-present",
+        "phrases-avec-si",
+        "plus-que-parfait",
+        "passe-compose"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "conditionnel passé بیشتر از کاری حرف می‌زند که در گذشته می‌توانست رخ بدهد ولی نداد. برای حسرت، سرزنش و نتیجهٔ یک فرض غیرواقعی دربارهٔ گذشته به کار می‌رود. با conditionnel présentِ `avoir` یا `être` و participe passé ساخته می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "حسرت: «دوست داشتم به مهمانی‌ات بیایم.»"
+            },
+            {
+              "kind": "li",
+              "text": "سرزنش: «باید به من زنگ می‌زدی.»"
+            },
+            {
+              "kind": "li",
+              "text": "نتیجهٔ فرض غیرواقعی گذشته بعد از `si` + plus-que-parfait: «اگر می‌دانستم، زودتر می‌آمدم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "avoir / être (conditionnel présent) + participe passé"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "انتخاب فعل کمکی و قاعده‌های هماهنگی participe passé همان قاعده‌های passé composé است."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'aurais aimé venir à ta fête.",
+              "fa": "دوست داشتم به مهمانی‌ات بیایم.",
+              "highlights": [
+                [
+                  2,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Tu aurais dû me téléphoner.",
+              "fa": "باید به من زنگ می‌زدی.",
+              "highlights": [
+                [
+                  3,
+                  12
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Si j'avais su, je serais venu plus tôt.",
+              "fa": "اگر می‌دانستم، زودتر می‌آمدم.",
+              "highlights": [
+                [
+                  18,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Nous aurions pu gagner ce match.",
+              "fa": "می‌توانستیم این مسابقه را ببریم.",
+              "highlights": [
+                [
+                  5,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Sans ton aide, je n'aurais jamais réussi.",
+              "fa": "بدون کمک تو هرگز موفق نمی‌شدم.",
+              "highlights": [
+                [
+                  20,
+                  26
+                ],
+                [
+                  34,
+                  40
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Si j'avais su, j'aurais venu plus tôt.",
+          "right": "Si j'avais su, je serais venu plus tôt.",
+          "why": "فعل venir با être صرف می‌شود، در conditionnel passé هم مثل passé composé."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "سه ساختار پرکاربرد: `j'aurais dû` + مصدر (باید …می‌کردم)، `j'aurais pu` + مصدر (می‌توانستم …)، `j'aurais voulu` یا `j'aurais aimé` + مصدر (دلم می‌خواست …)."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `si` شرطی conditionnel نمی‌آید. در فرض غیرواقعی دربارهٔ گذشته، بخش شرط با plus-que-parfait ساخته می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "نفی دور فعل کمکی قرار می‌گیرد: `Je n'aurais pas dû dire ça.`"
+            },
+            {
+              "kind": "li",
+              "text": "با `être`، participe passé با فاعل هماهنگ می‌شود: `Elle serait venue.`"
+            },
+            {
+              "kind": "li",
+              "text": "در خبرها برای اطلاعِ تأییدنشده دربارهٔ گذشته به کار می‌رود: `L'accident aurait fait dix blessés.` (گفته می‌شود این حادثه ده زخمی داشته است.)"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "ساختار",
+              "highlights": []
+            },
+            {
+              "text": "معنی",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "j'aurais dû",
+                "highlights": []
+              },
+              {
+                "text": "باید …می‌کردم",
+                "highlights": []
+              },
+              {
+                "text": "J'aurais dû partir plus tôt.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "j'aurais pu",
+                "highlights": []
+              },
+              {
+                "text": "می‌توانستم …",
+                "highlights": []
+              },
+              {
+                "text": "J'aurais pu t'aider.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "j'aurais voulu",
+                "highlights": []
+              },
+              {
+                "text": "دلم می‌خواست …",
+                "highlights": []
+              },
+              {
+                "text": "J'aurais voulu rester.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "conditionnel-present",
       "group": "tenses",
       "level": "B1",
@@ -7429,7 +9750,8 @@
         "futur",
         "phrases-avec-si",
         "imparfait",
-        "discours-indirect"
+        "discours-indirect",
+        "conditionnel-passe"
       ],
       "blocks": [
         {
@@ -8247,7 +10569,8 @@
         "plus-que-parfait",
         "verbes-pronominaux",
         "voix-passive",
-        "passe-recent"
+        "passe-recent",
+        "accord-participe-passe"
       ],
       "blocks": [
         {
@@ -8643,7 +10966,9 @@
         "imparfait",
         "phrases-avec-si",
         "passe-compose-vs-imparfait",
-        "discours-indirect"
+        "discours-indirect",
+        "conditionnel-passe",
+        "accord-participe-passe"
       ],
       "blocks": [
         {
@@ -8814,7 +11139,9 @@
         "verbes-pronominaux",
         "subjonctif-emplois",
         "passe-recent",
-        "gerondif"
+        "gerondif",
+        "verbes-modaux",
+        "pronom-on"
       ],
       "blocks": [
         {

@@ -6,7 +6,7 @@ title_fr: "Qui ou que ? (pronoms relatifs)"
 title_fa: "فرق qui و que"
 aliases_fr: [qui ou que, qui vs que, pronoms relatifs, pronom relatif qui, pronom relatif que]
 aliases_fa: [فرق qui و que, ضمیر موصولی, که در فرانسوی, تفاوت qui و que]
-related: [passe-compose, dont-et-ou, pronoms-cod-coi, relatifs-composes]
+related: [passe-compose, dont-et-ou, pronoms-cod-coi, relatifs-composes, accord-participe-passe]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

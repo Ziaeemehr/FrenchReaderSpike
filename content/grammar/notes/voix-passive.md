@@ -6,7 +6,7 @@ title_fr: "La voix passive"
 title_fa: "جملهٔ مجهول (voix passive)"
 aliases_fr: [voix passive, passif, être + participe passé, par, a été fait]
 aliases_fa: [مجهول, فعل مجهول, جمله مجهول, توسط]
-related: [passe-compose, accord-adjectif, futur]
+related: [passe-compose, accord-adjectif, futur, pronom-on, accord-participe-passe]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

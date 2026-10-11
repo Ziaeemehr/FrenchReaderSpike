@@ -6,7 +6,7 @@ title_fr: "Savoir ou connaître ?"
 title_fa: "فرق savoir و connaître"
 aliases_fr: [savoir ou connaître, savoir vs connaître, savoir connaitre, je sais, je connais]
 aliases_fa: [فرق savoir و connaître, دانستن و شناختن, بلد بودن, تفاوت savoir و connaître]
-related: [passe-compose-vs-imparfait]
+related: [passe-compose-vs-imparfait, verbes-modaux]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

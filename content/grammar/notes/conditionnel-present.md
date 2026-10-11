@@ -6,7 +6,7 @@ title_fr: "Le conditionnel présent"
 title_fa: "وجه شرطی حال (conditionnel présent)"
 aliases_fr: [conditionnel, conditionnel présent, je voudrais, je pourrais, tu devrais, politesse]
 aliases_fa: [وجه شرطی, درخواست مؤدبانه, je voudrais یعنی چه, توصیه کردن, آرزو]
-related: [futur, phrases-avec-si, imparfait, discours-indirect]
+related: [futur, phrases-avec-si, imparfait, discours-indirect, conditionnel-passe]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

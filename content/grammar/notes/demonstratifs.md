@@ -6,7 +6,7 @@ title_fr: "Les démonstratifs : ce, cette, ces, celui"
 title_fa: "اشاره: ce، cette، ces و celui"
 aliases_fr: [démonstratifs, adjectifs démonstratifs, ce cet cette ces, celui celle ceux celles, celui-ci, ça]
 aliases_fa: [صفت اشاره, ضمیر اشاره, این و آن, ce یا cet, celui یعنی چه]
-related: [articles, adjectifs-possessifs, genre-et-nombre, pronoms-possessifs]
+related: [articles, adjectifs-possessifs, genre-et-nombre, pronoms-possessifs, c-est-vs-il-est]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

@@ -6,7 +6,7 @@ title_fr: "Pour que + subjonctif, pour + infinitif"
 title_fa: "pour que: تا، برای اینکه"
 aliases_fr: [pour que, afin que, pour + infinitif, le but, afin de]
 aliases_fa: [تا, برای اینکه, بیان هدف, تا اینکه]
-related: [subjonctif-emplois, bien-que, avant-que]
+related: [subjonctif-emplois, bien-que, avant-que, cause-consequence]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

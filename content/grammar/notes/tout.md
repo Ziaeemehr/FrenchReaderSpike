@@ -6,7 +6,7 @@ title_fr: "Tout, toute, tous, toutes"
 title_fa: "tout، toute، tous، toutes: همه، تمام، هر"
 aliases_fr: [tout, toute, tous, toutes, tous les jours, toute la journée, tout le monde]
 aliases_fa: [همه, تمام, هر روز, همه‌چیز, فرق tout و tous]
-related: [accord-adjectif, articles, quantite]
+related: [accord-adjectif, articles, quantite, indefinis]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
