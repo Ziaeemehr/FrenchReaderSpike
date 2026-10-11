@@ -28,6 +28,8 @@ import com.ziaee.frenchreader.content.ImageTextExtractor
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
+import com.ziaee.frenchreader.grammar.GrammarListScreen
+import com.ziaee.frenchreader.grammar.GrammarNoteScreen
 import com.ziaee.frenchreader.resources.ResourcesScreen
 import com.ziaee.frenchreader.studylog.StudyLogChartsScreen
 import com.ziaee.frenchreader.studylog.StudyLogEntryScreen
@@ -220,6 +222,7 @@ private fun AppNavHost() {
                 onOpenResources = { navigateToTab("resources") },
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
+                onOpenGrammar = { navController.navigate("grammar") },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
                 onOpenStudyLog = { navController.navigate("study_log") },
                 openAddTextSheet = openAddTextOnHome,
@@ -240,8 +243,18 @@ private fun AppNavHost() {
                 onOpenHome = { navigateToTab("home") },
                 onOpenLibrary = { navigateToTab("library") },
                 onAddText = ::navigateToHomeAndAddText,
-                onWords = { navigateToTab("vocab") }
+                onWords = { navigateToTab("vocab") },
+                onOpenGrammar = { navController.navigate("grammar") }
             )
+        }
+        composable("grammar") {
+            GrammarListScreen(
+                onBack = { navController.popBackStack() },
+                onOpenNote = { navController.navigate("grammar/note/$it") }
+            )
+        }
+        composable("grammar/note/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            GrammarNoteScreen(id = entry.arguments?.getString("id").orEmpty(), onBack = { navController.popBackStack() })
         }
         composable(
             "reading/{textId}?find={find}",

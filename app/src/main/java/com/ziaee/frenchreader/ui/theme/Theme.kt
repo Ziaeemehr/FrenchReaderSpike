@@ -33,6 +33,7 @@ fun FrenchReaderTheme(
     val appScheme = if (darkTheme) FrenchReaderDarkColorScheme else FrenchReaderLightColorScheme
     CompositionLocalProvider(
         LocalAppSpacing provides AppSpacing(),
+        LocalGrammarColors provides if (darkTheme) GrammarDarkColors else GrammarLightColors,
         LocalAppSizes provides AppSizes(),
         LocalAppElevations provides AppElevations(),
         LocalEditorialTypography provides editorialTypography(language)

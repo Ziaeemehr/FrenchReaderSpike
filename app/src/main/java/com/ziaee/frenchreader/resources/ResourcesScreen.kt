@@ -77,6 +77,7 @@ import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
+import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import java.net.URI
 
 /** Save callback: existing, title, url, image, category, description, level; then onSaved. */
@@ -87,7 +88,8 @@ fun ResourcesScreen(
     onOpenHome: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddText: () -> Unit,
-    onWords: () -> Unit = {}
+    onWords: () -> Unit = {},
+    onOpenGrammar: () -> Unit = {}
 ) {
     val vm: ResourcesViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -104,7 +106,8 @@ fun ResourcesScreen(
         onOpenHome = onOpenHome,
         onOpenLibrary = onOpenLibrary,
         onAddText = onAddText,
-        onWords = onWords
+        onWords = onWords,
+        onOpenGrammar = onOpenGrammar
     )
 }
 
@@ -121,7 +124,8 @@ fun ResourcesContent(
     onOpenHome: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddText: () -> Unit,
-    onWords: () -> Unit = {}
+    onWords: () -> Unit = {},
+    onOpenGrammar: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val language = LocalConfiguration.current.locales[0].language
@@ -168,6 +172,19 @@ fun ResourcesContent(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Surface(
+                onClick = onOpenGrammar,
+                modifier = Modifier.fillMaxWidth().padding(FrenchReaderDesign.spacing.small),
+                color = LocalGrammarColors.current.accentContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(Modifier.padding(FrenchReaderDesign.spacing.small)) {
+                    Text(stringResource(R.string.grammar_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.grammar_entry_description), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
             OutlinedTextField(
                 value = state.query,
                 onValueChange = onQueryChange,

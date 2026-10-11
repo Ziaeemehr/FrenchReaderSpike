@@ -694,4 +694,24 @@
     <string name="study_log_no_study">No study</string>
     <string name="study_log_year_summary">%1$s in %2$d · %3$d active days · longest streak %4$d days</string>
     <string name="study_log_home_summary">Today %1$s · This week %2$s</string><string name="study_log_home_summary_empty">Nothing logged this week yet</string>
+    <string name="grammar_title">Grammar reference</string>
+    <string name="grammar_entry_description">In-app notes with French examples and Persian explanations</string>
+    <string name="grammar_empty">No grammar notes available</string>
+    <string name="grammar_not_found">Grammar note not found</string>
+    <string name="grammar_group_basics">Basics</string>
+    <string name="grammar_group_tenses">Tenses</string>
+    <string name="grammar_group_pronouns">Pronouns</string>
+    <string name="grammar_group_structures">Structures</string>
+    <string name="grammar_group_comparisons">Comparisons</string>
+    <string name="grammar_usage">Usage</string>
+    <string name="grammar_more">More to know</string>
+    <string name="grammar_structure">Structure</string>
+    <string name="grammar_examples">Examples</string>
+    <string name="grammar_mistake">Common mistake</string>
+    <string name="grammar_correct">Correct</string>
+    <string name="grammar_wrong">Incorrect</string>
+    <string name="grammar_timeline">Timeline</string>
+    <string name="grammar_decision">Choosing a structure</string>
+    <string name="grammar_steps">Steps</string>
+    <string name="grammar_comparison">Comparison</string>
 </resources>

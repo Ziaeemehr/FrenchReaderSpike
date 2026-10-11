@@ -694,4 +694,24 @@
     <string name="study_log_no_study">Aucune étude</string>
     <string name="study_log_year_summary">%1$s en %2$d · %3$d jours actifs · plus longue série : %4$d jours</string>
     <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string><string name="study_log_home_summary_empty">Rien d’enregistré cette semaine</string>
+    <string name="grammar_title">Référence grammaticale</string>
+    <string name="grammar_entry_description">Notes avec exemples français et explications en persan</string>
+    <string name="grammar_empty">Aucune note disponible</string>
+    <string name="grammar_not_found">Note grammaticale introuvable</string>
+    <string name="grammar_group_basics">Bases</string>
+    <string name="grammar_group_tenses">Temps</string>
+    <string name="grammar_group_pronouns">Pronoms</string>
+    <string name="grammar_group_structures">Structures</string>
+    <string name="grammar_group_comparisons">Comparaisons</string>
+    <string name="grammar_usage">Usage</string>
+    <string name="grammar_more">Pour aller plus loin</string>
+    <string name="grammar_structure">Structure</string>
+    <string name="grammar_examples">Exemples</string>
+    <string name="grammar_mistake">Erreur fréquente</string>
+    <string name="grammar_correct">Correct</string>
+    <string name="grammar_wrong">Incorrect</string>
+    <string name="grammar_timeline">Chronologie</string>
+    <string name="grammar_decision">Choisir une structure</string>
+    <string name="grammar_steps">Étapes</string>
+    <string name="grammar_comparison">Comparaison</string>
 </resources>

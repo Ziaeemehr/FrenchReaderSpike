@@ -692,4 +692,24 @@
     <string name="study_log_no_study">بدون مطالعه</string>
     <string name="study_log_year_summary">%1$s در %2$d · %3$d روز فعال · طولانی‌ترین روند %4$d روز</string>
     <string name="study_log_home_summary">امروز %1$s · این هفته %2$s</string><string name="study_log_home_summary_empty">این هفته هنوز چیزی ثبت نشده</string>
+    <string name="grammar_title">مرجع دستور زبان</string>
+    <string name="grammar_entry_description">یادداشت‌های درون برنامه با مثال فرانسوی و توضیح فارسی</string>
+    <string name="grammar_empty">یادداشت دستوری موجود نیست</string>
+    <string name="grammar_not_found">یادداشت دستوری پیدا نشد</string>
+    <string name="grammar_group_basics">مبانی</string>
+    <string name="grammar_group_tenses">زمان‌ها</string>
+    <string name="grammar_group_pronouns">ضمیرها</string>
+    <string name="grammar_group_structures">ساختارها</string>
+    <string name="grammar_group_comparisons">مقایسه‌ها</string>
+    <string name="grammar_usage">کاربرد</string>
+    <string name="grammar_more">نکته‌های بیشتر</string>
+    <string name="grammar_structure">ساختار</string>
+    <string name="grammar_examples">مثال‌ها</string>
+    <string name="grammar_mistake">اشتباه رایج</string>
+    <string name="grammar_correct">درست</string>
+    <string name="grammar_wrong">نادرست</string>
+    <string name="grammar_timeline">خط زمانی</string>
+    <string name="grammar_decision">انتخاب ساختار</string>
+    <string name="grammar_steps">مراحل</string>
+    <string name="grammar_comparison">مقایسه</string>
 </resources>

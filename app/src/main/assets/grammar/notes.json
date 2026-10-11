@@ -1,0 +1,2050 @@
+{
+  "version": 1,
+  "notes": [
+    {
+      "id": "depuis-pendant-il-y-a",
+      "group": "comparisons",
+      "level": "A2",
+      "titleFr": "Depuis, pendant, il y a",
+      "titleFa": "فرق depuis، pendant و il y a",
+      "aliasesFr": [
+        "depuis",
+        "pendant",
+        "il y a",
+        "ça fait que",
+        "expressions de temps",
+        "durée"
+      ],
+      "aliasesFa": [
+        "از وقتی",
+        "به مدت",
+        "پیش",
+        "قبل",
+        "بیان زمان",
+        "مدت زمان"
+      ],
+      "related": [
+        "passe-compose-vs-imparfait",
+        "passe-compose",
+        "imparfait"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`depuis` برای کاری است که از گذشته شروع شده و هنوز ادامه دارد. `pendant` مدتِ یک کار را از شروع تا پایان می‌گوید. `il y a` می‌گوید کار چه مدت پیش انجام شد."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`depuis` + مدت یا نقطهٔ شروع: وقتی کار هنوز ادامه دارد، فعل در **زمان حال** می‌آید. «سه سال است که اینجا زندگی می‌کنم.»"
+            },
+            {
+              "kind": "li",
+              "text": "`pendant` + مدت: کاری با مدت مشخص که شروع و پایان دارد؛ بیشتر دربارهٔ گذشته، ولی برای آینده و عادت هم می‌آید. «دو ساعت کار کردم.»"
+            },
+            {
+              "kind": "li",
+              "text": "`il y a` + مدت: فاصلهٔ یک رویداد گذشته تا الان؛ معادل «… پیش». «دو روز پیش رسیدم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "présent + depuis + durée / date",
+            "verbe (souvent au passé composé) + pendant + durée",
+            "passé composé + il y a + durée"
+          ],
+          "text": []
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'habite ici depuis trois ans.",
+              "fa": "سه سال است که اینجا زندگی می‌کنم.",
+              "highlights": [
+                [
+                  13,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle apprend le français depuis 2022.",
+              "fa": "او از سال ۲۰۲۲ فرانسوی یاد می‌گیرد.",
+              "highlights": [
+                [
+                  25,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "J'ai travaillé pendant deux heures.",
+              "fa": "دو ساعت کار کردم.",
+              "highlights": [
+                [
+                  15,
+                  22
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Je suis arrivé il y a deux jours.",
+              "fa": "دو روز پیش رسیدم.",
+              "highlights": [
+                [
+                  15,
+                  21
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Ça fait trois ans que j'habite ici.",
+              "fa": "سه سال است که اینجا زندگی می‌کنم.",
+              "highlights": [
+                [
+                  0,
+                  7
+                ],
+                [
+                  18,
+                  21
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "J'ai habité ici depuis trois ans.",
+          "right": "J'habite ici depuis trois ans.",
+          "why": "اگر هنوز اینجا زندگی می‌کنید، کار ادامه دارد و فرانسوی زمان حال می‌خواهد. فارسی‌زبان‌ها به‌خاطر «زندگی کرده‌ام» به‌اشتباه passé composé می‌گذارند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "اگر نقطهٔ مرجع در گذشته باشد، `depuis` با imparfait می‌آید: `En 2020, j'habitais ici depuis trois ans.` (در سال ۲۰۲۰ سه سال بود که اینجا زندگی می‌کردم.)"
+            },
+            {
+              "kind": "li",
+              "text": "`pendant` برای آینده: `Je travaillerai pendant deux heures.`"
+            },
+            {
+              "kind": "li",
+              "text": "`depuis` با جملهٔ منفی می‌تواند با passé composé بیاید: `Je ne l'ai pas vu depuis un mois.` (یک ماه است او را ندیده‌ام.)"
+            },
+            {
+              "kind": "li",
+              "text": "`ça fait … que` و `il y a … que` همان معنای `depuis` را می‌دهند و در گفتار رایج‌اند."
+            },
+            {
+              "kind": "li",
+              "text": "`pendant` را اغلب می‌توان حذف کرد: `J'ai travaillé deux heures.`"
+            },
+            {
+              "kind": "li",
+              "text": "`pour` مدتِ پیش‌بینی‌شده برای یک سفر یا اقامت را می‌گوید: `Je pars pour deux semaines.`"
+            },
+            {
+              "kind": "li",
+              "text": "`en` زمان لازم برای تمام‌کردن کار را می‌گوید: `J'ai lu ce livre en deux jours.`"
+            },
+            {
+              "kind": "li",
+              "text": "`dans` فاصله تا یک رویداد آینده است: `Je pars dans deux jours.` (دو روز دیگر می‌روم.)"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "timeline",
+          "header": [
+            {
+              "text": "عبارت",
+              "highlights": []
+            },
+            {
+              "text": "روی خط زمان",
+              "highlights": []
+            },
+            {
+              "text": "زمان فعل",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "il y a",
+                "highlights": []
+              },
+              {
+                "text": "یک نقطه در گذشته",
+                "highlights": []
+              },
+              {
+                "text": "passé composé",
+                "highlights": []
+              },
+              {
+                "text": "Je suis arrivé il y a deux jours.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "pendant",
+                "highlights": []
+              },
+              {
+                "text": "بازه‌ای بسته با شروع و پایان",
+                "highlights": []
+              },
+              {
+                "text": "اغلب passé composé",
+                "highlights": []
+              },
+              {
+                "text": "J'ai travaillé pendant deux heures.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "depuis",
+                "highlights": []
+              },
+              {
+                "text": "از نقطه‌ای در گذشته تا الان، ادامه‌دار",
+                "highlights": []
+              },
+              {
+                "text": "présent (با مرجع گذشته: imparfait)",
+                "highlights": []
+              },
+              {
+                "text": "J'habite ici depuis trois ans.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "dans",
+                "highlights": []
+              },
+              {
+                "text": "یک نقطه در آینده",
+                "highlights": []
+              },
+              {
+                "text": "présent / futur",
+                "highlights": []
+              },
+              {
+                "text": "Je pars dans deux jours.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "passe-compose-vs-imparfait",
+      "group": "comparisons",
+      "level": "B1",
+      "titleFr": "Passé composé ou imparfait ?",
+      "titleFa": "فرق passé composé و imparfait",
+      "aliasesFr": [
+        "passé composé ou imparfait",
+        "passé composé vs imparfait",
+        "différence passé composé imparfait"
+      ],
+      "aliasesFa": [
+        "فرق ماضی ساده و استمراری",
+        "کدام زمان گذشته",
+        "تفاوت passé composé و imparfait"
+      ],
+      "related": [
+        "passe-compose",
+        "imparfait",
+        "depuis-pendant-il-y-a",
+        "savoir-vs-connaitre"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "passé composé می‌گوید «چه اتفاقی افتاد» و imparfait می‌گوید «اوضاع چطور بود». اولی رویدادِ تمام‌شده است و دومی زمینه، توصیف یا عادت."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "از خودتان بپرسید: آیا این جمله داستان را یک قدم جلو می‌برد؟"
+            },
+            {
+              "kind": "li",
+              "text": "بله، یک اتفاق تازه است → passé composé."
+            },
+            {
+              "kind": "li",
+              "text": "نه، فقط صحنه را توصیف می‌کند یا عادتی را می‌گوید → imparfait."
+            },
+            {
+              "kind": "p",
+              "text": "در یک روایت معمولاً هر دو با هم می‌آیند: imparfait صحنه را می‌چیند و passé composé رویدادها را تعریف می‌کند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "imparfait (زمینه) + quand + passé composé (رویداد)"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "کاری که در جریان بود با imparfait می‌آید و کاری که آن را قطع کرد با passé composé."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je regardais la télé quand il est arrivé.",
+              "fa": "داشتم تلویزیون تماشا می‌کردم که او رسید.",
+              "highlights": [
+                [
+                  3,
+                  12
+                ],
+                [
+                  30,
+                  40
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il faisait beau, alors nous sommes sortis.",
+              "fa": "هوا خوب بود، برای همین بیرون رفتیم.",
+              "highlights": [
+                [
+                  3,
+                  10
+                ],
+                [
+                  28,
+                  41
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Avant, je prenais le bus ; hier, j'ai pris le métro.",
+              "fa": "قبلاً با اتوبوس می‌رفتم؛ دیروز مترو سوار شدم.",
+              "highlights": [
+                [
+                  10,
+                  17
+                ],
+                [
+                  35,
+                  42
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle a vécu dix ans à Paris.",
+              "fa": "او ده سال در پاریس زندگی کرد.",
+              "highlights": [
+                [
+                  5,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Quand j'étais enfant, j'avais peur du noir.",
+              "fa": "وقتی بچه بودم، از تاریکی می‌ترسیدم.",
+              "highlights": [
+                [
+                  8,
+                  13
+                ],
+                [
+                  24,
+                  29
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "L'année dernière, j'allais trois fois à Paris.",
+          "right": "L'année dernière, je suis allé trois fois à Paris.",
+          "why": "وقتی تعداد دفعات مشخص است (trois fois)، کار عادتِ نامحدود نیست و به‌صورت رویدادهای تمام‌شده شمرده می‌شود؛ پس passé composé لازم است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "طولانی‌بودن کار معیار نیست؛ معیار این است که آن را تمام‌شده می‌بینیم یا در جریان."
+            },
+            {
+              "kind": "li",
+              "text": "بعضی فعل‌ها در passé composé اغلب شروعِ یک وضعیت را نشان می‌دهند: `je savais` (می‌دانستم) در برابر `j'ai su` (فهمیدم، باخبر شدم)؛ `je connaissais` (می‌شناختم) در برابر `j'ai connu` (آشنا شدم). این تغییر معنی به بافت بستگی دارد و همیشگی نیست."
+            },
+            {
+              "kind": "li",
+              "text": "مدتِ مشخص و بسته معمولاً passé composé می‌خواهد: `Pendant deux ans, j'ai habité à Paris.`"
+            },
+            {
+              "kind": "li",
+              "text": "`soudain` و `tout à coup` معمولاً رویداد تازه‌ای را معرفی می‌کنند و با passé composé می‌آیند."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "passé composé",
+              "highlights": []
+            },
+            {
+              "text": "imparfait",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "نقش",
+                "highlights": []
+              },
+              {
+                "text": "رویداد؛ چه شد؟",
+                "highlights": []
+              },
+              {
+                "text": "زمینه؛ اوضاع چطور بود؟",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "نگاه به کار",
+                "highlights": []
+              },
+              {
+                "text": "تمام‌شده، یک کل",
+                "highlights": []
+              },
+              {
+                "text": "در جریان، بدون شروع و پایان",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "تکرار",
+                "highlights": []
+              },
+              {
+                "text": "یک بار یا تعداد مشخص",
+                "highlights": []
+              },
+              {
+                "text": "عادت، تکرار نامشخص",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "سرنخ‌های رایج",
+                "highlights": []
+              },
+              {
+                "text": "hier, soudain, tout à coup, une fois, pendant deux ans",
+                "highlights": []
+              },
+              {
+                "text": "tous les jours, souvent, d'habitude, autrefois, à cette époque",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "نمونه",
+                "highlights": []
+              },
+              {
+                "text": "Il est arrivé.",
+                "highlights": []
+              },
+              {
+                "text": "Il pleuvait.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qui-vs-que",
+      "group": "comparisons",
+      "level": "A2",
+      "titleFr": "Qui ou que ? (pronoms relatifs)",
+      "titleFa": "فرق qui و que",
+      "aliasesFr": [
+        "qui ou que",
+        "qui vs que",
+        "pronoms relatifs",
+        "pronom relatif qui",
+        "pronom relatif que"
+      ],
+      "aliasesFa": [
+        "فرق qui و que",
+        "ضمیر موصولی",
+        "که در فرانسوی",
+        "تفاوت qui و que"
+      ],
+      "related": [
+        "passe-compose"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "هر دو در فارسی «که» ترجمه می‌شوند. `qui` فاعلِ جملهٔ بعد از خودش است و `que` مفعول مستقیم آن. انتخاب بین این دو ربطی به شخص یا شیء بودن ندارد."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "نقشِ اسمِ پیش از جای خالی را در جملهٔ بعدی پیدا کنید:"
+            },
+            {
+              "kind": "li",
+              "text": "اگر آن اسم فاعلِ فعلِ بعدی است → `qui`."
+            },
+            {
+              "kind": "li",
+              "text": "اگر مفعول مستقیم است و جمله فاعل دیگری دارد → `que`."
+            },
+            {
+              "kind": "p",
+              "text": "سرنخ سریع: بعد از `qui` معمولاً فعل می‌آید و بعد از `que` معمولاً فاعل. این فقط سرنخ است؛ مثلاً در `l'homme qui me connaît` بین `qui` و فعل یک ضمیر آمده است."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "nom + qui + verbe",
+            "nom + que + sujet + verbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "هر دو هم برای اشخاص و هم برای اشیا به کار می‌روند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "C'est l'homme qui habite ici.",
+              "fa": "این مردی است که اینجا زندگی می‌کند.",
+              "highlights": [
+                [
+                  14,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "C'est le film que j'ai vu hier.",
+              "fa": "این فیلمی است که دیروز دیدم.",
+              "highlights": [
+                [
+                  14,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "J'ai un ami qui parle cinq langues.",
+              "fa": "دوستی دارم که به پنج زبان صحبت می‌کند.",
+              "highlights": [
+                [
+                  12,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "La femme que tu as rencontrée est ma sœur.",
+              "fa": "زنی که ملاقات کردی خواهر من است.",
+              "highlights": [
+                [
+                  9,
+                  12
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Le livre qui est sur la table est à moi.",
+              "fa": "کتابی که روی میز است مال من است.",
+              "highlights": [
+                [
+                  9,
+                  12
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "C'est le livre qui j'ai acheté.",
+          "right": "C'est le livre que j'ai acheté.",
+          "why": "بعد از جای خالی فاعل (je) آمده است؛ پس «کتاب» مفعولِ خریدن است و que لازم است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`que` پیش از مصوت یا h بی‌صدا به `qu'` تبدیل می‌شود: `le film qu'il aime`. ولی `qui` هیچ‌وقت کوتاه نمی‌شود: `l'homme qui est là`."
+            },
+            {
+              "kind": "li",
+              "text": "چون `que` مفعول مستقیمی است که پیش از فعل آمده، در passé composé با `avoir`، participe passé با اسمِ پیش از que هماهنگ می‌شود: `la lettre que j'ai écrite`، `les photos que tu as prises`."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از حرف اضافه، برای اشخاص `qui` می‌آید: `l'ami avec qui je travaille`. این کاربرد جداست."
+            },
+            {
+              "kind": "li",
+              "text": "برای «که … آن» با `de` از `dont` و برای مکان و زمان از `où` استفاده می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "decision",
+          "header": [
+            {
+              "text": "نقش اسم در جملهٔ بعدی",
+              "highlights": []
+            },
+            {
+              "text": "انتخاب",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "فاعل",
+                "highlights": []
+              },
+              {
+                "text": "qui",
+                "highlights": []
+              },
+              {
+                "text": "la fille qui chante",
+                "highlights": [
+                  [
+                    9,
+                    12
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "text": "مفعول مستقیم",
+                "highlights": []
+              },
+              {
+                "text": "que",
+                "highlights": []
+              },
+              {
+                "text": "la chanson que j'écoute",
+                "highlights": [
+                  [
+                    11,
+                    14
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "text": "مفعول مستقیم، پیش از مصوت یا h بی‌صدا",
+                "highlights": []
+              },
+              {
+                "text": "qu'",
+                "highlights": []
+              },
+              {
+                "text": "la chanson qu'elle écoute",
+                "highlights": [
+                  [
+                    11,
+                    14
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "savoir-vs-connaitre",
+      "group": "comparisons",
+      "level": "A2",
+      "titleFr": "Savoir ou connaître ?",
+      "titleFa": "فرق savoir و connaître",
+      "aliasesFr": [
+        "savoir ou connaître",
+        "savoir vs connaître",
+        "savoir connaitre",
+        "je sais",
+        "je connais"
+      ],
+      "aliasesFa": [
+        "فرق savoir و connaître",
+        "دانستن و شناختن",
+        "بلد بودن",
+        "تفاوت savoir و connaître"
+      ],
+      "related": [
+        "passe-compose-vs-imparfait"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`savoir` یعنی «دانستن» یا «بلد بودن»: یک اطلاع یا یک مهارت. `connaître` یعنی «شناختن» یا «آشنا بودن»: یک شخص، مکان یا چیز. مفعولِ `connaître` همیشه اسم یا ضمیر است، نه فعل یا جمله."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`savoir` + مصدر: بلد بودنِ کاری. «شنا بلدم.»"
+            },
+            {
+              "kind": "li",
+              "text": "`savoir` + جملهٔ پیرو (que, si, où, quand, comment, pourquoi …): دانستن یک اطلاع. «می‌دانی کجا زندگی می‌کند؟»"
+            },
+            {
+              "kind": "li",
+              "text": "`connaître` + اسم یا ضمیر: آشنایی با شخص، مکان، اثر یا موضوع. «پاریس را خوب می‌شناسم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "savoir + infinitif",
+            "savoir + que / si / où / quand / comment … + phrase",
+            "connaître + nom"
+          ],
+          "text": []
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je sais nager.",
+              "fa": "من شنا بلدم.",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Je connais bien Paris.",
+              "fa": "پاریس را خوب می‌شناسم.",
+              "highlights": [
+                [
+                  3,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Tu sais où il habite ?",
+              "fa": "می‌دانی کجا زندگی می‌کند؟",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle connaît mon frère.",
+              "fa": "او برادرم را می‌شناسد.",
+              "highlights": [
+                [
+                  5,
+                  12
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je sais qu'il est malade.",
+              "fa": "می‌دانم که مریض است.",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je sais Marie depuis dix ans.",
+          "right": "Je connais Marie depuis dix ans.",
+          "why": "برای آشنایی با اشخاص فقط connaître به کار می‌رود. savoir با اسمِ شخص یا مکان نمی‌آید."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`connaître` هیچ‌وقت با مصدر یا جملهٔ پیرو نمی‌آید: `Je connais nager` و `Je connais qu'il est là` غلط‌اند."
+            },
+            {
+              "kind": "li",
+              "text": "`savoir` با چند اسم محدود می‌آید، وقتی منظور اطلاعی است که در ذهن داریم: `savoir la réponse`، `savoir sa leçon`، `savoir la vérité`."
+            },
+            {
+              "kind": "li",
+              "text": "صرف حال: `je sais, tu sais, il sait, nous savons, vous savez, ils savent` و `je connais, tu connais, il connaît, nous connaissons, vous connaissez, ils connaissent`."
+            },
+            {
+              "kind": "li",
+              "text": "در passé composé، بسته به بافت، `j'ai su` می‌تواند یعنی «فهمیدم، باخبر شدم» و `j'ai connu` یعنی «آشنا شدم، تجربه کردم»."
+            },
+            {
+              "kind": "li",
+              "text": "مفعول می‌تواند ضمیر باشد: `Je la connais.` (او را می‌شناسم.)"
+            },
+            {
+              "kind": "li",
+              "text": "`Je ne sais pas.` (نمی‌دانم.) جواب کوتاه رایج است؛ `Je ne connais pas.` یعنی «نمی‌شناسمش / با آن آشنا نیستم»."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "savoir",
+              "highlights": []
+            },
+            {
+              "text": "connaître",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "معنی",
+                "highlights": []
+              },
+              {
+                "text": "دانستن، بلد بودن",
+                "highlights": []
+              },
+              {
+                "text": "شناختن، آشنا بودن",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "بعدش چه می‌آید؟",
+                "highlights": []
+              },
+              {
+                "text": "مصدر یا جملهٔ پیرو؛ گاهی اسم‌هایی مثل la réponse",
+                "highlights": []
+              },
+              {
+                "text": "اسم یا ضمیر",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "برای اشخاص و مکان‌ها",
+                "highlights": []
+              },
+              {
+                "text": "✗",
+                "highlights": []
+              },
+              {
+                "text": "✓",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "نمونه",
+                "highlights": []
+              },
+              {
+                "text": "Je sais conduire.",
+                "highlights": []
+              },
+              {
+                "text": "Je connais ce quartier.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pronom-en",
+      "group": "pronouns",
+      "level": "A2",
+      "titleFr": "Le pronom « en »",
+      "titleFa": "ضمیر en",
+      "aliasesFr": [
+        "en, pronom en, j'en ai",
+        "il y en a"
+      ],
+      "aliasesFa": [
+        "ضمیر en",
+        "کاربرد en",
+        "جایگزین de",
+        "en یعنی چه"
+      ],
+      "related": [
+        "pronom-y",
+        "passe-compose"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`en` جای «`de` + اسم» را می‌گیرد تا آن اسم تکرار نشود. بیشتر برای مقدار و تعداد به کار می‌رود: `J'en veux` یعنی «از آن می‌خواهم»."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`en` جایگزین این‌ها می‌شود:"
+            },
+            {
+              "kind": "li",
+              "text": "اسم با حرف تعریف جزئی یا نامعین (du, de la, de l', des, un, une): «قهوه می‌خواهی؟ — بله، می‌خواهم.»"
+            },
+            {
+              "kind": "li",
+              "text": "اسمِ بعد از عدد یا کلمهٔ مقدار (beaucoup de, un peu de, trois …): «سه تا دارم.»"
+            },
+            {
+              "kind": "li",
+              "text": "متممِ فعل‌ها و عبارت‌هایی که با `de` می‌آیند، برای اشیا و مفاهیم: parler de, avoir besoin de, avoir envie de, s'occuper de."
+            },
+            {
+              "kind": "li",
+              "text": "مکانی که از آن می‌آییم (venir de, revenir de)."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + en + verbe conjugué"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "`en` پیش از فعلی می‌آید که متممش را جایگزین کرده است؛ معمولاً همان فعل صرف‌شده. اگر متممِ یک مصدر باشد، پیش از آن مصدر قرار می‌گیرد: `Je vais en acheter.`"
+            },
+            {
+              "kind": "p",
+              "text": "عدد یا کلمهٔ مقدار در جمله می‌ماند: `J'en ai trois.`، `Il en mange beaucoup.` در جواب مثبت `un` و `une` هم می‌مانند: `Tu as une voiture ? — Oui, j'en ai une.` ولی در منفی حذف می‌شوند: `Non, je n'en ai pas.`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tu veux du café ? — Oui, j'en veux.",
+              "fa": "قهوه می‌خواهی؟ — بله، می‌خواهم.",
+              "highlights": [
+                [
+                  27,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Tu as des frères ? — Oui, j'en ai trois.",
+              "fa": "برادر داری؟ — بله، سه تا دارم.",
+              "highlights": [
+                [
+                  28,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Tu as besoin de la voiture ? — Oui, j'en ai besoin.",
+              "fa": "ماشین را لازم داری؟ — بله، لازمش دارم.",
+              "highlights": [
+                [
+                  38,
+                  40
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle revient de Paris ? — Oui, elle en revient ce soir.",
+              "fa": "از پاریس برمی‌گردد؟ — بله، امشب از آنجا برمی‌گردد.",
+              "highlights": [
+                [
+                  36,
+                  38
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Du pain ? Non, je n'en ai pas acheté.",
+              "fa": "نان؟ نه، نخریده‌ام.",
+              "highlights": [
+                [
+                  20,
+                  22
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Tu as des enfants ? — Oui, j'ai deux.",
+          "right": "Tu as des enfants ? — Oui, j'en ai deux.",
+          "why": "وقتی اسم حذف می‌شود و فقط عدد یا مقدار می‌ماند، آوردن en اجباری است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "برای اشخاص بعد از فعل‌های `de`دار، معمولاً «`de` + ضمیر تأکیدی» می‌آید، نه en: `Je parle de lui.` (دربارهٔ او حرف می‌زنم.)"
+            },
+            {
+              "kind": "li",
+              "text": "در امر مثبت بعد از فعل می‌آید و با خط تیره وصل می‌شود: `Prends-en !`. فعل‌های ‎-er در دوم‌شخص مفرد یک s می‌گیرند: `Manges-en !`"
+            },
+            {
+              "kind": "li",
+              "text": "در منفی: `Je n'en veux pas.`"
+            },
+            {
+              "kind": "li",
+              "text": "عبارت پرکاربرد: `Il y en a.` (هست، وجود دارد.) و `Il n'y en a plus.` (دیگر نیست.)"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی `en` مفعول مستقیم است، participe passé معمولاً بدون هماهنگی می‌ماند: `Des pommes ? J'en ai mangé.`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pronom-y",
+      "group": "pronouns",
+      "level": "A2",
+      "titleFr": "Le pronom « y »",
+      "titleFa": "ضمیر y",
+      "aliasesFr": [
+        "y",
+        "pronom y",
+        "j'y vais, j'y pense"
+      ],
+      "aliasesFa": [
+        "ضمیر y",
+        "کاربرد y",
+        "جایگزین à",
+        "y یعنی چه"
+      ],
+      "related": [
+        "pronom-en"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`y` جای یک مکان یا جای «`à` + چیز» را می‌گیرد. `J'y vais` یعنی «به آنجا می‌روم» و `J'y pense` یعنی «به آن فکر می‌کنم»."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`y` جایگزین این‌ها می‌شود:"
+            },
+            {
+              "kind": "li",
+              "text": "مکانی که در آن هستیم یا به آن می‌رویم، با حرف‌های اضافه‌ای مثل à, en, dans, sur, chez: «به پاریس می‌روی؟ — بله، می‌روم.»"
+            },
+            {
+              "kind": "li",
+              "text": "متممِ فعل‌هایی که با `à` می‌آیند، وقتی دربارهٔ چیز یا مفهوم است: penser à, réfléchir à, répondre à, s'intéresser à, participer à."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + y + verbe conjugué"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "`y` پیش از فعلی می‌آید که متممش را جایگزین کرده است؛ معمولاً همان فعل صرف‌شده. اگر متممِ یک مصدر باشد، پیش از آن مصدر قرار می‌گیرد: `Je veux y aller.`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tu vas à Paris ? — Oui, j'y vais demain.",
+              "fa": "به پاریس می‌روی؟ — بله، فردا می‌روم.",
+              "highlights": [
+                [
+                  26,
+                  27
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il pense à son examen ? — Oui, il y pense tout le temps.",
+              "fa": "به امتحانش فکر می‌کند؟ — بله، مدام به آن فکر می‌کند.",
+              "highlights": [
+                [
+                  34,
+                  35
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Le livre est sur la table ? — Oui, il y est.",
+              "fa": "کتاب روی میز است؟ — بله، آنجاست.",
+              "highlights": [
+                [
+                  38,
+                  39
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Tu connais Lyon ? — Non, je n'y suis jamais allé.",
+              "fa": "لیون را می‌شناسی؟ — نه، هیچ‌وقت آنجا نرفته‌ام.",
+              "highlights": [
+                [
+                  30,
+                  31
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Tu vas à Paris ? — Oui, je vais y demain.",
+          "right": "Tu vas à Paris ? — Oui, j'y vais demain.",
+          "why": "y مثل ضمیرهای مفعولی پیش از فعل صرف‌شده می‌آید، نه بعد از آن."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`y` در اصل برای چیزها و مکان‌هاست. برای اشخاص بعد از `penser à`، در فرانسوی معیار «`à` + ضمیر تأکیدی» می‌آید: `Je pense à elle.` (نه `j'y pense`)."
+            },
+            {
+              "kind": "li",
+              "text": "با فعل‌هایی مثل `parler à`، شخص با `lui` یا `leur` جایگزین می‌شود: `Je parle à Marie. → Je lui parle.`"
+            },
+            {
+              "kind": "li",
+              "text": "مکانی که «از» آن می‌آییم با `en` جایگزین می‌شود، نه y: `Il vient de Lyon. → Il en vient.`"
+            },
+            {
+              "kind": "li",
+              "text": "پیش از آینده و شرطیِ فعل aller، `y` معمولاً حذف می‌شود تا دو صدای i پشت‌سرهم نیاید: `J'irai demain.`"
+            },
+            {
+              "kind": "li",
+              "text": "در امر مثبت بعد از فعل می‌آید: `Vas-y !`، `Allons-y !`. فعل `va` در اینجا یک s می‌گیرد."
+            },
+            {
+              "kind": "li",
+              "text": "در منفی: `Je n'y vais pas.`"
+            },
+            {
+              "kind": "li",
+              "text": "عبارت ثابت: `il y a` (وجود دارد) و `ça y est` (تمام شد، درست شد)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bien-que",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Bien que + subjonctif",
+      "titleFa": "bien que: با اینکه، هرچند",
+      "aliasesFr": [
+        "bien que",
+        "quoique",
+        "concession",
+        "bien que subjonctif"
+      ],
+      "aliasesFa": [
+        "با اینکه",
+        "هرچند",
+        "اگرچه",
+        "با وجود اینکه",
+        "تضاد"
+      ],
+      "related": [
+        "phrases-avec-si"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`bien que` یعنی «با اینکه / هرچند» و در فرانسوی معیار، فعلِ بعد از آن در وجه التزامی (subjonctif) می‌آید، حتی وقتی دربارهٔ یک واقعیت حرف می‌زنیم."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای بیان تضاد میان دو واقعیت: چیزی درست است، ولی نتیجه‌ای که انتظار داریم رخ نمی‌دهد. «با اینکه خسته است، به کار ادامه می‌دهد.»"
+            },
+            {
+              "kind": "p",
+              "text": "بیشتر در نوشتار و گفتار رسمی‌تر شنیده می‌شود؛ در گفتار روزمره `mais` و `pourtant` رایج‌ترند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "bien que + sujet + subjonctif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "برای کاری که پیش از جملهٔ اصلی تمام شده، subjonctif passé می‌آید: `bien que + sujet + avoir / être (subjonctif) + participe passé`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Bien qu'il soit fatigué, il continue à travailler.",
+              "fa": "با اینکه خسته است، به کار ادامه می‌دهد.",
+              "highlights": [
+                [
+                  0,
+                  8
+                ],
+                [
+                  11,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Bien qu'elle ait peu d'argent, elle est heureuse.",
+              "fa": "با اینکه پول کمی دارد، خوشحال است.",
+              "highlights": [
+                [
+                  0,
+                  8
+                ],
+                [
+                  13,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Nous sortons bien qu'il pleuve.",
+              "fa": "با اینکه باران می‌بارد، بیرون می‌رویم.",
+              "highlights": [
+                [
+                  13,
+                  21
+                ],
+                [
+                  24,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Bien que j'aie étudié, je n'ai pas réussi l'examen.",
+              "fa": "با اینکه درس خوانده بودم، در امتحان قبول نشدم.",
+              "highlights": [
+                [
+                  0,
+                  8
+                ],
+                [
+                  11,
+                  21
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Bien qu'il est malade, il travaille.",
+          "right": "Bien qu'il soit malade, il travaille.",
+          "why": "در فرانسوی معیار بعد از bien que از subjonctif استفاده می‌شود. چون جمله یک واقعیت را می‌گوید، زبان‌آموز به‌اشتباه indicatif می‌گذارد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`quoique` همان معنی و همان ساختار را دارد و رسمی‌تر است: `Quoiqu'il soit tard, elle travaille encore.`"
+            },
+            {
+              "kind": "li",
+              "text": "`même si` (حتی اگر) با indicatif می‌آید: `Même s'il pleut, nous sortons.`"
+            },
+            {
+              "kind": "li",
+              "text": "پیش از اسم از `malgré` استفاده می‌شود: `Malgré la pluie, nous sortons.`"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی فاعل دو بخش یکی است، باز هم جملهٔ کامل با subjonctif می‌آید: `Bien que je sois fatigué, je sors.` در نوشتار گاهی فاعل و فعل حذف می‌شوند: `Bien que fatigué, je sors.`"
+            },
+            {
+              "kind": "li",
+              "text": "`bien que` پیش از مصوت یا h بی‌صدا به `bien qu'` تبدیل می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "در گفتار، indicatif بعد از `bien que` هم شنیده می‌شود، ولی در نوشتار و آزمون غلط به شمار می‌آید."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phrases-avec-si",
+      "group": "structures",
+      "level": "B1",
+      "titleFr": "Les phrases avec « si » (hypothèse et condition)",
+      "titleFa": "جمله‌های شرطی با si",
+      "aliasesFr": [
+        "si",
+        "phrases avec si",
+        "hypothèse",
+        "condition",
+        "si + imparfait",
+        "si j'avais, si j'avais su"
+      ],
+      "aliasesFa": [
+        "اگر",
+        "جمله شرطی",
+        "شرطی نوع اول",
+        "شرطی نوع دوم",
+        "شرطی نوع سوم"
+      ],
+      "related": [
+        "imparfait",
+        "bien-que"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "سه الگوی اصلی وجود دارد که در هر کدام زمانِ بخش شرط با زمانِ جملهٔ اصلی جفت می‌شود. قاعدهٔ طلایی: فعلِ بخش شرط (بعد از `si`) در آینده (futur) یا وجه شرطی (conditionnel) نمی‌آید."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "شرط ممکن و واقعی دربارهٔ حال یا آینده: «اگر فردا هوا خوب باشد، به ساحل می‌رویم.»"
+            },
+            {
+              "kind": "li",
+              "text": "فرض غیرواقعی یا بعید دربارهٔ حال یا آینده: «اگر وقت بیشتری داشتم، بیشتر سفر می‌کردم.»"
+            },
+            {
+              "kind": "li",
+              "text": "فرض غیرواقعی دربارهٔ گذشته، اغلب برای حسرت یا سرزنش: «اگر آمده بودی، ماری را می‌دیدی.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "si + présent → futur simple / présent / impératif",
+            "si + imparfait → conditionnel présent",
+            "si + plus-que-parfait → conditionnel passé"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "جای دو بخش را می‌توان عوض کرد: `Nous irons à la plage s'il fait beau.`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "S'il fait beau demain, nous irons à la plage.",
+              "fa": "اگر فردا هوا خوب باشد، به ساحل می‌رویم.",
+              "highlights": [
+                [
+                  5,
+                  9
+                ],
+                [
+                  28,
+                  33
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Si tu as faim, mange quelque chose.",
+              "fa": "اگر گرسنه‌ای، چیزی بخور.",
+              "highlights": [
+                [
+                  6,
+                  8
+                ],
+                [
+                  15,
+                  20
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Si j'avais plus de temps, je voyagerais davantage.",
+              "fa": "اگر وقت بیشتری داشتم، بیشتر سفر می‌کردم.",
+              "highlights": [
+                [
+                  5,
+                  10
+                ],
+                [
+                  29,
+                  39
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Si tu étais venu, tu aurais vu Marie.",
+              "fa": "اگر آمده بودی، ماری را می‌دیدی.",
+              "highlights": [
+                [
+                  6,
+                  16
+                ],
+                [
+                  21,
+                  30
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Si j'aurais de l'argent, j'achèterais une maison.",
+          "right": "Si j'avais de l'argent, j'achèterais une maison.",
+          "why": "بعد از si شرطی، conditionnel نمی‌آید؛ فرض غیرواقعیِ حال با imparfait ساخته می‌شود. جملهٔ کمکی برای حفظ‌کردن: « Les si n'aiment pas les -rais. »"
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`si` فقط پیش از `il` و `ils` کوتاه می‌شود: `s'il`، `s'ils`. ولی `si elle`، `si on`."
+            },
+            {
+              "kind": "li",
+              "text": "imparfait در الگوی دوم معنای گذشته ندارد؛ نشان می‌دهد که فرض خلاف واقع یا بعید است: `Si tu venais demain, nous pourrions en parler.` (اگر فردا می‌آمدی، می‌توانستیم درباره‌اش حرف بزنیم.)"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی `si` به معنی «آیا / که آیا» است (پرسش غیرمستقیم)، قاعدهٔ بالا برقرار نیست و آینده مجاز است: `Je ne sais pas s'il viendra.` (نمی‌دانم می‌آید یا نه.)"
+            },
+            {
+              "kind": "li",
+              "text": "ترکیب الگوها هم ممکن است: `Si j'avais étudié, je serais médecin aujourd'hui.` (اگر درس خوانده بودم، الان پزشک بودم.)"
+            },
+            {
+              "kind": "li",
+              "text": "برای «حتی اگر» از `même si` با همین زمان‌ها استفاده می‌شود، نه subjonctif."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "بعد از si",
+              "highlights": []
+            },
+            {
+              "text": "جملهٔ اصلی",
+              "highlights": []
+            },
+            {
+              "text": "معنی",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "الگوی ۱",
+                "highlights": []
+              },
+              {
+                "text": "présent",
+                "highlights": []
+              },
+              {
+                "text": "futur simple / présent / impératif",
+                "highlights": []
+              },
+              {
+                "text": "شرط ممکن",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "الگوی ۲",
+                "highlights": []
+              },
+              {
+                "text": "imparfait",
+                "highlights": []
+              },
+              {
+                "text": "conditionnel présent",
+                "highlights": []
+              },
+              {
+                "text": "فرض خلاف واقع یا بعید در حال یا آینده",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "الگوی ۳",
+                "highlights": []
+              },
+              {
+                "text": "plus-que-parfait",
+                "highlights": []
+              },
+              {
+                "text": "conditionnel passé",
+                "highlights": []
+              },
+              {
+                "text": "فرض غیرواقعی در گذشته",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imparfait",
+      "group": "tenses",
+      "level": "A2",
+      "titleFr": "L'imparfait",
+      "titleFa": "زمان imparfait: توصیف و عادت در گذشته",
+      "aliasesFr": [
+        "imparfait",
+        "l'imparfait de l'indicatif"
+      ],
+      "aliasesFa": [
+        "ماضی استمراری",
+        "گذشته استمراری",
+        "عادت در گذشته",
+        "توصیف در گذشته"
+      ],
+      "related": [
+        "passe-compose",
+        "passe-compose-vs-imparfait",
+        "phrases-avec-si",
+        "depuis-pendant-il-y-a"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "imparfait گذشته را «در حال جریان» نشان می‌دهد: توصیف، عادت، یا کاری که در گذشته در حال انجام بود. شروع و پایان کار در آن مهم نیست."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "توصیف وضعیت، هوا، آدم‌ها و احساس‌ها در گذشته: «هوا سرد بود.»"
+            },
+            {
+              "kind": "li",
+              "text": "عادت یا کار تکراری در گذشته: «هر روز فوتبال بازی می‌کردم.»"
+            },
+            {
+              "kind": "li",
+              "text": "کاری که در حال انجام بود و کار دیگری وسط آن اتفاق افتاد: «داشتم کتاب می‌خواندم که تلفن زنگ زد.»"
+            },
+            {
+              "kind": "p",
+              "text": "بیشتر وقت‌ها معادل ماضی استمراری فارسی است (می‌رفتم). برای فعل‌های حالت مثل être و avoir در فارسی ماضی ساده می‌آید (بود، داشت)."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "radical de « nous » au présent + -ais, -ais, -ait, -ions, -iez, -aient"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "ریشه را از صرف `nous` در زمان حال بگیرید و `-ons` را بردارید: `nous parlons → parl-`، `nous finissons → finiss-`، `nous prenons → pren-`."
+            },
+            {
+              "kind": "p",
+              "text": "تنها استثنا فعل être است که ریشه‌اش `ét-` است: `j'étais, tu étais, il était, nous étions, vous étiez, ils étaient`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Quand j'étais petit, je jouais au foot tous les jours.",
+              "fa": "وقتی کوچک بودم، هر روز فوتبال بازی می‌کردم.",
+              "highlights": [
+                [
+                  8,
+                  13
+                ],
+                [
+                  24,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il faisait froid et il pleuvait.",
+              "fa": "هوا سرد بود و باران می‌بارید.",
+              "highlights": [
+                [
+                  3,
+                  10
+                ],
+                [
+                  23,
+                  31
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Nous habitions à Lyon à cette époque.",
+              "fa": "آن زمان در لیون زندگی می‌کردیم.",
+              "highlights": [
+                [
+                  5,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle lisait un livre quand le téléphone a sonné.",
+              "fa": "داشت کتاب می‌خواند که تلفن زنگ زد.",
+              "highlights": [
+                [
+                  5,
+                  11
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Quand j'étais petit, je jouait au foot tous les jours.",
+          "right": "Quand j'étais petit, je jouais au foot tous les jours.",
+          "why": "در imparfait، پایانهٔ فعل برای je برابر ‎-ais است؛ ‎-ait برای il، elle و on به کار می‌رود. این دو یکسان تلفظ می‌شوند و در نوشتن به‌راحتی جابه‌جا می‌شوند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "فعل‌های ‎-ger پیش از a یک e نگه می‌دارند: `je mangeais` ولی `nous mangions`."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌های ‎-cer پیش از a با ç نوشته می‌شوند: `je commençais` ولی `nous commencions`."
+            },
+            {
+              "kind": "li",
+              "text": "پایانه‌های ‎-ais, -ait, -aient یکسان تلفظ می‌شوند."
+            },
+            {
+              "kind": "li",
+              "text": "نشانه‌های رایج: tous les jours، souvent، d'habitude، autrefois، à cette époque، quand j'étais petit."
+            },
+            {
+              "kind": "li",
+              "text": "imparfait بعد از `si` برای فرض غیرواقعی هم به کار می‌رود؛ نکتهٔ «جمله‌های شرطی با si» را ببینید."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "passe-compose",
+      "group": "tenses",
+      "level": "A2",
+      "titleFr": "Le passé composé",
+      "titleFa": "زمان passé composé: گذشتهٔ مرکب",
+      "aliasesFr": [
+        "passé composé",
+        "passe compose",
+        "avoir ou être",
+        "participe passé"
+      ],
+      "aliasesFa": [
+        "گذشته ساده",
+        "ماضی مرکب",
+        "فعل کمکی avoir یا être",
+        "اسم مفعول"
+      ],
+      "related": [
+        "imparfait",
+        "passe-compose-vs-imparfait",
+        "depuis-pendant-il-y-a",
+        "qui-vs-que",
+        "pronom-en"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "passé composé برای کاری است که در گذشته انجام و تمام شده است. با زمان حالِ `avoir` یا `être` به‌اضافهٔ participe passé فعل اصلی ساخته می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "یک کار تمام‌شده در گذشته: «دیروز فیلم دیدم.»"
+            },
+            {
+              "kind": "li",
+              "text": "چند کار پشت‌سرهم در گذشته: «بلند شدم، قهوه خوردم و رفتم.»"
+            },
+            {
+              "kind": "li",
+              "text": "کاری که مدت مشخص و تمام‌شده داشته است: «دو سال در پاریس زندگی کردم.»"
+            },
+            {
+              "kind": "p",
+              "text": "در فارسی معمولاً با ماضی ساده (رفتم) و گاهی با ماضی نقلی (رفته‌ام) ترجمه می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + avoir / être (présent) + participe passé"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "بیشتر فعل‌ها با `avoir` صرف می‌شوند. با `être` دو گروه صرف می‌شوند:"
+            },
+            {
+              "kind": "li",
+              "text": "گروه مشخصی از فعل‌های جابه‌جایی و تغییر حالت: aller, venir, arriver, partir, entrer, sortir, monter, descendre, naître, mourir, rester, tomber, retourner, devenir, passer و بعضی مشتق‌هایشان (مثل revenir, rentrer). معنای حرکت به‌تنهایی کافی نیست: marcher و courir با `avoir` صرف می‌شوند."
+            },
+            {
+              "kind": "li",
+              "text": "همهٔ فعل‌های دوضمیره (pronominaux): se lever, se laver, s'appeler …"
+            },
+            {
+              "kind": "p",
+              "text": "با `être`، participe passé در جنس و عدد با فاعل هماهنگ می‌شود: `elle est arrivée`، `ils sont arrivés`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'ai mangé une pomme.",
+              "fa": "من یک سیب خوردم.",
+              "highlights": [
+                [
+                  2,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle est arrivée hier soir.",
+              "fa": "او دیشب رسید.",
+              "highlights": [
+                [
+                  5,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Nous avons fini le travail.",
+              "fa": "ما کار را تمام کردیم.",
+              "highlights": [
+                [
+                  5,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Ils se sont levés tôt.",
+              "fa": "آن‌ها زود از خواب بلند شدند.",
+              "highlights": [
+                [
+                  4,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je n'ai pas vu ce film.",
+              "fa": "من این فیلم را ندیده‌ام.",
+              "highlights": [
+                [
+                  5,
+                  7
+                ],
+                [
+                  12,
+                  14
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Elle a allé au marché.",
+          "right": "Elle est allée au marché.",
+          "why": "فعل aller با être صرف می‌شود و چون فاعل مؤنث است، participe passé یک e می‌گیرد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ساخت participe passé: فعل‌های ‎-er → ‎-é (parler → parlé, aller → allé)؛ فعل‌های ‎-ir مثل finir → ‎-i (finir → fini, choisir → choisi). شکل بقیهٔ فعل‌ها را باید یاد گرفت: partir → parti، ouvrir → ouvert، vendre → vendu."
+            },
+            {
+              "kind": "li",
+              "text": "چند شکل بی‌قاعدهٔ پرکاربرد: avoir → eu، être → été، faire → fait، prendre → pris، voir → vu، pouvoir → pu، vouloir → voulu، dire → dit، mettre → mis، venir → venu."
+            },
+            {
+              "kind": "li",
+              "text": "در جملهٔ منفی، `ne … pas` دور فعل کمکی قرار می‌گیرد: `je n'ai pas mangé`."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌هایی مثل sortir, monter, descendre, passer وقتی مفعول مستقیم دارند با `avoir` صرف می‌شوند: `J'ai sorti la poubelle.` (سطل زباله را بیرون بردم.)"
+            },
+            {
+              "kind": "li",
+              "text": "با `avoir`، participe passé با فاعل هماهنگ نمی‌شود: `elle a mangé`. ولی اگر مفعول مستقیم پیش از فعل آمده باشد، با آن هماهنگ می‌شود: `les pommes qu'elle a mangées`، `elle les a mangées`."
+            },
+            {
+              "kind": "li",
+              "text": "در فعل‌های دوضمیره هماهنگی همیشگی نیست: `elles se sont levées` ولی `elles se sont parlé` و `elle s'est lavé les mains`."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +67,7 @@ import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
 import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
+import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -255,6 +257,39 @@ fun DatasetCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
                 )
                 Text(
                     text = stringResource(R.string.home_dataset_support),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
+/** Entry point to the built-in grammar reference (see GrammarListScreen). */
+@Composable
+fun GrammarCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(FrenchReaderDesign.spacing.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Spellcheck,
+                contentDescription = null,
+                tint = LocalGrammarColors.current.accent,
+                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
+            )
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.grammar_title),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = stringResource(R.string.grammar_entry_description),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

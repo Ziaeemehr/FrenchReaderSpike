@@ -95,6 +95,7 @@ fun HomeScreen(
     onOpenResources: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
+    onOpenGrammar: () -> Unit = {},
     onStartReview: () -> Unit,
     onOpenStudyLog: () -> Unit = {},
     openAddTextSheet: Boolean = false,
@@ -223,6 +224,7 @@ fun HomeScreen(
         onDismissPreview = { vm.dismissPreview() },
         onStartReview = onStartReview,
         onOpenDataset = onOpenDataset,
+        onOpenGrammar = onOpenGrammar,
         onOpenStudyLog = onOpenStudyLog,
         studyLogMinutes = studyLogMinutes
     )
@@ -297,6 +299,7 @@ fun HomeContent(
     onDismissPreview: () -> Unit,
     onStartReview: () -> Unit,
     onOpenDataset: () -> Unit = {},
+    onOpenGrammar: () -> Unit = {},
     onOpenStudyLog: () -> Unit = {},
     studyLogMinutes: Pair<Int, Int> = 0 to 0
 ) {
@@ -419,6 +422,14 @@ fun HomeContent(
                 item {
                     DatasetCard(
                         onOpen = onOpenDataset,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
+                    GrammarCard(
+                        onOpen = onOpenGrammar,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
