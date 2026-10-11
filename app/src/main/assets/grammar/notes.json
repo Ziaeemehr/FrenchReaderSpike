@@ -2,6 +2,1155 @@
   "version": 1,
   "notes": [
     {
+      "id": "accord-adjectif",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "L'accord et la place de l'adjectif",
+      "titleFa": "تطابق و جای صفت",
+      "aliasesFr": [
+        "accord de l'adjectif, adjectif féminin, adjectif pluriel, place de l'adjectif",
+        "bel nouvel vieil"
+      ],
+      "aliasesFa": [
+        "تطابق صفت",
+        "صفت مؤنث",
+        "جای صفت",
+        "صفت قبل یا بعد از اسم"
+      ],
+      "related": [
+        "genre-et-nombre",
+        "articles"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "صفت در جنس و عدد با اسمش هماهنگ می‌شود: معمولاً `e` برای مؤنث و `s` برای جمع می‌گیرد. بیشتر صفت‌ها بعد از اسم می‌آیند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "هماهنگی هم وقتی صفت کنار اسم است لازم است و هم وقتی بعد از فعل être می‌آید. «او خوشحال است» برای یک زن شکل مؤنث صفت را می‌خواهد."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "nom + adjectif",
+            "adjectif masculin + e = féminin",
+            "adjectif singulier + s = pluriel"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "صفت در جنس و عدد با اسم هماهنگ می‌شود؛ شکل مؤنث معمولاً با افزودن e و شکل جمع معمولاً با افزودن s ساخته می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Un petit garçon et une petite fille jouent dans le jardin.",
+              "fa": "یک پسر کوچک و یک دختر کوچک در باغ بازی می‌کنند.",
+              "highlights": [
+                [
+                  3,
+                  8
+                ],
+                [
+                  23,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Elle porte une robe verte.",
+              "fa": "او یک پیراهن سبز پوشیده است.",
+              "highlights": [
+                [
+                  20,
+                  25
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Ses parents sont très gentils.",
+              "fa": "پدر و مادرش خیلی مهربان‌اند.",
+              "highlights": [
+                [
+                  22,
+                  29
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Ces maisons sont grandes.",
+              "fa": "این خانه‌ها بزرگ‌اند.",
+              "highlights": [
+                [
+                  17,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "C'est un bel appartement.",
+              "fa": "آپارتمان قشنگی است.",
+              "highlights": [
+                [
+                  9,
+                  12
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Marie est très content.",
+          "right": "Marie est très contente.",
+          "why": "فاعل مؤنث است، پس صفتِ بعد از être هم باید مؤنث باشد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "صفتی که خودش به e ختم می‌شود در مؤنث تغییر نمی‌کند: `un jeune homme, une jeune femme`."
+            },
+            {
+              "kind": "li",
+              "text": "چند الگوی مؤنث: `heureux, heureuse`؛ `sportif, sportive`؛ `premier, première`؛ `italien, italienne`؛ `bon, bonne`."
+            },
+            {
+              "kind": "li",
+              "text": "چند شکل بی‌قاعده: `beau, belle`؛ `nouveau, nouvelle`؛ `vieux, vieille`؛ `blanc, blanche`؛ `long, longue`."
+            },
+            {
+              "kind": "li",
+              "text": "چند صفت کوتاه و پرکاربرد معمولاً پیش از اسم می‌آیند: beau, bon, mauvais, grand, petit, jeune, vieux, nouveau, joli, gros."
+            },
+            {
+              "kind": "li",
+              "text": "`beau, nouveau, vieux` پیش از اسم مذکری که با مصوت یا h بی‌صدا شروع می‌شود به `bel, nouvel, vieil` تبدیل می‌شوند: `un vieil ami`."
+            },
+            {
+              "kind": "li",
+              "text": "برای گروهی که مذکر و مؤنث دارد، صفت مذکر جمع می‌آید: `Paul et Marie sont contents.`"
+            },
+            {
+              "kind": "li",
+              "text": "بعضی صفت‌های رنگ که از اسم گرفته شده‌اند تغییر نمی‌کنند: `des chaussures marron`، `des robes orange`."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "articles",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "Les articles : défini, indéfini, partitif",
+      "titleFa": "حرف‌های تعریف: le، un، du",
+      "aliasesFr": [
+        "articles",
+        "article défini",
+        "article indéfini",
+        "article partitif",
+        "le la les",
+        "un une des",
+        "du de la"
+      ],
+      "aliasesFa": [
+        "حرف تعریف",
+        "حرف تعریف معین",
+        "حرف تعریف نامعین",
+        "فرق le و un",
+        "du یعنی چه"
+      ],
+      "related": [
+        "genre-et-nombre",
+        "negation",
+        "pronom-en",
+        "accord-adjectif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "فرانسوی سه نوع حرف تعریف دارد: معین (`le, la, l', les`) برای چیزِ مشخص یا کلی، نامعین (`un, une, des`) برای چیزِ نامشخصِ شمردنی، و جزئی (`du, de la, de l', des`) برای مقدار نامشخصی از چیزی که شمرده نمی‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "معین: چیزی که شنونده می‌شناسد، یا یک مفهوم به‌طور کلی. «کتاب جالب است.»، «قهوه دوست دارم.»"
+            },
+            {
+              "kind": "li",
+              "text": "نامعین: چیزی که بار اول از آن حرف می‌زنیم یا مشخص نیست کدام. «یک کتاب خریدم.»"
+            },
+            {
+              "kind": "li",
+              "text": "جزئی: مقداری از یک چیز ناشمردنی مثل غذا، نوشیدنی یا مفهوم. «قهوه می‌خورم.» (یعنی مقداری قهوه)"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "le / la / l' / les + nom",
+            "un / une / des + nom",
+            "du / de la / de l' / des + nom"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "حرف تعریف در جنس و عدد با اسم هماهنگ است. در فرانسوی اسم تقریباً همیشه با یک حرف تعریف یا کلمه‌ای مشابه می‌آید."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "J'ai acheté un livre. Le livre est intéressant.",
+              "fa": "یک کتاب خریدم. کتاب جالب است.",
+              "highlights": [
+                [
+                  12,
+                  14
+                ],
+                [
+                  22,
+                  24
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "J'aime le café.",
+              "fa": "من قهوه دوست دارم.",
+              "highlights": [
+                [
+                  7,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Je bois du café le matin.",
+              "fa": "صبح‌ها قهوه می‌خورم.",
+              "highlights": [
+                [
+                  8,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle a des amis à Paris.",
+              "fa": "او در پاریس دوستانی دارد.",
+              "highlights": [
+                [
+                  7,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je ne bois pas de café.",
+              "fa": "من قهوه نمی‌خورم.",
+              "highlights": [
+                [
+                  15,
+                  17
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je vais à le cinéma.",
+          "right": "Je vais au cinéma.",
+          "why": "حرف اضافهٔ à با le ادغام می‌شود و au می‌سازد. این ادغام اجباری است."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ادغام با حرف اضافه: `à + le = au`، `à + les = aux`، `de + le = du`، `de + les = des`. ولی `à la` و `de la` و `à l'` و `de l'` تغییر نمی‌کنند."
+            },
+            {
+              "kind": "li",
+              "text": "`le` و `la` پیش از مصوت یا h بی‌صدا به `l'` تبدیل می‌شوند: `l'ami`، `l'heure`."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از فعل‌های علاقه مثل aimer, adorer, détester, préférer، برای حرف‌زدنِ کلی حرف تعریف معین می‌آید: `J'adore le chocolat.`"
+            },
+            {
+              "kind": "li",
+              "text": "در جملهٔ منفی، `un, une, des, du, de la` معمولاً به `de` (یا `d'`) تبدیل می‌شوند: `Je n'ai pas de voiture.` با فعل être این تغییر رخ نمی‌دهد: `Ce n'est pas un problème.`"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از عبارت‌های مقدار مثل `beaucoup`، `un peu` و `un kilo`، برای مقدار نامشخص معمولاً `de` یا `d'` می‌آید: `beaucoup de livres`، `un peu de sucre`، `un kilo de pommes`."
+            },
+            {
+              "kind": "li",
+              "text": "شکل جمعِ جزئی `des` است و برای اسم‌هایی می‌آید که معمولاً جمع‌اند: `des pâtes`، `des épinards`."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "masculin",
+              "highlights": []
+            },
+            {
+              "text": "féminin",
+              "highlights": []
+            },
+            {
+              "text": "pluriel",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "معین",
+                "highlights": []
+              },
+              {
+                "text": "le (l')",
+                "highlights": []
+              },
+              {
+                "text": "la (l')",
+                "highlights": []
+              },
+              {
+                "text": "les",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "نامعین",
+                "highlights": []
+              },
+              {
+                "text": "un",
+                "highlights": []
+              },
+              {
+                "text": "une",
+                "highlights": []
+              },
+              {
+                "text": "des",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "جزئی",
+                "highlights": []
+              },
+              {
+                "text": "du (de l')",
+                "highlights": []
+              },
+              {
+                "text": "de la (de l')",
+                "highlights": []
+              },
+              {
+                "text": "des",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genre-et-nombre",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "Le genre et le pluriel des noms",
+      "titleFa": "جنس و جمع اسم‌ها",
+      "aliasesFr": [
+        "genre des noms",
+        "masculin féminin",
+        "pluriel des noms",
+        "pluriel en x"
+      ],
+      "aliasesFa": [
+        "مذکر و مؤنث",
+        "جنس اسم",
+        "جمع بستن",
+        "جمع اسم"
+      ],
+      "related": [
+        "articles",
+        "accord-adjectif"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "هر اسم در فرانسوی یا مذکر است یا مؤنث، و بهتر است هر اسم را همراه با حرف تعریفش یاد بگیرید. جمع معمولاً با افزودن `s` ساخته می‌شود که تلفظ نمی‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "جنس اسم روی حرف تعریف، صفت و ضمیر اثر می‌گذارد، پس دانستنش لازم است. برای اشیا جنس منطق معنایی ندارد، ولی پایانهٔ کلمه اغلب سرنخ می‌دهد."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "nom singulier + s = pluriel"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "چند قاعدهٔ دیگر برای جمع:"
+            },
+            {
+              "kind": "li",
+              "text": "اسم‌هایی که به s، x یا z ختم می‌شوند تغییر نمی‌کنند: `un pays, des pays`."
+            },
+            {
+              "kind": "li",
+              "text": "پایانه‌های ‎-eau و ‎-eu معمولاً x می‌گیرند: `un bateau, des bateaux`."
+            },
+            {
+              "kind": "li",
+              "text": "پایانهٔ ‎-al معمولاً به ‎-aux تبدیل می‌شود: `un journal, des journaux`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Le voyage était long.",
+              "fa": "سفر طولانی بود.",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "La situation est difficile.",
+              "fa": "وضعیت سخت است.",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "J'ai deux chats et trois oiseaux.",
+              "fa": "دو گربه و سه پرنده دارم.",
+              "highlights": [
+                [
+                  10,
+                  15
+                ],
+                [
+                  25,
+                  32
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Il lit les journaux tous les matins.",
+              "fa": "او هر صبح روزنامه‌ها را می‌خواند.",
+              "highlights": [
+                [
+                  11,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Mon ami Paul et mon amie Claire arrivent demain.",
+              "fa": "دوستم پل و دوستم کلر فردا می‌رسند.",
+              "highlights": [
+                [
+                  4,
+                  7
+                ],
+                [
+                  20,
+                  24
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Il a acheté deux journals.",
+          "right": "Il a acheté deux journaux.",
+          "why": "بیشتر اسم‌های مختوم به ‎-al در جمع ‎-aux می‌گیرند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "برای اشخاص، مؤنث اغلب با افزودن e ساخته می‌شود: `un étudiant, une étudiante`. چند الگوی دیگر: `vendeur, vendeuse`؛ `acteur, actrice`؛ `musicien, musicienne`."
+            },
+            {
+              "kind": "li",
+              "text": "بعضی اسم‌ها برای هر دو جنس یک شکل دارند و فقط حرف تعریف عوض می‌شود: `un élève, une élève`."
+            },
+            {
+              "kind": "li",
+              "text": "پیش از اسم مؤنثی که با مصوت شروع می‌شود، به‌جای `ma, ta, sa` از `mon, ton, son` استفاده می‌شود: `mon amie`."
+            },
+            {
+              "kind": "li",
+              "text": "چند جمع بی‌قاعدهٔ پرکاربرد: `un œil, des yeux`؛ `un travail, des travaux`؛ `monsieur, messieurs`."
+            },
+            {
+              "kind": "li",
+              "text": "چند استثنا: `des festivals` با s؛ و `des bijoux, des genoux, des choux` با x."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "معمولاً مذکر",
+              "highlights": []
+            },
+            {
+              "text": "معمولاً مؤنث",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "پایانه",
+                "highlights": []
+              },
+              {
+                "text": "-age, -ment, -eau, -isme",
+                "highlights": []
+              },
+              {
+                "text": "-tion, -sion, -té, -ure, -ence",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "نمونه",
+                "highlights": []
+              },
+              {
+                "text": "le fromage, le bureau",
+                "highlights": []
+              },
+              {
+                "text": "la nation, la liberté",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "استثنا",
+                "highlights": []
+              },
+              {
+                "text": "la plage, la page, l'eau",
+                "highlights": []
+              },
+              {
+                "text": "le silence, le côté",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interrogation",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "La phrase interrogative",
+      "titleFa": "سؤال‌پرسیدن",
+      "aliasesFr": [
+        "interrogation, question, est-ce que, inversion, qu'est-ce que",
+        "quel",
+        "pourquoi",
+        "comment"
+      ],
+      "aliasesFa": [
+        "جمله سؤالی",
+        "سؤال پرسیدن",
+        "est-ce que یعنی چه",
+        "کلمات پرسشی",
+        "وارونگی"
+      ],
+      "related": [
+        "negation",
+        "qui-vs-que"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "برای سؤال بله/خیر سه راه هست: بالا بردن آهنگ صدا (محاوره‌ای)، آوردن `est-ce que` در اول جمله (خنثی)، و جابه‌جا کردن فاعل و فعل (رسمی). معنی هر سه یکی است."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "در گفت‌وگوی روزمره: آهنگ صدا یا `est-ce que`."
+            },
+            {
+              "kind": "li",
+              "text": "در نوشتار و موقعیت رسمی: وارونگی."
+            },
+            {
+              "kind": "li",
+              "text": "با کلمه‌های پرسشی مثل où, quand, comment, pourquoi, combien هم همین سه راه به کار می‌روند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "Tu viens ?",
+            "Est-ce que + sujet + verbe ?",
+            "Verbe + trait d'union + pronom sujet ?",
+            "mot interrogatif + est-ce que + sujet + verbe ?"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "با est-ce que ترتیب فاعل و فعل عادی می‌ماند؛ در وارونگی، ضمیر فاعلی بعد از فعل می‌آید و با خط تیره به آن وصل می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Est-ce que vous parlez français ?",
+              "fa": "شما فرانسوی حرف می‌زنید؟",
+              "highlights": [
+                [
+                  0,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Où habites-tu ?",
+              "fa": "کجا زندگی می‌کنی؟",
+              "highlights": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Pourquoi est-ce qu'il est en retard ?",
+              "fa": "چرا دیر کرده است؟",
+              "highlights": [
+                [
+                  0,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Qu'est-ce que tu fais ce soir ?",
+              "fa": "امشب چه‌کار می‌کنی؟",
+              "highlights": [
+                [
+                  0,
+                  13
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Quelle heure est-il ?",
+              "fa": "ساعت چند است؟",
+              "highlights": [
+                [
+                  0,
+                  6
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Est-ce que parlez-vous français ?",
+          "right": "Est-ce que vous parlez français ?",
+          "why": "بعد از est-ce que ترتیب عادی جمله حفظ می‌شود. est-ce que و وارونگی با هم نمی‌آیند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "در وارونگی، اگر فعل به مصوت ختم شود و ضمیر `il, elle, on` باشد، یک `-t-` اضافه می‌شود: `Parle-t-il français ?`، `A-t-elle fini ?`"
+            },
+            {
+              "kind": "li",
+              "text": "وقتی فاعل اسم است، اسم می‌ماند و ضمیرش بعد از فعل تکرار می‌شود: `Marie vient-elle ?`"
+            },
+            {
+              "kind": "li",
+              "text": "«چه» سه شکل دارد: `Qu'est-ce que tu fais ?` (خنثی)، `Que fais-tu ?` (رسمی)، `Tu fais quoi ?` (محاوره‌ای)."
+            },
+            {
+              "kind": "li",
+              "text": "`quel, quelle, quels, quelles` با اسم هماهنگ می‌شوند: `Quels livres ?`، `Quelles villes ?`"
+            },
+            {
+              "kind": "li",
+              "text": "`est-ce que` پیش از مصوت به `est-ce qu'` تبدیل می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "در جواب مثبت به سؤال منفی به‌جای `oui` از `si` استفاده می‌شود: `Tu ne viens pas ? — Si, je viens.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "روش",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            },
+            {
+              "text": "لحن",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "آهنگ صدا",
+                "highlights": []
+              },
+              {
+                "text": "Tu viens ?",
+                "highlights": []
+              },
+              {
+                "text": "محاوره‌ای",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "est-ce que",
+                "highlights": []
+              },
+              {
+                "text": "Est-ce que tu viens ?",
+                "highlights": []
+              },
+              {
+                "text": "خنثی",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "وارونگی",
+                "highlights": []
+              },
+              {
+                "text": "Viens-tu ?",
+                "highlights": []
+              },
+              {
+                "text": "رسمی",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "negation",
+      "group": "basics",
+      "level": "A1",
+      "titleFr": "La négation",
+      "titleFa": "منفی‌کردن جمله",
+      "aliasesFr": [
+        "négation",
+        "ne pas",
+        "ne plus",
+        "ne jamais",
+        "ne rien",
+        "ne personne",
+        "ne que"
+      ],
+      "aliasesFa": [
+        "نفی",
+        "جمله منفی",
+        "ne pas",
+        "دیگر نه",
+        "هرگز",
+        "هیچ‌چیز",
+        "هیچ‌کس"
+      ],
+      "related": [
+        "articles",
+        "passe-compose",
+        "pronoms-cod-coi"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "نفی در فرانسوی دو جزء دارد: `ne` پیش از فعل و `pas` بعد از آن. با عوض‌کردن `pas` معناهای دیگری مثل «دیگر نه»، «هرگز» و «هیچ‌چیز» ساخته می‌شود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "نفی ساده: «اسپانیایی حرف نمی‌زنم.»"
+            },
+            {
+              "kind": "li",
+              "text": "نفی با معنای خاص: `ne … plus` (دیگر نه)، `ne … jamais` (هرگز)، `ne … rien` (هیچ‌چیز)، `ne … personne` (هیچ‌کس)."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + ne + verbe + pas",
+            "sujet + ne + auxiliaire + pas + participe passé",
+            "ne pas + infinitif"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در زمان‌های مرکب، `ne … pas` دور فعل کمکی قرار می‌گیرد. `plus`، `jamais` و `rien` هم معمولاً پیش از participe passé می‌آیند، ولی `personne` بعد از آن قرار می‌گیرد."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je ne parle pas espagnol.",
+              "fa": "من اسپانیایی حرف نمی‌زنم.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  12,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Il n'a pas compris la question.",
+              "fa": "او سؤال را نفهمید.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  7,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Elle ne fume plus.",
+              "fa": "او دیگر سیگار نمی‌کشد.",
+              "highlights": [
+                [
+                  5,
+                  7
+                ],
+                [
+                  13,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Nous n'avons jamais visité Rome.",
+              "fa": "ما هرگز رم را ندیده‌ایم.",
+              "highlights": [
+                [
+                  5,
+                  7
+                ],
+                [
+                  13,
+                  19
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Il n'y a rien dans le frigo.",
+              "fa": "هیچ‌چیز در یخچال نیست.",
+              "highlights": [
+                [
+                  3,
+                  5
+                ],
+                [
+                  9,
+                  13
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je ne pas comprends.",
+          "right": "Je ne comprends pas.",
+          "why": "فعل صرف‌شده بین ne و pas قرار می‌گیرد. فقط با مصدر است که ne pas کنار هم می‌آیند."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`ne` پیش از مصوت یا h بی‌صدا به `n'` تبدیل می‌شود: `Je n'aime pas ça.`"
+            },
+            {
+              "kind": "li",
+              "text": "ضمیرهای مفعولی بین `ne` و فعل می‌مانند: `Je ne le connais pas.`"
+            },
+            {
+              "kind": "li",
+              "text": "`personne` در زمان‌های مرکب بعد از participe passé می‌آید: `Je n'ai vu personne.` ولی `rien` پیش از آن: `Je n'ai rien vu.`"
+            },
+            {
+              "kind": "li",
+              "text": "`personne` و `rien` می‌توانند فاعل باشند و در این حالت `pas` نمی‌آید: `Personne n'est venu.`"
+            },
+            {
+              "kind": "li",
+              "text": "`ne … que` نفی نیست و یعنی «فقط»: `Je n'ai que dix euros.`"
+            },
+            {
+              "kind": "li",
+              "text": "در گفتار روزمره `ne` اغلب حذف می‌شود (`Je sais pas.`)، ولی در نوشتار باید بیاید."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از نفی، `un, une, des, du, de la` معمولاً به `de` تبدیل می‌شوند: `Je n'ai pas de voiture.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "نفی",
+              "highlights": []
+            },
+            {
+              "text": "معنی",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "ne … pas",
+                "highlights": []
+              },
+              {
+                "text": "نه",
+                "highlights": []
+              },
+              {
+                "text": "Je ne sais pas.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … plus",
+                "highlights": []
+              },
+              {
+                "text": "دیگر نه",
+                "highlights": []
+              },
+              {
+                "text": "Je ne travaille plus.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … jamais",
+                "highlights": []
+              },
+              {
+                "text": "هرگز",
+                "highlights": []
+              },
+              {
+                "text": "Il ne ment jamais.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … rien",
+                "highlights": []
+              },
+              {
+                "text": "هیچ‌چیز",
+                "highlights": []
+              },
+              {
+                "text": "Je ne veux rien.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … personne",
+                "highlights": []
+              },
+              {
+                "text": "هیچ‌کس",
+                "highlights": []
+              },
+              {
+                "text": "Je ne connais personne.",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ne … que",
+                "highlights": []
+              },
+              {
+                "text": "فقط",
+                "highlights": []
+              },
+              {
+                "text": "Je n'ai que dix euros.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "depuis-pendant-il-y-a",
       "group": "comparisons",
       "level": "A2",
@@ -26,7 +1175,8 @@
       "related": [
         "passe-compose-vs-imparfait",
         "passe-compose",
-        "imparfait"
+        "imparfait",
+        "present"
       ],
       "blocks": [
         {
@@ -62,7 +1212,12 @@
             "verbe (souvent au passé composé) + pendant + durée",
             "passé composé + il y a + durée"
           ],
-          "text": []
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از depuis مدت یا نقطهٔ شروع، بعد از pendant مدتِ کار، و بعد از il y a فاصلهٔ زمانیِ رویداد گذشته تا الان می‌آید."
+            }
+          ]
         },
         {
           "type": "examples",
@@ -479,7 +1634,7 @@
                 "highlights": []
               },
               {
-                "text": "در جریان، بدون شروع و پایان",
+                "text": "در جریان، بدون تأکید بر شروع و پایان",
                 "highlights": []
               }
             ],
@@ -549,7 +1704,9 @@
         "تفاوت qui و que"
       ],
       "related": [
-        "passe-compose"
+        "passe-compose",
+        "dont-et-ou",
+        "pronoms-cod-coi"
       ],
       "blocks": [
         {
@@ -817,7 +1974,12 @@
             "savoir + que / si / où / quand / comment … + phrase",
             "connaître + nom"
           ],
-          "text": []
+          "text": [
+            {
+              "kind": "p",
+              "text": "بعد از savoir برای بیان مهارت مصدر و برای بیان اطلاع معمولاً جملهٔ پیرو می‌آید؛ گاهی اسم‌هایی مثل la réponse هم می‌آیند. بعد از connaître اسم یا ضمیر می‌آید."
+            }
+          ]
         },
         {
           "type": "examples",
@@ -993,6 +2155,265 @@
       ]
     },
     {
+      "id": "dont-et-ou",
+      "group": "pronouns",
+      "level": "B1",
+      "titleFr": "Les pronoms relatifs « dont » et « où »",
+      "titleFa": "ضمیرهای موصولی dont و où",
+      "aliasesFr": [
+        "dont",
+        "où",
+        "pronoms relatifs",
+        "pronom relatif dont",
+        "le jour où",
+        "ce dont"
+      ],
+      "aliasesFa": [
+        "dont یعنی چه",
+        "کاربرد dont",
+        "ضمیر موصولی",
+        "که … ـش",
+        "جایی که",
+        "روزی که"
+      ],
+      "related": [
+        "qui-vs-que",
+        "pronom-en"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "`dont` در جملهٔ موصولی جای «`de` + اسم» را می‌گیرد. `où` جای یک مکان یا یک زمان را می‌گیرد. هر دو در فارسی اغلب «که» ترجمه می‌شوند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "`dont` با فعل‌ها و عبارت‌هایی که `de` دارند: parler de, avoir besoin de, avoir envie de, avoir peur de, se souvenir de, être content de."
+            },
+            {
+              "kind": "li",
+              "text": "`dont` برای مالکیت: «دوستی که پدرش پزشک است»."
+            },
+            {
+              "kind": "li",
+              "text": "`où` برای مکان: «شهری که در آن به دنیا آمدم»."
+            },
+            {
+              "kind": "li",
+              "text": "`où` برای زمان: «روزی که همدیگر را دیدیم»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "nom + dont + sujet + verbe",
+            "nom (lieu / temps) + où + sujet + verbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "dont جای «de + اسم» را در جملهٔ موصولی می‌گیرد؛ où جملهٔ موصولی را به اسمِ مکان یا زمان وصل می‌کند."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "C'est le film dont je t'ai parlé.",
+              "fa": "این همان فیلمی است که درباره‌اش با تو حرف زدم.",
+              "highlights": [
+                [
+                  14,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "J'ai un ami dont le père est médecin.",
+              "fa": "دوستی دارم که پدرش پزشک است.",
+              "highlights": [
+                [
+                  12,
+                  16
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Voici la ville où je suis né.",
+              "fa": "این شهری است که در آن به دنیا آمدم.",
+              "highlights": [
+                [
+                  15,
+                  17
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Je me souviens du jour où nous nous sommes rencontrés.",
+              "fa": "روزی را که همدیگر را دیدیم به یاد دارم.",
+              "highlights": [
+                [
+                  23,
+                  25
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "C'est exactement le livre dont j'ai besoin.",
+              "fa": "این دقیقاً همان کتابی است که لازم دارم.",
+              "highlights": [
+                [
+                  26,
+                  30
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "C'est le film que je t'ai parlé.",
+          "right": "C'est le film dont je t'ai parlé.",
+          "why": "ساختار فعل parler de quelque chose است؛ چون de دارد، ضمیر موصولی باید dont باشد، نه que."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "بعد از `dont` برای مالکیت، صفت ملکی نمی‌آید و حرف تعریف معین می‌آید: `dont le père` (نه `dont son père`)."
+            },
+            {
+              "kind": "li",
+              "text": "برای زمان از `où` استفاده می‌شود، نه `quand`: `le jour où`، `l'année où`، `au moment où`."
+            },
+            {
+              "kind": "li",
+              "text": "`où` با حرف اضافه هم می‌آید: `la ville d'où je viens` (شهری که از آن می‌آیم)."
+            },
+            {
+              "kind": "li",
+              "text": "`dont` با ضمیر `en` هم‌خانواده است: هر دو جای «`de` + اسم» را می‌گیرند. `J'en ai besoin.` و `le livre dont j'ai besoin`."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از حرف اضافهٔ مرکب مثل `à côté de` به‌جای `dont` از `duquel, de laquelle` استفاده می‌شود؛ این موضوع جداست."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "decision",
+          "header": [
+            {
+              "text": "نقش در جملهٔ بعدی",
+              "highlights": []
+            },
+            {
+              "text": "انتخاب",
+              "highlights": []
+            },
+            {
+              "text": "نمونه",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "فاعل",
+                "highlights": []
+              },
+              {
+                "text": "qui",
+                "highlights": []
+              },
+              {
+                "text": "l'ami qui habite ici",
+                "highlights": [
+                  [
+                    6,
+                    9
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "text": "مفعول مستقیم",
+                "highlights": []
+              },
+              {
+                "text": "que",
+                "highlights": []
+              },
+              {
+                "text": "l'ami que je connais",
+                "highlights": [
+                  [
+                    6,
+                    9
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "text": "متمم با de",
+                "highlights": []
+              },
+              {
+                "text": "dont",
+                "highlights": []
+              },
+              {
+                "text": "l'ami dont je parle",
+                "highlights": [
+                  [
+                    6,
+                    10
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "text": "مکان یا زمان",
+                "highlights": []
+              },
+              {
+                "text": "où",
+                "highlights": []
+              },
+              {
+                "text": "la ville où j'habite",
+                "highlights": [
+                  [
+                    9,
+                    11
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "pronom-en",
       "group": "pronouns",
       "level": "A2",
@@ -1010,7 +2431,10 @@
       ],
       "related": [
         "pronom-y",
-        "passe-compose"
+        "passe-compose",
+        "articles",
+        "dont-et-ou",
+        "pronoms-cod-coi"
       ],
       "blocks": [
         {
@@ -1174,7 +2598,8 @@
         "y یعنی چه"
       ],
       "related": [
-        "pronom-en"
+        "pronom-en",
+        "pronoms-cod-coi"
       ],
       "blocks": [
         {
@@ -1301,6 +2726,304 @@
               "kind": "li",
               "text": "عبارت ثابت: `il y a` (وجود دارد) و `ça y est` (تمام شد، درست شد)."
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pronoms-cod-coi",
+      "group": "pronouns",
+      "level": "A2",
+      "titleFr": "Les pronoms COD et COI",
+      "titleFa": "ضمیرهای مفعولی: le، la، les و lui، leur",
+      "aliasesFr": [
+        "pronoms compléments",
+        "COD",
+        "COI",
+        "le la les",
+        "lui leur",
+        "pronom complément d'objet direct, pronom complément d'objet indirect"
+      ],
+      "aliasesFa": [
+        "ضمیر مفعولی",
+        "مفعول مستقیم",
+        "مفعول غیرمستقیم",
+        "فرق le و lui",
+        "lui یعنی چه"
+      ],
+      "related": [
+        "pronom-y",
+        "pronom-en",
+        "negation",
+        "passe-compose",
+        "qui-vs-que"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "ضمیر COD جای مفعول مستقیم (بدون حرف اضافه) را می‌گیرد: `le, la, l', les`. با فعل‌هایی مثل `parler à` و `téléphoner à`، ضمیر COI جای «`à` + شخص» را می‌گیرد: `lui, leur`. ضمیرهای `me, te, nous, vous` برای هر دو یکسان‌اند."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "به ساختار فعل نگاه کنید:"
+            },
+            {
+              "kind": "li",
+              "text": "فعل + کسی یا چیزی، بدون حرف اضافه (connaître quelqu'un) → COD."
+            },
+            {
+              "kind": "li",
+              "text": "فعل + `à` + کسی (parler à quelqu'un) → COI."
+            },
+            {
+              "kind": "p",
+              "text": "معیار ساختار فعل در فرانسوی است، نه ترجمهٔ فارسی. بعضی فعل‌ها در فارسی «به» یا «را» می‌گیرند ولی در فرانسوی برعکس‌اند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "sujet + pronom + verbe"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "ضمیر پیش از فعل صرف‌شده می‌آید. اگر مفعولِ یک مصدر باشد، پیش از آن مصدر قرار می‌گیرد: `Je vais leur écrire.`"
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Tu connais Paul ? — Oui, je le connais bien.",
+              "fa": "پل را می‌شناسی؟ — بله، خوب می‌شناسمش.",
+              "highlights": [
+                [
+                  28,
+                  30
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Tu parles à ta sœur ? — Oui, je lui parle tous les jours.",
+              "fa": "با خواهرت حرف می‌زنی؟ — بله، هر روز با او حرف می‌زنم.",
+              "highlights": [
+                [
+                  32,
+                  35
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Ces fleurs, je les achète pour ma mère.",
+              "fa": "این گل‌ها را برای مادرم می‌خرم.",
+              "highlights": [
+                [
+                  15,
+                  18
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle nous a invités à son mariage.",
+              "fa": "او ما را به عروسی‌اش دعوت کرد.",
+              "highlights": [
+                [
+                  5,
+                  9
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je vais leur écrire demain.",
+              "fa": "فردا برایشان نامه می‌نویسم.",
+              "highlights": [
+                [
+                  8,
+                  12
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je le téléphone ce soir.",
+          "right": "Je lui téléphone ce soir.",
+          "why": "ساختار فعل téléphoner à quelqu'un است؛ پس شخص با ضمیر COI یعنی lui جایگزین می‌شود."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "با چند فعل مثل `penser à`، شخص با ضمیر COI جایگزین نمی‌شود و «`à` + ضمیر تأکیدی» می‌آید: `Je pense à lui.`"
+            },
+            {
+              "kind": "li",
+              "text": "`lui` هم برای مذکر است و هم برای مؤنث: «به او»."
+            },
+            {
+              "kind": "li",
+              "text": "`le` و `la` پیش از مصوت یا h بی‌صدا به `l'` تبدیل می‌شوند: `Je l'aime.`"
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌های رایج با `à` + شخص: parler à, téléphoner à, écrire à, répondre à, demander à, donner à, dire à."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌هایی که برخلاف فارسی مفعول مستقیم می‌گیرند: aider, écouter, regarder, attendre, chercher. `Je l'attends.` (منتظرش هستم.)"
+            },
+            {
+              "kind": "li",
+              "text": "در نفی، ضمیر بین `ne` و فعل می‌ماند: `Je ne le connais pas.`"
+            },
+            {
+              "kind": "li",
+              "text": "در امر مثبت، ضمیر بعد از فعل می‌آید و `me` به `moi` تبدیل می‌شود: `Appelle-moi !`، `Donne-lui le livre.`"
+            },
+            {
+              "kind": "li",
+              "text": "در passé composé، participe passé با ضمیر COD پیش از فعل هماهنگ می‌شود (`Je les ai vus.`) ولی با COI نه (`Je leur ai parlé.`)."
+            },
+            {
+              "kind": "li",
+              "text": "وقتی دو ضمیر با هم می‌آیند: `me, te, nous, vous` پیش از `le, la, les`؛ و `le, la, les` پیش از `lui, leur`. `Je te le donne.`، `Je le lui donne.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "COD",
+              "highlights": []
+            },
+            {
+              "text": "COI",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "je",
+                "highlights": []
+              },
+              {
+                "text": "me (m')",
+                "highlights": []
+              },
+              {
+                "text": "me (m')",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "tu",
+                "highlights": []
+              },
+              {
+                "text": "te (t')",
+                "highlights": []
+              },
+              {
+                "text": "te (t')",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il",
+                "highlights": []
+              },
+              {
+                "text": "le (l')",
+                "highlights": []
+              },
+              {
+                "text": "lui",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "elle",
+                "highlights": []
+              },
+              {
+                "text": "la (l')",
+                "highlights": []
+              },
+              {
+                "text": "lui",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "nous",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "vous",
+                "highlights": []
+              },
+              {
+                "text": "vous",
+                "highlights": []
+              },
+              {
+                "text": "vous",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ils / elles",
+                "highlights": []
+              },
+              {
+                "text": "les",
+                "highlights": []
+              },
+              {
+                "text": "leur",
+                "highlights": []
+              }
+            ]
           ]
         }
       ]
@@ -1487,7 +3210,9 @@
       ],
       "related": [
         "imparfait",
-        "bien-que"
+        "bien-que",
+        "conditionnel-present",
+        "futur"
       ],
       "blocks": [
         {
@@ -1707,6 +3432,414 @@
       ]
     },
     {
+      "id": "conditionnel-present",
+      "group": "tenses",
+      "level": "B1",
+      "titleFr": "Le conditionnel présent",
+      "titleFa": "وجه شرطی حال (conditionnel présent)",
+      "aliasesFr": [
+        "conditionnel",
+        "conditionnel présent",
+        "je voudrais",
+        "je pourrais",
+        "tu devrais",
+        "politesse"
+      ],
+      "aliasesFa": [
+        "وجه شرطی",
+        "درخواست مؤدبانه",
+        "je voudrais یعنی چه",
+        "توصیه کردن",
+        "آرزو"
+      ],
+      "related": [
+        "futur",
+        "phrases-avec-si",
+        "imparfait"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "conditionnel présent با ریشهٔ futur simple و پایانه‌های imparfait ساخته می‌شود. برای درخواست مؤدبانه، آرزو، توصیه و نتیجهٔ یک فرض غیرواقعی به کار می‌رود."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "درخواست مؤدبانه: «یک قهوه می‌خواستم، لطفاً.»"
+            },
+            {
+              "kind": "li",
+              "text": "آرزو و تمایل: «دوست دارم روزی ژاپن را ببینم.»"
+            },
+            {
+              "kind": "li",
+              "text": "توصیه با devoir و پیشنهاد با pouvoir: «بهتر است استراحت کنی.»"
+            },
+            {
+              "kind": "li",
+              "text": "نتیجهٔ فرض غیرواقعی بعد از `si` + imparfait: «اگر وقت داشتم، بیشتر می‌خواندم.»"
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "radical du futur + -ais, -ais, -ait, -ions, -iez, -aient"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "ریشه همان ریشهٔ futur simple است، با همان بی‌قاعدگی‌ها: `je parlerais`، `je finirais`، `je prendrais`، `je serais`، `j'aurais`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je voudrais un café, s'il vous plaît.",
+              "fa": "یک قهوه می‌خواستم، لطفاً.",
+              "highlights": [
+                [
+                  3,
+                  11
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Pourriez-vous m'aider ?",
+              "fa": "ممکن است به من کمک کنید؟",
+              "highlights": [
+                [
+                  0,
+                  8
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Tu devrais te reposer.",
+              "fa": "بهتر است استراحت کنی.",
+              "highlights": [
+                [
+                  3,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "J'aimerais visiter le Japon un jour.",
+              "fa": "دوست دارم روزی ژاپن را ببینم.",
+              "highlights": [
+                [
+                  2,
+                  10
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Si j'avais le temps, je lirais davantage.",
+              "fa": "اگر وقت داشتم، بیشتر مطالعه می‌کردم.",
+              "highlights": [
+                [
+                  24,
+                  30
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Je vouloirais un café, s'il vous plaît.",
+          "right": "Je voudrais un café, s'il vous plaît.",
+          "why": "ریشهٔ vouloir در futur و conditionnel بی‌قاعده است: voudr-، نه خودِ مصدر."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ریشه‌های بی‌قاعده همان‌هایی‌اند که در futur simple هستند: `ser-`، `aur-`، `ir-`، `fer-`، `viendr-`، `verr-`، `pourr-`، `voudr-`، `devr-`، `saur-`."
+            },
+            {
+              "kind": "li",
+              "text": "`je parlerai` (futur) و `je parlerais` (conditionnel) تقریباً یکسان تلفظ می‌شوند؛ در نوشتن دقت کنید."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `si` شرطی conditionnel نمی‌آید؛ در بخش شرط imparfait می‌آید: `Si j'avais …, je lirais …`"
+            },
+            {
+              "kind": "li",
+              "text": "برای «آینده در گذشته» هم به کار می‌رود: `Il a dit qu'il viendrait.` (گفت که می‌آید.)"
+            },
+            {
+              "kind": "li",
+              "text": "در خبرها برای اطلاعِ تأییدنشده به کار می‌رود: `Le président serait malade.` (گفته می‌شود رئیس‌جمهور بیمار است.)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "futur",
+      "group": "tenses",
+      "level": "A2",
+      "titleFr": "Le futur proche et le futur simple",
+      "titleFa": "زمان آینده: futur proche و futur simple",
+      "aliasesFr": [
+        "futur",
+        "futur simple",
+        "futur proche",
+        "aller + infinitif",
+        "je vais faire",
+        "je ferai"
+      ],
+      "aliasesFa": [
+        "زمان آینده",
+        "آینده نزدیک",
+        "آینده ساده",
+        "فرق futur proche و futur simple"
+      ],
+      "related": [
+        "present",
+        "conditionnel-present",
+        "phrases-avec-si"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "فرانسوی دو آیندهٔ رایج دارد. futur proche با `aller` + مصدر ساخته می‌شود و برای آیندهٔ نزدیک یا کاری است که تصمیمش گرفته شده. futur simple با مصدر + پایانه ساخته می‌شود و برای برنامهٔ دورتر، پیش‌بینی و قول است."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "futur proche: کاری که به‌زودی انجام می‌شود یا نشانه‌اش از الان پیداست. «امشب به ماری زنگ می‌زنم.»"
+            },
+            {
+              "kind": "li",
+              "text": "futur simple: آیندهٔ دورتر، پیش‌بینی، قول، و بعد از `quand` برای رویداد آینده. «فردا هوا خوب خواهد بود.»"
+            },
+            {
+              "kind": "p",
+              "text": "در گفتار روزمره futur proche رایج‌تر است و در بسیاری از جمله‌ها هر دو ممکن‌اند."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "aller (présent) + infinitif",
+            "infinitif + -ai, -as, -a, -ons, -ez, -ont"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "در futur simple، فعل‌های ‎-re پیش از پایانه e آخر را از دست می‌دهند: `prendre → je prendrai`."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je vais appeler Marie ce soir.",
+              "fa": "امشب به ماری زنگ می‌زنم.",
+              "highlights": [
+                [
+                  3,
+                  15
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Nous partirons en vacances en juillet.",
+              "fa": "ما در ژوئیه به تعطیلات می‌رویم.",
+              "highlights": [
+                [
+                  5,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Il fera beau demain.",
+              "fa": "فردا هوا خوب خواهد بود.",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Quand tu arriveras, nous mangerons.",
+              "fa": "وقتی برسی، غذا می‌خوریم.",
+              "highlights": [
+                [
+                  9,
+                  18
+                ],
+                [
+                  25,
+                  34
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Attention, tu vas tomber !",
+              "fa": "مواظب باش، الان می‌افتی!",
+              "highlights": [
+                [
+                  14,
+                  24
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Nous prendrerons le train de huit heures.",
+          "right": "Nous prendrons le train de huit heures.",
+          "why": "ریشهٔ futur simple برای prendre شکل prendr- است؛ e آخر مصدر حذف می‌شود و پایانه مستقیم به r می‌چسبد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "ریشه‌های بی‌قاعدهٔ پرکاربرد: être `ser-`، avoir `aur-`، aller `ir-`، faire `fer-`، venir `viendr-`، voir `verr-`، pouvoir `pourr-`، vouloir `voudr-`، devoir `devr-`، savoir `saur-`."
+            },
+            {
+              "kind": "li",
+              "text": "ریشهٔ futur simple همیشه به r ختم می‌شود."
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `quand`، `lorsque` و `dès que`، برای رویداد آینده futur می‌آید، برخلاف فارسی که مضارع التزامی می‌آورد: `Quand tu arriveras, …` (وقتی برسی، …)"
+            },
+            {
+              "kind": "li",
+              "text": "بعد از `si` شرطی futur نمی‌آید؛ نکتهٔ «جمله‌های شرطی با si» را ببینید."
+            },
+            {
+              "kind": "li",
+              "text": "نفی در futur proche دور فعل aller قرار می‌گیرد: `Je ne vais pas venir.`"
+            },
+            {
+              "kind": "li",
+              "text": "چند تغییر املایی: `acheter → j'achèterai`، `appeler → j'appellerai`."
+            },
+            {
+              "kind": "li",
+              "text": "زمان حال هم برای آیندهٔ قطعی به کار می‌رود: `Je pars demain.`"
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "futur proche",
+              "highlights": []
+            },
+            {
+              "text": "futur simple",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "ساخت",
+                "highlights": []
+              },
+              {
+                "text": "aller + infinitif",
+                "highlights": []
+              },
+              {
+                "text": "infinitif + -ai, -as, -a …",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "کاربرد",
+                "highlights": []
+              },
+              {
+                "text": "آیندهٔ نزدیک، تصمیم گرفته‌شده",
+                "highlights": []
+              },
+              {
+                "text": "آیندهٔ دورتر، پیش‌بینی، قول",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "لحن",
+                "highlights": []
+              },
+              {
+                "text": "رایج در گفتار",
+                "highlights": []
+              },
+              {
+                "text": "رایج در نوشتار",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "نمونه",
+                "highlights": []
+              },
+              {
+                "text": "Je vais partir.",
+                "highlights": []
+              },
+              {
+                "text": "Je partirai.",
+                "highlights": []
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
       "id": "imparfait",
       "group": "tenses",
       "level": "A2",
@@ -1726,7 +3859,9 @@
         "passe-compose",
         "passe-compose-vs-imparfait",
         "phrases-avec-si",
-        "depuis-pendant-il-y-a"
+        "depuis-pendant-il-y-a",
+        "present",
+        "conditionnel-present"
       ],
       "blocks": [
         {
@@ -1888,7 +4023,9 @@
         "passe-compose-vs-imparfait",
         "depuis-pendant-il-y-a",
         "qui-vs-que",
-        "pronom-en"
+        "pronom-en",
+        "negation",
+        "pronoms-cod-coi"
       ],
       "blocks": [
         {
@@ -2042,6 +4179,308 @@
               "kind": "li",
               "text": "در فعل‌های دوضمیره هماهنگی همیشگی نیست: `elles se sont levées` ولی `elles se sont parlé` و `elle s'est lavé les mains`."
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "present",
+      "group": "tenses",
+      "level": "A1",
+      "titleFr": "Le présent de l'indicatif",
+      "titleFa": "زمان حال (présent)",
+      "aliasesFr": [
+        "présent, présent de l'indicatif",
+        "conjugaison au présent",
+        "verbes en -er"
+      ],
+      "aliasesFa": [
+        "زمان حال",
+        "حال ساده",
+        "صرف فعل در حال",
+        "مضارع"
+      ],
+      "related": [
+        "futur",
+        "imparfait",
+        "depuis-pendant-il-y-a"
+      ],
+      "blocks": [
+        {
+          "type": "summary",
+          "markdown": [
+            {
+              "kind": "p",
+              "text": "présent برای کاری است که الان انجام می‌شود، عادت‌ها و حقیقت‌های کلی. فعل‌های ‎-er که بیشترین فعل‌ها هستند، به‌جز `aller`، این پایانه‌ها را دارند: ‎`-e, -es, -e, -ons, -ez, -ent`."
+            }
+          ]
+        },
+        {
+          "type": "usage",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "کاری که همین الان در جریان است: «دارم غذا می‌خورم.»"
+            },
+            {
+              "kind": "li",
+              "text": "عادت و تکرار: «هر روز با قطار می‌روند.»"
+            },
+            {
+              "kind": "li",
+              "text": "حقیقت کلی و توصیف: «او پزشک است.»"
+            },
+            {
+              "kind": "li",
+              "text": "آیندهٔ نزدیک و قطعی: «فردا صبح می‌روم.»"
+            },
+            {
+              "kind": "p",
+              "text": "فرانسوی زمان جدایی برای «دارم … می‌کنم» ندارد؛ `Je mange` هم یعنی «می‌خورم» و هم «دارم می‌خورم»."
+            }
+          ]
+        },
+        {
+          "type": "structure",
+          "patterns": [
+            "radical + -e, -es, -e, -ons, -ez, -ent"
+          ],
+          "text": [
+            {
+              "kind": "p",
+              "text": "برای فعل‌های باقاعدهٔ ‎-er، پایانهٔ ‎-er را بردارید و پایانه‌های بالا را اضافه کنید: `parler → je parle, nous parlons`. بعضی فعل‌ها تغییر ریشه یا املا دارند و `aller` بی‌قاعده است."
+            }
+          ]
+        },
+        {
+          "type": "examples",
+          "items": [
+            {
+              "id": "ex1",
+              "fr": "Je parle français et anglais.",
+              "fa": "من فرانسوی و انگلیسی حرف می‌زنم.",
+              "highlights": [
+                [
+                  3,
+                  8
+                ]
+              ]
+            },
+            {
+              "id": "ex2",
+              "fr": "Nous finissons à dix-huit heures.",
+              "fa": "ما ساعت شش عصر تمام می‌کنیم.",
+              "highlights": [
+                [
+                  5,
+                  14
+                ]
+              ]
+            },
+            {
+              "id": "ex3",
+              "fr": "Ils prennent le train tous les jours.",
+              "fa": "آن‌ها هر روز با قطار می‌روند.",
+              "highlights": [
+                [
+                  4,
+                  12
+                ]
+              ]
+            },
+            {
+              "id": "ex4",
+              "fr": "Elle est médecin et elle a deux enfants.",
+              "fa": "او پزشک است و دو بچه دارد.",
+              "highlights": [
+                [
+                  5,
+                  8
+                ],
+                [
+                  25,
+                  26
+                ]
+              ]
+            },
+            {
+              "id": "ex5",
+              "fr": "Je pars demain matin.",
+              "fa": "فردا صبح می‌روم.",
+              "highlights": [
+                [
+                  3,
+                  7
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "mistake",
+          "wrong": "Ils parle français.",
+          "right": "Ils parlent français.",
+          "why": "پایانهٔ سوم‌شخص جمع ‎-ent است. این پایانه تلفظ نمی‌شود، برای همین در نوشتن جا می‌افتد."
+        },
+        {
+          "type": "more",
+          "markdown": [
+            {
+              "kind": "li",
+              "text": "در فعل‌های ‎-er، به‌جز `aller`، شکل‌های `je, tu, il, ils` یکسان تلفظ می‌شوند: `parle, parles, parle, parlent`."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌های ‎-ir مثل finir: `je finis, tu finis, il finit, nous finissons, vous finissez, ils finissent`."
+            },
+            {
+              "kind": "li",
+              "text": "چهار فعل بی‌قاعدهٔ اصلی را باید حفظ کرد: être (`suis, es, est, sommes, êtes, sont`)، avoir (`ai, as, a, avons, avez, ont`)، aller (`vais, vas, va, allons, allez, vont`)، faire (`fais, fais, fait, faisons, faites, font`)."
+            },
+            {
+              "kind": "li",
+              "text": "فعل‌های ‎-ger و ‎-cer در شکل nous تغییر املایی دارند: `nous mangeons`، `nous commençons`."
+            },
+            {
+              "kind": "li",
+              "text": "برای تأکید بر اینکه کار همین الان در جریان است: `être en train de` + مصدر. `Je suis en train de manger.`"
+            },
+            {
+              "kind": "li",
+              "text": "با `depuis`، برای کاری که هنوز ادامه دارد présent می‌آید؛ نکتهٔ depuis را ببینید."
+            }
+          ]
+        },
+        {
+          "type": "infographic",
+          "kind": "comparison",
+          "header": [
+            {
+              "text": "",
+              "highlights": []
+            },
+            {
+              "text": "parler",
+              "highlights": []
+            },
+            {
+              "text": "finir",
+              "highlights": []
+            },
+            {
+              "text": "prendre",
+              "highlights": []
+            }
+          ],
+          "rows": [
+            [
+              {
+                "text": "je",
+                "highlights": []
+              },
+              {
+                "text": "parle",
+                "highlights": []
+              },
+              {
+                "text": "finis",
+                "highlights": []
+              },
+              {
+                "text": "prends",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "tu",
+                "highlights": []
+              },
+              {
+                "text": "parles",
+                "highlights": []
+              },
+              {
+                "text": "finis",
+                "highlights": []
+              },
+              {
+                "text": "prends",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "il / elle",
+                "highlights": []
+              },
+              {
+                "text": "parle",
+                "highlights": []
+              },
+              {
+                "text": "finit",
+                "highlights": []
+              },
+              {
+                "text": "prend",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "nous",
+                "highlights": []
+              },
+              {
+                "text": "parlons",
+                "highlights": []
+              },
+              {
+                "text": "finissons",
+                "highlights": []
+              },
+              {
+                "text": "prenons",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "vous",
+                "highlights": []
+              },
+              {
+                "text": "parlez",
+                "highlights": []
+              },
+              {
+                "text": "finissez",
+                "highlights": []
+              },
+              {
+                "text": "prenez",
+                "highlights": []
+              }
+            ],
+            [
+              {
+                "text": "ils / elles",
+                "highlights": []
+              },
+              {
+                "text": "parlent",
+                "highlights": []
+              },
+              {
+                "text": "finissent",
+                "highlights": []
+              },
+              {
+                "text": "prennent",
+                "highlights": []
+              }
+            ]
           ]
         }
       ]

@@ -73,7 +73,7 @@ type: comparison
 | | passé composé | imparfait |
 | --- | --- | --- |
 | نقش | رویداد؛ چه شد؟ | زمینه؛ اوضاع چطور بود؟ |
-| نگاه به کار | تمام‌شده، یک کل | در جریان، بدون شروع و پایان |
+| نگاه به کار | تمام‌شده، یک کل | در جریان، بدون تأکید بر شروع و پایان |
 | تکرار | یک بار یا تعداد مشخص | عادت، تکرار نامشخص |
 | سرنخ‌های رایج | hier, soudain, tout à coup, une fois, pendant deux ans | tous les jours, souvent, d'habitude, autrefois, à cette époque |
 | نمونه | Il est arrivé. | Il pleuvait. |

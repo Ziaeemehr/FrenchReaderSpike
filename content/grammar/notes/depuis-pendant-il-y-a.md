@@ -6,7 +6,7 @@ title_fr: "Depuis, pendant, il y a"
 title_fa: "فرق depuis، pendant و il y a"
 aliases_fr: [depuis, pendant, il y a, ça fait que, expressions de temps, durée]
 aliases_fa: [از وقتی, به مدت, پیش, قبل, بیان زمان, مدت زمان]
-related: [passe-compose-vs-imparfait, passe-compose, imparfait]
+related: [passe-compose-vs-imparfait, passe-compose, imparfait, present]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
@@ -29,6 +29,8 @@ review_group: 2026-10-11
 `verbe (souvent au passé composé) + pendant + durée`
 
 `passé composé + il y a + durée`
+
+بعد از depuis مدت یا نقطهٔ شروع، بعد از pendant مدتِ کار، و بعد از il y a فاصلهٔ زمانیِ رویداد گذشته تا الان می‌آید.
 
 ## examples
 

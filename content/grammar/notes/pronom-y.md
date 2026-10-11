@@ -6,7 +6,7 @@ title_fr: "Le pronom « y »"
 title_fa: "ضمیر y"
 aliases_fr: [y, pronom y, j'y vais, j'y pense]
 aliases_fa: [ضمیر y, کاربرد y, جایگزین à, y یعنی چه]
-related: [pronom-en]
+related: [pronom-en, pronoms-cod-coi]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11

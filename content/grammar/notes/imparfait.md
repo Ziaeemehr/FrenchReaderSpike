@@ -6,7 +6,7 @@ title_fr: "L'imparfait"
 title_fa: "زمان imparfait: توصیف و عادت در گذشته"
 aliases_fr: [imparfait, l'imparfait de l'indicatif]
 aliases_fa: [ماضی استمراری, گذشته استمراری, عادت در گذشته, توصیف در گذشته]
-related: [passe-compose, passe-compose-vs-imparfait, phrases-avec-si, depuis-pendant-il-y-a]
+related: [passe-compose, passe-compose-vs-imparfait, phrases-avec-si, depuis-pendant-il-y-a, present, conditionnel-present]
 status: reviewed
 review_note: 2026-10-11
 review_group: 2026-10-11
