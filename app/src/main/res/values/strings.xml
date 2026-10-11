@@ -718,6 +718,7 @@
     <string name="grammar_search_placeholder">Search grammar in French or Persian</string>
     <string name="grammar_search_clear">Clear search</string>
     <string name="grammar_search_no_results">No grammar notes match your search.</string>
+    <string name="grammar_filter_clear">Show all levels</string>
     <plurals name="grammar_search_results">
         <item quantity="one">%d result</item>
         <item quantity="other">%d results</item>

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -108,7 +109,11 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
     val listState = rememberLazyListState()
     val keyboard = LocalSoftwareKeyboardController.current
     val index = remember(notes) { GrammarSearchIndex(notes.orEmpty()) }
-    val results by remember(index) { derivedStateOf { index.search(query) } }
+    // Empty means every level; the levels are few, so a plain list is enough to save and restore.
+    var levels by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val allLevels = remember(notes) { notes.orEmpty().map { it.level }.distinct().sorted() }
+    fun shown(note: GrammarNote) = levels.isEmpty() || note.level in levels
+    val results by remember(index) { derivedStateOf { index.search(query).filter { shown(it.note) } } }
     GrammarPage { padding ->
         if (notes == null) {
             CircularProgressIndicator(Modifier.padding(padding).padding(FrenchReaderDesign.spacing.small))
@@ -140,9 +145,23 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                         keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() })
                     )
                 }
+                if (allLevels.size > 1) item(key = "levels") {
+                    // Level names are Latin (A1, B1), so the row reads left to right in every UI language.
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            allLevels.forEach { level ->
+                                FilterChip(
+                                    selected = level in levels,
+                                    onClick = { levels = if (level in levels) levels - level else levels + level },
+                                    label = { Text(level) }
+                                )
+                            }
+                        }
+                    }
+                }
                 if (query.isBlank()) {
                     if (notes!!.isEmpty()) item(key = "empty") { Text(stringResource(R.string.grammar_empty)) }
-                    notes!!.groupBy { it.group }.forEach { (group, entries) ->
+                    notes!!.filter(::shown).groupBy { it.group }.forEach { (group, entries) ->
                         item(key = "group:$group") { EditorialSectionHeader(stringResource(groupTitle(group))) }
                         items(entries, key = { it.id }) { note -> GrammarNoteCard(note, onOpenNote) }
                     }
@@ -158,6 +177,9 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                         Column {
                             Text(stringResource(R.string.grammar_search_no_results))
                             TextButton(onClick = { query = "" }) { Text(stringResource(R.string.grammar_search_clear)) }
+                            if (levels.isNotEmpty()) {
+                                TextButton(onClick = { levels = emptyList() }) { Text(stringResource(R.string.grammar_filter_clear)) }
+                            }
                         }
                     }
                     items(results, key = { it.note.id }) { result ->

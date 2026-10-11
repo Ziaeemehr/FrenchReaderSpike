@@ -718,6 +718,7 @@
     <string name="grammar_search_placeholder">Rechercher en français ou en persan</string>
     <string name="grammar_search_clear">Effacer la recherche</string>
     <string name="grammar_search_no_results">Aucune fiche de grammaire ne correspond à votre recherche.</string>
+    <string name="grammar_filter_clear">Afficher tous les niveaux</string>
     <plurals name="grammar_search_results">
         <item quantity="one">%d résultat</item>
         <item quantity="other">%d résultats</item>
