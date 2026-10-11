@@ -1,8 +1,6 @@
 package com.ziaee.frenchreader.comprehension
 
-import com.ziaee.frenchreader.data.VocabEntry
 import java.util.Locale
-import kotlin.math.roundToInt
 
 interface FrenchLemmaLexicon {
     val commonLemmas: Set<String>
@@ -67,28 +65,4 @@ private fun isExcludedProperNoun(text: String, start: Int, original: String): Bo
     val previousIndex = (start - 1 downTo 0).firstOrNull { !text[it].isWhitespace() } ?: return false
     if ('\n' in text.substring(previousIndex, start)) return false
     return text[previousIndex] !in sentenceInitialPredecessors
-}
-
-fun buildKnownLemmaSet(entries: List<VocabEntry>, lexicon: FrenchLemmaLexicon): Set<String> = buildSet {
-    addAll(lexicon.commonLemmas.map(::normalizeFrench))
-    entries.asSequence()
-        .filter { it.learned || (it.lastReviewedAtMs != null && it.leitnerBox >= 2) }
-        .forEach { entry ->
-            val tokens = entry.word.split('/').flatMap { tokenizeFrench(it, lexicon) }
-            if (tokens.size <= 4) tokens.forEach { addAll(it.lemmas) }
-        }
-}
-
-fun scoreComprehension(
-    text: String,
-    knownLemmas: Set<String>,
-    lexicon: FrenchLemmaLexicon
-): Int? = scoreComprehension(tokenizeFrench(text, lexicon), knownLemmas)
-
-fun scoreComprehension(tokens: List<FrenchToken>, knownLemmas: Set<String>): Int? {
-    if (tokens.size < 20) return null
-    val knownCount = tokens.count { token ->
-        token.surface in knownLemmas || token.lemmas.any(knownLemmas::contains)
-    }
-    return (knownCount * 100.0 / tokens.size).roundToInt()
 }

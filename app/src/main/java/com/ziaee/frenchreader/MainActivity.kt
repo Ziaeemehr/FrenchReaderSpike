@@ -28,6 +28,9 @@ import com.ziaee.frenchreader.content.ImageTextExtractor
 import com.ziaee.frenchreader.data.AppearancePrefs
 import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
+import com.ziaee.frenchreader.exams.ExamListScreen
+import com.ziaee.frenchreader.exams.ExamQuestionScreen
+import com.ziaee.frenchreader.exams.ExamScreen
 import com.ziaee.frenchreader.grammar.GrammarListScreen
 import com.ziaee.frenchreader.grammar.GrammarNoteScreen
 import com.ziaee.frenchreader.grammar.GrammarPostersScreen
@@ -224,6 +227,7 @@ private fun AppNavHost() {
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
                 onOpenGrammar = { navController.navigate("grammar") },
+                onOpenExams = { route -> navController.navigate(route) },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
                 onOpenStudyLog = { navController.navigate("study_log") },
                 openAddTextSheet = openAddTextOnHome,
@@ -254,6 +258,18 @@ private fun AppNavHost() {
                 onOpenNote = { navController.navigate("grammar/note/$it") },
                 onOpenPosters = { navController.navigate("grammar/posters") }
             )
+        }
+        composable("exams") {
+            ExamListScreen(onBack = { navController.popBackStack() }, onOpenExam = { navController.navigate("exams/$it") })
+        }
+        composable("exams/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            ExamScreen(id = entry.arguments?.getString("id").orEmpty(), onBack = { navController.popBackStack() },
+                onOpenQuestion = { navController.navigate("exams/${entry.arguments?.getString("id")}/question/${Uri.encode(it)}") })
+        }
+        composable("exams/{examId}/question/{questionId}", arguments = listOf(
+            navArgument("examId") { type = NavType.StringType }, navArgument("questionId") { type = NavType.StringType }
+        )) { entry ->
+            ExamQuestionScreen(entry.arguments?.getString("examId").orEmpty(), entry.arguments?.getString("questionId").orEmpty()) { navController.popBackStack() }
         }
         composable("grammar/posters") { GrammarPostersScreen { navController.popBackStack() } }
         composable("grammar/note/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->

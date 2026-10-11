@@ -19,6 +19,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,7 +32,9 @@ private const val TAG = "AutoBackup"
 private const val AUTO_BACKUP_DIR = "backups"
 private const val AUTO_BACKUP_PREFIX = "french_reader_auto_"
 private const val AUTO_BACKUP_SUFFIX = ".zip"
-internal const val AUTO_BACKUP_KEEP = 5
+private const val PROTECTED_BACKUP_PREFIX = "french_reader_keep_"
+private const val AUTO_BACKUP_BUDGET_BYTES = 1024L * 1024 * 1024
+private const val AUTO_BACKUP_ALWAYS_KEEP = 3
 private const val DRIVE_UPLOAD_WORK_NAME = "auto_backup_drive_upload"
 private const val DRIVE_UPLOAD_DELAY_SECONDS = 60L
 
@@ -42,15 +48,34 @@ internal fun isAutoBackupFileName(name: String): Boolean =
 internal fun sortAutoBackupsNewestFirst(names: List<String>): List<String> =
     names.filter(::isAutoBackupFileName).sortedDescending()
 
-internal fun selectAutoBackupsToDelete(names: List<String>, keep: Int = AUTO_BACKUP_KEEP): List<String> =
-    sortAutoBackupsNewestFirst(names).drop(keep)
+internal fun protectedBackupFileName(atMs: Long): String =
+    autoBackupFileName(atMs).replace(AUTO_BACKUP_PREFIX, PROTECTED_BACKUP_PREFIX)
 
-/**
- * Anki-style safety net: every time the app goes to the background and the
- * database changed since the previous run, write a full backup next to the
- * app's files (keeping the last [AUTO_BACKUP_KEEP]) and, when the user is
- * signed in for cloud backup, schedule an upload of it to Google Drive.
- */
+internal fun isProtectedBackupFileName(name: String): Boolean =
+    name.startsWith(PROTECTED_BACKUP_PREFIX) && name.endsWith(AUTO_BACKUP_SUFFIX)
+
+internal fun backupTimestamp(name: String): LocalDateTime? {
+    val prefix = when {
+        isAutoBackupFileName(name) -> AUTO_BACKUP_PREFIX
+        isProtectedBackupFileName(name) -> PROTECTED_BACKUP_PREFIX
+        else -> return null
+    }
+    return runCatching {
+        LocalDateTime.parse(name.removePrefix(prefix).removeSuffix(AUTO_BACKUP_SUFFIX),
+            DateTimeFormatter.ofPattern("uuuuMMdd_HHmmss").withResolverStyle(ResolverStyle.STRICT))
+    }.getOrNull()
+}
+
+internal fun selectAutoBackupsToDelete(names: List<String>, now: LocalDateTime = LocalDateTime.now()): List<String> {
+    val parsed = names.filter(::isAutoBackupFileName).mapNotNull { name -> backupTimestamp(name)?.let { name to it } }
+    val keep = selectBackupsToKeep(parsed.map { it.second }, now)
+    return parsed.filter { it.second !in keep }.map { it.first }
+}
+
+internal fun selectProtectedBackupsToDelete(names: List<String>): List<String> =
+    names.filter(::isProtectedBackupFileName).filter { backupTimestamp(it) != null }.sortedDescending().drop(5)
+
+/** Writes local snapshots when the app leaves the foreground and schedules Drive uploads. */
 object AutoBackup {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -61,7 +86,48 @@ object AutoBackup {
     fun latest(context: Context): File? {
         val directory = directory(context)
         val names = directory.list()?.toList() ?: return null
-        return sortAutoBackupsNewestFirst(names).firstOrNull()?.let { File(directory, it) }
+        return sortAutoBackupsNewestFirst(names).filter { backupTimestamp(it) != null }.firstOrNull()?.let { File(directory, it) }
+    }
+
+    fun listBackups(context: Context): List<File> =
+        directory(context).listFiles().orEmpty().filter {
+            it.isFile && (isAutoBackupFileName(it.name) || isProtectedBackupFileName(it.name))
+        }.sortedByDescending { backupTimestamp(it.name) ?: LocalDateTime.MIN }
+
+    suspend fun withBackupLock(action: suspend () -> Boolean): Boolean = mutex.withLock { action() }
+
+    suspend fun protectCurrentState(context: Context) {
+        if (!hasUserData(context)) return
+        val archive = LocalBackup.createArchive(context)
+        try {
+            writeArchive(context, archive, protected = true)
+            pruneProtected(context)
+        } finally {
+            archive.delete()
+        }
+    }
+
+    private fun writeArchive(context: Context, archive: File, protected: Boolean): File {
+        val directory = directory(context).apply { mkdirs() }
+        var atMs = System.currentTimeMillis()
+        var target = File(directory, if (protected) protectedBackupFileName(atMs) else autoBackupFileName(atMs))
+        while (target.exists()) {
+            atMs += 1000
+            target = File(directory, if (protected) protectedBackupFileName(atMs) else autoBackupFileName(atMs))
+        }
+        val staging = File.createTempFile(".backup-", ".tmp", directory)
+        try {
+            archive.copyTo(staging, overwrite = true)
+            if (!staging.renameTo(target)) throw IOException("Unable to write backup")
+        } finally {
+            staging.delete()
+        }
+        return target
+    }
+
+    private fun pruneProtected(context: Context) {
+        selectProtectedBackupsToDelete(directory(context).list()?.toList().orEmpty())
+            .forEach { File(directory(context), it).delete() }
     }
 
     fun onAppBackgrounded(context: Context) {
@@ -81,15 +147,45 @@ object AutoBackup {
         // good backups out of the rotation.
         if (!hasUserData(context)) return
 
+        val current = readBackupCounts(context)
+        val previous = BackupPrefs.getLastAutoBackupCounts(context)
+        if (previous != null && isLargeLoss(previous, current)) {
+            // Set the last good backup aside. If that fails the new backup is still written: the
+            // time-based rotation keeps older ones, and a failing rename must not stop backups for good.
+            latest(context)?.let { latest ->
+                val target = File(latest.parentFile, latest.name.replace(AUTO_BACKUP_PREFIX, PROTECTED_BACKUP_PREFIX))
+                if (target.exists() || !latest.renameTo(target)) Log.w(TAG, "Unable to protect ${latest.name}")
+            }
+            pruneProtected(context)
+        }
         val archive = LocalBackup.createArchive(context)
         try {
             val directory = directory(context).apply { mkdirs() }
-            archive.copyTo(File(directory, autoBackupFileName(startedAt)), overwrite = true)
+            writeArchive(context, archive, protected = false)
+            BackupPrefs.setLastAutoBackupCounts(context, current)
             BackupPrefs.setLastAutoBackupAtMs(context, startedAt)
             selectAutoBackupsToDelete(directory.list()?.toList().orEmpty()).forEach { File(directory, it).delete() }
+            trimToSizeBudget(directory)
             scheduleDriveUpload(context)
         } finally {
             archive.delete()
+        }
+    }
+
+    /**
+     * Keeping backups by date instead of by count means more files. A library with many images
+     * makes each one large, so beyond [AUTO_BACKUP_BUDGET_BYTES] the oldest automatic backups go,
+     * never the three newest and never the protected ones.
+     */
+    private fun trimToSizeBudget(directory: File) {
+        val files = directory.listFiles().orEmpty()
+            .filter { isAutoBackupFileName(it.name) && backupTimestamp(it.name) != null }
+            .sortedByDescending { it.name }
+        var total = files.sumOf { it.length() }
+        files.drop(AUTO_BACKUP_ALWAYS_KEEP).asReversed().forEach { file ->
+            if (total <= AUTO_BACKUP_BUDGET_BYTES) return
+            val size = file.length()
+            if (file.delete()) total -= size
         }
     }
 
@@ -98,10 +194,9 @@ object AutoBackup {
         return maxOf(database.lastModified(), File(database.path + "-wal").lastModified())
     }
 
-    private fun hasUserData(context: Context): Boolean =
-        AppDatabase.get(context).openHelper.readableDatabase
-            .query("SELECT (SELECT COUNT(*) FROM vocab) + (SELECT COUNT(*) FROM texts)")
-            .use { cursor -> cursor.moveToFirst() && cursor.getLong(0) > 0 }
+    private fun hasUserData(context: Context): Boolean = readBackupCounts(context).let {
+        it.vocab > 0 || it.texts > 0 || it.examAttempts > 0
+    }
 
     /**
      * The upload runs through WorkManager because a backgrounded app loses its
@@ -139,4 +234,15 @@ class DriveUploadWorker(context: Context, params: WorkerParameters) : CoroutineW
             if (runAttemptCount < 5) Result.retry() else Result.failure()
         }
     }
+}
+
+internal fun readBackupCounts(context: Context): BackupCounts {
+    val database = AppDatabase.get(context).openHelper.readableDatabase
+    fun count(table: String): Long {
+        if (table == "exam_attempts" && !database.query(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='exam_attempts'"
+            ).use { it.moveToFirst() }) return 0
+        return database.query("SELECT COUNT(*) FROM $table").use { it.moveToFirst(); it.getLong(0) }
+    }
+    return BackupCounts(count("vocab"), count("texts"), count("exam_attempts"))
 }

@@ -1,0 +1,785 @@
+﻿================================================================================
+  Expression Écrite (EE) — Tâche 1 : Rédaction d'un message
+  Export date: 2026-10-11 09:49
+  Total subjects: 77
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  #1  |  Frequency: 27  |  Months: aout 2024 | avril 2025 | avril 2026 | decembre 2023 | decembre 2024 | decembre 2025 | fevrier 2026 | janvier 2025 | juillet 2024 | juillet 2026 | juin 2023 | juin 2024 | juin 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | novembre 2023 | octobre 2024 | octobre 2025 | septembre 2023 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un courriel à vos amis pour les inviter à un anniversaire surprise de votre meilleur(e) ami(e).(Lieu, date, horaire, etc.).
+
+  ترجمه فارسی:
+  یک ایمیل به دوستان‌تان بنویسید و آن‌ها را به جشن تولد غافلگیرانه بهترین دوست‌تان دعوت کنید. (مکان، تاریخ، ساعت، و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #2  |  Frequency: 26  |  Months: aout 2025 | avril 2025 | avril 2026 | decembre 2023 | decembre 2024 | decembre 2025 | fevrier 2025 | fevrier 2026 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | mai 2023 | mai 2024 | mai 2026 | mars 2024 | novembre 2023 | novembre 2024 | octobre 2024 | septembre 2023 | septembre 2024 | septembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous souhaitez fêter votre anniversaire dans un restaurant. Vous invitez vos amis. Vous leur écrivez un courriel pour leur donner toutes les informations nécessaires (lieu, date, menu, prix, etc.) et vous leur demandez une réponse.
+
+  ترجمه فارسی:
+  شما می‌خواهید تولدتان را در یک رستوران جشن بگیرید. دوستانتان را دعوت می‌کنید. برای آن‌ها ایمیلی می‌نویسید تا تمامی اطلاعات لازم (محل، تاریخ، منو، قیمت و غیره) را به آن‌ها اطلاع دهید و از آن‌ها بخواهید که پاسخ دهند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #3  |  Frequency: 23  |  Months: avril 2025 | decembre 2025 | fevrier 2025 | fevrier 2026 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | juin 2026 | mai 2025 | mai 2026 | mars 2026 | novembre 2024 | octobre 2024 | septembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous voulez partir en week-end avec vos amis le mois prochain. Vous leur écrivez un message pour décrire votre projet (lieu, transport, activités, etc.).
+
+  ترجمه فارسی:
+  شما می‌خواهید ماه آینده برای یک آخر هفته همراه با دوستانتان به سفر بروید. برای آن‌ها پیامی می‌نویسید تا برنامه‌تان را توصیف کنید (مکان، وسیلهٔ نقلیه، فعالیت‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #4  |  Frequency: 23  |  Months: août 2026 | avril 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2023 | juin 2024 | juin 2025 | juin 2026 | mai 2026 | mars 2024 | mars 2026 | novembre 2024 | octobre 2026 | septembre 2023 | septembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez invité votre ami Cédric à votre mariage au Château de Chombony et il vous a répondu qu’il ne connait pas ce château. Décrivez-le à votre ami (lieu, localisation, transports, etc.).
+
+  ترجمه فارسی:
+  شما دوست‌تان سدریک را به مراسم عروسی‌تان در شاتو شومبونی دعوت کرده‌اید و او پاسخ داده که این شاتو را نمی‌شناسد. برای دوست‌تان توضیح دهید (محل، موقعیت، راه‌های دسترسی و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #5  |  Frequency: 20  |  Months: août 2026 | avril 2025 | avril 2026 | fevrier 2025 | fevrier 2026 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | octobre 2023 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  “Salut, j’ai appris que tu vas à une salle de sport et qu’elle est magnifique. Peux-tu m’en dire plus “. Écrivez un message pour répondre à votre ami concernant ce sujet.
+
+  ترجمه فارسی:
+  «سلام، شنیدم که به یک باشگاه ورزشی می‌روی و آن باشگاه بسیار زیباست. می‌توانی بیشتر دربارهٔ آن برایم بگویی؟» یک پیام بنویسید تا به دوستتان در مورد این موضوع پاسخ دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #6  |  Frequency: 19  |  Months: aout 2025 | août 2026 | fevrier 2025 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2026 | mai 2023 | mai 2026 | novembre 2025 | octobre 2026 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous souhaitez assister à un festival de cinéma dans votre ville. Vous écrivez un message à votre ami(e) pour lui proposer de venir avec vous. Vous lui donnez toutes les informations nécessaires sur l’événement (films, dates et horaires, tarifs, etc.).
+
+  ترجمه فارسی:
+  شما مایلید در یک جشنواره سینمایی در شهر خود شرکت کنید. برای دوستتان پیامی می‌نویسید و از او دعوت می‌کنید که همراه شما بیاید. تمام اطلاعات لازم دربارهٔ رویداد (فیلم‌ها، تاریخ‌ها و ساعات نمایش، قیمت بلیت‌ها و غیره) را به او می‌دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #7  |  Frequency: 19  |  Months: août 2026 | avril 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2024 | juin 2025 | juin 2026 | mai 2023 | mai 2024 | mai 2026 | mars 2024 | mars 2025 | mars 2026 | novembre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre ami Mehdi vient d’emménager dans votre ville et cherche des renseignements sur les moyens de transport. Écrivez un message en lui donnant les informations nécessaires (types de transport, abonnement, tarif, etc.)
+
+  ترجمه فارسی:
+  دوستت مهدی همین‌تازگی به شهر تو نقل‌مکان کرده و دنبال اطلاعاتی درباره گزینه‌های حمل‌ونقل است. یک پیام بنویس و اطلاعات لازم را به او بده (انواع وسایل حمل‌ونقل، بلیت‌ها و اشتراک‌ها، تعرفه‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #8  |  Frequency: 19  |  Months: aout 2024 | aout 2025 | avril 2025 | avril 2026 | decembre 2024 | fevrier 2025 | juillet 2024 | juillet 2025 | mai 2023 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | octobre 2023 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Répondez au courriel de votre ami Lucas pour lui donner des informations sur les nouveaux locaux de votre entreprise (lieu, disposition des pièces, équipements, etc.)
+
+  ترجمه فارسی:
+  به ایمیل دوست‌تان لوکاس پاسخ دهید تا به او اطلاعاتی دربارهٔ محل جدید شرکت‌تان (مکان، چیدمان اتاق‌ها، تجهیزات و غیره) بدهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #9  |  Frequency: 17  |  Months: aout 2024 | août 2026 | avril 2026 | decembre 2023 | decembre 2024 | decembre 2025 | fevrier 2026 | janvier 2026 | juillet 2025 | juin 2025 | mai 2026 | mars 2025 | novembre 2023 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Je cherche un vélo en bon état et bon marché. Contactez-moi par courriel :[email protected]
+Vous avez un vélo à vendre. Vous écrivez un courriel pour décrire votre vélo et proposer un prix. Vous lui donnez un rendez-vous pour essayer le vélo.
+
+  ترجمه فارسی:
+  من به دنبال یک دوچرخه در وضعیت خوب و با قیمت مناسب هستم. از طریق پست الکترونیکی با من تماس بگیرید: [email protected] شما دوچرخه‌ای برای فروش دارید. یک ایمیل بنویسید تا دوچرخه‌تان را توصیف کرده و قیمتی پیشنهاد دهید. برای امتحان دوچرخه، زمانی برای ملاقات به او پیشنهاد کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #10  |  Frequency: 15  |  Months: août 2026 | avril 2025 | decembre 2023 | decembre 2024 | janvier 2025 | janvier 2026 | juillet 2024 | juillet 2026 | juin 2024 | juin 2025 | juin 2026 | mai 2026 | novembre 2023 | novembre 2024 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez lu une annonce sur un site internet qui propose l’aide aux personnes qui souhaitent apprendre le français et les aider à trouver des personnes avec lesquelles elles peuvent pratiquer le français et qui leur permettront d’améliorer leur niveau. Envoyez un courriel pour répondre à cette annonce tout en vous présentant et en expliquant pourquoi vous voulez pratiquer cette langue.
+
+  ترجمه فارسی:
+  شما آگهی‌ای را در یک وب‌سایت خوانده‌اید که به افرادی که می‌خواهند زبان فرانسه را بیاموزند کمک می‌کند و آن‌ها را در یافتن افرادی که می‌توانند با آن‌ها فرانسه تمرین کنند و سطح‌شان را ارتقاء دهند یاری می‌نماید. یک ایمیل در پاسخ به این آگهی ارسال کنید؛ در آن خود را معرفی کرده و توضیح دهید چرا مایل به تمرین این زبان هستید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #11  |  Frequency: 15  |  Months: aout 2025 | avril 2025 | fevrier 2025 | janvier 2024 | juillet 2024 | juillet 2026 | juin 2023 | juin 2026 | mai 2024 | mai 2026 | novembre 2025 | octobre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Salut ! Je suis d’accord pour m’occuper de ta maison et de ton jardin pendant tes vacances. Tu peux m’expliquer ce que je dois faire ? À bientôt, Cédric Consigne de la tâche : Vous répondez à Cédric. Dans votre message, vous décrivez ce qu’il doit faire chez vous pendant votre absence.
+
+  ترجمه فارسی:
+  سلام! من موافقم که در طول تعطیلات از خانه و باغ شما مراقبت کنم. می‌توانید برایم توضیح دهید چه کاری باید انجام دهم؟ به‌زودی، سِدریک
+
+دستور کار: شما به سِدریک پاسخ می‌دهید. در پیام خود توضیح می‌دهید که او در مدت غیبت شما در خانه‌تان چه کارهایی باید انجام دهد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #12  |  Frequency: 14  |  Months: decembre 2023 | decembre 2025 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2025 | juin 2026 | mai 2026 | novembre 2023 | octobre 2025 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Salut, Tu as commencé ton nouveau travail ! C’est comment ? Tu es content(e) ? Ali Vous répondez à votre ami Ali. Dans votre message, vous décrivez votre nouveau travail (lieu, collègues, etc.) et vous donnez vos impressions.
+
+  ترجمه فارسی:
+  سلام، شما کار جدیدتان را شروع کرده‌اید! اوضاع چگونه است؟ راضی هستید؟ علی. به دوست‌تان علی پاسخ می‌دهید. در پیام‌تان، شغل جدیدتان را توصیف کنید (محل کار، همکاران و غیره) و برداشت‌هایتان را بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #13  |  Frequency: 14  |  Months: août 2026 | avril 2024 | decembre 2024 | janvier 2025 | juillet 2024 | juin 2023 | juin 2024 | mai 2026 | mars 2024 | mars 2025 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Je suis votre amie Anna et je compte passer un weekend dans ta ville. Donnez-moi des informations sur les moyens de transport pour explorer la ville. Répondez à Anna dans un message.
+
+  ترجمه فارسی:
+  من دوست شما آنا هستم و قصد دارم یک آخر هفته در شهر شما بگذرانم. اطلاعاتی درباره وسایل حمل‌ونقل برای گشت‌وگذار در شهر به من بدهید. در یک پیام به آنا پاسخ دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #14  |  Frequency: 14  |  Months: aout 2025 | août 2026 | avril 2026 | juillet 2024 | juillet 2025 | juin 2023 | juin 2026 | mai 2026 | novembre 2025 | octobre 2023 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Rédigez un message pour inviter votre ami(e) à passer ses vacances dans votre ville en précisant les lieux et les endroits à visiter.
+
+  ترجمه فارسی:
+  یک پیام بنویسید تا دوست‌تان را دعوت کنید تعطیلاتش را در شهر شما بگذراند و در آن اماکن و جاهای دیدنی‌ای را که باید دید مشخص کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #15  |  Frequency: 14  |  Months: aout 2025 | decembre 2023 | fevrier 2024 | fevrier 2025 | janvier 2024 | juillet 2024 | juillet 2025 | mai 2024 | mai 2026 | novembre 2023 | novembre 2024 | novembre 2025 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Parc de loisirs : “J’ai hâte de passer la journée avec toi demain. S’il te plaît, dis-moi, quelle activité nous pourrons faire ?”Répondez à votre ami(e) pour lui décrire la sortie (horaires, transport, activités, etc.).
+
+  ترجمه فارسی:
+  پارک تفریحی: «بی‌صبرانه منتظرم فردا روز را با تو بگذرانم. لطفاً به من بگو، چه فعالیت‌هایی می‌توانیم انجام دهیم؟» به دوست‌تان پاسخ دهید و برنامهٔ بیرون‌رفتن را برای او توصیف کنید (ساعت‌ها، حمل‌ونقل، فعالیت‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #16  |  Frequency: 14  |  Months: aout 2025 | fevrier 2025 | janvier 2024 | juillet 2024 | juillet 2025 | juin 2025 | mai 2026 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous êtes locataire d’un appartement trop grand pour vous. Écrivez une annonce dans un journal pour chercher un colocataire. Il faut mentionner : la superficie, le caractère du colocataire, le prix, etc.
+
+  ترجمه فارسی:
+  شما مستأجرِ آپارتمانی هستید که برایتان خیلی بزرگ است. یک آگهی در روزنامه برای یافتن یک هم‌خانه بنویسید. لازم است ذکر کنید: مساحت (متراژ)، خصوصیات شخصیتی هم‌خانه، قیمت و غیره.
+
+────────────────────────────────────────────────────────────────────────────────
+  #17  |  Frequency: 14  |  Months: avril 2025 | avril 2026 | decembre 2023 | juillet 2024 | juillet 2026 | juin 2023 | juin 2026 | mai 2026 | novembre 2023 | octobre 2024 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous souhaitez faire du sport et vous voulez que votre ami vous accompagne. Écrivez-lui un message pour lui proposer de pratiquer ensemble.
+
+  ترجمه فارسی:
+  شما می‌خواهید ورزش کنید و می‌خواهید دوستتان شما را همراهی کند. برای او پیامی بنویسید و پیشنهاد دهید که با هم ورزش کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #18  |  Frequency: 13  |  Months: aout 2024 | août 2026 | avril 2026 | juillet 2026 | juin 2026 | mai 2023 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre ami souhaite commencer à faire du sport. Rédigez un message pour lui recommander une salle de sport située dans votre quartier (localisation, tarifs, types d’activités, etc.).
+
+  ترجمه فارسی:
+  دوستتان می‌خواهد ورزش را شروع کند. یک پیام بنویسید و در آن یک باشگاه ورزشی واقع در محله‌تان را به او توصیه کنید (موقعیت، تعرفه‌ها، انواع فعالیت‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #19  |  Frequency: 13  |  Months: août 2026 | avril 2024 | janvier 2025 | janvier 2026 | juillet 2025 | juillet 2026 | juin 2024 | juin 2025 | mai 2026 | mars 2024 | mars 2025 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez trouvé un nouveau travail. Vous écrivez à votre amie francophone pour lui annoncer la bonne nouvelle. Vous décrivez votre poste, vos collègues et votre lieu de travail.
+
+  ترجمه فارسی:
+  شما یک شغل جدید پیدا کرده‌اید. به دوست فرانسوی‌زبان‌تان می‌نویسید تا این خبر خوش را به او اعلام کنید. در نامه موقعیت شغلی‌تان، همکارانتان و محل کارتان را توصیف می‌کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #20  |  Frequency: 12  |  Months: decembre 2024 | decembre 2025 | fevrier 2026 | juillet 2025 | juillet 2026 | juin 2025 | mai 2026 | mars 2025 | mars 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à votre ami(e) qui souhaite suivre des cours de langue dans votre école. Donnez les détails spécifiques pour aider votre ami(e) à faire son choix. (lieu, tarifs, types de cours disponibles, etc.).
+
+  ترجمه فارسی:
+  برای دوستی که می‌خواهد در مدرسهٔ شما در کلاس‌های زبان شرکت کند، یک پیام بنویسید. جزئیات مشخصی ارائه دهید تا به دوست‌تان در انتخاب کمک کند (مکان، هزینه‌ها، انواع دوره‌های موجود و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #21  |  Frequency: 12  |  Months: avril 2025 | avril 2026 | fevrier 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2026 | mai 2026 | novembre 2024 | octobre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre ami(e) veut découvrir la région dans laquelle vous habitez. Écrivez-lui un message pour lui proposer des sites à visiter.
+
+  ترجمه فارسی:
+  دوست شما می‌خواهد منطقه‌ای را که در آن زندگی می‌کنید کشف کند. برای او پیامی بنویسید و مکان‌هایی را برای بازدید پیشنهاد دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #22  |  Frequency: 12  |  Months: août 2026 | fevrier 2025 | juillet 2024 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez passé un week-end à la campagne. Écrivez un message à votre ami(e) pour lui décrire ce qui s’est passé.
+
+  ترجمه فارسی:
+  شما یک آخر هفته را در روستا گذرانده‌اید. برای دوست‌تان پیامی بنویسید و برای او شرح دهید چه اتفاقی افتاد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #23  |  Frequency: 12  |  Months: decembre 2024 | fevrier 2024 | fevrier 2025 | fevrier 2026 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2023 | juin 2025 | mai 2023 | mai 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message dans le journal de votre université pour rechercher un partenaire avec qui faire du sport.
+
+  ترجمه فارسی:
+  در روزنامه دانشگاه خود پیامی بنویسید تا شریک یا همراهی برای انجام فعالیت‌های ورزشی پیدا کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #24  |  Frequency: 11  |  Months: avril 2025 | decembre 2024 | decembre 2025 | fevrier 2026 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Un nouveau restaurant vient d’ouvrir près de chez vous. Vous écrivez à un(e) ami(e) pour lui proposer d’y aller avec vous. Vous décrivez le restaurant (cuisine, prix, décoration, etc.).
+
+  ترجمه فارسی:
+  به تازگی یک رستوران جدید در نزدیکی منزل شما افتتاح شده است. شما برای یکی از دوستانتان می‌نویسید تا او را دعوت کنید با شما به آنجا بیاید. رستوران را توصیف می‌کنید (سبک آشپزی، قیمت‌ها، دکوراسیون و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #25  |  Frequency: 11  |  Months: decembre 2023 | fevrier 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | mai 2026 | novembre 2023 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Je vais bientôt vivre dans ton quartier. Je cherche un endroit sympathique pour faire mes courses. Est-ce que tu connais un marché intéressant ? Merci d’avance et à bientôt ! Bernard
+Vous répondez à votre ami Bernard. Dans votre message, vous décrivez un marché de votre quartier que vous aimez bien (lieu, horaires, produits, etc.).
+
+  ترجمه فارسی:
+  به‌زودی در محلهٔ تو زندگی خواهم کرد. دنبال یک مکان خوشایند برای خریدهایم می‌گردم. آیا بازاری جالب می‌شناسی؟ پیشاپیش ممنون و به‌زودی می‌بینمت! برنارد. شما به دوست‌تان برنارد پاسخ می‌دهید. در پیام‌تان، بازاری در محله‌تان را که دوست دارید توصیف کنید (مکان، ساعات کار، محصولات و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #26  |  Frequency: 10  |  Months: fevrier 2025 | juillet 2024 | juillet 2025 | juin 2025 | mai 2023 | mai 2026 | mars 2026 | novembre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  “Bonjour, ça y est, j’ai obtenu mon visa pour le Canada. Je vais arriver le 3 mars. Est-ce que tu pourras m’aider à trouver un hôtel pour la première semaine ? Merci d’avance pour ton aide.” Matthias. Vous avez trouvé un hôtel pour Matthias. Vous lui écrivez un courriel. Dans ce message vous décrivez l’hôtel et vous lui donnez toutes les informations utiles (situation, tarif…).
+
+  ترجمه فارسی:
+  سلام، تمام شد؛ ویزای کانادا را گرفتم. روز ۳ مارس می‌رسم. می‌توانی برای هفتهٔ اول یک هتل پیدا کنی؟ پیشاپیش از کمکت ممنون. ماتتیاس. شما برای ماتتیاس هتلی پیدا کرده‌اید. باید برای او یک ایمیل بنویسید. در این پیام هتل را توصیف کنید و همهٔ اطلاعات مفید (موقعیت، هزینه و...) را به او بدهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #27  |  Frequency: 10  |  Months: fevrier 2025 | janvier 2024 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  France Télévisions prépare un reportage sur le sport amateur. Et vous, quel sportif êtes-vous ? Envoyez-nous vos témoignages sur francetelevisions.fr.
+
+  ترجمه فارسی:
+  France Télévisions در حال تهیهٔ گزارشی دربارهٔ ورزش آماتوری است. و شما، چه ورزشکاری هستید؟ تجربیات‌تان را برای ما در francetelevisions. fr ارسال کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #28  |  Frequency: 9  |  Months: août 2026 | decembre 2023 | decembre 2024 | janvier 2026 | juin 2025 | mai 2025 | octobre 2026 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  le journal ” Bienvenue” compte publier un article qui parle des habitants de notre ville. Écrivez-nous un message qui sera diffusé dans ce numéro. Vous êtes récemment installé dans cette ville, et il vous est demandé de vous présenter et décrire ensuite tous vos lieux préférés au sein de cette ville.
+
+  ترجمه فارسی:
+  روزنامه «Bienvenue» به قصد دارد مقاله‌ای دربارهٔ ساکنان شهر ما منتشر کند. پیامی برای انتشار در این شماره بنویسید. شما اخیراً در این شهر ساکن شده‌اید و از شما خواسته شده است خود را معرفی کنید و سپس تمام مکان‌های مورد علاقه‌تان در این شهر را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #29  |  Frequency: 9  |  Months: avril 2024 | fevrier 2025 | janvier 2024 | janvier 2026 | juin 2024 | mai 2023 | mars 2024 | mars 2026 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à votre ami(e) pour lui faire part de votre programme de déménagement vers votre nouveau logement, en demandant son aide (date, lieu, programme).
+
+  ترجمه فارسی:
+  یک پیام برای دوستتان بنویسید تا او را از برنامهٔ نقل‌مکان‌تان به منزل جدید مطلع کنید و از او برای کمک درخواست نمایید (تاریخ، مکان، برنامه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #30  |  Frequency: 9  |  Months: decembre 2025 | juillet 2024 | juillet 2025 | juin 2023 | juin 2025 | juin 2026 | mai 2026 | octobre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous venez de vous installer dans une nouvelle ville. Vous écrivez un message à un(e) ami(e) pour décrire votre nouvel environnement (quartier, voisins, magasins, etc.)
+
+  ترجمه فارسی:
+  شما تازه در یک شهر جدید ساکن شده‌اید. برای یکی از دوستان‌تان پیامی می‌نویسید تا محیط جدیدتان (محله، همسایگان، فروشگاه‌ها و غیره) را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #31  |  Frequency: 9  |  Months: aout 2025 | août 2026 | fevrier 2025 | janvier 2024 | juillet 2024 | mai 2026 | novembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  La bibliothèque de votre quartier propose une rencontre avec un(e) auteur(e). Vous souhaitez y aller avec un(e) ami(e). Vous lui écrivez un message. Vous décrivez l’événement et vous lui proposez de venir avec vous.
+
+  ترجمه فارسی:
+  کتابخانهٔ محلهٔ شما نشستی با یک نویسنده (آقا یا خانم) برگزار می‌کند. شما می‌خواهید همراه یک دوست (آقا یا خانم) در این نشست شرکت کنید. برای او پیامی می‌نویسید. رویداد را توصیف می‌کنید و از او دعوت می‌کنید که همراه شما بیاید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #32  |  Frequency: 9  |  Months: aout 2025 | avril 2026 | juillet 2024 | juillet 2025 | juin 2025 | mai 2026 | novembre 2025 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à vos amis pour leur proposer de passer un week-end avec vous pour faire du sport.
+
+  ترجمه فارسی:
+  یک پیام برای دوستان‌تان بنویسید و از آن‌ها دعوت کنید که یک آخر هفته را همراه شما بگذرانند و به فعالیت‌های ورزشی بپردازند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #33  |  Frequency: 9  |  Months: fevrier 2025 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez commandé un objet sur Internet et après réception du colis, vous constatez que l’objet est cassé. Rédigez un e-mail au service clientèle pour signaler le problème, décrivez le dommage de l’objet et précisez ce que vous attendez comme solution.
+
+  ترجمه فارسی:
+  شما یک کالا را به‌صورت اینترنتی سفارش داده‌اید و پس از دریافت بسته متوجه می‌شوید که کالا شکسته است. یک ایمیل به بخش خدمات مشتریان بنویسید تا مشکل را گزارش کنید، خسارت وارده به کالا را توصیف کنید و مشخص کنید چه راه‌حلی از سوی آن‌ها انتظار دارید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #34  |  Frequency: 9  |  Months: avril 2025 | juillet 2024 | juillet 2025 | mai 2024 | mai 2026 | novembre 2025 | octobre 2024 | septembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous partez en vacances avec des amis. Vous avez trouvé un hôtel. Vous écrivez un message à vos amis pour décrire cet hôtel (localisation, prix, équipements, etc.). Vous leur proposez de réserver cet hôtel.
+
+  ترجمه فارسی:
+  شما با دوستان‌تان به تعطیلات می‌روید. یک هتل پیدا کرده‌اید. پیامی برای دوستان‌تان می‌نویسید تا این هتل را توصیف کنید (موقعیت، قیمت، امکانات و غیره). به آن‌ها پیشنهاد می‌دهید که این هتل را رزرو کنند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #35  |  Frequency: 9  |  Months: avril 2025 | decembre 2023 | janvier 2025 | juillet 2024 | juin 2023 | mai 2026 | novembre 2023 | octobre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous voulez organiser une fête. Écrivez un message à vos amis pour les inviter et leur demander de vous aider à l’organiser (lieu, date, thème, etc.).
+
+  ترجمه فارسی:
+  شما می‌خواهید یک مهمانی برگزار کنید. پیامی برای دوستانتان بنویسید تا آنها را دعوت کرده و از آنها بخواهید در برنامه‌ریزی و سازماندهی آن کمک کنند (مکان، تاریخ، تم و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #36  |  Frequency: 9  |  Months: decembre 2024 | decembre 2025 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | mai 2023 | mai 2026 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrire un message pour inviter vos amis à une fête de fin d’année (Date, lieu, programme).
+
+  ترجمه فارسی:
+  یک پیام بنویسید تا دوستان‌تان را به جشن پایان سال دعوت کنید (تاریخ، مکان، برنامه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #37  |  Frequency: 8  |  Months: avril 2025 | janvier 2026 | juillet 2025 | juin 2025 | mai 2026 | octobre 2026 | septembre 2023 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un courriel à votre ami pour l’inviter à passer une journée avec vous (lieu, date, activités, etc.).
+
+  ترجمه فارسی:
+  یک ایمیل به دوست خود بنویسید و او را برای گذراندن یک روز همراه خود دعوت کنید (محل، تاریخ، فعالیت‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #38  |  Frequency: 8  |  Months: avril 2026 | janvier 2026 | juin 2026 | mai 2026 | mars 2026 | octobre 2023 | octobre 2024 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous faites du sport dans un club. Vous venez de remporter une compétition vous écrivez un courriel à vos amis pour leur raconter cet évènement sportif et annoncer votre réussite sportive.
+
+  ترجمه فارسی:
+  شما در یک باشگاه ورزش می‌کنید. همین‌الان در یک مسابقه پیروز شده‌اید؛ برای دوستان‌تان یک ایمیل بنویسید تا این رویداد ورزشی را برای‌شان شرح دهید و موفقیت ورزشی‌تان را اعلام کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #39  |  Frequency: 8  |  Months: decembre 2025 | juillet 2025 | juin 2025 | juin 2026 | mai 2026 | octobre 2025 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez reçu ce message de votre ami Thomas : « Salut ! Je ne connais pas bien la culture et les traditions de ton pays. Peux-tu me parler d’une grande fête célébrée chez toi ? À bientôt ! » Consigne : Répondez-lui en décrivant une fête importante de votre pays.
+
+  ترجمه فارسی:
+  شما این پیام را از دوست‌تان توماس دریافت کرده‌اید: «سلام! من با فرهنگ و سنت‌های کشورتان آشنایی زیادی ندارم. می‌تونی درباره یک جشن بزرگ که در کشورتان برگزار می‌شود برایم بگویی؟ به‌زودی می‌بینمت!» دستورالعمل: به او پاسخ دهید و یک جشن مهم در کشورتان را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #40  |  Frequency: 7  |  Months: decembre 2023 | janvier 2026 | juillet 2025 | juin 2025 | mars 2025 | novembre 2023 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Salut, Comment ça va ? Alors, comment est la nouvelle université ? Est-ce que les étudiants sont sympas ? Comment sont les profs ? À bientôt. Alex »Vous répondez à Alex dans un message où vous décrivez votre université (professeurs, étudiants, activités, etc.).
+
+  ترجمه فارسی:
+  سلام، چطوری؟ خب، دانشگاه جدید چطور است؟ آیا دانشجویان مهربان هستند؟ استادها چگونه‌اند؟ به‌زودی می‌بینمت. الکس
+
+شما باید به الکس در پیامی پاسخ دهید که در آن دانشگاه خود را توصیف می‌کنید (استادان، دانشجویان، فعالیت‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #41  |  Frequency: 7  |  Months: aout 2024 | avril 2026 | decembre 2024 | decembre 2025 | fevrier 2026 | juin 2025 | mars 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous voulez changer la décoration de votre appartement (meubles, peinture, objets, etc.). Vous écrivez un message à un(e) ami(e). Vous lui décrivez votre projet et vous lui demandez de vous aider.
+
+  ترجمه فارسی:
+  شما می‌خواهید دکوراسیون آپارتمان خود را تغییر دهید (مبلمان، رنگ‌آمیزی، اشیاء و غیره). شما پیامی برای یک دوست می‌نویسید. در آن پروژه‌تان را برای او توصیف می‌کنید و از او می‌خواهید که به شما کمک کند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #42  |  Frequency: 7  |  Months: decembre 2025 | fevrier 2026 | juin 2025 | mai 2023 | mai 2026 | octobre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Salut, Je suis vraiment intéressé à l’idée de voyager et de découvrir un autre pays. Peux-tu me parler un peu de ton pays et de sa culture ? Marc. »Écrivez un message à votre ami Marc, qui veut voyager et découvrir un autre pays, pour lui parler de votre pays et de sa culture (lieux, sites touristiques, monuments, etc.). »
+
+  ترجمه فارسی:
+  «سلام، من واقعاً به ایدهٔ سفر و آشنایی با یک کشور دیگر علاقه‌مندم. می‌توانی کمی دربارهٔ کشور و فرهنگ خودت به من بگویی؟ مارک.» برای دوست‌تان مارک که می‌خواهد سفر کند و کشوری دیگر را کشف کند، پیامی بنویسید تا دربارهٔ کشور و فرهنگ خود (مکان‌ها، جاذبه‌های گردشگری، بناها و غیره) به او بگویید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #43  |  Frequency: 7  |  Months: juillet 2024 | juin 2023 | juin 2026 | mai 2025 | mai 2026 | octobre 2024 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez emménagé dans une nouvelle ville il y a un mois. Écrivez un courriel à votre ami Léo pour lui donner de vos nouvelles. Parlez-lui de votre appartement, du quartier, de la ville en général, et des activités que vous faites.
+
+  ترجمه فارسی:
+  شما یک ماه پیش به یک شهر جدید نقل مکان کرده‌اید. یک ایمیل برای دوستتان لئو بنویسید تا از احوالتان برایش خبر بدهید. در مورد آپارتمان‌تان، محله، شهر به طور کلی و فعالیت‌هایی که انجام می‌دهید صحبت کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #44  |  Frequency: 7  |  Months: juillet 2024 | juin 2023 | juin 2026 | mai 2023 | mai 2025 | mai 2026 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous allez fêter votre anniversaire. Vos amis vous demandent ce que vous souhaitez comme cadeaux. Vous voulez des vêtements. Vous leur écrivez un message pour leur décrire les vêtements que vous aimeriez recevoir.
+
+  ترجمه فارسی:
+  شما قرار است تولد خود را جشن بگیرید. دوستان‌تان از شما می‌پرسند چه هدایایی می‌خواهید. شما می‌خواهید لباس هدیه بگیرید. برای آن‌ها پیامی می‌نویسید و در آن لباس‌هایی را که مایلید دریافت کنید توصیف می‌کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #45  |  Frequency: 7  |  Months: fevrier 2025 | janvier 2024 | juillet 2026 | juin 2026 | mai 2026 | octobre 2024 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à votre ami(e) pour lui décrire le programme de vos prochaines vacances (lieu, date, activités, etc.).
+
+  ترجمه فارسی:
+  یک پیام برای دوست‌تان بنویسید و در آن برنامهٔ تعطیلات آینده‌تان را توصیف کنید (مکان، تاریخ، فعالیت‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #46  |  Frequency: 7  |  Months: aout 2024 | fevrier 2025 | janvier 2024 | mai 2026 | octobre 2024 | septembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez publié une annonce pour la location de votre appartement à Montréal. Écrivez un courriel pour répondre à une personne intéressée en lui fournissant des informations sur l’appartement (caractéristiques, loyer, quartier, etc.).
+
+  ترجمه فارسی:
+  شما آگهی‌ای برای اجاره آپارتمان خود در مونترال منتشر کرده‌اید. یک ایمیل بنویسید تا به یک فرد علاقه‌مند پاسخ دهید و اطلاعاتی درباره آپارتمان (مشخصات، مبلغ اجاره، محله و غیره) در اختیار او قرار دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #47  |  Frequency: 6  |  Months: decembre 2023 | decembre 2025 | juillet 2025 | juin 2025 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous terminez un séjour professionnel dans un pays étranger et vous souhaitez fêter votre départ. Vous écrivez un courriel à vos collègues pour les inviter au restaurant. Vous décrivez votre projet et vous leur donnez les informations nécessaires (adresse, date, heure, etc.).
+
+  ترجمه فارسی:
+  شما اقامت کاری خود را در یک کشور خارجی به پایان می‌رسانید و مایلید به مناسبت ترک آن‌جا جشنی برگزار کنید. در ایمیلی به همکارانتان آن‌ها را به رستوران دعوت می‌کنید، برنامه‌تان را شرح می‌دهید و اطلاعات لازم (نشانی، تاریخ، ساعت و غیره) را در اختیارشان قرار می‌دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #48  |  Frequency: 6  |  Months: juillet 2024 | juillet 2025 | mai 2026 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Salut ! Je sais que tu fais du sport depuis le mois dernier. Ça m’intéresse beaucoup et j’aimerais bien venir avec toi. Tu peux m’en dire plus ? À bientôt ! Camille » Vous répondez à votre ami Camille. Dans votre message, vous décrivez votre activité sportive et vous donnez des informations utiles (lieu, durée, prix, etc.).
+
+  ترجمه فارسی:
+  سلام! می‌دانم که از ماه گذشته ورزش می‌کنی. خیلی برایم جالب است و دوست دارم همراهت بیایم. می‌توانی بیشتر درباره‌اش بگویی؟ به‌زودی می‌بینمت! کامیل
+
+شما به دوست‌تان کامیل پاسخ می‌دهید. در پیام‌تان فعالیت ورزشی‌تان را توصیف کرده و اطلاعات مفید (محل، مدت، قیمت و غیره) را ارائه می‌دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #49  |  Frequency: 6  |  Months: aout 2025 | avril 2026 | juillet 2025 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Envoyez un courriel à votre ami francophone afin de lui demander de l’aide pour la recherche d’un logement, en lui fournissant toutes les informations nécessaires (type de logement, budget, date).
+
+  ترجمه فارسی:
+  یک ایمیل به دوست فرانسوی‌زبان خود بنویسید و از او بخواهید در پیدا کردن محل سکونت به شما کمک کند، و تمامی اطلاعات لازم را (نوع محل سکونت، بودجه، تاریخ) در اختیار او قرار دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #50  |  Frequency: 6  |  Months: avril 2026 | juin 2026 | mai 2026 | octobre 2026 | septembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous partez en voyage et vous laissez votre appartement à un ami qui veut venir rester chez vous pendant vos vacances. Vous lui envoyez un message pour décrire votre appartement (immeuble, logement, accès…).
+
+  ترجمه فارسی:
+  شما در سفر می‌روید و آپارتمان‌تان را به دوستی می‌سپارید که می‌خواهد در طول تعطیلات شما پیش‌تان بماند. شما برای او پیامی می‌فرستید تا آپارتمان خود را توصیف کنید (ساختمان، واحد مسکونی، دسترسی …).
+
+────────────────────────────────────────────────────────────────────────────────
+  #51  |  Frequency: 5  |  Months: decembre 2024 | janvier 2026 | mars 2026 | octobre 2024 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous voulez organiser une visite culturelle dans votre ville. Vous envoyez un message pour inviter vos amis. Vous leur donnez toutes les informations nécessaires (activités, date, lieu, etc.).
+
+  ترجمه فارسی:
+  شما می‌خواهید یک بازدید فرهنگی در شهر خود برگزار کنید. شما پیامی می‌فرستید تا دوستان‌تان را دعوت کنید و تمام اطلاعات لازم را به آنان می‌دهید (فعالیت‌ها، تاریخ، مکان، و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #52  |  Frequency: 5  |  Months: aout 2025 | juillet 2024 | mai 2026 | novembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous allez déménager. Des amis ont accepté de vous aider. Vous leur écrivez un message collectif pour leur expliquer comment le déménagement va se passer (lieux, horaires, durée, trajet, tâches à faire, etc.)
+
+  ترجمه فارسی:
+  شما قصد دارید اسباب‌کشی کنید. دوستانی موافقت کرده‌اند که به شما کمک کنند. شما برای آن‌ها یک پیام گروهی می‌نویسید تا توضیح دهید اسباب‌کشی چگونه انجام خواهد شد (مکان‌ها، ساعات، مدت‌زمان، مسیر، کارهایی که باید انجام شود و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #53  |  Frequency: 5  |  Months: aout 2025 | avril 2025 | juillet 2024 | juillet 2025 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  L’anniversaire de votre ami approche à grands pas et vous avez décidé de lui offrir un voyage comme cadeau. Rédigez un message pour l’informer des préparatifs que vous avez faits (destination, dates, préparatifs, etc.).
+
+  ترجمه فارسی:
+  تولد دوست‌تان به‌سرعت در حال نزدیک‌شدن است و شما تصمیم گرفته‌اید برای او یک سفر به‌عنوان هدیه تدارک ببینید. یک پیام بنویسید تا او را از آمادگی‌ها و تدارکاتی که انجام داده‌اید مطلع سازید (مقصد، تاریخ‌ها، تدارکات و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #54  |  Frequency: 5  |  Months: aout 2025 | avril 2026 | juillet 2025 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous envisagez de déménager et avez trouvé un appartement. Vous souhaitez en informer un ami en lui fournissant les détails concernant le bien en question : nombre de pièces, emplacement et prix.
+
+  ترجمه فارسی:
+  شما درصدد نقل‌مکان هستید و یک آپارتمان پیدا کرده‌اید. می‌خواهید دوست‌تان را در جریان قرار دهید و جزئیات مربوط به آن ملک را به او بدهید: تعداد اتاق‌ها، موقعیت و قیمت.
+
+────────────────────────────────────────────────────────────────────────────────
+  #55  |  Frequency: 5  |  Months: avril 2026 | juillet 2025 | juin 2026 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous allez déménager à Nice, en France. Vous écrivez un message sur le site d’une agence immobilière. Vous donnez les informations nécessaires (superficie, budget, nombre de pièces, etc.).
+
+  ترجمه فارسی:
+  شما قصد دارید به شهر نیس در فرانسه نقل مکان کنید. شما پیامی در وب‌سایت یک آژانس املاک می‌نویسید و اطلاعات ضروری را می‌دهید (مانند متراژ، بودجه، تعداد اتاق‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #56  |  Frequency: 5  |  Months: août 2026 | fevrier 2025 | juillet 2024 | juillet 2026 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre ami(e) va fêter son anniversaire. Écrivez un message à vos amis pour lui acheter un cadeau commun.
+
+  ترجمه فارسی:
+  دوست شما قرار است تولدش را جشن بگیرد. یک پیام به دوستانتان بنویسید تا برای او هدیه‌ای مشترک بخرید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #57  |  Frequency: 5  |  Months: fevrier 2025 | janvier 2025 | juillet 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Salut ! Je cherche un endroit pour déjeuner en plein air ce week-end. Qu’est-ce que tu me proposes ? À bientôt, Barbara. Vous répondez à votre amie Barbara. Vous décrivez le lieu (parc, jardin, terrasse, etc.)
+
+  ترجمه فارسی:
+  سلام! من دنبال جایی برای ناهار خوردن در فضای باز این آخر هفته هستم. چه پیشنهادی داری؟ به‌زودی می‌بینمت، باربارا. شما باید به دوست‌تان باربارا پاسخ دهید. محل را توصیف کنید (پارک، باغ، تراس و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #58  |  Frequency: 4  |  Months: août 2026 | decembre 2023 | janvier 2026 | novembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous souhaitez inviter vos amis à découvrir un lieu touristique que vous appréciez particulièrement. Dans un message amical, présentez ce lieu, expliquez pourquoi vous l’aimez et proposez une date, une heure et un hébergement pour cette visite.
+
+  ترجمه فارسی:
+  مایل هستید دوستانتان را برای کشف یک مکان گردشگری که به‌ویژه آن را دوست دارید، دعوت کنید. در یک پیام دوستانه این مکان را معرفی کنید، توضیح دهید چرا آن را دوست دارید و یک تاریخ، یک ساعت و یک محل اقامت برای این بازدید پیشنهاد دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #59  |  Frequency: 4  |  Months: avril 2025 | juillet 2025 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre amie Jeanne envisage de visiter votre pays. Rédigez un message personnalisé lui proposant un itinéraire de visite. Incluez une variété de lieux tels que des villes, sites touristiques et monuments célèbres, en expliquant brièvement l’intérêt de chaque recommandation.
+
+  ترجمه فارسی:
+  دوست شما ژان قصد دارد از کشور شما دیدن کند. یک پیام شخصی بنویسید و برای او یک برنامه سفر پیشنهادی تهیه کنید. در برنامه، مجموعه‌ای از مکان‌ها مانند شهرها، جاذبه‌های گردشگری و بناها یا آثار تاریخی مشهور را بگنجانید و به‌طور مختصر دربارهٔ اهمیت هر توصیه توضیح دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #60  |  Frequency: 4  |  Months: avril 2025 | mai 2026 | novembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez récemment déménagé dans une nouvelle ville. Invitez votre amie à venir passer les vacances chez vous.
+
+  ترجمه فارسی:
+  شما اخیراً به یک شهر جدید نقل‌مکان کرده‌اید. از دوستِ خود (مؤنث) دعوت کنید تا تعطیلات را در خانهٔ شما بگذراند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #61  |  Frequency: 4  |  Months: fevrier 2025 | janvier 2024 | mai 2026 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à votre ami(e) pour lui raconter votre entretien d’embauche (entreprise, salaire, type d’emploi, etc.).
+
+  ترجمه فارسی:
+  یک پیام به دوست خود بنویسید و در آن دربارهٔ مصاحبه شغلی‌تان برای او توضیح دهید (شرکت، حقوق، نوع شغل و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #62  |  Frequency: 4  |  Months: decembre 2024 | fevrier 2025 | mai 2023 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à votre ami pour le convaincre de pratiquer une activité physique.
+
+  ترجمه فارسی:
+  یک پیام برای دوست‌تان بنویسید تا او را متقاعد کنید فعالیت بدنی انجام دهد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #63  |  Frequency: 4  |  Months: decembre 2023 | juillet 2024 | novembre 2023 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrire un message à votre amie pour lui proposer un lieu de camping (lieu, date, activités…)
+
+  ترجمه فارسی:
+  برای دوستِ خود (مونث) پیامی بنویسید و در آن مکانی برای کمپ پیشنهاد دهید (مکان، تاریخ، فعالیت‌ها...)
+
+────────────────────────────────────────────────────────────────────────────────
+  #64  |  Frequency: 4  |  Months: decembre 2023 | juillet 2024 | juillet 2026 | juin 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Un évènement sportif aura lieu dans votre ville bientôt. Faites parvenir un message à vos amis pour les inviter (date, lieu, inscription, etc.).
+
+  ترجمه فارسی:
+  یک رویداد ورزشی به‌زودی در شهر شما برگزار می‌شود. پیامی به دوستان‌تان بفرستید و آن‌ها را دعوت کنید (تاریخ، مکان، ثبت‌نام و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #65  |  Frequency: 4  |  Months: avril 2026 | juillet 2026 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à vos amis pour les inviter à votre anniversaire et leur raconter comment va se dérouler votre fête.
+
+  ترجمه فارسی:
+  به دوستانتان پیامی بنویسید تا آن‌ها را به جشن تولدتان دعوت کنید و برایشان تعریف کنید که مهمانی‌تان چگونه برگزار خواهد شد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #66  |  Frequency: 3  |  Months: decembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous venez d’arriver dans un nouveau pays. Vous écrivez à vos amis pour leur raconter votre arrivée et décrire vos premières impressions.
+
+  ترجمه فارسی:
+  شما همین‌اکنون به یک کشور جدید رسیده‌اید. برای دوستان‌تان می‌نویسید تا ورودتان را برایشان شرح دهید و برداشت‌های اولیه‌تان را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #67  |  Frequency: 3  |  Months: juillet 2025 | juillet 2026 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre amie Carole et sa famille prévoient de visiter votre ville prochainement. Dans un message, proposez-leur un hôtel où séjourner (tarifs, activités, transports, etc.)
+
+  ترجمه فارسی:
+  دوست شما کارول و خانواده‌اش قصد دارند به‌زودی از شهر شما دیدن کنند. در قالب یک پیام، به آنها هتلی را برای اقامت پیشنهاد کنید (قیمت‌ها، فعالیت‌ها، حمل‌ونقل و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #68  |  Frequency: 3  |  Months: avril 2025 | juin 2023 | mai 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Salut ! J’ai entendu que ton école de langue est super ! J’aimerais m’y inscrire aussi. Peux-tu me dire ce que tu en penses ? »Répondez à votre ami qui veut s’inscrire dans votre école de langue.
+
+  ترجمه فارسی:
+  «سلام! شنیدم مدرسه زبانت خیلی خوبه! من هم می‌خوام توش ثبت‌نام کنم. می‌تونی بهم بگی نظرت چیه؟» به دوستی که می‌خواهد در مدرسهٔ زبان شما ثبت‌نام کند پاسخ دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #69  |  Frequency: 3  |  Months: decembre 2024 | fevrier 2025 | mai 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Les professeurs de votre quartier veulent organiser une rencontre avec leurs élèves pour les orienter dans le choix de leurs futures professions, vous leur écrivez un mail pour leur donner les avantages de votre profession.
+
+  ترجمه فارسی:
+  معلمان محلهٔ شما قصد دارند نشستی با دانش‌آموزان خود برگزار کنند تا آن‌ها را در انتخاب مشاغل آینده‌شان راهنمایی کنند. شما برای آن‌ها ایمیلی می‌نویسید و در آن مزایای حرفهٔ خود را شرح می‌دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #70  |  Frequency: 3  |  Months: août 2026 | avril 2026 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous habitez dans un grand appartement et vous recherchez un colocataire. Décrivez le type de colocation que vous proposez ainsi que les caractéristiques de votre appartement.
+
+  ترجمه فارسی:
+  شما در آپارتمان بزرگی زندگی می‌کنید و به دنبال یک هم‌خانه می‌گردید. نوع هم‌خانگی‌ای را که پیشنهاد می‌دهید و همچنین ویژگی‌های آپارتمانتان را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #71  |  Frequency: 3  |  Months: avril 2026 | mai 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous souhaitez aller au concert de votre artiste préféré(e). Vous proposez à votre ami(e) de vous accompagner. Vous lui écrivez un courriel avec les informations utiles (date, prix, lieu, artiste, durée) (60 mots minimum/120 mots maximum).
+
+  ترجمه فارسی:
+  شما می‌خواهید به کنسرت هنرمند مورد علاقه‌تان بروید. به دوستتان پیشنهاد می‌دهید همراهتان بیاید. یک ایمیل با اطلاعات لازم برایش می‌نویسید (تاریخ، قیمت، مکان، هنرمند، مدت) (حداقل ۶۰ کلمه / حداکثر ۱۲۰ کلمه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #72  |  Frequency: 3  |  Months: juin 2026 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Tu as pris des cours au centre de langues cultures pour tous ? Comment est cette école ? Bises, Paul Vous répondez à votre ami Paul. Vous décrivez l’école de langues (salle de cours, matériel, professeur, etc.)
+
+  ترجمه فارسی:
+  آیا در مرکز زبان «Centre de langues Cultures pour tous» دوره‌ای گذرانده‌اید؟ این مدرسه چگونه است؟ با مهر، پل. شما به دوست‌تان پل پاسخ می‌دهید. شما مدرسهٔ زبان را توصیف می‌کنید (کلاس درس، وسایل آموزشی، معلم، و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #73  |  Frequency: 2  |  Months: avril 2025 | octobre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez consulté une annonce en ligne pour la location d’un appartement. Écrivez un courriel au propriétaire pour demander des informations sur l’appartement et le quartier.
+
+  ترجمه فارسی:
+  شما یک آگهی آنلاین برای اجارهٔ آپارتمانی را مشاهده کرده‌اید. یک ایمیل رسمی به صاحب‌خانه بنویسید و در آن درخواست اطلاعات دربارهٔ آپارتمان و محله نمایید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #74  |  Frequency: 2  |  Months: fevrier 2025 | janvier 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  L’été est arrivé ! Je vous propose de faire un pique-nique samedi prochain. Connaissez-vous un endroit sympa pour les enfants et les adultes où nous pouvons tous nous retrouver ? Bisous, à bientôt. Léa”Vous acceptez l’invitation de Léa et vous lui proposez un endroit pour organiser le pique-nique. Vous décrivez le lieu et expliquez quelles sont les activités possibles.
+
+  ترجمه فارسی:
+  «تابستان آمده است! پیشنهاد می‌کنم شنبهٔ هفتهٔ آینده یک پیک‌نیک داشته باشیم. آیا جایی مناسب برای کودکان و بزرگسالان می‌شناسید که همهٔ ما بتوانیم آنجا همدیگر را ببینیم؟ بوس، به‌زودی. لئا» شما دعوت لئا را می‌پذیرید و مکانی برای برگزاری پیک‌نیک به او پیشنهاد می‌دهید. محل را توصیف کرده و توضیح دهید چه فعالیت‌هایی می‌توان انجام داد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #75  |  Frequency: 2  |  Months: mai 2026 | mars 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Vous allez fêter votre anniversaire. Vous envoyez un message à vos amis pour les inviter. Vous leur décrivez le programme de la soirée et leur demandez de l’aide pour l’organisation (60 mots minimum/120 mots maximum). »
+
+  ترجمه فارسی:
+  شما می‌خواهید تولدتان را جشن بگیرید. به دوستانتان پیامی می‌فرستید تا آن‌ها را دعوت کنید. برنامهٔ آن شب را برایشان توصیف می‌کنید و از آن‌ها برای سازماندهی مهمانی کمک می‌خواهید (حداقل ۶۰ کلمه / حداکثر ۱۲۰ کلمه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #76  |  Frequency: 1  |  Months: mai 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez effectué un travail temporaire en été. Vous écrivez un message à vos amis pour leur raconter ce que vous avez fait.
+
+  ترجمه فارسی:
+  شما در تابستان یک کار موقت انجام دادید. اکنون پیامی برای دوستان‌تان می‌نویسید تا برایشان تعریف کنید چه کاری انجام داده‌اید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #77  |  Frequency: 1  |  Months: septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez dîné dans un nouveau restaurant. Écrivez un message à votre ami pour lui décrire le restaurant : l’ambiance, la décoration, les plats et le service.
+
+  ترجمه فارسی:
+  شما در یک رستوران جدید شام خورده‌اید. برای دوست‌تان پیامی بنویسید و در آن رستوران را توصیف کنید: جو (فضا)، دکوراسیون، غذاها و خدمات.
+
+================================================================================

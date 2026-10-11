@@ -247,7 +247,8 @@ fun AddTextHost(
     onEpub: (Uri) -> Unit = {},
     onPdf: (Uri) -> Unit = {},
     onImages: (List<Uri>) -> Unit = {},
-    onSave: (title: String, body: String) -> Unit
+    initialLevel: String? = null,
+    onSave: (title: String, body: String, level: String?) -> Unit
 ) {
     val incomingShare by SharedTextHolder.pending.collectAsState()
     LaunchedEffect(incomingShare) {
@@ -263,7 +264,9 @@ fun AddTextHost(
     }
 
     if (state.showDialog) {
+        var level by remember(state.prefillTitle, state.prefillBody, initialLevel) { mutableStateOf(initialLevel) }
         AddTextEditor(
+            levelOptions = { TextLevelSelector(level) { level = it } },
             initialTitle = state.prefillTitle,
             initialBody = state.prefillBody,
             // A whole PDF/book in an editable TextField freezes the UI, so
@@ -272,7 +275,7 @@ fun AddTextHost(
             onDismiss = { state.dismiss() },
             onSave = { title, body ->
                 state.dismiss()
-                onSave(title, body)
+                onSave(title, body, level)
             }
         )
     }
@@ -476,6 +479,7 @@ fun AddTextDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTextEditor(
+    levelOptions: (@Composable () -> Unit)? = null,
     initialTitle: String = "",
     initialBody: String = "",
     bodyEditable: Boolean = true,
@@ -658,6 +662,7 @@ fun AddTextEditor(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
+                levelOptions?.invoke()
                 if (bodyEditable && findVisible) {
                     Column(Modifier.fillMaxWidth()) {
                         Row(

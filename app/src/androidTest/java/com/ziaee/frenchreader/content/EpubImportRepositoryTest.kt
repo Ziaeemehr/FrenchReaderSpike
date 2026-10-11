@@ -80,6 +80,20 @@ class EpubImportRepositoryTest {
         assertTrue(TextBodyStore(context).read(document).length > 200_000)
     }
 
+    @Test
+    fun inheritsNearestFolderLevelAndKeepsItWhenMoved() = runBlocking {
+        val folders = db.libraryOrganizerDao()
+        val outer = folders.insertFolder(com.ziaee.frenchreader.data.LibraryFolder(name = "A1"))
+        val inner = folders.insertFolder(com.ziaee.frenchreader.data.LibraryFolder(name = " b2 ", parentId = outer))
+        val destination = folders.insertFolder(com.ziaee.frenchreader.data.LibraryFolder(name = "Stories", parentId = inner))
+        val result = EpubImportRepository(context, db).import(Uri.fromFile(epubFile), destination)
+        val id = result.firstTextId!!
+        assertEquals(destination, db.textDao().getById(id)!!.folderId)
+        assertEquals("B2", db.textDao().getById(id)!!.level)
+        db.textDao().setFolder(id, outer)
+        assertEquals("B2", db.textDao().getById(id)!!.level)
+    }
+
     private fun writeEpub(
         file: File,
         longText: String = "Un texte français assez long pour former un chapitre complet. ".repeat(5)

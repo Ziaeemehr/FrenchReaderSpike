@@ -76,6 +76,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.ziaee.frenchreader.backup.backupTimestamp
+import com.ziaee.frenchreader.backup.isProtectedBackupFileName
+import com.ziaee.frenchreader.backup.formatBackupTimestamp
+import com.ziaee.frenchreader.backup.DriveBackupFile
+import java.time.Instant
+import java.time.ZoneId
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -813,7 +820,9 @@ private fun AutoBackupSection(
     snackbarHostState: SnackbarHostState
 ) {
     var enabled by remember { mutableStateOf(BackupPrefs.isAutoBackupEnabled(context)) }
-    var showRestoreConfirm by remember { mutableStateOf(false) }
+    var showBackups by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf<File?>(null) }
+    var backups by remember { mutableStateOf(AutoBackup.listBackups(context)) }
     val latest = remember { AutoBackup.latest(context) }
 
     fun showMessage(text: String) {
@@ -837,21 +846,35 @@ private fun AutoBackupSection(
         ),
         style = MaterialTheme.typography.bodySmall
     )
-    OutlinedButton(enabled = latest != null, onClick = { showRestoreConfirm = true }) {
+    OutlinedButton(enabled = backups.isNotEmpty(), onClick = { backups = AutoBackup.listBackups(context); showBackups = true }) {
         Text(stringResource(R.string.auto_backup_restore))
     }
 
-    if (showRestoreConfirm && latest != null) {
+    if (showBackups) {
+        BackupPickerDialog(
+            backups.map { file ->
+                val timestamp = backupTimestamp(file.name)?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+                val label = timestamp?.let { formatBackupTimestamp(it) } ?: file.name
+                val size = context.getString(R.string.backup_size_mb, file.length() / (1024.0 * 1024.0))
+                label + "\n" + size + if (isProtectedBackupFileName(file.name))
+                    "\n" + context.getString(R.string.backup_protected_label) else ""
+            },
+            onDismiss = { showBackups = false },
+            onSelect = { selected = backups[it]; showBackups = false }
+        )
+    }
+    val chosen = selected
+    if (chosen != null) {
         AlertDialog(
-            onDismissRequest = { showRestoreConfirm = false },
+            onDismissRequest = { selected = null },
             title = { Text(stringResource(R.string.auto_backup_restore_confirm_title)) },
             text = { Text(stringResource(R.string.local_backup_restore_confirm_message)) },
             confirmButton = {
                 OutlinedButton(onClick = {
-                    showRestoreConfirm = false
+                    selected = null
                     scope.launch {
                         try {
-                            if (LocalBackup.importArchiveFile(context, latest)) {
+                            if (LocalBackup.importArchiveFile(context, chosen)) {
                                 restartApp(context)
                             } else {
                                 showMessage(context.getString(R.string.local_backup_invalid_file))
@@ -863,7 +886,7 @@ private fun AutoBackupSection(
                 }) { Text(stringResource(R.string.backup_restore)) }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showRestoreConfirm = false }) {
+                OutlinedButton(onClick = { selected = null }) {
                     Text(stringResource(R.string.accessibility_back))
                 }
             }
@@ -960,6 +983,8 @@ private fun CloudBackupSection(
     var signedInEmail by remember { mutableStateOf(BackupPrefs.getSignedInEmail(context)) }
     var lastBackupAtMs by remember { mutableStateOf(BackupPrefs.getLastBackupAtMs(context)) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
+    var backups by remember { mutableStateOf<List<DriveBackupFile>?>(null) }
+    var selected by remember { mutableStateOf<DriveBackupFile?>(null) }
     var pendingAccessTokenAction by remember { mutableStateOf<((String) -> Unit)?>(null) }
 
     fun showMessage(text: String) {
@@ -1044,7 +1069,19 @@ private fun CloudBackupSection(
             Text(stringResource(R.string.backup_now))
         }
 
-        OutlinedButton(onClick = { showRestoreConfirm = true }) {
+        OutlinedButton(onClick = {
+            withDriveAccessToken { token ->
+                scope.launch {
+                    try {
+                        val files = withContext(Dispatchers.IO) { DriveBackupClient.listBackupsNewestFirst(token) }
+                        if (files.isEmpty()) showMessage(context.getString(R.string.backup_restore_not_found))
+                        else backups = files
+                    } catch (e: Exception) {
+                        showMessage(context.getString(R.string.backup_restore_failure))
+                    }
+                }
+            }
+        }) {
             Text(stringResource(R.string.backup_restore))
         }
 
@@ -1059,6 +1096,16 @@ private fun CloudBackupSection(
         }
     }
 
+    backups?.let { files ->
+        BackupPickerDialog(
+            files.map { file ->
+                runCatching { formatBackupTimestamp(Instant.parse(file.createdTime).toEpochMilli()) }
+                    .getOrDefault(file.name)
+            },
+            onDismiss = { backups = null },
+            onSelect = { selected = files[it]; backups = null; showRestoreConfirm = true }
+        )
+    }
     if (showRestoreConfirm) {
         AlertDialog(
             onDismissRequest = { showRestoreConfirm = false },
@@ -1071,7 +1118,7 @@ private fun CloudBackupSection(
                         scope.launch {
                             try {
                                 val restored = withContext(Dispatchers.IO) {
-                                    val fileId = DriveBackupClient.findBackupFileId(token)
+                                    val fileId = selected?.id
                                         ?: return@withContext false
                                     val bytes = DriveBackupClient.downloadBackup(token, fileId)
                                     LocalBackup.importBytes(context, bytes)
@@ -1102,4 +1149,23 @@ private fun restartApp(context: Context) {
     intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
     context.startActivity(intent)
     Runtime.getRuntime().exit(0)
+}
+
+@Composable
+private fun BackupPickerDialog(labels: List<String>, onDismiss: () -> Unit, onSelect: (Int) -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.backup_choose)) },
+        text = {
+            Column(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
+                labels.forEachIndexed { index, label ->
+                    TextButton(onClick = { onSelect(index) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(label, modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.accessibility_back)) } }
+    )
 }

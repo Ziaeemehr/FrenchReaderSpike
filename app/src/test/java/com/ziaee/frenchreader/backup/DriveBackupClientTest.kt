@@ -47,7 +47,7 @@ class DriveBackupClientTest {
     }
 
     @Test
-    fun `backup selection keeps newest five and treats legacy as oldest`() {
+    fun `backup selection uses daily retention and treats legacy as oldest`() {
         val files = listOf(
             DriveBackupFile("legacy", "frenchreader_backup.db", "2099-01-01T00:00:00Z"),
             DriveBackupFile("one", "frenchreader_backup_20260918-100000.zip", "2026-09-18T10:00:00Z"),
@@ -59,11 +59,21 @@ class DriveBackupClientTest {
             DriveBackupFile("other", "unrelated.zip", "2026-09-24T10:00:00Z")
         )
 
-        val selection = selectDriveBackups(files)
+        val selection = selectDriveBackups(files, java.time.LocalDateTime.of(2026, 9, 23, 12, 0), java.time.ZoneOffset.UTC)
 
         assertEquals("six", selection.newest?.id)
-        assertEquals(listOf("six", "five", "four", "three", "two"), selection.keep.map { it.id })
-        assertEquals(listOf("one", "legacy"), selection.delete.map { it.id })
+        assertEquals(listOf("six", "five", "four", "three", "two", "one"), selection.keep.map { it.id })
+        assertEquals(listOf("legacy"), selection.delete.map { it.id })
+    }
+
+    @Test fun `legacy alone is retained`() {
+        val legacy = DriveBackupFile("legacy", "frenchreader_backup.db", "2099-01-01T00:00:00Z")
+        assertEquals(listOf(legacy), selectDriveBackups(listOf(legacy)).keep)
+    }
+
+    @Test fun `invalid created time is retained`() {
+        val invalid = DriveBackupFile("invalid", "frenchreader_backup_invalid.zip", "invalid")
+        assertEquals(listOf(invalid), selectDriveBackups(listOf(invalid)).keep)
     }
 
     @Test fun `backup selection returns no newest when only unrelated files exist`() {

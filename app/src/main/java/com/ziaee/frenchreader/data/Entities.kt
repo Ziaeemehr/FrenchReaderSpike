@@ -8,6 +8,12 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.ziaee.frenchreader.resources.ResourceCategory
 
+/** Completion marks stored in [TextDocument.readMark]: 0 follows reading progress,
+ * 1 forces finished, and 2 keeps the text in Reading regardless of progress. */
+const val READ_MARK_AUTOMATIC = 0
+const val READ_MARK_FINISHED = 1
+const val READ_MARK_NOT_FINISHED = 2
+
 /**
  * A text the user has imported (pasted, for phase 1 -- file import comes in
  * phase 2). `lastPositionMs` / `lastChunkIndex` let us resume exactly where
@@ -39,8 +45,10 @@ data class TextDocument(
     val externalKey: String? = null,
     val lastAccessedAtMs: Long = 0,
     val folderId: Long? = null,
+    val level: String? = null,
     val bodyPath: String? = null,
-    val pinned: Boolean = false
+    val pinned: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val readMark: Int = READ_MARK_AUTOMATIC
 )
 
 /**
@@ -183,7 +191,10 @@ data class ResourceLink(
     val level: String? = null
 )
 
-/** One shadowing try on one sentence. Only the score is kept -- never the audio. */
+const val CARD_SHADOW_CHUNK = -1
+
+/** One shadowing try on one sentence. Only the score is kept -- never the audio.
+ * Card attempts use textId = 0, chunkIndex = [CARD_SHADOW_CHUNK] and sentenceIndex = the card ID. */
 @Entity(tableName = "shadow_attempts", indices = [Index(value = ["timestampMs"])])
 data class ShadowAttempt(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -196,4 +207,17 @@ data class ShadowAttempt(
     val paceRatio: Float? = null,
     val engine: String,
     val timestampMs: Long
+)
+
+@Entity(tableName = "exam_attempts", indices = [Index(value = ["examId", "questionId"])])
+data class ExamAttempt(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val examId: String,
+    val questionId: String,
+    val questionFr: String,
+    val answer: String,
+    val score: Double?,
+    val note: String,
+    val createdAtMs: Long,
+    val updatedAtMs: Long
 )

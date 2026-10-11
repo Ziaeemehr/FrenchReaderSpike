@@ -48,7 +48,13 @@ class GrammarMarkdownTest {
             assertEquals("| " + List(table.header.size) { "---" }.joinToString(" | ") + " |", rows[1])
             rows.forEach { assertEquals(table.header.size + 2, it.split('|').size) }
             assertFalse(markdown.any { it in '\u2066'..'\u2069' || it == '\u00A0' })
-            assertTrue(markdown.endsWith("---\n\n${labels.appName}\n"))
+            assertTrue(markdown.endsWith(
+                "---\n\nTest App\n\nGitHub: https://github.com/Ziaeemehr/FrenchReaderSpike\n\n" +
+                    "Bazaar: https://cafebazaar.ir/app/com.ziaee.frenchreader\n"
+            ))
+            val pdf = grammarNoteToPdfBlocks(note, labels)
+            assertEquals(com.ziaee.frenchreader.share.PdfBlock.Heading(note.titleFr, 1), pdf.first())
+            assertEquals(titles, pdf.filterIsInstance<com.ziaee.frenchreader.share.PdfBlock.Heading>().drop(1).map { it.text })
         }
     }
 

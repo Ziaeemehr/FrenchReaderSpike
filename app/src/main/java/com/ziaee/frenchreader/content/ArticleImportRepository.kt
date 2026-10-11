@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.content
 
+import com.ziaee.frenchreader.text.normalizeTextLevel
+import com.ziaee.frenchreader.text.levelForFolder
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.LibraryOrganizerDao
 import com.ziaee.frenchreader.data.TextDao
@@ -31,7 +33,7 @@ class ArticleImportRepository(
     /** Returns null if no registered source matches the headline or the
      * source fails to fetch the full article; the headline preview stays
      * open so the caller can offer Retry. */
-    suspend fun import(headline: HeadlineEntity): ArticleImportResult? {
+    suspend fun import(headline: HeadlineEntity, folderId: Long? = null, level: String? = null): ArticleImportResult? {
         val externalKey = normalizeArticleUrl(headline.articleUrl)
         textDao.findByExternalKey(externalKey)?.let { existing ->
             return ArticleImportResult.OpenExisting(existing.id)
@@ -51,7 +53,10 @@ class ArticleImportRepository(
                 author = article.author,
                 license = article.license,
                 publishedAt = article.publishedAtMs,
-                externalKey = externalKey
+                externalKey = externalKey,
+                folderId = folderId,
+                level = normalizeTextLevel(level)
+                    ?: libraryOrganizerDao?.levelForFolder(folderId)
             ),
             article.text
         )

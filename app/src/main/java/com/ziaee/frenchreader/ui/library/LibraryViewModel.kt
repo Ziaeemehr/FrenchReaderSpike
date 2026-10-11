@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui.library
 
+import com.ziaee.frenchreader.text.levelFromFolderNames
+import com.ziaee.frenchreader.text.normalizeTextLevel
 import android.app.Application
 import android.net.Uri
 import android.util.Log
@@ -11,7 +13,6 @@ import com.ziaee.frenchreader.content.EpubImportResult
 import com.ziaee.frenchreader.content.BatchImportRepository
 import com.ziaee.frenchreader.content.BatchImportResult
 import com.ziaee.frenchreader.content.TextExtractionController
-import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.LibraryTag
@@ -42,8 +43,6 @@ import kotlinx.coroutines.launch
 class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
-    private val comprehensionRepository = ComprehensionRepository.get(app)
-    val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val epubImportRepository = EpubImportRepository(app, db)
     private val batchImportRepository = BatchImportRepository(app, db, bodyStore, epubImportRepository)
     private val textExtraction = TextExtractionController(app)
@@ -57,6 +56,8 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     )
 
     private val query = MutableStateFlow("")
+    private val levelFilter = MutableStateFlow<LevelFilter>(LevelFilter.All)
+    private val shelf = MutableStateFlow(LibraryShelf.READING)
     private val sort = MutableStateFlow(LibrarySort.NEWEST)
     private val folderFilter = MutableStateFlow<FolderFilter>(FolderFilter.All)
     private val selectedTagIds = MutableStateFlow<Set<Long>>(emptySet())
@@ -105,7 +106,9 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         val query: String,
         val sort: LibrarySort,
         val folder: FolderFilter,
-        val tagIds: Set<Long>
+        val tagIds: Set<Long>,
+        val shelf: LibraryShelf,
+        val level: LevelFilter = LevelFilter.All
     )
 
     private val libraryData = combine(
@@ -119,9 +122,13 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         })
     }
 
-    private val filterSettings = combine(query, sort, folderFilter, selectedTagIds) {
-            currentQuery, currentSort, currentFolder, currentTags ->
-        FilterSettings(currentQuery, currentSort, currentFolder, currentTags)
+    private val baseFilterSettings = combine(query, sort, folderFilter, selectedTagIds, shelf) {
+            currentQuery, currentSort, currentFolder, currentTags, currentShelf ->
+        FilterSettings(currentQuery, currentSort, currentFolder, currentTags, currentShelf)
+    }
+
+    private val filterSettings = combine(baseFilterSettings, levelFilter) { settings, level ->
+        settings.copy(level = level)
     }
 
     /** Full-text body matches for the current query (id -> snippet); re-run when texts change. */
@@ -141,39 +148,86 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     val uiState: StateFlow<LibraryUiState> = combine(libraryData, filterSettings, selectedIds, bodySnippets) { data, filters, selection, snippets ->
-        LibraryUiState(
+        val finishedIds = data.documents.filter {
+            isTextFinished(it, data.completionByTextId[it.id] == true)
+        }.mapTo(mutableSetOf()) { it.id }
+        val filtered = projectLibrary(
+            documents = data.documents,
             query = filters.query,
             sort = filters.sort,
-            documents = projectLibrary(
-                documents = data.documents,
-                query = filters.query,
-                sort = filters.sort,
-                folderFilter = filters.folder,
-                selectedTagIds = filters.tagIds,
-                tagIdsByText = data.tagIdsByText,
-                folders = data.folders,
-                bodyMatchIds = if (filters.query.isBlank()) emptySet() else snippets.keys
-            ),
+            folderFilter = filters.folder,
+            selectedTagIds = filters.tagIds,
+            tagIdsByText = data.tagIdsByText,
+            folders = data.folders,
+            bodyMatchIds = if (filters.query.isBlank()) emptySet() else snippets.keys,
+            shelf = LibraryShelf.ALL,
+            levelFilter = filters.level
+        )
+        val visible = projectLibrary(
+            filtered, "", filters.sort, shelf = filters.shelf, finishedIds = finishedIds
+        )
+        LibraryUiState(
+            shelf = filters.shelf,
+            shelfCounts = libraryShelfCounts(filtered, finishedIds),
+            query = filters.query,
+            sort = filters.sort,
+            documents = visible,
             allDocuments = data.documents,
             folders = data.folders,
             tags = data.tags,
             tagIdsByText = data.tagIdsByText,
             completionByTextId = data.completionByTextId,
             folderFilter = filters.folder,
+            levelFilter = filters.level,
             selectedTagIds = filters.tagIds,
-            selectedIds = selection,
+            selectedIds = prunedSelection(selection, visible.mapTo(mutableSetOf()) { it.id }),
             totalDocumentCount = data.documents.size,
             bodySnippets = if (filters.query.isBlank()) emptyMap() else snippets
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryUiState())
 
+    fun setLevelFilter(value: LevelFilter) {
+        if (levelFilter.value != value) selectedIds.value = emptySet()
+        levelFilter.value = value
+    }
+
+    fun setLevel(ids: List<Long>, level: String?) {
+        viewModelScope.launch {
+            db.textDao().setLevel(ids, normalizeTextLevel(level))
+            clearSelection()
+        }
+    }
+
+    private fun importFolderId(): Long? = (folderFilter.value as? FolderFilter.Folder)?.id
+
+    fun importLevel(): String? = levelFromFolderNames(
+        importFolderId()?.let { pathTo(uiState.value.folders, it).map { folder -> folder.name } }.orEmpty()
+    )
+
+    /** What bulk actions act on: the selection as shown, never texts hidden by a search or filter. */
+    private fun visibleSelection(): List<Long> = uiState.value.selectedIds.toList()
+
+    fun setShelf(value: LibraryShelf) {
+        // A selection never carries over to another shelf: bulk actions act on what is on screen.
+        if (shelf.value != value) selectedIds.value = emptySet()
+        shelf.value = value
+    }
+
+    /** [mark] is the shelf the user chose. A text whose reading progress already says the same goes
+     * back to automatic, so a mark is only stored where it overrides the progress. */
+    fun setReadMark(ids: List<Long>, mark: Int) {
+        val completion = uiState.value.completionByTextId
+        viewModelScope.launch {
+            ids.groupBy { id -> readMarkToStore(mark, completion[id] == true) }
+                .forEach { (stored, group) -> db.textDao().setReadMark(group, stored) }
+            clearSelection()
+        }
+    }
+
     fun setQuery(value: String) {
         query.value = value
     }
 
-    fun requestComprehension(document: TextDocument) {
-        comprehensionRepository.request(document)
-    }
 
     fun setSort(value: LibrarySort) {
         sort.value = value
@@ -206,7 +260,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteSelected() {
-        val ids = selectedIds.value.toList()
+        val ids = visibleSelection()
         viewModelScope.launch {
             ids.forEach { id -> db.textDao().getById(id)?.let { importRepository.deleteWithImage(it) } }
             clearSelection()
@@ -214,7 +268,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun moveSelectedToFolder(folderId: Long?) {
-        val ids = selectedIds.value.toList()
+        val ids = visibleSelection()
         viewModelScope.launch {
             if (ids.isNotEmpty()) db.textDao().setFolders(ids, folderId)
             clearSelection()
@@ -222,7 +276,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun addTagsToSelected(tagIds: Set<Long>) {
-        val ids = selectedIds.value.toList()
+        val ids = visibleSelection()
         viewModelScope.launch {
             if (ids.isNotEmpty() && tagIds.isNotEmpty()) organizerDao.addTagsToTexts(ids, tagIds.toList())
             clearSelection()
@@ -232,7 +286,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     fun createFolderAndMoveSelected(name: String) {
         val cleanName = name.trim()
         if (cleanName.isBlank()) return
-        val ids = selectedIds.value.toList()
+        val ids = visibleSelection()
         viewModelScope.launch {
             val folderId = organizerDao.findFolderByName(cleanName)?.id
                 ?: organizerDao.insertFolder(LibraryFolder(name = cleanName))
@@ -244,7 +298,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     fun createTagAndAddToSelected(name: String, selectedTagIds: Set<Long>) {
         val cleanName = name.trim()
         if (cleanName.isBlank()) return
-        val ids = selectedIds.value.toList()
+        val ids = visibleSelection()
         viewModelScope.launch {
             val existingId = organizerDao.findTagByName(cleanName)?.id
             val insertedId = existingId ?: organizerDao.insertTag(LibraryTag(name = cleanName))
@@ -379,9 +433,9 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Persists a pasted/file-imported/shared text -- Library's Add Text
      * entry point mirrors Home's (see [com.ziaee.frenchreader.ui.home.HomeViewModel.pasteText]). */
-    fun pasteText(title: String, body: String, onDone: (Long) -> Unit) {
+    fun pasteText(title: String, body: String, level: String? = importLevel(), onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = ""), body)
+            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = "", level = normalizeTextLevel(level), folderId = importFolderId()), body)
             onDone(id)
         }
     }
@@ -393,7 +447,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     ) {
         viewModelScope.launch {
             try {
-                val result = epubImportRepository.import(uri)
+                val result = epubImportRepository.import(uri, importFolderId())
                 onDone(result)
             } catch (error: Exception) {
                 android.util.Log.w("EpubImport", "EPUB import failed", error)
@@ -404,14 +458,14 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     fun importFiles(uris: List<Uri>, onDone: (BatchImportResult) -> Unit) {
         viewModelScope.launch {
-            onDone(runCatching { batchImportRepository.importAll(uris) }
+            onDone(runCatching { batchImportRepository.importAll(uris, destinationFolderId = importFolderId()) }
                 .getOrElse { BatchImportResult(0, 0, uris.size, null) })
         }
     }
 
     fun importTree(uri: Uri, onDone: (BatchImportResult) -> Unit) {
         viewModelScope.launch {
-            onDone(runCatching { batchImportRepository.importTree(uri) }
+            onDone(runCatching { batchImportRepository.importTree(uri, destinationFolderId = importFolderId()) }
                 .getOrElse { BatchImportResult(0, 0, 1, null) })
         }
     }

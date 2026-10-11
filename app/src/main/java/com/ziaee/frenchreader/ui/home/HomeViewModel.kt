@@ -1,5 +1,6 @@
 package com.ziaee.frenchreader.ui.home
 
+import com.ziaee.frenchreader.text.normalizeTextLevel
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -22,7 +23,6 @@ import com.ziaee.frenchreader.content.RfiFacileContentSource
 import com.ziaee.frenchreader.content.VikidiaContentSource
 import com.ziaee.frenchreader.content.WikisourceContentSource
 import com.ziaee.frenchreader.content.TextExtractionController
-import com.ziaee.frenchreader.comprehension.ComprehensionRepository
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.NewsPrefs
@@ -58,9 +58,29 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
+    var examRoute by mutableStateOf("exams")
+        private set
+    var examPracticeCounts by mutableStateOf<Pair<Int, Int>?>(null)
+        private set
+
+    init {
+        viewModelScope.launch {
+            val exams = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { com.ziaee.frenchreader.exams.loadExams(app.assets) }.getOrDefault(emptyList())
+            }
+            examRoute = exams.singleOrNull()?.let { "exams/${it.id}" } ?: "exams"
+            val exam = exams.firstOrNull()
+            val file = exam?.questionsFile
+            if (exam != null && file != null) {
+                val total = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { com.ziaee.frenchreader.exams.loadExamQuestionTotal(app.assets, file) }.getOrNull()
+                }
+                if (total != null) db.examAttemptDao().countPractisedQuestions(exam.id).collect { examPracticeCounts = it to total }
+            }
+        }
+    }
+
     private val bodyStore = TextBodyStore(app)
-    private val comprehensionRepository = ComprehensionRepository.get(app)
-    val comprehensionScores: StateFlow<Map<Long, Int?>> = comprehensionRepository.scores
     private val newsRepository = NewsRepository(
         db.headlineDao(),
         enabledSourceIds = { NewsPrefs.getEnabledSourceIds(app) }
@@ -187,9 +207,6 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         refresh(force = false)
     }
 
-    fun requestComprehension(document: TextDocument) {
-        comprehensionRepository.request(document)
-    }
 
     /** Pull-to-refresh always passes true; the initial load passes false so
      * a still-fresh cache from a recent session skips the network entirely. */
@@ -250,9 +267,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Persists a pasted/file-imported/shared text as-is -- the Add Text
      * flow, unrelated to headline or topic-search imports. */
-    fun pasteText(title: String, body: String, onDone: (Long) -> Unit) {
+    fun pasteText(title: String, body: String, level: String? = null, onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = ""), body)
+            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = "", level = normalizeTextLevel(level)), body)
             onDone(id)
         }
     }

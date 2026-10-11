@@ -5,6 +5,17 @@ import com.ziaee.frenchreader.data.LibraryTag
 import com.ziaee.frenchreader.data.TextDocument
 import java.util.Locale
 
+enum class LibraryShelf { READING, FINISHED, ALL }
+
+data class LibraryShelfCounts(val reading: Int = 0, val finished: Int = 0) {
+    val all: Int get() = reading + finished
+}
+
+internal fun libraryShelfCounts(documents: List<TextDocument>, finishedIds: Set<Long>): LibraryShelfCounts {
+    val finished = documents.count { it.id in finishedIds }
+    return LibraryShelfCounts(documents.size - finished, finished)
+}
+
 enum class LibrarySort { NEWEST, TITLE, LAST_READ }
 
 sealed interface FolderFilter {
@@ -13,7 +24,13 @@ sealed interface FolderFilter {
     data class Folder(val id: Long) : FolderFilter
 }
 
+sealed interface LevelFilter {
+    data object All : LevelFilter
+    data class Level(val level: String?) : LevelFilter
+}
+
 data class LibraryUiState(
+    val shelf: LibraryShelf = LibraryShelf.READING,
     val query: String = "",
     val sort: LibrarySort = LibrarySort.NEWEST,
     val documents: List<TextDocument> = emptyList(),
@@ -23,16 +40,20 @@ data class LibraryUiState(
     val tagIdsByText: Map<Long, Set<Long>> = emptyMap(),
     val completionByTextId: Map<Long, Boolean> = emptyMap(),
     val folderFilter: FolderFilter = FolderFilter.All,
+    val levelFilter: LevelFilter = LevelFilter.All,
     val selectedTagIds: Set<Long> = emptySet(),
     val selectedIds: Set<Long> = emptySet(),
     val totalDocumentCount: Int = documents.size,
     /** Text id -> context around the match, for texts whose body matches the search. */
-    val bodySnippets: Map<Long, String> = emptyMap()
+    val bodySnippets: Map<Long, String> = emptyMap(),
+    val shelfCounts: LibraryShelfCounts = libraryShelfCounts(allDocuments, allDocuments.filter {
+        isTextFinished(it, completionByTextId[it.id] == true)
+    }.mapTo(mutableSetOf()) { it.id })
 ) {
     /** Distinguishes "the library has zero saved texts" from "the current
      * search has zero matches" so the empty state can show the right copy. */
     val isSearching: Boolean get() = query.isNotBlank()
-    val isFiltering: Boolean get() = folderFilter != FolderFilter.All || selectedTagIds.isNotEmpty()
+    val isFiltering: Boolean get() = levelFilter != LevelFilter.All || folderFilter != FolderFilter.All || selectedTagIds.isNotEmpty()
     val isSelecting: Boolean get() = selectedIds.isNotEmpty()
 }
 
@@ -55,7 +76,10 @@ internal fun projectLibrary(
     selectedTagIds: Set<Long> = emptySet(),
     tagIdsByText: Map<Long, Set<Long>> = emptyMap(),
     folders: List<LibraryFolder> = emptyList(),
-    bodyMatchIds: Set<Long> = emptySet()
+    bodyMatchIds: Set<Long> = emptySet(),
+    shelf: LibraryShelf = LibraryShelf.READING,
+    finishedIds: Set<Long> = emptySet(),
+    levelFilter: LevelFilter = LevelFilter.All
 ): List<TextDocument> {
     val normalizedQuery = query.trim().lowercase(Locale.ROOT)
     val includedFolderIds = (folderFilter as? FolderFilter.Folder)?.let {
@@ -72,7 +96,13 @@ internal fun projectLibrary(
             is FolderFilter.Folder -> doc.folderId in includedFolderIds
         }
         val matchesTags = tagIdsByText[doc.id].orEmpty().containsAll(selectedTagIds)
-        matchesQuery && matchesFolder && matchesTags
+        val matchesShelf = when (shelf) {
+            LibraryShelf.READING -> doc.id !in finishedIds
+            LibraryShelf.FINISHED -> doc.id in finishedIds
+            LibraryShelf.ALL -> true
+        }
+        matchesQuery && matchesFolder && matchesTags && matchesShelf &&
+            (levelFilter == LevelFilter.All || doc.level == (levelFilter as LevelFilter.Level).level)
     }
     val comparator: Comparator<TextDocument> = when (sort) {
         LibrarySort.NEWEST -> compareByDescending { it.createdAtMs }

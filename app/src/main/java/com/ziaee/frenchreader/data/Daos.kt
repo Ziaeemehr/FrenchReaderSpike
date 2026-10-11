@@ -75,6 +75,22 @@ interface TextDao {
     @Query("UPDATE texts SET pinned = :pinned WHERE id = :id")
     suspend fun setPinned(id: Long, pinned: Boolean)
 
+    @Query("UPDATE texts SET level = :level WHERE id IN (:ids)")
+    suspend fun setLevelChunk(ids: List<Long>, level: String?)
+
+    @Transaction
+    suspend fun setLevel(ids: List<Long>, level: String?) {
+        ids.chunked(SQL_ID_CHUNK).forEach { setLevelChunk(it, level) }
+    }
+
+    @Query("UPDATE texts SET readMark = :mark WHERE id IN (:ids)")
+    suspend fun setReadMarkChunk(ids: List<Long>, mark: Int)
+
+    @Transaction
+    suspend fun setReadMark(ids: List<Long>, mark: Int) {
+        ids.chunked(SQL_ID_CHUNK).forEach { setReadMarkChunk(it, mark) }
+    }
+
     @Query("UPDATE texts SET folderId = :folderId WHERE id IN (:ids)")
     suspend fun setFolders(ids: List<Long>, folderId: Long?)
 }
@@ -83,6 +99,9 @@ interface TextDao {
 interface LibraryOrganizerDao {
     @Query("SELECT * FROM library_folders ORDER BY name COLLATE NOCASE")
     fun observeFolders(): Flow<List<LibraryFolder>>
+
+    @Query("SELECT * FROM library_folders")
+    suspend fun getFoldersOnce(): List<LibraryFolder>
 
     @Query("SELECT * FROM library_tags ORDER BY name COLLATE NOCASE")
     fun observeTags(): Flow<List<LibraryTag>>
@@ -357,4 +376,17 @@ interface ShadowAttemptDao {
 
     @Query("SELECT DISTINCT date(timestampMs / 1000, 'unixepoch', 'localtime') FROM shadow_attempts")
     suspend fun distinctActiveDates(): List<String>
+}
+
+@Dao
+interface ExamAttemptDao {
+    @Insert suspend fun insert(attempt: ExamAttempt): Long
+    @Update suspend fun update(attempt: ExamAttempt)
+    @Query("DELETE FROM exam_attempts WHERE id = :id") suspend fun deleteById(id: Long)
+    @Query("SELECT * FROM exam_attempts WHERE examId = :examId ORDER BY createdAtMs, id")
+    fun observeForExam(examId: String): Flow<List<ExamAttempt>>
+    @Query("SELECT * FROM exam_attempts WHERE examId = :examId AND questionId = :questionId ORDER BY createdAtMs, id")
+    fun observeForQuestion(examId: String, questionId: String): Flow<List<ExamAttempt>>
+    @Query("SELECT COUNT(DISTINCT questionId) FROM exam_attempts WHERE examId = :examId")
+    fun countPractisedQuestions(examId: String): Flow<Int>
 }

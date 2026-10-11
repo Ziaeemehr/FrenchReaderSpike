@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -57,12 +58,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.ziaee.frenchreader.ui.TextLevelBadge
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
 import com.ziaee.frenchreader.ui.components.EditorialEmptyState
-import com.ziaee.frenchreader.ui.ComprehensionBadge
 import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
 import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
@@ -299,6 +300,39 @@ fun GrammarCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun ExamsCard(onOpen: () -> Unit, modifier: Modifier = Modifier, practiceCounts: Pair<Int, Int>? = null) {
+    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(FrenchReaderDesign.spacing.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.School,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
+            )
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.exams_title),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = practiceCounts?.let { stringResource(R.string.exam_home_progress, it.first, it.second) }
+                        ?: stringResource(R.string.exams_entry_description),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TodayNewsSection(
@@ -457,7 +491,6 @@ fun ContinueReadingCard(
     body: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    comprehensionPercent: Int? = null
 ) {
     val metrics = remember(doc.id, body, doc.lastChunkIndex) { homeReadingMetrics(doc, body) }
     Column(modifier = modifier) {
@@ -495,7 +528,7 @@ fun ContinueReadingCard(
                             )
                             Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
                         }
-                        comprehensionPercent?.let { ComprehensionBadge(it) }
+                        doc.level?.let { TextLevelBadge(it) }
                     }
                     Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
                     EditorialProgressIndicator(
@@ -523,8 +556,6 @@ fun ContinueReadingCard(
 fun RecentTextsSection(
     documents: List<TextDocument>,
     bodyByTextId: Map<Long, String> = emptyMap(),
-    comprehensionScores: Map<Long, Int?> = emptyMap(),
-    onRequestComprehension: (TextDocument) -> Unit = {},
     onOpen: (TextDocument) -> Unit,
     onSeeAll: () -> Unit,
     onAddText: () -> Unit,
@@ -546,13 +577,9 @@ fun RecentTextsSection(
             )
         } else {
             documents.forEach { doc ->
-                LaunchedEffect(doc.id, doc.bodyPath, doc.rawText.length) {
-                    onRequestComprehension(doc)
-                }
                 RecentTextRow(
                     doc,
                     bodyByTextId[doc.id].orEmpty(),
-                    comprehensionScores[doc.id],
                     onClick = { onOpen(doc) }
                 )
             }
@@ -561,7 +588,7 @@ fun RecentTextsSection(
 }
 
 @Composable
-private fun RecentTextRow(doc: TextDocument, body: String, comprehensionPercent: Int?, onClick: () -> Unit) {
+private fun RecentTextRow(doc: TextDocument, body: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -587,9 +614,9 @@ private fun RecentTextRow(doc: TextDocument, body: String, comprehensionPercent:
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                comprehensionPercent?.let {
+                doc.level?.let {
                     Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
-                    ComprehensionBadge(it)
+                    TextLevelBadge(it)
                 }
             }
         }

@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,9 +18,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.ziaee.frenchreader.ui.shared.SetTextLevelDialog
+import com.ziaee.frenchreader.text.TEXT_LEVELS
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Stairs
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -71,9 +78,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.ziaee.frenchreader.ui.TextLevelBadge
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.TextDocument
-import com.ziaee.frenchreader.ui.ComprehensionBadge
+import com.ziaee.frenchreader.data.READ_MARK_FINISHED
+import com.ziaee.frenchreader.data.READ_MARK_NOT_FINISHED
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
 import com.ziaee.frenchreader.ui.components.EditorialEmptyState
@@ -105,7 +114,6 @@ fun LibraryScreen(
 ) {
     val vm: LibraryViewModel = viewModel()
     val state by vm.uiState.collectAsState()
-    val comprehensionScores by vm.comprehensionScores.collectAsState()
 
     val addTextState = rememberAddTextUiState()
     var showAddSourceSheet by remember { mutableStateOf(false) }
@@ -150,10 +158,10 @@ fun LibraryScreen(
 
     LibraryContent(
         state = state,
-        comprehensionScores = comprehensionScores,
-        onRequestComprehension = vm::requestComprehension,
         onQueryChange = { vm.setQuery(it) },
         onSortSelect = { vm.setSort(it) },
+        onShelfSelect = vm::setShelf,
+        onReadMark = vm::setReadMark,
         onOpen = { doc ->
             if (state.isSearching && doc.id in state.bodySnippets) onOpenTextAt(doc.id, state.query.trim())
             else onOpenText(doc.id)
@@ -162,6 +170,8 @@ fun LibraryScreen(
         onEdit = { doc, title, body -> vm.updateText(doc, title, body) },
         onLoadBody = { doc, loaded -> vm.loadBody(doc, loaded) },
         onFolderFilterChange = vm::setFolderFilter,
+        onLevelFilterChange = vm::setLevelFilter,
+        onSetLevel = vm::setLevel,
         onTagFilterToggle = vm::toggleTagFilter,
         onCreateFolder = { vm.createFolder(it) },
         onCreateFolderIn = vm::createFolder,
@@ -196,9 +206,10 @@ fun LibraryScreen(
         addTextState,
         onEpub = importEpub,
         onPdf = extractionImporter.importPdf,
-        onImages = extractionImporter.importImages
-    ) { title, body ->
-        vm.pasteText(title.ifBlank { untitledFallback }, body) { id -> onOpenText(id) }
+        onImages = extractionImporter.importImages,
+        initialLevel = vm.importLevel()
+    ) { title, body, level ->
+        vm.pasteText(title.ifBlank { untitledFallback }, body, level) { id -> onOpenText(id) }
     }
     AddSourceSheet(
         visible = showAddSourceSheet,
@@ -215,12 +226,10 @@ fun LibraryScreen(
 
 /** Stateless Library layout, hoisted out so a UI test can drive it with a
  * static [LibraryUiState] instead of a real database-backed ViewModel. */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LibraryContent(
     state: LibraryUiState,
-    comprehensionScores: Map<Long, Int?> = emptyMap(),
-    onRequestComprehension: (TextDocument) -> Unit = {},
     onQueryChange: (String) -> Unit,
     onSortSelect: (LibrarySort) -> Unit,
     onOpen: (TextDocument) -> Unit,
@@ -255,8 +264,15 @@ fun LibraryContent(
     onMoveSelectedToFolder: (Long?) -> Unit = {},
     onAddTagsToSelected: (Set<Long>) -> Unit = {},
     onCreateFolderAndMoveSelected: (String) -> Unit = {},
-    onCreateTagAndAddToSelected: (String, Set<Long>) -> Unit = { _, _ -> }
+    onCreateTagAndAddToSelected: (String, Set<Long>) -> Unit = { _, _ -> },
+    onShelfSelect: (LibraryShelf) -> Unit = {},
+    onLevelFilterChange: (LevelFilter) -> Unit = {},
+    onSetLevel: (List<Long>, String?) -> Unit = { _, _ -> },
+    onReadMark: (List<Long>, Int) -> Unit = { _, _ -> }
 ) {
+    var levelMenuExpanded by remember { mutableStateOf(false) }
+    var levelTargets by remember { mutableStateOf<List<TextDocument>?>(null) }
+    var bulkMarkMenuExpanded by remember { mutableStateOf(false) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var folderMenuExpanded by remember { mutableStateOf(false) }
     var expandedFolderIds by rememberSaveable { mutableStateOf(emptyList<Long>()) }
@@ -305,6 +321,28 @@ fun LibraryContent(
                         }
                         IconButton(onClick = { showBulkTags = true }, modifier = Modifier.testTag("bulkTags")) {
                             Icon(Icons.Default.Label, contentDescription = stringResource(R.string.library_bulk_tags))
+                        }
+                        Box {
+                            IconButton(onClick = { bulkMarkMenuExpanded = true }, modifier = Modifier.testTag("bulkReadMark")) {
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.library_read_mark_actions))
+                            }
+                            DropdownMenu(expanded = bulkMarkMenuExpanded, onDismissRequest = { bulkMarkMenuExpanded = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.text_level_set)) },
+                                    onClick = {
+                                        bulkMarkMenuExpanded = false
+                                        levelTargets = state.allDocuments.filter { it.id in state.selectedIds }
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.library_mark_finished)) },
+                                    onClick = { bulkMarkMenuExpanded = false; onReadMark(state.selectedIds.toList(), READ_MARK_FINISHED) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.library_move_back_reading)) },
+                                    onClick = { bulkMarkMenuExpanded = false; onReadMark(state.selectedIds.toList(), READ_MARK_NOT_FINISHED) }
+                                )
+                            }
                         }
                     } else {
                         IconButton(
@@ -463,9 +501,38 @@ fun LibraryContent(
                 }
             }
 
+            Box(Modifier.fillMaxWidth().padding(horizontal = FrenchReaderDesign.spacing.small)) {
+                val selectedLevel = (state.levelFilter as? LevelFilter.Level)?.level
+                OutlinedButton(
+                    onClick = { levelMenuExpanded = true },
+                    modifier = Modifier.fillMaxWidth().testTag("levelFilters")
+                ) {
+                    Text(
+                        if (state.levelFilter == LevelFilter.All) stringResource(R.string.text_level_all)
+                        else selectedLevel ?: stringResource(R.string.text_level_unspecified),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                }
+                DropdownMenu(expanded = levelMenuExpanded, onDismissRequest = { levelMenuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.text_level_all)) },
+                        onClick = { onLevelFilterChange(LevelFilter.All); levelMenuExpanded = false }
+                    )
+                    (TEXT_LEVELS + listOf(null)).filter { level ->
+                        state.allDocuments.any { it.level == level } || state.levelFilter == LevelFilter.Level(level)
+                    }.forEach { level ->
+                        DropdownMenuItem(
+                            text = { Text(level ?: stringResource(R.string.text_level_unspecified)) },
+                            onClick = { onLevelFilterChange(LevelFilter.Level(level)); levelMenuExpanded = false }
+                        )
+                    }
+                }
+            }
+
             if (state.tags.isNotEmpty()) {
-                LazyRow(modifier = Modifier.fillMaxWidth().testTag("tagFilters")) {
-                    items(state.tags, key = { it.id }) { tag ->
+                FlowRow(modifier = Modifier.fillMaxWidth().testTag("tagFilters")) {
+                    state.tags.forEach { tag ->
                         FilterChip(
                             selected = tag.id in state.selectedTagIds,
                             onClick = { onTagFilterToggle(tag.id) },
@@ -474,6 +541,35 @@ fun LibraryContent(
                             modifier = Modifier.padding(horizontal = 4.dp).testTag("tagFilter_${tag.id}")
                         )
                     }
+                }
+            }
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = FrenchReaderDesign.spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(FrenchReaderDesign.spacing.xSmall)
+            ) {
+                LibraryShelf.entries.forEach { shelf ->
+                    val label = when (shelf) {
+                        LibraryShelf.READING -> R.string.library_shelf_reading
+                        LibraryShelf.FINISHED -> R.string.library_shelf_finished
+                        LibraryShelf.ALL -> R.string.library_shelf_all
+                    }
+                    val count = when (shelf) {
+                        LibraryShelf.READING -> state.shelfCounts.reading
+                        LibraryShelf.FINISHED -> state.shelfCounts.finished
+                        LibraryShelf.ALL -> state.shelfCounts.all
+                    }
+                    val tag = when (shelf) {
+                        LibraryShelf.READING -> "shelfReading"
+                        LibraryShelf.FINISHED -> "shelfFinished"
+                        LibraryShelf.ALL -> "shelfAll"
+                    }
+                    FilterChip(
+                        selected = state.shelf == shelf,
+                        onClick = { onShelfSelect(shelf) },
+                        label = { Text(stringResource(label, count), maxLines = 1) },
+                        modifier = Modifier.testTag(tag)
+                    )
                 }
             }
 
@@ -488,17 +584,21 @@ fun LibraryContent(
                 )
                 state.documents.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (state.isFiltering) stringResource(R.string.library_no_matches_filters)
-                        else stringResource(R.string.library_no_results, state.query),
+                        when {
+                            state.isSearching || state.isFiltering && state.shelfCounts.all == 0 ->
+                                if (state.isFiltering) stringResource(R.string.library_no_matches_filters)
+                                else stringResource(R.string.library_no_results, state.query)
+                            state.shelf == LibraryShelf.FINISHED -> stringResource(R.string.library_finished_empty)
+                            state.shelf == LibraryShelf.READING && state.shelfCounts.finished > 0 ->
+                                stringResource(R.string.library_reading_empty)
+                            else -> stringResource(R.string.library_no_matches_filters)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.medium)
                     )
                 }
                 else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(state.documents, key = { it.id }) { doc ->
-                        LaunchedEffect(doc.id, doc.bodyPath, doc.rawText.length) {
-                            onRequestComprehension(doc)
-                        }
                         LibraryRow(
                             doc,
                             onClick = { if (state.isSelecting) onToggleSelection(doc.id) else onOpen(doc) },
@@ -512,6 +612,7 @@ fun LibraryContent(
                                 onLoadBody(doc) { body -> pendingEditBody = body }
                             },
                             onMoveRequest = { pendingMove = doc },
+                            onLevelRequest = { levelTargets = listOf(doc) },
                             onTagsRequest = { pendingTags = doc },
                             folderName = doc.folderId?.let { folderId ->
                                 pathTo(state.folders, folderId).takeIf { it.isNotEmpty() }
@@ -520,9 +621,12 @@ fun LibraryContent(
                             },
                             tagNames = state.tags.filter { it.id in state.tagIdsByText[doc.id].orEmpty() }.map { it.name },
                             completed = state.completionByTextId[doc.id] == true,
-                            comprehensionPercent = comprehensionScores[doc.id],
                             bodySnippet = state.bodySnippets[doc.id]?.takeIf {
                                 !doc.title.contains(state.query.trim(), ignoreCase = true)
+                            },
+                            onReadMarkRequest = {
+                                onReadMark(listOf(doc.id), if (isTextFinished(doc, state.completionByTextId[doc.id] == true))
+                                    READ_MARK_NOT_FINISHED else READ_MARK_FINISHED)
                             },
                             onDeleteRequest = { pendingDelete = doc }
                         )
@@ -531,6 +635,14 @@ fun LibraryContent(
                 }
             }
         }
+    }
+
+    levelTargets?.let { documents ->
+        SetTextLevelDialog(
+            level = documents.map { it.level }.distinct().singleOrNull(),
+            onDismiss = { levelTargets = null },
+            onSelect = { level -> onSetLevel(documents.map { it.id }, level); levelTargets = null }
+        )
     }
 
     pendingDelete?.let { doc ->
@@ -637,7 +749,7 @@ fun LibraryContent(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LibraryRow(
     doc: TextDocument,
@@ -647,12 +759,13 @@ private fun LibraryRow(
     selectionMode: Boolean,
     onEditRequest: () -> Unit,
     onMoveRequest: () -> Unit,
+    onLevelRequest: () -> Unit,
     onTagsRequest: () -> Unit,
     folderName: String?,
     tagNames: List<String>,
     completed: Boolean,
-    comprehensionPercent: Int?,
     onDeleteRequest: () -> Unit,
+    onReadMarkRequest: () -> Unit,
     bodySnippet: String? = null
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -707,10 +820,8 @@ private fun LibraryRow(
                     ReadingStatus.READ -> stringResource(R.string.library_status_read)
                 }
                 MetadataBadge(text = readLabel)
-                comprehensionPercent?.let {
-                    Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
-                    ComprehensionBadge(it)
-                }
+                Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
+                TextLevelBadge(doc.level)
             }
         }
         if (!selectionMode) Box {
@@ -721,6 +832,24 @@ private fun LibraryRow(
                 )
             }
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.text_level_set)) },
+                    modifier = Modifier.testTag("setLevel_${doc.id}"),
+                    leadingIcon = { Icon(Icons.Default.Stairs, contentDescription = null) },
+                    onClick = { menuExpanded = false; onLevelRequest() }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (isTextFinished(doc, completed))
+                        R.string.library_move_back_reading else R.string.library_mark_finished)) },
+                    modifier = Modifier.testTag("readMark_${doc.id}"),
+                    leadingIcon = {
+                        Icon(
+                            if (isTextFinished(doc, completed)) Icons.AutoMirrored.Filled.Undo else Icons.Default.DoneAll,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = { menuExpanded = false; onReadMarkRequest() }
+                )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_edit)) },
                     leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },

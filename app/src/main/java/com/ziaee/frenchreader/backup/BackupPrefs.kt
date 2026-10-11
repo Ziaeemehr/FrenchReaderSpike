@@ -40,6 +40,24 @@ object BackupPrefs {
         prefs(context).edit().putBoolean(KEY_AUTO_BACKUP_ENABLED, enabled).apply()
     }
 
+    internal fun getLastAutoBackupCounts(context: Context): BackupCounts? {
+        val prefs = prefs(context)
+        if (!prefs.contains("auto_count_vocab")) return null
+        return BackupCounts(prefs.getLong("auto_count_vocab", 0), prefs.getLong("auto_count_texts", 0),
+            prefs.getLong("auto_count_exam_attempts", 0))
+    }
+
+    internal fun setLastAutoBackupCounts(context: Context, counts: BackupCounts) {
+        if (!prefs(context).edit().putLong("auto_count_vocab", counts.vocab)
+                .putLong("auto_count_texts", counts.texts).putLong("auto_count_exam_attempts", counts.examAttempts)
+                .commit()) throw java.io.IOException("Unable to remember backup counts")
+    }
+
+    /** After a restore the remembered counts describe other data; the next backup starts afresh. */
+    internal fun clearLastAutoBackupCounts(context: Context) {
+        prefs(context).edit().remove("auto_count_vocab").remove("auto_count_texts").remove("auto_count_exam_attempts").apply()
+    }
+
     fun getLastAutoBackupAtMs(context: Context): Long? =
         prefs(context).getLong(KEY_LAST_AUTO_BACKUP_AT_MS, -1L).takeIf { it != -1L }
 

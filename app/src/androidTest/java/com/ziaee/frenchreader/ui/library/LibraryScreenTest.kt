@@ -3,6 +3,9 @@ package com.ziaee.frenchreader.ui.library
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -13,6 +16,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.TextDocument
+import com.ziaee.frenchreader.data.READ_MARK_FINISHED
+import com.ziaee.frenchreader.data.READ_MARK_NOT_FINISHED
 import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.ui.theme.ThemeMode
 import org.junit.Assert.assertEquals
@@ -43,7 +48,11 @@ class LibraryScreenTest {
         onDelete: (TextDocument) -> Unit = {},
         onAddText: () -> Unit = {},
         onOpenHome: () -> Unit = {},
-        onQueryChange: (String) -> Unit = {}
+        onQueryChange: (String) -> Unit = {},
+        onShelfSelect: (LibraryShelf) -> Unit = {},
+        onSetLevel: (List<Long>, String?) -> Unit = { _, _ -> },
+        onLevelFilterChange: (LevelFilter) -> Unit = {},
+        onReadMark: (List<Long>, Int) -> Unit = { _, _ -> }
     ) {
         composeRule.setContent {
             FrenchReaderTheme(ThemeMode.LIGHT) {
@@ -51,6 +60,10 @@ class LibraryScreenTest {
                     state = state,
                     onQueryChange = onQueryChange,
                     onSortSelect = {},
+                    onShelfSelect = onShelfSelect,
+                    onReadMark = onReadMark,
+                    onSetLevel = onSetLevel,
+                    onLevelFilterChange = onLevelFilterChange,
                     onOpen = onOpen,
                     onDelete = onDelete,
                     onAddText = onAddText,
@@ -62,10 +75,117 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun rowLevelPickerSelectsCurrentLevelAndAppliesImmediately() {
+        val document = TextDocument(id = 1, title = "Story", rawText = "Text", level = "A2")
+        var chosen: Pair<List<Long>, String?>? = null
+        setLibraryContent(LibraryUiState(documents = listOf(document)), onSetLevel = { ids, level -> chosen = ids to level })
+        composeRule.onNode(hasContentDescription(string(R.string.library_row_more_actions, document.title))).performClick()
+        composeRule.onNodeWithTag("setLevel_1").performClick()
+        // The row behind the dialog also shows "A2"; only the chip inside the dialog is meant.
+        composeRule.onNode(hasText("A2") and hasAnyAncestor(isDialog())).assertIsSelected()
+        composeRule.onNodeWithText("B2").performClick()
+        assertEquals(listOf(1L) to "B2", chosen)
+        composeRule.onNodeWithText(string(R.string.text_level_set)).assertDoesNotExist()
+    }
+
+    @Test
+    fun bulkLevelPickerCanClearLevels() {
+        var chosen: Pair<List<Long>, String?>? = null
+        val document = TextDocument(id = 1, title = "Story", rawText = "Text", level = "A2")
+        setLibraryContent(
+            LibraryUiState(documents = listOf(document), selectedIds = setOf(1L)),
+            onSetLevel = { ids, level -> chosen = ids to level }
+        )
+        composeRule.onNodeWithTag("bulkReadMark").performClick()
+        composeRule.onNodeWithText(string(R.string.text_level_set)).performClick()
+        composeRule.onNodeWithText(string(R.string.text_level_unspecified)).performClick()
+        assertEquals(listOf(1L) to null, chosen)
+    }
+
+    @Test
+    fun levelFilterOffersExistingLevelsAndCurrentSelection() {
+        var chosen: LevelFilter? = null
+        setLibraryContent(
+            LibraryUiState(documents = listOf(TextDocument(title = "Story", rawText = "Text", level = "A2")), levelFilter = LevelFilter.Level("C1")),
+            onLevelFilterChange = { chosen = it }
+        )
+        composeRule.onNodeWithTag("levelFilters").performClick()
+        composeRule.onNodeWithText("B2").assertDoesNotExist()
+        composeRule.onNode(hasText("A2") and hasAnyAncestor(isPopup())).performClick()
+        assertEquals(LevelFilter.Level("A2"), chosen)
+    }
+
+    @Test
+    fun shelfChipsShowCountsAndSelectFinished() {
+        var shelf: LibraryShelf? = null
+        setLibraryContent(
+            LibraryUiState(shelfCounts = LibraryShelfCounts(1, 2)),
+            onShelfSelect = { shelf = it }
+        )
+        composeRule.onNodeWithTag("shelfReading").assertIsSelected()
+        composeRule.onNodeWithText(string(R.string.library_shelf_finished, 2)).assertExists()
+        composeRule.onNodeWithText(string(R.string.library_shelf_all, 3)).assertExists()
+        composeRule.onNodeWithTag("shelfFinished").performClick()
+        assertEquals(LibraryShelf.FINISHED, shelf)
+    }
+
+    @Test
+    fun rowMenuMarksUntouchedTextFinished() {
+        val document = TextDocument(id = 1, title = "New", rawText = "Text")
+        var mark: Pair<List<Long>, Int>? = null
+        setLibraryContent(LibraryUiState(documents = listOf(document)), onReadMark = { ids, value -> mark = ids to value })
+        composeRule.onNode(hasContentDescription(string(R.string.library_row_more_actions, document.title))).performClick()
+        composeRule.onNodeWithText(string(R.string.library_mark_finished)).performClick()
+        assertEquals(listOf(document.id) to READ_MARK_FINISHED, mark)
+    }
+
+    @Test
+    fun finishedRowMenuMovesTextBackToReading() {
+        val document = TextDocument(id = 1, title = "Done", rawText = "Text", readMark = READ_MARK_FINISHED)
+        var mark: Pair<List<Long>, Int>? = null
+        setLibraryContent(
+            LibraryUiState(shelf = LibraryShelf.FINISHED, documents = listOf(document)),
+            onReadMark = { ids, value -> mark = ids to value }
+        )
+        composeRule.onNodeWithText(string(R.string.library_status_read)).assertExists()
+        composeRule.onNode(hasContentDescription(string(R.string.library_row_more_actions, document.title))).performClick()
+        composeRule.onNodeWithText(string(R.string.library_move_back_reading)).performClick()
+        assertEquals(listOf(document.id) to READ_MARK_NOT_FINISHED, mark)
+    }
+
+    @Test
+    fun selectionMenuOffersBothMarksForAllSelectedTexts() {
+        val documents = listOf(doc(1, "First", false), doc(2, "Second", false))
+        var mark: Pair<List<Long>, Int>? = null
+        setLibraryContent(
+            LibraryUiState(documents = documents, selectedIds = setOf(1L, 2L)),
+            onReadMark = { ids, value -> mark = ids to value }
+        )
+        composeRule.onNodeWithTag("bulkReadMark").performClick()
+        composeRule.onNodeWithText(string(R.string.library_mark_finished)).performClick()
+        assertEquals(listOf(1L, 2L) to READ_MARK_FINISHED, mark)
+        composeRule.onNodeWithTag("bulkReadMark").performClick()
+        composeRule.onNodeWithText(string(R.string.library_move_back_reading)).performClick()
+        assertEquals(listOf(1L, 2L) to READ_MARK_NOT_FINISHED, mark)
+    }
+
+    @Test
+    fun finishedShelfEmptyShowsExplanation() {
+        setLibraryContent(LibraryUiState(shelf = LibraryShelf.FINISHED, totalDocumentCount = 1, shelfCounts = LibraryShelfCounts(1, 0)))
+        composeRule.onNodeWithText(string(R.string.library_finished_empty)).assertExists()
+    }
+
+    @Test
+    fun readingShelfEmptyPointsToFinished() {
+        setLibraryContent(LibraryUiState(totalDocumentCount = 2, shelfCounts = LibraryShelfCounts(0, 2)))
+        composeRule.onNodeWithText(string(R.string.library_reading_empty)).assertExists()
+    }
+
+    @Test
     fun populatedStateShowsSearchSortAndDocuments() {
         val document = doc(1L, "Mon article", completed = true)
         setLibraryContent(
-            LibraryUiState(documents = listOf(document), completionByTextId = mapOf(document.id to true))
+            LibraryUiState(shelf = LibraryShelf.FINISHED, documents = listOf(document), completionByTextId = mapOf(document.id to true))
         )
 
         composeRule.onNodeWithText(string(R.string.library_search_hint)).assertExists()
@@ -129,7 +249,7 @@ class LibraryScreenTest {
         var deleteCount = 0
         val document = doc(1L, "Mon article", completed = true)
         setLibraryContent(
-            state = LibraryUiState(documents = listOf(document)),
+            state = LibraryUiState(shelf = LibraryShelf.FINISHED, documents = listOf(document), completionByTextId = mapOf(document.id to true)),
             onDelete = { deleteCount++ }
         )
 

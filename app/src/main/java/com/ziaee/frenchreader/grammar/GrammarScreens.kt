@@ -86,11 +86,15 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.share.shareFileIntent
+import com.ziaee.frenchreader.share.shareSignatureLines
+import com.ziaee.frenchreader.share.writePdf
 import com.ziaee.frenchreader.text.isRtlText
 import com.ziaee.frenchreader.ui.components.MetadataBadge
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import com.ziaee.frenchreader.ui.theme.Vazirmatn
+import java.io.OutputStream
 import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -362,6 +366,13 @@ fun GrammarNoteScreen(id: String, onBack: () -> Unit) {
             snackbar.showSnackbar(context.getString(if (saved) R.string.grammar_save_success else R.string.grammar_save_failure))
         }
     }
+    fun shareFile(name: String, mimeType: String, title: String, write: (OutputStream) -> Unit) {
+        scope.launch {
+            runCatching { withContext(Dispatchers.IO) { shareFileIntent(context, name, mimeType, title, write) } }
+                .onSuccess { context.startActivity(Intent.createChooser(it, context.getString(R.string.grammar_export))) }
+                .onFailure { snackbar.showSnackbar(context.getString(R.string.grammar_share_failure)) }
+        }
+    }
     LaunchedEffect(note?.id) {
         if (note != null) GrammarPrefs.opened(context, note.id)
     }
@@ -396,6 +407,17 @@ fun GrammarNoteScreen(id: String, onBack: () -> Unit) {
                                         putExtra(Intent.EXTRA_SUBJECT, note.titleFr)
                                     }
                                     context.startActivity(Intent.createChooser(intent, context.getString(R.string.grammar_share_text)))
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.grammar_share_markdown)) }, onClick = {
+                                    expanded = false
+                                    shareFile("${note.id}.md", "text/markdown", note.titleFr) { it.write(markdown.toByteArray()) }
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.grammar_share_pdf)) }, onClick = {
+                                    expanded = false
+                                    val blocks = grammarNoteToPdfBlocks(note, labels)
+                                    shareFile("${note.id}.pdf", "application/pdf", note.titleFr) {
+                                        writePdf(context, blocks, shareSignatureLines(labels.appName), it)
+                                    }
                                 })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.grammar_save_markdown)) }, onClick = {
                                     expanded = false

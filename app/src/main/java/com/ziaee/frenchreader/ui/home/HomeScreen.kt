@@ -96,6 +96,7 @@ fun HomeScreen(
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
     onOpenGrammar: () -> Unit = {},
+    onOpenExams: (String) -> Unit = {},
     onStartReview: () -> Unit,
     onOpenStudyLog: () -> Unit = {},
     openAddTextSheet: Boolean = false,
@@ -103,7 +104,6 @@ fun HomeScreen(
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
-    val comprehensionScores by vm.comprehensionScores.collectAsState()
     val studyLogMinutes by vm.studyLogMinutes.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -198,8 +198,6 @@ fun HomeScreen(
 
     HomeContent(
         state = state,
-        comprehensionScores = comprehensionScores,
-        onRequestComprehension = vm::requestComprehension,
         selectedHeadline = vm.selectedHeadline,
         isPreviewImporting = vm.selectedHeadline?.let { state.importingKey == it.articleUrl } ?: false,
         previewHasError = vm.previewImportError,
@@ -225,6 +223,8 @@ fun HomeScreen(
         onStartReview = onStartReview,
         onOpenDataset = onOpenDataset,
         onOpenGrammar = onOpenGrammar,
+        onOpenExams = { onOpenExams(vm.examRoute) },
+        examPracticeCounts = vm.examPracticeCounts,
         onOpenStudyLog = onOpenStudyLog,
         studyLogMinutes = studyLogMinutes
     )
@@ -234,8 +234,8 @@ fun HomeScreen(
         onEpub = importEpub,
         onPdf = extractionImporter.importPdf,
         onImages = extractionImporter.importImages
-    ) { title, body ->
-        vm.pasteText(title.ifBlank { untitledFallback }, body) { id -> onOpenText(id) }
+    ) { title, body, level ->
+        vm.pasteText(title.ifBlank { untitledFallback }, body, level) { id -> onOpenText(id) }
     }
 
     AddSourceSheet(
@@ -273,8 +273,6 @@ fun HomeScreen(
 @Composable
 fun HomeContent(
     state: HomeUiState,
-    comprehensionScores: Map<Long, Int?> = emptyMap(),
-    onRequestComprehension: (com.ziaee.frenchreader.data.TextDocument) -> Unit = {},
     selectedHeadline: HeadlineEntity?,
     isPreviewImporting: Boolean,
     previewHasError: Boolean,
@@ -300,7 +298,9 @@ fun HomeContent(
     onStartReview: () -> Unit,
     onOpenDataset: () -> Unit = {},
     onOpenGrammar: () -> Unit = {},
+    onOpenExams: () -> Unit = {},
     onOpenStudyLog: () -> Unit = {},
+    examPracticeCounts: Pair<Int, Int>? = null,
     studyLogMinutes: Pair<Int, Int> = 0 to 0
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -399,13 +399,9 @@ fun HomeContent(
                 }
                 state.continueReading?.let { doc ->
                     item {
-                        LaunchedEffect(doc.id, doc.bodyPath, doc.rawText.length) {
-                            onRequestComprehension(doc)
-                        }
                         ContinueReadingCard(
                             doc = doc,
                             body = state.bodyByTextId[doc.id].orEmpty(),
-                            comprehensionPercent = comprehensionScores[doc.id],
                             onClick = { onOpenText(doc.id) }
                         )
                     }
@@ -436,11 +432,18 @@ fun HomeContent(
                     )
                 }
                 item {
+                    ExamsCard(
+                        onOpen = onOpenExams,
+                        practiceCounts = examPracticeCounts,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
                     RecentTextsSection(
                         documents = state.recentTexts,
                         bodyByTextId = state.bodyByTextId,
-                        comprehensionScores = comprehensionScores,
-                        onRequestComprehension = onRequestComprehension,
                         onOpen = { onOpenText(it.id) },
                         onSeeAll = onOpenLibrary,
                         onAddText = onAddTextClick

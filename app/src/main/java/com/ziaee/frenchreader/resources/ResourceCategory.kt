@@ -300,6 +300,18 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
             "Informations officielles et sujets d'exemple du DELF et du DALF.",
             "اطلاعات رسمی و نمونه‌آزمون‌های مدرک DELF و DALF.")
     ),
+    DefaultResource(
+        "French-TCF", "https://french-tcf.com", ResourceCategory.EXAMS, 63, "A1–C2",
+        d("TCF Canada speaking and writing subjects reported by candidates, with how often each one came up. Needs an account.",
+            "Sujets d'expression orale et écrite du TCF Canada rapportés par les candidats, avec leur fréquence. Compte requis.",
+            "موضوع‌های گفتاری و نوشتاری TCF کانادا به گزارش داوطلبان، همراه با تعداد تکرار هر موضوع. نیاز به حساب کاربری دارد.")
+    ),
+    DefaultResource(
+        "French-TCF (.ir)", "https://french-tcf.ir", ResourceCategory.EXAMS, 64, "A1–C2",
+        d("The french-tcf.com collection of TCF subjects on its .ir address. Needs an account.",
+            "La collection de sujets TCF de french-tcf.com, à son adresse en .ir. Compte requis.",
+            "مجموعهٔ موضوع‌های TCF سایت french-tcf.com روی نشانی ‎.ir. نیاز به حساب کاربری دارد.")
+    ),
     // Courses
     DefaultResource(
         "Bonjour de France", "https://www.bonjourdefrance.com/", ResourceCategory.COURSES, 70, "A1–C1",

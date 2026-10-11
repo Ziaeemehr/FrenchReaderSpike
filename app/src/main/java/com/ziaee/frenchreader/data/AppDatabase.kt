@@ -285,6 +285,54 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE texts ADD COLUMN readMark INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `exam_attempts` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `examId` TEXT NOT NULL, `questionId` TEXT NOT NULL, `questionFr` TEXT NOT NULL, `answer` TEXT NOT NULL, `score` REAL, `note` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_exam_attempts_examId_questionId` ON `exam_attempts` (`examId`, `questionId`)")
+    }
+}
+
+val MIGRATION_19_20 = object : Migration(19, 20) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE texts ADD COLUMN level TEXT")
+        // A text takes the level of the nearest folder named exactly A1..C2. The folder tree is
+        // small, so it is resolved once here instead of per text in SQL.
+        val names = HashMap<Long, String>()
+        val parents = HashMap<Long, Long?>()
+        db.query("SELECT id, name, parentId FROM library_folders").use { cursor ->
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(0)
+                names[id] = cursor.getString(1)
+                parents[id] = if (cursor.isNull(2)) null else cursor.getLong(2)
+            }
+        }
+        val levels = setOf("A1", "A2", "B1", "B2", "C1", "C2")
+        val foldersByLevel = HashMap<String, MutableList<Long>>()
+        names.keys.forEach { folderId ->
+            var current: Long? = folderId
+            var steps = 0
+            // The step limit guards against a parent cycle in damaged data.
+            while (current != null && steps++ <= names.size) {
+                val level = names[current]?.trim()?.uppercase()
+                if (level in levels) {
+                    foldersByLevel.getOrPut(level!!) { mutableListOf() }.add(folderId)
+                    break
+                }
+                current = parents[current]
+            }
+        }
+        foldersByLevel.forEach { (level, folderIds) ->
+            folderIds.chunked(500).forEach { chunk ->
+                db.execSQL(
+                    "UPDATE texts SET level = ? WHERE level IS NULL AND folderId IN (${chunk.joinToString(",")})",
+                    arrayOf(level)
+                )
+            }
+        }
+    }
+}
+
 /**
  * Triggers that mirror `texts` into `texts_fts`. A file-backed text has rawText = "", so on update
  * its indexed body is left alone (Kotlin writes it). Created on every open (IF NOT EXISTS) so fresh
@@ -321,7 +369,7 @@ val TEXT_SEARCH_CALLBACK = object : RoomDatabase.Callback() {
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
     MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
-    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18
+    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
 )
 
 @Database(
@@ -329,13 +377,14 @@ val ALL_MIGRATIONS = arrayOf(
         TextDocument::class, HeadlineEntity::class, VocabEntry::class, VocabList::class,
         ReviewLogEntry::class, ActivityLogEntry::class, ResourceLink::class,
         LibraryFolder::class, LibraryTag::class, TextTagCrossRef::class, HighlightEntry::class,
-        ShadowAttempt::class, TextSearchEntry::class, StudySource::class, StudySession::class
+        ShadowAttempt::class, TextSearchEntry::class, StudySource::class, StudySession::class, ExamAttempt::class
     ],
     version = AppDatabase.SCHEMA_VERSION,
     exportSchema = false
 )
 @TypeConverters(StudyLogConverters::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun examAttemptDao(): ExamAttemptDao
     abstract fun studyLogDao(): StudyLogDao
     abstract fun textDao(): TextDao
     abstract fun headlineDao(): HeadlineDao
@@ -349,7 +398,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shadowAttemptDao(): ShadowAttemptDao
 
     companion object {
-        const val SCHEMA_VERSION = 18
+        const val SCHEMA_VERSION = 20
 
         @Volatile private var INSTANCE: AppDatabase? = null
 

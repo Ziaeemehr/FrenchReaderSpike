@@ -1,5 +1,6 @@
 package com.ziaee.frenchreader.content
 
+import com.ziaee.frenchreader.text.normalizeTextLevel
 import android.content.Context
 import androidx.room.withTransaction
 import com.ziaee.frenchreader.data.AppDatabase
@@ -136,6 +137,7 @@ class DatasetRepository(
                             sourceUrl = story.sourceUrl,
                             externalKey = story.key,
                             folderId = level,
+                            level = normalizeTextLevel(pack.level),
                             imagePath = stored
                         ),
                         body

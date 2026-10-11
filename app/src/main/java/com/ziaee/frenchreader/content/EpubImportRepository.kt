@@ -1,8 +1,10 @@
 package com.ziaee.frenchreader.content
 
+import com.ziaee.frenchreader.text.normalizeTextLevel
 import android.content.Context
 import android.net.Uri
 import androidx.room.withTransaction
+import com.ziaee.frenchreader.text.levelForFolder
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.TextBodyStorage
@@ -31,7 +33,9 @@ class EpubImportRepository(
     private val imageStore: ArticleImageStorage = ArticleImageStore(context),
     private val bodyStore: TextBodyStorage = TextBodyStore(context)
 ) {
-    suspend fun import(uri: Uri): EpubImportResult = withContext(Dispatchers.IO) {
+    suspend fun import(uri: Uri, folderId: Long? = null, level: String? = null): EpubImportResult = withContext(Dispatchers.IO) {
+        val textLevel = normalizeTextLevel(level)
+            ?: db.libraryOrganizerDao().levelForFolder(folderId)
         val displayName = queryDisplayName(context, uri)
         val book = context.contentResolver.openInputStream(uri)?.use { EpubReader.read(it) }
             ?: throw EpubFormatException("unable to open EPUB")
@@ -44,7 +48,7 @@ class EpubImportRepository(
         val externalKey = "epub:$identifierHash"
 
         db.textDao().findByExternalKey(externalKey)?.let { existing ->
-            return@withContext EpubImportResult(null, bookTitle, existing.id, 0, 0)
+            return@withContext EpubImportResult(existing.folderId, bookTitle, existing.id, 0, 0)
         }
         val stagingDir = File(context.cacheDir, "epub-import-${UUID.randomUUID()}").apply { mkdirs() }
         val writtenPaths = mutableListOf<String>()
@@ -78,15 +82,15 @@ class EpubImportRepository(
                 val textDao = db.textDao()
                 textDao.findByExternalKey(externalKey)?.let { existing ->
                     writtenPaths.forEach { imageStore.delete(it) }
-                    return@withTransaction EpubImportResult(null, bookTitle, existing.id, 0, 0)
+                    return@withTransaction EpubImportResult(existing.folderId, bookTitle, existing.id, 0, 0)
                 }
                 val id = insertTextDocument(
                     textDao, bodyStore,
                     TextDocument(title = bookTitle, rawText = "", sourceName = bookTitle,
-                        externalKey = externalKey, imagePath = coverPath),
+                        externalKey = externalKey, imagePath = coverPath, folderId = folderId, level = textLevel),
                     stagedBody.readText(Charsets.UTF_8)
                 )
-                EpubImportResult(null, bookTitle, id, book.chapters.size, 0)
+                EpubImportResult(folderId, bookTitle, id, book.chapters.size, 0)
             }
         } catch (error: Exception) {
             writtenPaths.forEach { runCatching { imageStore.delete(it) } }

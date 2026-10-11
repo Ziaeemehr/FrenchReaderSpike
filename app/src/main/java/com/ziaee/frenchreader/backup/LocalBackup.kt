@@ -150,7 +150,11 @@ object LocalBackup {
         restoreArchive(context, archive)
     }
 
-    private fun restoreArchive(context: Context, archive: File): Boolean {
+    private suspend fun restoreArchive(context: Context, archive: File): Boolean = AutoBackup.withBackupLock {
+        restoreArchiveLocked(context, archive)
+    }
+
+    private suspend fun restoreArchiveLocked(context: Context, archive: File): Boolean {
         val stagingRoot = File(context.filesDir, ".backup-restore-${UUID.randomUUID()}")
         val candidateDb = File(stagingRoot, DATABASE_ENTRY)
         try {
@@ -162,7 +166,12 @@ object LocalBackup {
             }
             if (!validateDatabase(candidateDb)) return false
             if (includesFiles) FILE_DIRECTORIES.forEach { File(stagingRoot, it).mkdirs() }
+            // Best effort: when the current data cannot even be read (the case a restore is for),
+            // there is nothing to set aside and the restore must still go through.
+            runCatching { AutoBackup.protectCurrentState(context) }
+                .onFailure { android.util.Log.w("LocalBackup", "No safety backup before restore", it) }
             swapIntoPlace(context, candidateDb, stagingRoot, includesFiles)
+            BackupPrefs.clearLastAutoBackupCounts(context)
             File(stagingRoot, SETTINGS_ENTRY).takeIf(File::isFile)?.let { restoreSettings(context, deserializeSettings(it.readText())) }
             GrammarPrefs.reload(context)
             return true

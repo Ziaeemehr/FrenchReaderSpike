@@ -40,6 +40,9 @@ class Migration15To16Test {
                 // v17 columns, so the chain 15 -> 16 -> 17 runs from a true v15 shape.
                 execSQL("ALTER TABLE resources DROP COLUMN description")
                 execSQL("ALTER TABLE resources DROP COLUMN level")
+                // Columns added after v18, so the later steps of the chain can add them again.
+                execSQL("ALTER TABLE texts DROP COLUMN readMark")
+                execSQL("ALTER TABLE texts DROP COLUMN level")
                 version = 15
             }
             close()
@@ -82,6 +85,9 @@ class Migration15To16Test {
             openHelper.writableDatabase.apply {
                 execSQL("ALTER TABLE resources DROP COLUMN description")
                 execSQL("ALTER TABLE resources DROP COLUMN level")
+                // Columns added after v18, so the later steps of the chain can add them again.
+                execSQL("ALTER TABLE texts DROP COLUMN readMark")
+                execSQL("ALTER TABLE texts DROP COLUMN level")
                 version = 16
             }
             close()

@@ -1,6 +1,13 @@
 package com.ziaee.frenchreader.ui
 
 import android.app.Application
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalContext
+import com.ziaee.frenchreader.shadowing.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -63,6 +70,49 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private val ttsRepo = TtsChunkRepository(app)
     private val translationRepo = TranslationRepository(app)
     private val player = ExoPlayer.Builder(app).build()
+    var pronunciationEnabled by mutableStateOf(ShadowingPrefs.getCardPractice(context)); private set
+    private var pronunciationStats by mutableStateOf(CardPronunciationStats())
+    val pronunciationAccuracy get() = pronunciationStats.accuracy
+    private val shadowingController = ShadowingController(
+        scope = viewModelScope,
+        engineFactory = {
+            when (ShadowingPrefs.getEngine(context)) {
+                SpeechEngineKind.VOSK -> VoskEngine(VoskModelManager(context).modelDir)
+                SpeechEngineKind.ANDROID -> AndroidSpeechEngine(context)
+            }
+        },
+        saveAttempt = {
+            db.shadowAttemptDao().insert(it)
+            pronunciationStats = pronunciationStats.after(it.matched, it.total)
+        },
+        addStudyTimeMs = {},
+        now = System::currentTimeMillis,
+        isPlaying = { player.isPlaying || player.playWhenReady }
+    )
+    val shadowing = shadowingController.state
+
+    fun setPronunciation(enabled: Boolean) {
+        pronunciationEnabled = enabled
+        ShadowingPrefs.setCardPractice(context, enabled)
+        shadowingController.setEnabled(enabled)
+        current?.let(::setShadowTarget)
+    }
+
+    private fun setShadowTarget(entry: VocabEntry) {
+        shadowingController.setTarget(0, SentenceRef(CARD_SHADOW_CHUNK, entry.id.toInt()),
+            flashcardShadowText(entry).orEmpty(), 0)
+    }
+
+    fun startCardRecording(): Boolean {
+        if (current?.let(::flashcardShadowText) == null) return false
+        audioJob?.cancel()
+        player.pause()
+        return shadowingController.pressStart()
+    }
+    fun endCardRecording() = shadowingController.pressEnd()
+    fun cancelCardRecording() = shadowingController.cancel()
+    fun replayCardRecording() = shadowingController.replayMine()
+
     private val voiceCache = HashMap<Long, Pair<String, Int>>()
     private val queue = mutableListOf<VocabEntry>()
     private val completedIds = mutableSetOf<Long>()
@@ -91,6 +141,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     internal val currentSlot: CardSlot? get() = slot
     val current: VocabEntry? get() = slot?.entry
     private fun show(entry: VocabEntry?) {
+        shadowingController.cancel()
+        entry?.let(::setShadowTarget)
         sentenceTranslation = null
         sentenceTranslationLoading = false
         sentenceTranslationError = false
@@ -192,6 +244,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
             completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
             cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+            pronunciationStats = CardPronunciationStats()
             sessionStartedAtMs = now
             show(queue.removeFirstOrNull())
             stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
@@ -213,6 +266,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             totalCards = result.total
             cardsReviewed = completedIds.size
             applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+            pronunciationStats = CardPronunciationStats()
             sessionStartedAtMs = System.currentTimeMillis()
             show(queue.removeFirstOrNull())
             stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
@@ -275,6 +329,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     fun undo() {
         val r = undoRecord ?: return
         if (current == null || undoing) return
+        shadowingController.cancel()
         undoing = true
         canUndo = false
         viewModelScope.launch {
@@ -310,6 +365,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         val old = slot.entry
         val edited = old.copy(word = word, meaning = meaning, sentence = sentence)
         slot.entry = edited
+        setShadowTarget(edited)
         val r = undoRecord
         var requeued = r?.requeued
         if (old === requeued) requeued = edited
@@ -430,6 +486,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             VocabPrefs.addStudyTimeMs(context, localDateFor(now), now - sessionStartedAtMs)
             sessionInProgress = false
         }
+        shadowingController.release()
         player.release()
         super.onCleared()
     }
@@ -440,6 +497,36 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Unit) {
     val vm: VocabReviewViewModel = viewModel()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val uiScope = rememberCoroutineScope()
+    val micDenied = stringResource(R.string.shadowing_mic_denied)
+    val modelRequired = stringResource(R.string.review_pronunciation_model_required)
+    val settingsLabel = stringResource(R.string.review_open_settings)
+    fun enablePronunciationChecked() {
+        if (ShadowingPrefs.getEngine(context) == SpeechEngineKind.VOSK && !VoskModelManager(context).isInstalled()) {
+            vm.setPronunciation(false)
+            uiScope.launch {
+                if (snackbar.showSnackbar(modelRequired, settingsLabel) == SnackbarResult.ActionPerformed) onOpenSettings()
+            }
+        } else vm.setPronunciation(true)
+    }
+    val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted && vm.stage == ReviewStage.REVIEW) enablePronunciationChecked()
+        else if (!granted) {
+            vm.setPronunciation(false)
+            uiScope.launch { snackbar.showSnackbar(micDenied) }
+        }
+    }
+    fun enablePronunciation() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            enablePronunciationChecked()
+        } else micPermission.launch(Manifest.permission.RECORD_AUDIO)
+    }
+    LaunchedEffect(vm.stage) {
+        if (vm.stage == ReviewStage.REVIEW && vm.pronunciationEnabled) enablePronunciation()
+        else if (vm.stage != ReviewStage.REVIEW) vm.cancelCardRecording()
+    }
+    DisposableEffect(vm) { onDispose { vm.cancelCardRecording() } }
     // Reveal state is keyed by entry instance (identity): each presentation is a distinct object
     // (answer() re-queues a copy), so the outgoing card keeps its state and a returning card starts unrevealed.
     var revealedEntry by remember { newRevealedEntryState() }
@@ -484,7 +571,7 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     } }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }, actions = { if (vm.stage == ReviewStage.REVIEW) IconButton(onClick = vm::undo, enabled = vm.canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.review_undo)) }; IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, stringResource(R.string.review_open_settings)) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.vocab_review_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } }, actions = { if (vm.stage == ReviewStage.REVIEW) IconToggleButton(checked = vm.pronunciationEnabled, onCheckedChange = { if (it) enablePronunciation() else vm.setPronunciation(false) }) { Icon(Icons.Default.Mic, stringResource(R.string.review_pronunciation_practice)) }; if (vm.stage == ReviewStage.REVIEW) IconButton(onClick = vm::undo, enabled = vm.canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.review_undo)) }; IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, stringResource(R.string.review_open_settings)) } }) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp)) {
             when {
@@ -686,6 +773,11 @@ private fun ReviewCard(
             onDictionary = onDictionary,
             onEdit = onEdit
         )
+        if (revealed && interactive && vm.pronunciationEnabled && flashcardShadowText(entry) != null) {
+            val shadowState by vm.shadowing.collectAsState()
+            CardShadowingRow(shadowState, vm::startCardRecording, vm::endCardRecording,
+                vm::cancelCardRecording, vm::replayCardRecording)
+        }
         Spacer(Modifier.height(14.dp))
         if (!revealed) Button(onClick = onReveal, enabled = interactive, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.vocab_reveal_meaning)) }
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -717,6 +809,7 @@ private fun ReviewCard(
         SummaryLine(R.string.review_summary_cards, vm.cardsReviewedToday.toString())
         SummaryLine(R.string.review_summary_forward, vm.movedForwardToday.toString())
         SummaryLine(R.string.review_summary_returned, vm.returnedToBoxOneToday.toString())
+        vm.pronunciationAccuracy?.let { SummaryLine(R.string.review_summary_pronunciation, "$it%") }
         SummaryLine(R.string.review_summary_time, formatDuration(vm.studyTimeMs))
         SummaryLine(R.string.review_summary_next, vm.nextScheduledAtMs?.let(::formatDate) ?: "—")
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) { Text(stringResource(R.string.action_close)) }

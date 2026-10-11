@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.room.withTransaction
+import com.ziaee.frenchreader.text.levelForFolder
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.LibraryFolder
 import com.ziaee.frenchreader.data.TextBodyStorage
@@ -43,29 +44,29 @@ class BatchImportRepository(
     private val epubRepository: EpubImportRepository = EpubImportRepository(context, db),
     private val imageStore: ArticleImageStorage = ArticleImageStore(context)
 ) {
-    suspend fun importAll(uris: List<Uri>, folderName: String? = null): BatchImportResult =
+    suspend fun importAll(uris: List<Uri>, folderName: String? = null, destinationFolderId: Long? = null): BatchImportResult =
         withContext(Dispatchers.IO) {
-            importUris(uris, if (uris.size > 1) folderName ?: datedFolderName() else null)
+            importUris(uris, if (uris.size > 1) folderName ?: datedFolderName() else null, destinationFolderId = destinationFolderId)
         }
 
-    suspend fun importTree(treeUri: Uri): BatchImportResult = withContext(Dispatchers.IO) {
+    suspend fun importTree(treeUri: Uri, destinationFolderId: Long? = null): BatchImportResult = withContext(Dispatchers.IO) {
         val name = queryTreeName(treeUri) ?: datedFolderName()
-        importUris(listTreeFiles(treeUri), name, treeUri)
+        importUris(listTreeFiles(treeUri), name, treeUri, destinationFolderId)
     }
 
-    private suspend fun importUris(uris: List<Uri>, folderName: String?, treeUri: Uri? = null): BatchImportResult {
-            val folderId = folderName?.let { createFolder(it) }
+    private suspend fun importUris(uris: List<Uri>, folderName: String?, treeUri: Uri? = null, destinationFolderId: Long? = null): BatchImportResult {
+            val folderId = folderName?.let { createFolder(it, destinationFolderId) } ?: destinationFolderId
+            val level = db.libraryOrganizerDao().levelForFolder(folderId)
             var imported = 0
             var skipped = 0
             var failed = 0
             uris.forEach { uri ->
                 try {
                     if (isEpub(uri)) {
-                        val result = epubRepository.import(uri)
-                        if (result.importedCount > 0) result.firstTextId?.let { db.textDao().setFolder(it, folderId) }
+                        val result = epubRepository.import(uri, folderId, level)
                         if (result.importedCount == 0) skipped++ else imported++
                     } else {
-                        when (importText(uri, folderId, treeUri)) {
+                        when (importText(uri, folderId, treeUri, level)) {
                             true -> imported++
                             false -> skipped++
                         }
@@ -77,7 +78,7 @@ class BatchImportRepository(
             return BatchImportResult(imported, skipped, failed, folderId)
     }
 
-    private suspend fun importText(uri: Uri, folderId: Long?, treeUri: Uri?): Boolean {
+    private suspend fun importText(uri: Uri, folderId: Long?, treeUri: Uri?, level: String?): Boolean {
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytesLimited(MAX_TEXT_IMPORT_BYTES) }
             ?: error("Unable to open document")
         val content = bytes.toString(Charsets.UTF_8)
@@ -100,7 +101,7 @@ class BatchImportRepository(
                     db.textDao(), bodyStore,
                     TextDocument(
                         title = parsed.title?.takeIf { it.isNotBlank() } ?: displayName.substringBeforeLast('.'),
-                        rawText = "", sourceName = displayName, externalKey = externalKey, folderId = folderId
+                        rawText = "", sourceName = displayName, externalKey = externalKey, folderId = folderId, level = level
                     ),
                     stagedBody.readText(Charsets.UTF_8)
                 )
@@ -167,9 +168,9 @@ class BatchImportRepository(
         return null
     }
 
-    private suspend fun createFolder(name: String): Long = db.withTransaction {
+    private suspend fun createFolder(name: String, parentId: Long?): Long = db.withTransaction {
         val cleanName = name.trim().ifBlank { datedFolderName() }
-        db.libraryOrganizerDao().insertFolder(LibraryFolder(name = cleanName))
+        db.libraryOrganizerDao().insertFolder(LibraryFolder(name = cleanName, parentId = parentId))
     }
 
     private fun isEpub(uri: Uri): Boolean {

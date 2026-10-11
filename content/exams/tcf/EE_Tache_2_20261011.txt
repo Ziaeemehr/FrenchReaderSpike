@@ -1,0 +1,793 @@
+﻿================================================================================
+  Expression Écrite (EE) — Tâche 2 : Rédaction d'un article
+  Export date: 2026-10-11 09:52
+  Total subjects: 78
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  #1  |  Frequency: 32  |  Months: août 2026 | avril 2024 | avril 2025 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2023 | juin 2024 | juin 2025 | juin 2026 | mai 2026 | mars 2024 | mars 2026 | novembre 2024 | octobre 2023 | octobre 2026 | septembre 2023 | septembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Dans votre blog, racontez votre expérience de l’apprentissage d’une langue étrangère (vous écrivez sur un forum internet en racontant votre expérience en apprenant une langue étrangère).
+
+  ترجمه فارسی:
+  در وبلاگ خود، تجربهٔ خود از یادگیری یک زبان خارجی را بازگو کنید (شما در یک انجمن اینترنتی می‌نویسید و تجربه‌تان در یادگیری یک زبان خارجی را بیان می‌کنید).
+
+────────────────────────────────────────────────────────────────────────────────
+  #2  |  Frequency: 25  |  Months: aout 2025 | août 2026 | avril 2026 | fevrier 2025 | janvier 2024 | janvier 2026 | juillet 2024 | juillet 2025 | juin 2023 | juin 2026 | mai 2023 | mai 2026 | mars 2026 | novembre 2025 | octobre 2023 | octobre 2024 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à un concours pour gagner un séjour de deux semaines dans votre ville préférée. Le thème de ce concours est “Mon artiste préféré“. Écrivez un article de blog pour parler de votre artiste préféré.
+
+  ترجمه فارسی:
+  شما در یک مسابقه شرکت کرده‌اید تا یک اقامت دو هفته‌ای در شهر مورد علاقه‌تان را برنده شوید. موضوع این مسابقه «هنرمندِ مورد علاقه‌ام» است. یک پست وبلاگی بنویسید و دربارهٔ هنرمند مورد علاقه‌تان صحبت کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #3  |  Frequency: 21  |  Months: aout 2024 | avril 2025 | avril 2026 | decembre 2023 | decembre 2024 | decembre 2025 | fevrier 2026 | janvier 2025 | juillet 2024 | juillet 2026 | juin 2023 | juin 2024 | juin 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | novembre 2023 | octobre 2024 | octobre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à une brocante (achat / vente de produits d’occasion) dans votre ville. Sur votre blog personnel, racontez pourquoi vous avez aimé cette activité.
+
+  ترجمه فارسی:
+  شما در یک بروکانت (خرید و فروش کالاهای دست‌دوم) در شهر خود شرکت کردید. در وبلاگ شخصی‌تان توضیح دهید چرا از این فعالیت لذت بردید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #4  |  Frequency: 21  |  Months: avril 2025 | decembre 2025 | fevrier 2025 | fevrier 2026 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | mai 2025 | mai 2026 | mars 2026 | novembre 2024 | octobre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  COURRIER DES LECTEURS Tout quitter pour partir en voyage pendant un an : bonne ou mauvaise idée ? Répondez sur notre site Internet : “voyage.internaute.fr”. Vous écrivez un message sur ce site internet, vous répondez à la question posée en prenant des exemples de votre vie personnelle.
+
+  ترجمه فارسی:
+  نامه‌های خوانندگان: ترک همه چیز و سفر یک‌ساله — ایده‌ای خوب یا بد؟ در وب‌سایت ما پاسخ دهید: «voyage. internaute. fr». شما پیامی در این وب‌سایت می‌نویسید؛ به پرسش مطرح‌شده پاسخ دهید و از مثال‌هایی از زندگی شخصی‌تان استفاده کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #5  |  Frequency: 19  |  Months: août 2026 | avril 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2024 | juin 2025 | juin 2026 | mai 2023 | mai 2024 | mai 2026 | mars 2024 | mars 2025 | mars 2026 | novembre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Exprimez votre admiration pour une personnalité, célèbre ou non, en vous appuyant sur ses actions spécifiques. Rédigez un article de blog en détaillant les actions remarquables de cette personne et expliquez pourquoi vous l’aimez.
+
+  ترجمه فارسی:
+  تحسین خود را نسبت به یک شخصیت، معروف یا غیرمعروف، با تکیه بر اقدامات مشخص او ابراز کنید. یک پست وبلاگی بنویسید و اقدامات قابل توجه این شخص را با جزئیات شرح دهید و توضیح دهید چرا او را دوست دارید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #6  |  Frequency: 19  |  Months: aout 2025 | avril 2024 | avril 2025 | fevrier 2025 | janvier 2024 | juillet 2024 | juillet 2026 | juin 2023 | juin 2024 | juin 2026 | mai 2024 | mai 2026 | mars 2024 | novembre 2025 | octobre 2024 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous faites une réclamation par rapport aux mauvaises prestations d’une agence de voyages suite à un voyage mal organisé. Exprimez votre mécontentement.
+
+  ترجمه فارسی:
+  شما به‌خاطر خدمات نامناسب یک آژانس مسافرتی پس از یک سفر بد سازماندهی‌شده شکایتی مطرح می‌کنید. نارضایتی خود را ابراز کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #7  |  Frequency: 19  |  Months: aout 2024 | aout 2025 | avril 2025 | avril 2026 | decembre 2024 | fevrier 2025 | juillet 2024 | juillet 2025 | mai 2023 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | octobre 2023 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez assisté à un événement intitulé « Une semaine sans voiture ». Racontez votre expérience et donnez votre impression sur cette initiative. Décrivez le déroulement de l’événement (dates, lieu, activités proposées).
+
+  ترجمه فارسی:
+  شما در رویدادی با عنوان «هفته‌ای بدون خودرو» شرکت کرده‌اید. تجربهٔ خود را روایت کنید و نظر خود را دربارهٔ این ابتکار بیان کنید. روند برگزاری رویداد را توصیف کنید (تاریخ‌ها، مکان، فعالیت‌های ارائه‌شده).
+
+────────────────────────────────────────────────────────────────────────────────
+  #8  |  Frequency: 19  |  Months: avril 2025 | avril 2026 | decembre 2023 | decembre 2024 | fevrier 2025 | juillet 2024 | juillet 2026 | juin 2023 | juin 2026 | mai 2023 | mai 2026 | novembre 2023 | octobre 2024 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez déjà étudié dans une université à l’étranger. Écrivez un article sur votre blog pour raconter cette expérience.
+
+  ترجمه فارسی:
+  شما قبلاً در دانشگاهی در خارج از کشور تحصیل کرده‌اید. یک پست در وبلاگ خود بنویسید تا این تجربه را بازگو کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #9  |  Frequency: 18  |  Months: aout 2025 | août 2026 | avril 2024 | avril 2025 | janvier 2025 | janvier 2026 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2024 | juin 2025 | mai 2026 | mars 2024 | mars 2025 | novembre 2024 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Chers internautes, J’ai 19 ans, je vais bientôt partir à l’étranger pour continuer mes études. J’aimerais bien lire les témoignages et avis des étudiants qui ont déjà fait des études loin de chez eux. Merci de me répondre. Julie »Vous avez fait des études à l’étranger pendant un an. Vous écrivez une réponse sur le forum. Vous racontez votre séjour à l’étranger, vous dites si vous avez aimé ou non cette expérience et vous dites pourquoi.
+
+  ترجمه فارسی:
+  کاربران گرامی اینترنت، من ۱۹ سال دارم و به‌زودی برای ادامهٔ تحصیلاتم به خارج از کشور خواهم رفت. دوست دارم تجربه‌ها و نظرات دانشجویانی را بخوانم که قبلاً دور از خانه تحصیل کرده‌اند. لطفاً پاسخ دهید. ژولی
+
+شما یک سال در خارج از کشور تحصیل کرده‌اید. اکنون یک پاسخ در انجمن می‌نویسید. در پاسخ‌تان دربارهٔ اقامت‌تان در خارج از کشور توضیح می‌دهید، می‌گویید آیا از این تجربه خوش‌تان آمد یا نه و دلایل خود را مطرح می‌کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #10  |  Frequency: 18  |  Months: août 2026 | avril 2025 | decembre 2023 | decembre 2024 | fevrier 2026 | janvier 2025 | janvier 2026 | juillet 2024 | juillet 2026 | juin 2024 | juin 2025 | juin 2026 | mai 2026 | novembre 2023 | novembre 2024 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez été invité(e) à une fête en famille. Vous envoyez un message à vos amis pour raconter cette fête. Vous expliquez ce que vous avez le plus aimé.
+
+  ترجمه فارسی:
+  شما به یک مهمانی خانوادگی دعوت شده‌اید. برای دوستانتان پیامی می‌فرستید تا این مهمانی را برایشان بازگو کنید. توضیح می‌دهید بیش از همه چه چیزی را دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #11  |  Frequency: 16  |  Months: aout 2025 | avril 2025 | avril 2026 | decembre 2023 | decembre 2024 | fevrier 2025 | juillet 2024 | juillet 2025 | juillet 2026 | mai 2023 | mai 2026 | mars 2024 | novembre 2023 | novembre 2024 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez quitté la ville afin de vous installer à la campagne. Sur votre blog, vous expliquez pourquoi vous avez fait ce choix et vous présentez les avantages de votre nouvelle vie.
+
+  ترجمه فارسی:
+  شما شهر را ترک کرده‌اید تا در مناطق روستایی ساکن شوید. در وبلاگ‌تان توضیح می‌دهید چرا این انتخاب را انجام داده‌اید و مزایای زندگی جدیدتان را بیان می‌کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #12  |  Frequency: 15  |  Months: août 2026 | avril 2025 | avril 2026 | fevrier 2025 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | novembre 2024 | octobre 2023 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez lu sur un forum un débat concernant les formations en ligne. Écrivez un message en décrivant votre expérience (cours de langue, formation professionnelle, etc.). Donnez votre avis sur ce que vous avez aimé et ce que vous n’avez pas.
+
+  ترجمه فارسی:
+  شما در یک انجمن بحثی دربارهٔ دوره‌های آموزشی آنلاین خوانده‌اید. یک پیام بنویسید و تجربهٔ خود را توصیف کنید (دوره‌های زبان، آموزش‌های حرفه‌ای و غیره). نظر خود را دربارهٔ آنچه دوست داشتید و آنچه دوست نداشتید بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #13  |  Frequency: 14  |  Months: decembre 2023 | decembre 2025 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2025 | juin 2026 | mai 2026 | novembre 2023 | octobre 2025 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  INFOS FAMILLES Vivre avec une personne âgée : comment faire ? Notre site cherche des témoignages. Vous avez vécu avec une personne âgée. Vous racontez votre expérience.
+
+  ترجمه فارسی:
+  اطلاعات خانواده: زندگی با یک فرد سالمند؛ چگونه باید عمل کرد؟ وب‌سایت ما در جست‌وجوی دریافت تجربیات و روایت‌هاست. شما با یک فرد سالمند زندگی کرده‌اید. تجربه‌تان را بازگو کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #14  |  Frequency: 14  |  Months: decembre 2024 | decembre 2025 | fevrier 2026 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | mai 2023 | mai 2026 | mars 2025 | mars 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous travaillez dans une association qui aide les personnes âgées. Rédigez un article de blog pour raconter vos expériences et convaincre d’autres personnes de rejoindre l’association.
+
+  ترجمه فارسی:
+  شما در یک انجمن کار می‌کنید که به سالمندان کمک می‌کند. یک مقاله برای وبلاگ بنویسید تا تجربیات‌تان را بازگو کنید و دیگران را قانع کنید که به آن انجمن بپیوندند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #15  |  Frequency: 14  |  Months: août 2026 | avril 2024 | decembre 2024 | janvier 2025 | juillet 2024 | juin 2023 | juin 2024 | mai 2026 | mars 2024 | mars 2025 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez assisté à une fête de voisins du quartier, écrivez un blog pour montrer pourquoi vous avez aimé cette fête.
+
+  ترجمه فارسی:
+  شما در یک جشن همسایگی در محله شرکت کرده‌اید؛ یک پست وبلاگی بنویسید تا نشان دهید چرا از این جشن خوش‌تان آمده است.
+
+────────────────────────────────────────────────────────────────────────────────
+  #16  |  Frequency: 14  |  Months: août 2026 | decembre 2024 | fevrier 2025 | juillet 2024 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre direction est à la recherche d’une salle pour la fête de fin d’année, capable d’accueillir 100 invités. Rédigez un message à la direction pour lui dire que vous avez trouvé un local idéal. (lieu, tarifs, services, etc.).
+
+  ترجمه فارسی:
+  مدیریت شما به دنبال یک سالن برای جشن پایان سال است که ظرفیت پذیرش ۱۰۰ مهمان را داشته باشد. پیامی به مدیریت بنویسید و اطلاع دهید که مکانی ایده‌آل یافته‌اید (محل، تعرفه‌ها، خدمات و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #17  |  Frequency: 13  |  Months: aout 2024 | août 2026 | avril 2026 | juillet 2026 | juin 2026 | mai 2023 | mai 2026 | mars 2025 | mars 2026 | novembre 2024 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à un événement qui vous a marqué (anniversaire, mariage, etc.). Racontez votre souvenir en décrivant ce qui vous a le plus marqué.
+
+  ترجمه فارسی:
+  شما در رویدادی شرکت کرده‌اید که تأثیری عمیق بر شما گذاشته است (تولد، عروسی و غیره). خاطرهٔ خود را بازگو کنید و توصیف نمایید چه چیزی بیش از همه شما را تحت تأثیر قرار داده است.
+
+────────────────────────────────────────────────────────────────────────────────
+  #18  |  Frequency: 12  |  Months: avril 2025 | avril 2026 | fevrier 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | juillet 2025 | juillet 2026 | juin 2026 | mai 2026 | novembre 2024 | octobre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à un cours de sport dans une salle. Écrivez un article dans votre blog parlant de cette expérience et en exprimant également votre avis par rapport à cette salle.
+
+  ترجمه فارسی:
+  شما در یک کلاس ورزشی در یک سالن شرکت کرده‌اید. یک مطلب در وبلاگ‌تان بنویسید که در آن تجربه خود را توصیف کنید و همچنین نظر خود را دربارهٔ آن سالن بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #19  |  Frequency: 12  |  Months: decembre 2024 | fevrier 2024 | fevrier 2025 | fevrier 2026 | janvier 2025 | juillet 2024 | juillet 2025 | juin 2023 | juin 2025 | mai 2023 | mai 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un article de blog pour raconter votre arrivée dans un pays étranger en donnant vos impressions.
+
+  ترجمه فارسی:
+  یک مطلب وبلاگی بنویسید تا ورودتان به یک کشور خارجی را بازگو کنید و برداشت‌ها و احساسات خود را بیان نمایید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #20  |  Frequency: 11  |  Months: aout 2025 | decembre 2025 | juillet 2025 | juin 2025 | juin 2026 | mai 2026 | novembre 2025 | octobre 2025 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez assisté à un festival de cinéma. Vous avez vu plusieurs films. Sur votre site personnel, vous racontez le film que vous avez préféré. Vous expliquez votre choix.
+
+  ترجمه فارسی:
+  شما در یک جشنواره سینمایی شرکت کردید. چندین فیلم دیدید. در وب‌سایت شخصی‌تان دربارهٔ فیلمی که بیشتر از همه دوست داشتید می‌نویسید و دلیل انتخاب‌تان را توضیح می‌دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #21  |  Frequency: 11  |  Months: aout 2025 | fevrier 2025 | juillet 2024 | juillet 2025 | juillet 2026 | mai 2023 | mai 2026 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez accueilli un(e) étudiant(e) étranger(ère) pendant une semaine chez vous. Sur votre blog, vous écrivez un article pour raconter cette semaine. Vous expliquez pourquoi vous avez aimé cette expérience.
+
+  ترجمه فارسی:
+  شما یک دانشجوی خارجی را به‌مدت یک هفته در خانهٔ خود پذیرفته‌اید. در وبلاگ‌تان مقاله‌ای می‌نویسید تا آن هفته را بازگو کنید. توضیح می‌دهید که چرا این تجربه را دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #22  |  Frequency: 11  |  Months: aout 2025 | fevrier 2025 | janvier 2024 | juillet 2024 | mai 2026 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez commencé une nouvelle activité de loisir (danse, peinture, sport, etc.). Vous écrivez un message à vos amis pour raconter votre expérience et pour donner votre opinion sur cette activité.
+
+  ترجمه فارسی:
+  شما یک فعالیت تفریحی جدید را شروع کرده‌اید (رقص، نقاشی، ورزش و غیره). شما پیامی برای دوستانتان می‌نویسید تا تجربه‌تان را بازگو کنید و نظر خود را دربارهٔ این فعالیت بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #23  |  Frequency: 11  |  Months: decembre 2023 | fevrier 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | mai 2026 | novembre 2023 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous faites partie d’une association de quartier qui propose des activités aux enfants (aide aux devoirs, sorties, jeux, etc.). Sur votre site internet, vous racontez votre expérience et vous expliquez pourquoi ce type d’association est utile.
+
+  ترجمه فارسی:
+  شما عضو یک انجمن محلی هستید که فعالیت‌هایی برای کودکان ارائه می‌دهد (کمک در انجام تکالیف، گردش‌ها، بازی‌ها و غیره). در وب‌سایت خود، تجربه‌تان را شرح می‌دهید و توضیح می‌دهید که چرا چنین انجمنی مفید است.
+
+────────────────────────────────────────────────────────────────────────────────
+  #24  |  Frequency: 10  |  Months: août 2026 | decembre 2023 | decembre 2024 | janvier 2026 | juillet 2025 | juin 2025 | mai 2026 | novembre 2023 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à vos amis pour leur partager votre expérience de travail temporaire effectué durant les vacances d’été.
+
+  ترجمه فارسی:
+  یک پیام برای دوستان‌تان بنویسید تا تجربه‌تان از کار موقتی که در طول تعطیلات تابستان انجام دادید را با آن‌ها به اشتراک بگذارید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #25  |  Frequency: 10  |  Months: fevrier 2025 | juillet 2024 | juillet 2025 | juin 2025 | mai 2023 | mai 2026 | mars 2026 | novembre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous êtes allés voir un spectacle (film, pièce de théâtre, concert, etc.) avec des amis. Vous l’avez aimé. Sur votre blog, vous racontez votre soirée et vous expliquez pourquoi vous avez aimé le spectacle.
+
+  ترجمه فارسی:
+  شما همراه با دوستان‌تان به تماشای یک اجرا (فیلم، نمایش تئاتر، کنسرت و غیره) رفته‌اید. از آن خوشتان آمده است. در وبلاگ‌تان، شب خود را روایت می‌کنید و توضیح می‌دهید چرا از آن اجرا خوش‌تان آمد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #26  |  Frequency: 10  |  Months: avril 2025 | decembre 2023 | janvier 2025 | juillet 2024 | juillet 2026 | juin 2023 | mai 2026 | novembre 2023 | octobre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à une compétition sportive, racontez votre expérience sur un site internet et donnez votre avis (lieu, date, organisation).
+
+  ترجمه فارسی:
+  شما در یک رقابت ورزشی شرکت کرده‌اید. تجربهٔ خود را در یک وب‌سایت بنویسید و نظر خود را بیان کنید (مکان، تاریخ، سازمان‌دهی).
+
+────────────────────────────────────────────────────────────────────────────────
+  #27  |  Frequency: 10  |  Months: fevrier 2025 | janvier 2024 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez passé des vacances formidables dans une belle région de votre pays. Vous écrivez un message à vos amis dans lequel vous racontez votre expérience. Vous expliquez pourquoi vous avez beaucoup aimé ce séjour.
+
+  ترجمه فارسی:
+  شما تعطیلاتی فوق‌العاده را در منطقه‌ای زیبا از کشور خود گذرانده‌اید. شما در حال نوشتن پیامی برای دوستانتان هستید که در آن تجربه‌تان را بازگو می‌کنید. توضیح می‌دهید چرا از این اقامت بسیار لذت بردید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #28  |  Frequency: 9  |  Months: août 2026 | decembre 2023 | decembre 2024 | janvier 2026 | juin 2025 | mai 2025 | octobre 2026 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous venez d’assister au concert de votre artiste favori. Vous écrivez un article sur votre blog personnel, pour partager cette expérience et inciter vos amis et les autres à assister à son prochain concert.
+
+  ترجمه فارسی:
+  شما همین‌اکنون در کنسرت هنرمند مورد علاقه‌تان شرکت کرده‌اید. شما در حال نوشتن یک مطلب در وبلاگ شخصی‌تان هستید تا این تجربه را به اشتراک بگذارید و دوستان و دیگران را به حضور در کنسرت بعدی او تشویق کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #29  |  Frequency: 9  |  Months: decembre 2024 | decembre 2025 | fevrier 2026 | juillet 2025 | juillet 2026 | juin 2023 | juin 2025 | mai 2023 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez passé des vacances au Canada par le biais d’une agence de voyage. Écrivez un commentaire pour raconter votre expérience que vous avez vécue durant ce voyage.
+
+  ترجمه فارسی:
+  شما تعطیلاتی را در کانادا از طریق یک آژانس مسافرتی گذرانده‌اید. یک یادداشت بنویسید و تجربه‌ای را که در طول این سفر داشته‌اید بازگو کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #30  |  Frequency: 9  |  Months: avril 2025 | decembre 2025 | fevrier 2026 | juillet 2024 | juin 2023 | juin 2025 | mai 2024 | octobre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à un concours de cuisine, vous allez décrire vos souvenirs dans votre blog en indiquant les détails.
+
+  ترجمه فارسی:
+  شما در یک مسابقه آشپزی شرکت کرده‌اید؛ قرار است خاطرات خود را در وبلاگ‌تان با ذکر جزئیات توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #31  |  Frequency: 9  |  Months: avril 2025 | juillet 2024 | juillet 2025 | mai 2024 | mai 2026 | novembre 2025 | octobre 2024 | septembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous êtes parti(e) travailler à l’étranger. Vous envoyez un message à vos amis pour raconter cette nouvelle expérience professionnelle. Vous expliquez ce que vous avez le plus aimé.
+
+  ترجمه فارسی:
+  برای کار به خارج رفته‌اید. پیامی برای دوستانتان می‌فرستید تا این تجربهٔ کاری جدید را برایشان بازگو کنید. توضیح می‌دهید که بیش از همه چه چیزی را در این تجربه دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #32  |  Frequency: 9  |  Months: aout 2025 | avril 2026 | juillet 2024 | juillet 2025 | juin 2025 | mai 2026 | novembre 2025 | septembre 2023 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un article sur votre blog pour raconter pourquoi vous avez décidé de changer votre alimentation (vos habitudes alimentaires).
+
+  ترجمه فارسی:
+  یک مقاله برای وبلاگ خود بنویسید و توضیح دهید چرا تصمیم گرفتید رژیم غذایی‌تان (عادات غذایی‌تان) را تغییر دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #33  |  Frequency: 9  |  Months: aout 2025 | janvier 2024 | juillet 2024 | juillet 2025 | mai 2024 | mai 2026 | novembre 2025 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un message à vos amis pour leur raconter votre expérience lors d’un salon du livre (conférence, expositions et rencontre avec les auteurs…).
+
+  ترجمه فارسی:
+  برای دوستان‌تان پیامی بنویسید و تجربه‌تان از حضور در یک نمایشگاه کتاب (کنفرانس‌ها، غرفه‌ها و دیدار با نویسندگان…) را برایشان روایت کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #34  |  Frequency: 9  |  Months: aout 2025 | août 2026 | fevrier 2025 | janvier 2024 | juillet 2024 | mai 2026 | novembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Dans le cadre de la Semaine du goût, vous avez participé à une activité pour découvrir les cuisines du monde. Vous écrivez un article pour le site Internet de votre ville. Dans cet article, vous racontez votre expérience et vous expliquez ce que vous avez aimé.
+
+  ترجمه فارسی:
+  در چارچوب هفتهٔ چشایی، شما در فعالیتی برای کشف آشپزی‌های جهان شرکت کردید. شما برای وب‌سایت شهرِ خود مقاله‌ای می‌نویسید. در این مقاله تجربیات خود را بازگو می‌کنید و توضیح می‌دهید چه چیزهایی را دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #35  |  Frequency: 9  |  Months: fevrier 2025 | juillet 2025 | juin 2026 | mai 2024 | mai 2026 | mars 2025 | mars 2026 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez visité une exposition de votre artiste préféré. Rédigez un article exprimant votre expérience lors de la visite. Décrivez ce que vous avez vu et vos impressions.
+
+  ترجمه فارسی:
+  شما از نمایشگاهی از هنرمند مورد علاقه‌تان بازدید کرده‌اید. یک مقاله بنویسید که تجربهٔ شما در طول بازدید را بیان کند. توضیح دهید چه چیزهایی دیدید و برداشت‌ها و تأثیرات این بازدید بر شما چه بود.
+
+────────────────────────────────────────────────────────────────────────────────
+  #36  |  Frequency: 9  |  Months: decembre 2023 | fevrier 2024 | fevrier 2025 | janvier 2025 | juillet 2024 | novembre 2023 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez visité un nouveau pays pendant vos vacances. Sur un site internet, racontez votre expérience et donnez votre opinion sur ce pays.
+
+  ترجمه فارسی:
+  شما در طول تعطیلات از یک کشور جدید بازدید کرده‌اید. در یک سایت اینترنتی، تجربهٔ خود را بازگو کنید و نظر خود را دربارهٔ این کشور بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #37  |  Frequency: 8  |  Months: avril 2025 | janvier 2026 | juillet 2025 | juin 2025 | mai 2026 | octobre 2026 | septembre 2023 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à une journée de formation dans votre entreprise. Écrivez un courriel à vos collègues pour raconter cette journée et exprimer ce que vous avez apprécié.
+
+  ترجمه فارسی:
+  شما در یک روز آموزشی در شرکت‌تان شرکت کرده‌اید. برای همکارانتان ایمیلی بنویسید تا در آن این روز را گزارش کنید و آنچه را که در آن پسندیدید بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #38  |  Frequency: 8  |  Months: avril 2026 | janvier 2026 | juin 2026 | mai 2026 | mars 2026 | octobre 2023 | octobre 2024 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Le site «colocation.com» recherche des témoignages sur vos expériences de colocation. Vous avez déjà habité en colocation avec des amis. Vous racontez votre expérience aux membres du site internet. Vous donnez votre opinion sur ce mode de logement.
+
+  ترجمه فارسی:
+  وب‌سایت «colocation.com» در جست‌وجوی گزارش‌هایی درباره تجربیات شما از هم‌خانه‌گی است. شما پیش‌تر با دوستان خود در هم‌خانه‌گی زندگی کرده‌اید. تجربه‌تان را برای اعضای وب‌سایت بازگو می‌کنید. نظر خود را درباره این شیوه سکونت بیان می‌کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #39  |  Frequency: 8  |  Months: decembre 2025 | juillet 2024 | juillet 2025 | juin 2025 | juin 2026 | mai 2026 | octobre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à une action pour la « Journée mondiale du nettoyage de notre planète ». Vous avez ramassé des déchets dans un lieu public (plage, forêt, rue, etc.) avec d’autres personnes. Vous racontez cette expérience à vos amis. Vous expliquez pourquoi il est important de participer à ce type d’action.
+
+  ترجمه فارسی:
+  شما در اقدامی به مناسبت «روز جهانی پاک‌سازی سیاره ما» شرکت کردید. شما همراه با دیگران در یک مکان عمومی (ساحل، جنگل، خیابان و غیره) زباله‌ها را جمع‌آوری کردید. این تجربه را برای دوستانتان تعریف می‌کنید و توضیح می‌دهید که چرا شرکت در این نوع اقدامات مهم است.
+
+────────────────────────────────────────────────────────────────────────────────
+  #40  |  Frequency: 7  |  Months: decembre 2023 | janvier 2026 | juillet 2025 | juin 2025 | mars 2025 | novembre 2023 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez décidé de ne plus utiliser votre réseau social préféré (Instagram, Facebook, etc.). Vous écrivez à vos amis pour leur raconter cette expérience et expliquer pourquoi vous avez pris cette décision.
+
+  ترجمه فارسی:
+  شما تصمیم گرفته‌اید دیگر از شبکه اجتماعی مورد علاقه‌تان (اینستاگرام، فیسبوک و غیره) استفاده نکنید. برای دوستانتان می‌نویسید تا این تجربه را برایشان تعریف کنید و توضیح دهید چرا این تصمیم را گرفته‌اید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #41  |  Frequency: 7  |  Months: decembre 2024 | decembre 2025 | fevrier 2026 | juillet 2025 | juin 2023 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez visité une ville que vous ne connaissiez pas. Vous avez envie de partager votre découverte. Vous postez un message sur un site Internet dédié aux voyages. Racontez votre expérience et expliquez ce qui vous a plu et ce qui vous a déplu dans la ville.
+
+  ترجمه فارسی:
+  شما از شهری که قبلاً آن را نمی‌شناختید دیدن کرده‌اید. می‌خواهید کشف خود را به اشتراک بگذارید. پیامی در وب‌سایتی اختصاصی برای سفر منتشر می‌کنید. تجربهٔ خود را بازگو کنید و توضیح دهید چه چیزی در آن شهر برایتان خوشایند بود و چه چیزی ناخوشایند بود.
+
+────────────────────────────────────────────────────────────────────────────────
+  #42  |  Frequency: 7  |  Months: aout 2024 | avril 2026 | decembre 2024 | decembre 2025 | fevrier 2026 | juin 2025 | mars 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez passé une journée à la campagne avec vos amis. À votre retour, vous écrivez un message sur votre forum pour raconter à vos amis comment cette journée s’est passée. Vous expliquez ce que vous avez aimé (activités, lieu, animaux, etc.).
+
+  ترجمه فارسی:
+  شما یک روز را در ناحیهٔ روستایی با دوستان‌تان گذرانده‌اید. پس از بازگشت، پیامی در انجمن خود می‌نویسید تا برای دوستان‌تان شرح دهید آن روز چگونه گذشت. شما توضیح می‌دهید چه چیزهایی را دوست داشتید (فعالیت‌ها، مکان، حیوانات و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #43  |  Frequency: 7  |  Months: decembre 2025 | fevrier 2026 | juin 2025 | mai 2023 | mai 2026 | octobre 2024 | septembre 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous venez d’avoir un nouveau travail. Envoyez un courriel à vos amis pour leur raconter comment vous avez passé votre première semaine de travail (entreprise, poste, tâches, etc.).
+
+  ترجمه فارسی:
+  شما به‌تازگی شغل جدیدی را آغاز کرده‌اید. برای دوستان‌تان یک ایمیل بفرستید و برایشان توضیح دهید که اولین هفته کاری‌تان را چگونه گذرانده‌اید (شرکت، سمت، وظایف و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #44  |  Frequency: 7  |  Months: juillet 2024 | juin 2023 | juin 2026 | mai 2025 | mai 2026 | octobre 2024 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez assisté à une fête traditionnelle dans votre pays ou à l’étranger. Racontez-la dans votre blog et dites pourquoi vous l’avez aimée.
+
+  ترجمه فارسی:
+  شما در یک جشن سنتی در کشور خود یا در خارج از کشور شرکت کرده‌اید. آن را در وبلاگ خود روایت کنید و بگویید چرا آن را دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #45  |  Frequency: 7  |  Months: juillet 2024 | juin 2023 | juin 2026 | mai 2023 | mai 2025 | mai 2026 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  www.manger-international.com
+Ce mois-ci, nous nous intéressons aux habitudes alimentaires dans le monde. Racontez-nous comment mangent les habitants de votre pays ! Les 10 premiers témoignages seront publiés sur notre site ! Vous avez lu cette annonce Vous écrivez un article pour les lecteurs du site www.manger-international.com. Vous expliquez comment mangent les habitants de votre pays et vous indiquez quelles habitudes vous plaisent ou vous déplaisent, et pourquoi ?
+
+  ترجمه فارسی:
+  www.manger-international.com
+این ماه ما به عادت‌های غذایی در سراسر جهان می‌پردازیم. برای ما تعریف کنید که ساکنان کشور شما چگونه غذا می‌خورند! ده گزارش نخست در سایت ما منتشر خواهد شد. شما این آگهی را خوانده‌اید. شما باید مقاله‌ای برای خوانندگان سایت www.manger-international.com بنویسید. توضیح دهید که ساکنان کشور شما چگونه غذا می‌خورند و مشخص کنید کدام عادت‌ها را دوست دارید یا دوست ندارید و چرا.
+
+────────────────────────────────────────────────────────────────────────────────
+  #46  |  Frequency: 7  |  Months: fevrier 2025 | janvier 2024 | juillet 2026 | juin 2026 | mai 2026 | octobre 2024 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un article de blog sur un évènement auquel vous avez assisté récemment (festival, cérémonie, fête, etc.).
+
+  ترجمه فارسی:
+  یک مقالهٔ وبلاگی دربارهٔ رویدادی که اخیراً در آن حضور داشته‌اید بنویسید (جشنواره، مراسم، مهمانی و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #47  |  Frequency: 7  |  Months: aout 2024 | fevrier 2025 | janvier 2024 | mai 2026 | octobre 2024 | septembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous venez de commencer les cours à l’université de Montréal. Écrivez un message à votre ami pour lui raconter votre première semaine à l’université. Vous donnez votre opinion sur l’université et sur les cours.
+
+  ترجمه فارسی:
+  شما تازه کلاس‌های خود را در دانشگاه مونترال آغاز کرده‌اید. برای دوست‌تان پیامی بنویسید و هفتهٔ اول‌تان در دانشگاه را برای او تعریف کنید. نظر خود را دربارهٔ دانشگاه و همچنین دربارهٔ درس‌ها بیان نمایید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #48  |  Frequency: 6  |  Months: decembre 2023 | decembre 2025 | juillet 2025 | juin 2025 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez commencé une nouvelle activité sportive. Sur votre blog, vous racontez votre expérience. Vous expliquez pourquoi cette activité peut être intéressante pour tout le monde.
+
+  ترجمه فارسی:
+  شما یک فعالیت ورزشی جدید را آغاز کرده‌اید. در وبلاگ خود، تجربه‌تان را بازگو می‌کنید و توضیح می‌دهید که چرا این فعالیت می‌تواند برای همه جالب باشد.
+
+────────────────────────────────────────────────────────────────────────────────
+  #49  |  Frequency: 6  |  Months: aout 2024 | decembre 2024 | decembre 2025 | fevrier 2026 | juin 2025 | mars 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « École de musique ! Cours Gratuits, Concerts, Jeux. Rendez-Vous Vendredi, À partir de 9 Heures »Vous avez participé à cet évènement. Vous écrivez à vos amis pour raconter votre expérience et vous donnez votre opinion sur cette journée.
+
+  ترجمه فارسی:
+  «مدرسهٔ موسیقی! کلاس‌های رایگان، کنسرت‌ها، بازی‌ها. قرار: جمعه، از ساعت ۹» شما در این رویداد شرکت کرده‌اید. برای دوستان‌تان می‌نویسید تا تجربه‌تان را بازگو کنید و نظر خود را دربارهٔ این روز بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #50  |  Frequency: 6  |  Months: juillet 2024 | juillet 2025 | mai 2026 | novembre 2025 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Tout quitter pour changer de vie ? Il y a deux ans, nous avons décidé de changer de vie. Paul a quitté son poste de banquier à Paris et nous avons ouvert une boulangerie à Calgary ! Que pensez-vous de cette décision ? Avez-vous déjà vécu un grand changement, professionnel ou personnel ? Paul et Naïma » Vous avez lu ce message sur un forum internet. Vous répondez à Paul et Naïma. Dans votre message, vous donnez votre opinion sur le choix de Paul et de Naïma et vous racontez comment vous feriez si vous étiez à leur place.
+
+  ترجمه فارسی:
+  همه چیز را رها کردن برای تغییر زندگی؟ دو سال پیش تصمیم گرفتیم زندگی‌مان را تغییر دهیم. پل پستِ بانکداری‌اش را در پاریس ترک کرد و ما در کالگِری یک نانوایی باز کردیم! نظر شما درباره این تصمیم چیست؟ آیا تا به حال تجربهٔ تغییری بزرگ، حرفه‌ای یا شخصی، را داشته‌اید؟ پل و نایما
+
+شما این پیام را در یک انجمن اینترنتی خوانده‌اید. شما به پل و نایما پاسخ می‌دهید. در پیام خود، نظر خود را دربارهٔ انتخاب پل و نایما بیان کنید و توضیح دهید اگر جای آن‌ها بودید چه می‌کردید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #51  |  Frequency: 6  |  Months: aout 2025 | août 2026 | avril 2026 | juillet 2025 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Une troupe de théâtre s’est installée dans votre ville, et vous avez assisté à l’un de ses spectacles. Rédigez un article de blog pour décrire cette expérience.
+
+  ترجمه فارسی:
+  یک گروه تئاتر اخیراً در شهر شما مستقر شده است و شما در یکی از اجراهای آن حضور داشته‌اید. یک پست وبلاگی بنویسید و این تجربه را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #52  |  Frequency: 6  |  Months: aout 2025 | avril 2026 | juillet 2025 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Votre école vous a chargé d’organiser une journée spéciale pour accueillir les nouveaux étudiants francophones. Vous rédigez un courriel destiné à ces étudiants dans lequel vous donnez tous les détails pour le bon déroulement de cette journée.
+
+  ترجمه فارسی:
+  مدرسهٔ شما از شما خواسته است که یک روز ویژه برای استقبال از دانشجویان تازه‌وارد فرانسوی‌زبان سازمان‌دهی کنید. شما در حال نگارش یک ایمیل خطاب به این دانشجویان هستید که در آن همه جزئیات لازم برای برگزاری مناسب این روز را ارائه می‌دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #53  |  Frequency: 6  |  Months: avril 2026 | juin 2026 | mai 2026 | octobre 2026 | septembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un article de blog sur votre souvenir de voyage que vous avez aimé le plus.
+
+  ترجمه فارسی:
+  یک مقالهٔ وبلاگی دربارهٔ خاطرهٔ سفری که بیش از همه آن را دوست داشتید بنویسید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #54  |  Frequency: 5  |  Months: decembre 2024 | janvier 2026 | mars 2026 | octobre 2024 | septembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez assisté à une soirée écologique pour protéger la planète qui avait lieu dans votre université. Racontez-la dans votre blog et expliquez pourquoi vous l’avez aimée.
+
+  ترجمه فارسی:
+  شما در یک شب محیط‌زیستی که با هدف حفاظت از کره زمین در دانشگاه شما برگزار شد شرکت کردید. آن را در وبلاگ خود روایت کنید و توضیح دهید چرا آن را دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #55  |  Frequency: 5  |  Months: aout 2025 | avril 2026 | juillet 2025 | juin 2025 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Une annonce de festival de musique gratuit a été publiée dans votre ville, et vous avez profité de cette occasion pour y assister avec votre ami. Écrivez un article de blog pour raconter l’expérience que vous avez vécue lors de cet événement musical.
+
+  ترجمه فارسی:
+  در شهر شما اطلاعیه‌ای درباره برگزاری یک جشنواره موسیقی رایگان منتشر شد و شما از این فرصت استفاده کردید تا همراه دوست‌تان در آن شرکت کنید. یک مطلب وبلاگی بنویسید و تجربه‌ای را که در این رویداد موسیقایی داشته‌اید روایت کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #56  |  Frequency: 5  |  Months: avril 2026 | juillet 2025 | juin 2026 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez commencé à prendre des cours dans une école de langues. Vous envoyez un message à vos amis pour leur raconter comment s’est passée votre première semaine. Parlez de votre impression sur l’école et sur vos cours.
+
+  ترجمه فارسی:
+  شما شروع به شرکت در کلاس‌هایی در یک مدرسهٔ زبان کرده‌اید. برای دوستانتان پیامی می‌فرستید تا برایشان شرح دهید هفتهٔ اولتان چگونه گذشت. دربارهٔ برداشت‌تان از مدرسه و از کلاس‌هایتان صحبت کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #57  |  Frequency: 5  |  Months: août 2026 | fevrier 2025 | juillet 2024 | juillet 2026 | mai 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  La direction d’une école de musique cherche un endroit où organiser une fête pour 100 personnes. Écrivez un courriel pour les informer que vous avez trouvé un local (lieu, tarifs, service, etc.).
+
+  ترجمه فارسی:
+  مدیریت یک مدرسه موسیقی به دنبال مکانی برای برگزاری جشنی برای ۱۰۰ نفر است. یک ایمیل بنویسید تا به ایشان اطلاع دهید که شما یک مکان برای برگزاری پیدا کرده‌اید (محل برگزاری، تعرفه‌ها، خدمات و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #58  |  Frequency: 4  |  Months: août 2026 | decembre 2023 | janvier 2026 | novembre 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez assisté à un festival (de musique, de cinéma, de gastronomie…) mais vous avez été déçu. Rédigez un article sur votre blog dans lequel vous expliquez ce qui ne vous a pas plu.
+
+  ترجمه فارسی:
+  شما در یک جشنواره (موسیقی، سینما، غذا و غیره) شرکت کرده‌اید، اما ناامید شده‌اید. یک مقاله برای وبلاگ خود بنویسید که در آن توضیح دهید چه چیزهایی موجب نارضایتی شما شده‌اند.
+
+────────────────────────────────────────────────────────────────────────────────
+  #59  |  Frequency: 4  |  Months: avril 2025 | juillet 2025 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Racontez votre expérience personnelle de participation à une émission de télévision. Détaillez le contexte de votre participation, votre rôle dans l’émission, et les impressions que vous en avez retirées.
+
+  ترجمه فارسی:
+  تجربهٔ شخصی خود از حضور در یک برنامهٔ تلویزیونی را شرح دهید. زمینهٔ حضور شما، نقش‌تان در برنامه و برداشت‌هایی که از آن به‌دست آوردید را به تفصیل بیان کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #60  |  Frequency: 4  |  Months: avril 2025 | juin 2026 | mai 2026 | octobre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un article pour le journal de l’entreprise pour raconter le pique-nique que vous avez fait avec vos collègues de travail. Décrivez l’ambiance, les plats apportés, les activités faites ensemble et les meilleurs moments de la journée.
+
+  ترجمه فارسی:
+  یک مقاله برای روزنامه شرکت بنویسید تا پیک‌نیکی را که با همکارانتان داشتید بازگو کنید. فضای حاکم، غذاهایی که آورده شد، فعالیت‌هایی که با هم انجام دادید و بهترین لحظات آن روز را توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #61  |  Frequency: 4  |  Months: avril 2025 | mai 2026 | novembre 2024 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Que pensez-vous de l’installation d’une télévision dans la chambre ? »Partagez votre avis dans un article de blog.
+
+  ترجمه فارسی:
+  نظرتان درباره نصب تلویزیون در اتاق خواب چیست؟ دیدگاه خود را در قالب یک مطلب وبلاگی به اشتراک بگذارید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #62  |  Frequency: 4  |  Months: fevrier 2025 | janvier 2024 | mai 2026 | octobre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Jeu concours : »« Gagnez deux billets pour la destination de votre choix avec la compagnie Air Tropiques. Racontez votre plus beau voyage sur notre forum »Écrivez un message sur le forum de la compagnie Air Tropiques. Vous racontez votre plus beau voyage (date, destination, activités, etc.) et vous expliquez pourquoi ce voyage a été spécial pour vous.
+
+  ترجمه فارسی:
+  مسابقه: «دو بلیت به مقصد دلخواه‌تان را با شرکت هواپیمایی Air Tropiques برنده شوید. زیباترین سفر خود را در انجمن ما تعریف کنید» یک پیام در انجمن شرکت Air Tropiques بنویسید. در این پیام سفر زیبای خود را توضیح دهید (تاریخ، مقصد، فعالیت‌ها و غیره) و شرح دهید چرا این سفر برای شما خاص بود.
+
+────────────────────────────────────────────────────────────────────────────────
+  #63  |  Frequency: 4  |  Months: avril 2026 | mai 2026 | octobre 2026 | septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Répondez en commentaire à une publication sur Facebook au sujet des études à l’étranger en citant les avantages et les inconvénients de cette expérience.
+
+  ترجمه فارسی:
+  در بخش نظرات یک پست در فیسبوک درباره تحصیل در خارج از کشور پاسخ دهید و مزایا و معایب این تجربه را ذکر کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #64  |  Frequency: 4  |  Months: decembre 2023 | juillet 2024 | juillet 2026 | juin 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez suivi un cours de cuisine. Rédigez un article de blog pour décrire ce souvenir en indiquant les détails.
+
+  ترجمه فارسی:
+  شما در یک کلاس آشپزی شرکت کرده‌اید. یک پست وبلاگی بنویسید تا این خاطره را با ذکر جزئیات توصیف کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #65  |  Frequency: 4  |  Months: decembre 2023 | juillet 2024 | novembre 2023 | novembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Deux amis souhaitent passer deux semaines de congé chez vous. Écrivez-leur un message pour leur proposer des lieux à visiter (endroits historiques, restaurants, etc.).
+
+  ترجمه فارسی:
+  دو دوست مایل‌اند دو هفته از تعطیلات خود را در منزل شما بگذرانند. برای آن‌ها پیامی بنویسید و مکان‌هایی برای بازدید پیشنهاد کنید (مکان‌های تاریخی، رستوران‌ها و غیره).
+
+────────────────────────────────────────────────────────────────────────────────
+  #66  |  Frequency: 4  |  Months: mai 2026 | mars 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez suivi une formation (cours de langue, informatique, etc.). Sur un site Internet, vous écrivez un message pour raconter votre expérience (cours, participants, professeurs, etc.). Vous expliquez ce que vous avez aimé ou pas aimé pendant cette formation. (120 mots minimum / 150 mots maximum)
+
+  ترجمه فارسی:
+  شما در یک دورهٔ آموزشی (کلاس زبان، کامپیوتر و غیره) شرکت کرده‌اید. در یک وب‌سایت، پیامی می‌نویسید تا تجربه‌تان را تعریف کنید (دوره، شرکت‌کنندگان، استادان و غیره). توضیح می‌دهید که در طول این دوره چه چیزی را دوست داشتید یا دوست نداشتید (حداقل ۱۲۰ کلمه / حداکثر ۱۵۰ کلمه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #67  |  Frequency: 4  |  Months: août 2026 | juin 2026 | octobre 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Sur votre blog, parlez de votre dernière visite à un restaurant (l’endroit, la nourriture, le service, etc.). Racontez ce que vous avez vécu et dites ce qui vous a vraiment plu.
+
+  ترجمه فارسی:
+  در وبلاگ‌تان دربارهٔ آخرین بازدیدتان از یک رستوران صحبت کنید (مکان، غذا، خدمات و غیره). آنچه را که تجربه کردید شرح دهید و بگویید چه چیزی را واقعاً دوست داشتید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #68  |  Frequency: 3  |  Months: decembre 2025 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous cherchez un(e) partenaire de sport. Vous publiez un message sur le site Internet des étudiants de votre école. Vous précisez vos disponibilités.
+
+  ترجمه فارسی:
+  شما به دنبال یک شریک ورزشی هستید. پیامی در وب‌سایت دانشجویی مدرسه‌تان منتشر می‌کنید. در آن زمان‌های در دسترس‌بودن خود را مشخص می‌کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #69  |  Frequency: 3  |  Months: decembre 2024 | fevrier 2025 | mai 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Écrivez un courriel à votre ami pour l’inviter à vous accompagner au concert de votre musicien préféré en lui précisant tous les détails (heure, tarif, lieu…)
+
+  ترجمه فارسی:
+  یک ایمیل به دوست خود بنویسید و او را دعوت کنید که شما را در کنسرت موسیقیدان مورد علاقه‌تان همراهی کند؛ تمامی جزئیات را مشخص نمایید (ساعت، قیمت بلیط، محل برگزاری، ...).
+
+────────────────────────────────────────────────────────────────────────────────
+  #70  |  Frequency: 3  |  Months: avril 2026 | mai 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Les professeurs de l’école de votre quartier souhaitent présenter différents métiers aux élèves. Vous voulez participer à ce projet pour parler de votre expérience. Vous leur écrivez. Vous décrivez votre profession (activités, collègues, etc.). Vous expliquez pourquoi vous trouvez votre métier intéressant (120 mots minimum/150 mots maximum)
+
+  ترجمه فارسی:
+  معلمان مدرسه محله شما می‌خواهند مشاغل مختلف را به دانش‌آموزان معرفی کنند. شما می‌خواهید در این پروژه شرکت کنید و درباره تجربه‌تان صحبت کنید. به آنها نامه می‌نویسید. حرفه‌تان را توصیف می‌کنید (فعالیت‌ها، همکاران و غیره). توضیح می‌دهید چرا شغلتان را جالب می‌دانید (حداقل ۱۲۰ کلمه / حداکثر ۱۵۰ کلمه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #71  |  Frequency: 2  |  Months: fevrier 2025 | janvier 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  📩 Salut, tu vas bien ? Nous avons deux semaines de vacances en janvier et nous allons visiter ton pays. Nous cherchons des sites historiques et des plats locaux à découvrir. Qu’est-ce que tu nous conseilles ?– Aaron & Perla👉 Répondez à Aaron et Perla en leur faisant des suggestions et en justifiant votre choix avec votre propre expérience.
+
+  ترجمه فارسی:
+  📩 سلام، حال شما چطور است؟ ما دو هفته تعطیلات در ژانویه داریم و قصد داریم از کشور شما دیدن کنیم. دنبال مکان‌های تاریخی و غذاهای محلی برای کشف‌کردن هستیم. چه چیزی به ما توصیه می‌کنید؟ – آرون و پرلا 👉 به آرون و پرلا پاسخ دهید؛ به آن‌ها پیشنهادهایی بدهید و انتخاب خود را با تجربهٔ شخصی‌تان توجیه کنید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #72  |  Frequency: 2  |  Months: mai 2026 | mars 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  « Vous avez participé à un concours de cuisine. Sur votre site Internet, vous écrivez un court article pour raconter cette journée. Vous expliquez pourquoi vous avez aimé ou pourquoi vous n’avez pas aimé cette expérience (120 mots minimum/150 mots maximum). »
+
+  ترجمه فارسی:
+  شما در یک مسابقهٔ آشپزی شرکت کرده‌اید. در وب‌سایت خود، مقاله‌ای کوتاه می‌نویسید تا آن روز را تعریف کنید. توضیح می‌دهید چرا این تجربه را دوست داشتید یا چرا دوست نداشتید (حداقل ۱۲۰ کلمه / حداکثر ۱۵۰ کلمه).
+
+────────────────────────────────────────────────────────────────────────────────
+  #73  |  Frequency: 2  |  Months: juin 2026 | septembre 2026
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez décidé de laisser tout derrière vous pour voyager pendant un an. Rédigez un article de blog pour partager cette aventure unique.
+
+  ترجمه فارسی:
+  شما تصمیم گرفته‌اید همه چیز را پشت سر بگذارید و به مدت یک سال سفر کنید. یک پست وبلاگی بنویسید تا این ماجراجویی منحصربه‌فرد را به اشتراک بگذارید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #74  |  Frequency: 1  |  Months: aout 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Les maisons de retraite peuvent éloigner les personnes âgées de leur famille et créer un sentiment d’abandon. De plus, les conditions de vie ne sont pas toujours idéales et il arrive que certains établissements manquent de personnel qualifié. Je crois que le soutien à domicile est une meilleure option pour vieillir en famille. Jean, retraité
+
+  ترجمه فارسی:
+  خانه‌های سالمندان می‌توانند سالمندان را از خانواده‌شان دور کرده و احساس رهاشدگی ایجاد کنند. علاوه بر این، شرایط زندگی همیشه ایده‌آل نیست و گاهی برخی مراکز از نیروی انسانی واجد شرایط برخوردار نیستند. من معتقدم حمایت در منزل گزینه‌ای بهتر برای سپری کردن دوران پیری در کنار خانواده است. ژان، بازنشسته
+
+────────────────────────────────────────────────────────────────────────────────
+  #75  |  Frequency: 1  |  Months: fevrier 2025
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez mis une annonce en ligne pour la location de votre appartement. Écrivez un courriel pour donner les informations sur l’appartement et le quartier.
+
+  ترجمه فارسی:
+  شما یک آگهی آنلاین برای اجاره آپارتمان خود منتشر کرده‌اید. یک ایمیل بنویسید تا اطلاعات مربوط به آپارتمان و محله را ارائه دهید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #76  |  Frequency: 1  |  Months: septembre 2024
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à un concours artistique (musique, danse, dessin, etc.) sur votre blog, vous écrivez un court article pour raconter cet événement. Vous expliquez ce que vous avez aimé.
+
+  ترجمه فارسی:
+  شما در یک مسابقهٔ هنری (موسیقی، رقص، نقاشی و غیره) در وبلاگ خود شرکت کرده‌اید؛ یک مقالهٔ کوتاه بنویسید تا این رویداد را بازگو کنید. توضیح دهید چه چیزهایی را دوست داشته‌اید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #77  |  Frequency: 1  |  Months: juin 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous avez participé à une activité de bénévolat pour protéger la nature et l’écosystème. Répondez en commentaire et partagez votre expérience.
+
+  ترجمه فارسی:
+  شما در یک فعالیت داوطلبانه به‌منظور حفاظت از طبیعت و اکوسیستم شرکت کرده‌اید. در بخش نظرات پاسخ دهید و تجربهٔ خود را به اشتراک بگذارید.
+
+────────────────────────────────────────────────────────────────────────────────
+  #78  |  Frequency: 1  |  Months: mai 2023
+────────────────────────────────────────────────────────────────────────────────
+
+  Sujet (FR):
+  Vous voulez vendre votre vélo. Vous écrivez un courriel à cette adresse en précisant les caractéristiques de votre vélo.
+
+  ترجمه فارسی:
+  شما می‌خواهید دوچرخهٔ خود را بفروشید. به این آدرس ایمیلی می‌نویسید و مشخصات دوچرخهٔ خود را ذکر می‌کنید.
+
+================================================================================

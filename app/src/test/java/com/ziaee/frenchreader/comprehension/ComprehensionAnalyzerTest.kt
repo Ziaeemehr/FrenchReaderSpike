@@ -1,8 +1,6 @@
 package com.ziaee.frenchreader.comprehension
 
-import com.ziaee.frenchreader.data.VocabEntry
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ComprehensionAnalyzerTest {
@@ -55,61 +53,7 @@ class ComprehensionAnalyzerTest {
 
     @Test
     fun lemmaMatchingRecognizesInflectionsAndNormalizedLigatures() {
-        val known = setOf("manger", "oeil")
-
-        assertEquals(100, scoreComprehension(repeatWords("mangeons yeux œil", 7), known, lexicon))
+        val tokens = tokenizeFrench("mangeons yeux œil", lexicon)
+        assertEquals(listOf(setOf("manger"), setOf("oeil"), setOf("oeil")), tokens.map { it.lemmas })
     }
-
-    @Test
-    fun knownSetUsesOnlyLearnedOrReviewedBoxTwoEntriesAndSplitsAlternatives() {
-        val entries = listOf(
-            entry("nouveau", learned = false, box = 1, reviewed = null),
-            entry("mangeons", learned = false, box = 2, reviewed = 1L),
-            entry("yeux", learned = true, box = 1, reviewed = null),
-            entry("un commerçant / une commerçante", learned = true, box = 1, reviewed = null),
-            entry("ceci est une phrase beaucoup trop longue", learned = true, box = 1, reviewed = null)
-        )
-
-        val known = buildKnownLemmaSet(entries, lexicon)
-
-        assertEquals(
-            setOf("je", "nous", "le", "l'", "d'", "un", "une", "manger", "oeil", "commerçant", "commerçante"),
-            known
-        )
-    }
-
-    @Test
-    fun scoreReturnsNullBelowTwentyCountedTokens() {
-        assertNull(scoreComprehension(repeatWords("mot", 19), setOf("mot"), lexicon))
-    }
-
-    @Test
-    fun scoreRoundsToWholePercentAtBadgeThresholds() {
-        assertEquals(95, scoreComprehension(wordsWithKnownCount(19, 20), setOf("connu"), lexicon))
-        assertEquals(85, scoreComprehension(wordsWithKnownCount(17, 20), setOf("connu"), lexicon))
-        assertEquals(80, scoreComprehension(wordsWithKnownCount(16, 20), setOf("connu"), lexicon))
-    }
-
-    @Test
-    fun badgeLevelsUseNinetyFiveAndEightyFivePercentBoundaries() {
-        assertEquals(ComprehensionLevel.EASY, comprehensionLevel(95))
-        assertEquals(ComprehensionLevel.MANAGEABLE, comprehensionLevel(94))
-        assertEquals(ComprehensionLevel.MANAGEABLE, comprehensionLevel(85))
-        assertEquals(ComprehensionLevel.HARD, comprehensionLevel(84))
-    }
-
-    private fun entry(word: String, learned: Boolean, box: Int, reviewed: Long?) = VocabEntry(
-        word = word,
-        sentence = "",
-        textId = 1,
-        dictionaryUrl = "",
-        learned = learned,
-        leitnerBox = box,
-        lastReviewedAtMs = reviewed
-    )
-
-    private fun repeatWords(words: String, times: Int): String = List(times) { words }.joinToString(" ")
-
-    private fun wordsWithKnownCount(known: Int, total: Int): String =
-        List(known) { "connu" }.plus(List(total - known) { "inconnu" }).joinToString(" ")
 }

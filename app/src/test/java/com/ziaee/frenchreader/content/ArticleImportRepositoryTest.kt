@@ -201,6 +201,14 @@ class ArticleImportRepositoryTest {
 
         override suspend fun setFolder(id: Long, folderId: Long?) = Unit
 
+        override suspend fun setLevelChunk(ids: List<Long>, level: String?) {
+            documents.replaceAll { if (it.id in ids) it.copy(level = level) else it }
+        }
+
+        override suspend fun setReadMarkChunk(ids: List<Long>, mark: Int) {
+            documents.replaceAll { if (it.id in ids) it.copy(readMark = mark) else it }
+        }
+
         override suspend fun setFolders(ids: List<Long>, folderId: Long?) = Unit
 
         override suspend fun setPinned(id: Long, pinned: Boolean) = Unit

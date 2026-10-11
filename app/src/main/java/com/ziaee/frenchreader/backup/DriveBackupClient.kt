@@ -7,6 +7,8 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
+import java.time.ZoneId
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -17,9 +19,9 @@ private const val FILES_ENDPOINT = "https://www.googleapis.com/drive/v3/files"
 private const val UPLOAD_ENDPOINT = "https://www.googleapis.com/upload/drive/v3/files"
 
 object DriveBackupClient {
-    fun findBackupFileId(accessToken: String): String? {
-        return selectDriveBackups(listBackups(accessToken)).newest?.id
-    }
+    /** Every backup in the app folder, newest first, the legacy single-file backup last. */
+    internal fun listBackupsNewestFirst(accessToken: String): List<DriveBackupFile> =
+        orderDriveBackups(listBackups(accessToken))
 
     fun uploadBackup(accessToken: String, file: File) {
         if (file.length() > MAX_BACKUP_ARCHIVE_BYTES) throw IOException("Backup archive is too large")
@@ -56,7 +58,7 @@ object DriveBackupClient {
         }
     }
 
-    private fun listBackups(accessToken: String): List<DriveBackupFile> {
+    internal fun listBackups(accessToken: String): List<DriveBackupFile> {
         val url = "$FILES_ENDPOINT?spaces=appDataFolder&pageSize=1000&fields=files(id,name,createdTime)&orderBy=createdTime%20desc"
         return parseDriveBackupFiles(httpGet(url, accessToken))
     }
@@ -131,12 +133,25 @@ internal fun parseDriveBackupFiles(responseJson: String): List<DriveBackupFile> 
     }
 }
 
-internal fun selectDriveBackups(files: List<DriveBackupFile>): DriveBackupSelection {
-    val ordered = files.filter { it.name.startsWith(BACKUP_PREFIX) }.sortedWith(
+internal fun orderDriveBackups(files: List<DriveBackupFile>): List<DriveBackupFile> =
+    files.filter { it.name.startsWith(BACKUP_PREFIX) }.sortedWith(
         compareBy<DriveBackupFile> { it.name == LEGACY_BACKUP_FILE_NAME }
             .thenByDescending { it.createdTime }.thenByDescending { it.name }
     )
-    return DriveBackupSelection(ordered.firstOrNull(), ordered.take(5), ordered.drop(5))
+
+internal fun selectDriveBackups(
+    files: List<DriveBackupFile>, now: LocalDateTime = LocalDateTime.now(), zone: ZoneId = ZoneId.systemDefault()
+): DriveBackupSelection {
+    val ordered = orderDriveBackups(files)
+    val timestamps = ordered.filter { it.name != LEGACY_BACKUP_FILE_NAME }.associateWith {
+        runCatching { LocalDateTime.ofInstant(Instant.parse(it.createdTime), zone) }.getOrNull()
+    }
+    val retained = selectBackupsToKeep(timestamps.values.filterNotNull(), now)
+    val keep = ordered.filter {
+        if (it.name == LEGACY_BACKUP_FILE_NAME) timestamps.isEmpty()
+        else timestamps[it] == null || timestamps[it] in retained
+    }
+    return DriveBackupSelection(ordered.firstOrNull(), keep, ordered.filter { it !in keep })
 }
 
 internal fun parseBackupFileId(responseJson: String, fileName: String): String? {
