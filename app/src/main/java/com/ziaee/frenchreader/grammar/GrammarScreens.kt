@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -124,7 +126,7 @@ private const val VIEW_FAVOURITES = "favourites"
 private const val VIEW_RECENT = "recent"
 
 @Composable
-fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
+fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, onOpenPosters: () -> Unit = {}) {
     val notes by grammarNotes()
     val context = LocalContext.current
     remember(context) { GrammarPrefs.load(context) }
@@ -161,7 +163,15 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                 contentPadding = PaddingValues(FrenchReaderDesign.spacing.small),
                 verticalArrangement = Arrangement.spacedBy(FrenchReaderDesign.spacing.xSmall)
             ) {
-                item(key = "back") { GrammarBackRow(onBack, title) }
+                item(key = "back") {
+                    GrammarBackRow(onBack, title) {
+                        TextButton(onClick = onOpenPosters) {
+                            Icon(Icons.Default.Collections, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(stringResource(R.string.grammar_posters))
+                        }
+                    }
+                }
                 item(key = "search") {
                     OutlinedTextField(
                         value = query,

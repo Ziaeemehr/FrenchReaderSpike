@@ -724,6 +724,8 @@
     <string name="grammar_favourites">علاقه‌مندی‌ها</string>
     <string name="grammar_favourites_empty">هنوز نکته‌ای را نشان نکرده‌اید. برای افزودن، ستارهٔ بالای نکته را بزنید.</string>
     <string name="grammar_recent_empty">هنوز نکته‌ای باز نکرده‌اید.</string>
+    <string name="grammar_posters">اینفوگرافی‌ها</string>
+    <string name="grammar_posters_empty">پوسترهای جمع‌بندی هر موضوع به‌مرور اینجا اضافه می‌شوند.</string>
     <string name="grammar_recently_opened">تازه بازشده‌ها</string>
     <string name="grammar_add_favourite">افزودن به علاقه‌مندی‌ها</string>
     <string name="grammar_remove_favourite">حذف از علاقه‌مندی‌ها</string>

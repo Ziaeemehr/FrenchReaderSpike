@@ -30,6 +30,7 @@ import com.ziaee.frenchreader.data.LocalePrefs
 import com.ziaee.frenchreader.data.applyAppLanguage
 import com.ziaee.frenchreader.grammar.GrammarListScreen
 import com.ziaee.frenchreader.grammar.GrammarNoteScreen
+import com.ziaee.frenchreader.grammar.GrammarPostersScreen
 import com.ziaee.frenchreader.resources.ResourcesScreen
 import com.ziaee.frenchreader.studylog.StudyLogChartsScreen
 import com.ziaee.frenchreader.studylog.StudyLogEntryScreen
@@ -250,9 +251,11 @@ private fun AppNavHost() {
         composable("grammar") {
             GrammarListScreen(
                 onBack = { navController.popBackStack() },
-                onOpenNote = { navController.navigate("grammar/note/$it") }
+                onOpenNote = { navController.navigate("grammar/note/$it") },
+                onOpenPosters = { navController.navigate("grammar/posters") }
             )
         }
+        composable("grammar/posters") { GrammarPostersScreen { navController.popBackStack() } }
         composable("grammar/note/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
             GrammarNoteScreen(id = entry.arguments?.getString("id").orEmpty(), onBack = { navController.popBackStack() })
         }

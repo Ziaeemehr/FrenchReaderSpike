@@ -726,6 +726,8 @@
     <string name="grammar_favourites">Favourites</string>
     <string name="grammar_favourites_empty">No favourites yet. Tap the star on a note to add it.</string>
     <string name="grammar_recent_empty">You have not opened any note yet.</string>
+    <string name="grammar_posters">Infographics</string>
+    <string name="grammar_posters_empty">Summary posters for each topic will appear here.</string>
     <string name="grammar_recently_opened">Recently opened</string>
     <string name="grammar_add_favourite">Add to favourites</string>
     <string name="grammar_remove_favourite">Remove from favourites</string>
