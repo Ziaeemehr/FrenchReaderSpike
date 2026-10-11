@@ -200,28 +200,31 @@ def synthesize_stream(request: SynthesisRequest):
         yield json.dumps({"type": "start", "sentences": sentences}, ensure_ascii=False) + "\n"
         silence = np.zeros(SAMPLE_RATE * SILENCE_MS // 1000, dtype=np.int16)
         streamed_bytes = 0
-        with synthesis_lock:
-            for index, sentence in enumerate(sentences):
-                tts_text = clean_for_tts(sentence)
-                if not re.search(r"\w", tts_text):
-                    tts_text = "."
+        for index, sentence in enumerate(sentences):
+            tts_text = clean_for_tts(sentence)
+            if not re.search(r"\w", tts_text):
+                tts_text = "."
+            # Hold the lock for one sentence only, never across a yield: a client
+            # that goes away leaves this generator suspended at a yield, and a
+            # lock held there would block every later request for good.
+            with synthesis_lock:
                 samples = to_pcm16(
                     tts.tts(text=tts_text, speaker=request.speaker, language=request.language, speed=speed)
                 )
-                padded = samples if index == len(sentences) - 1 else np.concatenate([samples, silence])
-                audio = encode_mp3_segment(padded)
-                yield json.dumps(
-                    {
-                        "type": "sentence",
-                        "index": index,
-                        "text": sentence,
-                        "offset_ms": streamed_bytes * 8000 / STREAM_BITRATE,
-                        "duration_ms": len(samples) * 1000 / SAMPLE_RATE,
-                        "audio_b64": base64.b64encode(audio).decode("ascii"),
-                    },
-                    ensure_ascii=False,
-                ) + "\n"
-                streamed_bytes += len(audio)
+            padded = samples if index == len(sentences) - 1 else np.concatenate([samples, silence])
+            audio = encode_mp3_segment(padded)
+            yield json.dumps(
+                {
+                    "type": "sentence",
+                    "index": index,
+                    "text": sentence,
+                    "offset_ms": streamed_bytes * 8000 / STREAM_BITRATE,
+                    "duration_ms": len(samples) * 1000 / SAMPLE_RATE,
+                    "audio_b64": base64.b64encode(audio).decode("ascii"),
+                },
+                ensure_ascii=False,
+            ) + "\n"
+            streamed_bytes += len(audio)
         yield json.dumps({"type": "end"}) + "\n"
 
     return StreamingResponse(lines(), media_type="application/x-ndjson")
