@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.SnackbarHost
@@ -81,7 +82,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.text.isRtlText
-import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.components.MetadataBadge
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
@@ -105,7 +105,7 @@ private fun contentString(id: Int): String {
 private fun GrammarSectionHeader(id: Int) {
     GrammarText(
         GrammarCell(contentString(id)), rtl = true,
-        style = MaterialTheme.typography.titleLarge, color = LocalGrammarColors.current.accent
+        style = MaterialTheme.typography.titleMedium, color = LocalGrammarColors.current.accent
     )
 }
 
@@ -184,19 +184,19 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                     val byId = notes!!.associateBy { it.id }
                     val recents = prefs.recents.mapNotNull { byId[it.id] }.filter(::shown).take(5)
                     if (favourites.isNotEmpty()) {
-                        item(key = "fav-header") { EditorialSectionHeader(stringResource(R.string.grammar_favourites)) }
+                        item(key = "fav-header") { GrammarListHeader(stringResource(R.string.grammar_favourites)) }
                         items(favourites, key = { "fav:${it.id}" }) { note ->
                             GrammarNoteCard(note, onOpenNote, favourite = true)
                         }
                     }
                     if (recents.isNotEmpty()) {
-                        item(key = "recent-header") { EditorialSectionHeader(stringResource(R.string.grammar_recently_opened)) }
+                        item(key = "recent-header") { GrammarListHeader(stringResource(R.string.grammar_recently_opened)) }
                         items(recents, key = { "recent:${it.id}" }) { note ->
                             GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
                         }
                     }
                     notes!!.filter(::shown).groupBy { it.group }.forEach { (group, entries) ->
-                        item(key = "group-header:$group") { EditorialSectionHeader(stringResource(groupTitle(group))) }
+                        item(key = "group-header:$group") { GrammarListHeader(stringResource(groupTitle(group))) }
                         items(entries, key = { "group:${it.id}" }) { note ->
                             GrammarNoteCard(note, onOpenNote, favourite = note.id in prefs.favourites)
                         }
@@ -224,6 +224,23 @@ fun GrammarListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit) {
                 }
             }
         }
+    }
+}
+
+/** A quiet section label for the list: small accent text with a hairline, instead of a display heading. */
+@Composable
+private fun GrammarListHeader(title: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = FrenchReaderDesign.spacing.xSmall),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(FrenchReaderDesign.spacing.xSmall)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = LocalGrammarColors.current.accent
+        )
+        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -337,7 +354,7 @@ fun GrammarNoteScreen(id: String, onBack: () -> Unit) {
             else {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GrammarText(GrammarCell(note.titleFr), rtl = false, style = MaterialTheme.typography.headlineSmall)
+                        GrammarText(GrammarCell(note.titleFr), rtl = false, style = MaterialTheme.typography.titleLarge)
                         GrammarText(GrammarCell(note.titleFa), rtl = true, secondary = true)
                         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) { MetadataBadge(note.level) }
                     }
@@ -360,7 +377,7 @@ private fun GrammarBackRow(onBack: () -> Unit, title: String? = null, actions: @
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back))
         }
-        if (title != null) Text(title, style = MaterialTheme.typography.titleLarge)
+        if (title != null) Text(title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.weight(1f))
         actions()
     }
