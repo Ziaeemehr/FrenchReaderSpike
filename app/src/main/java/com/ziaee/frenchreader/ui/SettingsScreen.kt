@@ -43,6 +43,7 @@ import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.backup.AuthorizationOutcome
+import com.ziaee.frenchreader.backup.AutoBackup
 import com.ziaee.frenchreader.backup.BackupPrefs
 import com.ziaee.frenchreader.update.UpdatePrefs
 import com.ziaee.frenchreader.backup.DriveBackupClient
@@ -189,6 +190,7 @@ fun SettingsScreen(
                     4 -> ShadowingSettings(context, scope, snackbarHostState)
                     5 -> TtsCacheSettings(context, scope, snackbarHostState)
                     6 -> {
+                        AutoBackupSection(context, scope, snackbarHostState)
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
@@ -802,6 +804,71 @@ private fun HighlightColor.labelResource(): Int = when (this) {
     HighlightColor.PURPLE -> R.string.highlight_purple
     HighlightColor.TEAL -> R.string.highlight_teal
     HighlightColor.RED -> R.string.highlight_red
+}
+
+@Composable
+private fun AutoBackupSection(
+    context: Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
+) {
+    var enabled by remember { mutableStateOf(BackupPrefs.isAutoBackupEnabled(context)) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+    val latest = remember { AutoBackup.latest(context) }
+
+    fun showMessage(text: String) {
+        scope.launch { snackbarHostState.showSnackbar(text) }
+    }
+
+    Text(
+        stringResource(R.string.auto_backup_section_title),
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+    SettingsSwitchRow(stringResource(R.string.auto_backup_toggle), enabled) {
+        enabled = it
+        BackupPrefs.setAutoBackupEnabled(context, it)
+    }
+    Text(stringResource(R.string.auto_backup_description), style = MaterialTheme.typography.bodySmall)
+    Text(
+        stringResource(
+            R.string.auto_backup_last,
+            formatLastBackupLabel(context, latest?.lastModified())
+        ),
+        style = MaterialTheme.typography.bodySmall
+    )
+    OutlinedButton(enabled = latest != null, onClick = { showRestoreConfirm = true }) {
+        Text(stringResource(R.string.auto_backup_restore))
+    }
+
+    if (showRestoreConfirm && latest != null) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text(stringResource(R.string.auto_backup_restore_confirm_title)) },
+            text = { Text(stringResource(R.string.local_backup_restore_confirm_message)) },
+            confirmButton = {
+                OutlinedButton(onClick = {
+                    showRestoreConfirm = false
+                    scope.launch {
+                        try {
+                            if (LocalBackup.importArchiveFile(context, latest)) {
+                                restartApp(context)
+                            } else {
+                                showMessage(context.getString(R.string.local_backup_invalid_file))
+                            }
+                        } catch (e: Exception) {
+                            showMessage(context.getString(R.string.local_backup_restore_failure))
+                        }
+                    }
+                }) { Text(stringResource(R.string.backup_restore)) }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showRestoreConfirm = false }) {
+                    Text(stringResource(R.string.accessibility_back))
+                }
+            }
+        )
+    }
 }
 
 @Composable

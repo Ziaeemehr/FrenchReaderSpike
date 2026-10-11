@@ -1,16 +1,21 @@
 import argparse
 import base64
 import io
+import json
 import os
 import re
 import subprocess
 import threading
 import wave
 
+# Lets the few operations Apple's GPU backend lacks run on the CPU instead of failing.
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
 import numpy as np
 import torch
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 os.environ.setdefault("COQUI_TOS_AGREED", "1")
@@ -19,12 +24,20 @@ from TTS.api import TTS
 
 SAMPLE_RATE = 24_000
 SILENCE_MS = 150
+# Constant bitrate keeps every MP3 frame the same size, so the playing time of
+# a streamed segment follows exactly from its byte count.
+STREAM_BITRATE = 48_000
 MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
 ABBREVIATIONS = ("M.", "Mme.", "Mme", "Dr.")
 
 app = FastAPI()
 torch.set_num_threads(int(os.environ.get("XTTS_THREADS", os.cpu_count() or 1)))
-tts = TTS(MODEL_NAME).to("cpu")
+# Apple's GPU (MPS) is roughly 1.6x faster than the CPU for XTTS on an M-series Mac.
+# Override with XTTS_DEVICE=cpu (or cuda) if needed.
+DEVICE = os.environ.get("XTTS_DEVICE") or (
+    "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+)
+tts = TTS(MODEL_NAME).to(DEVICE)
 synthesis_lock = threading.Lock()
 
 
@@ -99,6 +112,25 @@ def encode_mp3(samples: np.ndarray) -> bytes:
     return process.stdout
 
 
+def encode_mp3_segment(samples: np.ndarray) -> bytes:
+    """Headerless constant-bitrate MP3, so segments can simply be appended to each other."""
+    process = subprocess.run(
+        [
+            "ffmpeg", "-hide_banner", "-loglevel", "error",
+            "-f", "s16le", "-ar", str(SAMPLE_RATE), "-ac", "1", "-i", "pipe:0",
+            "-c:a", "libmp3lame", "-b:a", str(STREAM_BITRATE),
+            "-write_xing", "0", "-id3v2_version", "0", "-f", "mp3", "pipe:1",
+        ],
+        input=samples.tobytes(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {process.stderr.decode(errors='replace').strip()}")
+    return process.stdout
+
+
 @app.get("/health", dependencies=[Depends(require_token)])
 def health():
     return {"ok": True}
@@ -148,9 +180,60 @@ def synthesize(request: SynthesisRequest):
     return {"sentences": boundaries, "audio_b64": audio_b64}
 
 
+
+@app.post("/synthesize_stream", dependencies=[Depends(require_token)])
+def synthesize_stream(request: SynthesisRequest):
+    """Same result as /synthesize, delivered sentence by sentence as JSON lines.
+
+    Lets the app start playing the first sentence while the rest of a long
+    paragraph is still being generated. Line types: "start" (all sentence
+    texts), "sentence" (timing + MP3 bytes to append), "end".
+    """
+    sentences = split_sentences(request.text)
+    if not sentences:
+        raise HTTPException(status_code=400, detail="Text is empty")
+    speed = 1 + request.rate_percent / 100
+    if speed <= 0:
+        raise HTTPException(status_code=400, detail="rate_percent must be greater than -100")
+
+    def lines():
+        yield json.dumps({"type": "start", "sentences": sentences}, ensure_ascii=False) + "\n"
+        silence = np.zeros(SAMPLE_RATE * SILENCE_MS // 1000, dtype=np.int16)
+        streamed_bytes = 0
+        with synthesis_lock:
+            for index, sentence in enumerate(sentences):
+                tts_text = clean_for_tts(sentence)
+                if not re.search(r"\w", tts_text):
+                    tts_text = "."
+                samples = to_pcm16(
+                    tts.tts(text=tts_text, speaker=request.speaker, language=request.language, speed=speed)
+                )
+                padded = samples if index == len(sentences) - 1 else np.concatenate([samples, silence])
+                audio = encode_mp3_segment(padded)
+                yield json.dumps(
+                    {
+                        "type": "sentence",
+                        "index": index,
+                        "text": sentence,
+                        "offset_ms": streamed_bytes * 8000 / STREAM_BITRATE,
+                        "duration_ms": len(samples) * 1000 / SAMPLE_RATE,
+                        "audio_b64": base64.b64encode(audio).decode("ascii"),
+                    },
+                    ensure_ascii=False,
+                ) + "\n"
+                streamed_bytes += len(audio)
+        yield json.dumps({"type": "end"}) + "\n"
+
+    return StreamingResponse(lines(), media_type="application/x-ndjson")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Local XTTS-v2 server")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8020)
     args = parser.parse_args()
+    # The first synthesis after loading is much slower; pay that cost before the first request.
+    speaker = next(iter(tts.synthesizer.tts_model.speaker_manager.speakers.keys()))
+    tts.tts(text="Bonjour.", speaker=speaker, language="fr")
+    print(f"XTTS ready on {DEVICE}", flush=True)
     uvicorn.run(app, host=args.host, port=args.port)

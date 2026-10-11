@@ -145,6 +145,10 @@ object LocalBackup {
         }
     }
 
+    suspend fun importArchiveFile(context: Context, archive: File): Boolean = withContext(Dispatchers.IO) {
+        restoreArchive(context, archive)
+    }
+
     private fun restoreArchive(context: Context, archive: File): Boolean {
         val stagingRoot = File(context.filesDir, ".backup-restore-${UUID.randomUUID()}")
         val candidateDb = File(stagingRoot, DATABASE_ENTRY)
@@ -208,8 +212,12 @@ object LocalBackup {
             input.read(header) == header.size && header.contentEquals(SQLITE_HEADER)
         }
         if (!headerOk) return false
+        // Read-write on purpose: on recent SQLite versions integrity_check also
+        // verifies the FTS4 index, which needs write access and otherwise reports
+        // "attempt to write a readonly database" for a perfectly good backup.
+        // The file is our own staging copy, so opening it writable is safe.
         val database = try {
-            SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READONLY)
+            SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READWRITE)
         } catch (_: Exception) {
             return false
         }

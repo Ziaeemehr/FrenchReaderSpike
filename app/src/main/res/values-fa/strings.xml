@@ -60,6 +60,7 @@
     <string name="tts_cache_pinned_note">فایل‌های پین‌شده از محدودیت حجم و زمان و پاک کردن کش مستثنی هستند.</string>
     <string name="xtts_server_url">نشانی سرور</string>
     <string name="xtts_speaker">گوینده</string>
+    <string name="xtts_choose_speaker_title">صدای سرور محلی</string>
     <string name="xtts_speakers_unavailable">برای بارگیری گویندگان به سرور متصل شوید</string>
     <string name="xtts_refresh_speakers">تازه‌سازی</string>
     <string name="xtts_token">توکن (اختیاری)</string>
@@ -342,7 +343,6 @@
     <string name="selection_action_listen">شنیدن</string>
     <string name="selection_action_highlight">برجسته‌سازی</string>
     <string name="highlight_choose_color">انتخاب رنگ</string>
-    <string name="highlight_change_color">تغییر رنگ</string>
     <string name="highlight_delete">حذف برجسته‌سازی</string>
     <string name="manual_dictionary_action">واژه‌نامه</string>
     <string name="manual_dictionary_title">جست‌وجوی واژه</string>
@@ -429,6 +429,12 @@
     <string name="backup_success">پشتیبان‌گیری انجام شد</string>
     <string name="backup_failure">پشتیبان‌گیری ناموفق بود</string>
     <string name="backup_restore_failure">بازیابی ناموفق بود</string>
+    <string name="auto_backup_section_title">پشتیبان‌گیری خودکار</string>
+    <string name="auto_backup_toggle">پشتیبان‌گیری خودکار هنگام خروج از برنامه</string>
+    <string name="auto_backup_description">۵ پشتیبان آخر روی همین دستگاه نگه داشته می‌شود. اگر در بخش پشتیبان‌گیری ابری وارد شده باشید، در Google Drive هم آپلود می‌شود.</string>
+    <string name="auto_backup_last">آخرین پشتیبان خودکار: %1$s</string>
+    <string name="auto_backup_restore">بازیابی آخرین پشتیبان خودکار</string>
+    <string name="auto_backup_restore_confirm_title">آخرین پشتیبان خودکار بازیابی شود؟</string>
     <string name="local_backup_section_title">پشتیبان‌گیری محلی</string>
     <string name="local_backup_save">ذخیرهٔ نسخهٔ پشتیبان روی دستگاه</string>
     <string name="local_backup_restore">بازیابی از فایل</string>

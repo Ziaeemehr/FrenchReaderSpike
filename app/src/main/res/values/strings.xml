@@ -60,6 +60,7 @@
     <string name="tts_cache_pinned_note">Pinned files are exempt from size and age limits and from clearing the cache.</string>
     <string name="xtts_server_url">Server URL</string>
     <string name="xtts_speaker">Speaker</string>
+    <string name="xtts_choose_speaker_title">Local server voice</string>
     <string name="xtts_speakers_unavailable">Connect to the server to load speakers</string>
     <string name="xtts_refresh_speakers">Refresh</string>
     <string name="xtts_token">Token (optional)</string>
@@ -344,7 +345,6 @@
     <string name="selection_action_listen">Listen</string>
     <string name="selection_action_highlight">Highlight</string>
     <string name="highlight_choose_color">Choose color</string>
-    <string name="highlight_change_color">Change color</string>
     <string name="highlight_delete">Delete highlight</string>
     <string name="manual_dictionary_action">Dictionary</string>
     <string name="manual_dictionary_title">Look up a word</string>
@@ -431,6 +431,12 @@
     <string name="backup_success">Backup complete</string>
     <string name="backup_failure">Backup failed</string>
     <string name="backup_restore_failure">Restore failed</string>
+    <string name="auto_backup_section_title">Automatic backup</string>
+    <string name="auto_backup_toggle">Back up automatically when leaving the app</string>
+    <string name="auto_backup_description">Keeps the last 5 backups on this device. When you are signed in under Cloud Backup, it also uploads to Google Drive.</string>
+    <string name="auto_backup_last">Last automatic backup: %1$s</string>
+    <string name="auto_backup_restore">Restore latest automatic backup</string>
+    <string name="auto_backup_restore_confirm_title">Restore the latest automatic backup?</string>
     <string name="local_backup_section_title">Local backup</string>
     <string name="local_backup_save">Save backup to device</string>
     <string name="local_backup_restore">Restore from file</string>

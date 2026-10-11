@@ -22,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.ziaee.frenchreader.backup.AutoBackup
 import com.ziaee.frenchreader.content.DatasetSeeder
 import com.ziaee.frenchreader.content.ImageTextExtractor
 import com.ziaee.frenchreader.data.AppearancePrefs
@@ -89,6 +90,11 @@ class MainActivity : AppCompatActivity() {
     // launchMode="singleTask" (see AndroidManifest.xml) routes a share sent
     // while the app is already running here instead of spawning a second
     // instance.
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) AutoBackup.onAppBackgrounded(this)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIncomingIntent(intent)

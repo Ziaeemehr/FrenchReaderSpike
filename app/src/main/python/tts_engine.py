@@ -18,6 +18,20 @@ import asyncio
 import json
 
 import edge_tts
+from edge_tts import communicate as _communicate
+from edge_tts import constants as _constants
+
+# On 2026-10-10 Microsoft started answering 403 on the websocket endpoint
+# edge-tts 7.2.8 ships with (speech.platform.bing.com/.../readaloud/edge/v1).
+# Edge itself now talks to api.msedgeservices.com, which still accepts the
+# same client token and Sec-MS-GEC scheme. Only redirect while the installed
+# edge-tts still points at the old host, so an upstream fix wins once we
+# pick it up (see rany2/edge-tts#490).
+if "speech.platform.bing.com" in _communicate.WSS_URL:
+    _communicate.WSS_URL = (
+        "wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1"
+        f"?Ocp-Apim-Subscription-Key={_constants.TRUSTED_CLIENT_TOKEN}"
+    )
 
 
 def synthesize(text: str, voice: str, out_path: str) -> str:

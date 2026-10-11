@@ -361,11 +361,12 @@ abstract class AppDatabase : RoomDatabase() {
                     "french_reader.db"
                 )
                     .addMigrations(*ALL_MIGRATIONS)
-                    // Safety net only -- covers a version jump with no
-                    // matching migration (e.g. skipping straight from a
-                    // much older schema); the normal v2->v3 path above
-                    // never falls back to this.
-                    .fallbackToDestructiveMigration()
+                    // Only the pre-migration v1 schema may be recreated from
+                    // scratch. Anything else without a migration path -- in
+                    // particular installing an older build over newer data --
+                    // must fail loudly instead of silently dropping every
+                    // table, which is how a real vocabulary was lost once.
+                    .fallbackToDestructiveMigrationFrom(1)
                     .addCallback(TEXT_SEARCH_CALLBACK)
                     .build().also { INSTANCE = it }
             }

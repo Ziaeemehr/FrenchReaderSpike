@@ -10,6 +10,8 @@ import com.ziaee.frenchreader.R
 private const val PREFS_NAME = "backup_prefs"
 private const val KEY_SIGNED_IN_EMAIL = "signed_in_email"
 private const val KEY_LAST_BACKUP_AT_MS = "last_backup_at_ms"
+private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
+private const val KEY_LAST_AUTO_BACKUP_AT_MS = "last_auto_backup_at_ms"
 
 object BackupPrefs {
     private fun prefs(context: Context): SharedPreferences =
@@ -29,6 +31,20 @@ object BackupPrefs {
 
     fun setLastBackupAtMs(context: Context, atMs: Long) {
         prefs(context).edit().putLong(KEY_LAST_BACKUP_AT_MS, atMs).apply()
+    }
+
+    fun isAutoBackupEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_AUTO_BACKUP_ENABLED, true)
+
+    fun setAutoBackupEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_AUTO_BACKUP_ENABLED, enabled).apply()
+    }
+
+    fun getLastAutoBackupAtMs(context: Context): Long? =
+        prefs(context).getLong(KEY_LAST_AUTO_BACKUP_AT_MS, -1L).takeIf { it != -1L }
+
+    fun setLastAutoBackupAtMs(context: Context, atMs: Long) {
+        prefs(context).edit().putLong(KEY_LAST_AUTO_BACKUP_AT_MS, atMs).apply()
     }
 }
 

@@ -9,6 +9,17 @@ data class SentenceBoundary(val text: String, val offsetMs: Double, val duration
 data class SynthesisResult(val audioFile: File, val sentences: List<SentenceBoundary>)
 
 /**
+ * A streaming synthesis in progress: [audioFile] already holds the audio of
+ * [sentences] and keeps growing; [plannedTexts] lists every sentence the
+ * finished result will contain.
+ */
+data class PartialSynthesis(
+    val audioFile: File,
+    val sentences: List<SentenceBoundary>,
+    val plannedTexts: List<String>
+)
+
+/**
  * Thin Kotlin wrapper around tts_engine.py's synthesize_sentences(). Must be
  * called off the main thread -- Chaquopy calls block, and this one also
  * does network I/O (calling edge-tts) inside the Python side.

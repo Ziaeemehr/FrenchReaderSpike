@@ -153,9 +153,6 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     var selectedPhraseSentence by remember { mutableStateOf("") }
     var selectedPhraseRange by remember { mutableStateOf<TextRange?>(null) }
     var showHighlightPalette by remember { mutableStateOf(false) }
-    var highlightPopupTarget by remember { mutableStateOf<HighlightEntry?>(null) }
-    var highlightPopupRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
-    var changeHighlightColor by remember { mutableStateOf(false) }
     var lastHighlightColorKey by remember(settingsContext) {
         mutableStateOf(HighlightPrefs.getLastColorKey(settingsContext))
     }
@@ -174,6 +171,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     // Paragraph the scroll-mode auto-follow last handled; -1 forces a check on load.
     var lastFollowedChunk by remember { mutableIntStateOf(-1) }
     var voiceMenuExpanded by remember { mutableStateOf(false) }
+    var showXttsSpeakerDialog by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
     var showSourceInfoSheet by remember { mutableStateOf(false) }
     var pageNavigationMenuOpen by remember { mutableStateOf(false) }
@@ -595,9 +593,27 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                         DropdownMenuItem(
                                             text = { Text(stringResource(voice.labelRes)) },
                                             leadingIcon = { if (state.textDoc?.voice == voice.id) Icon(Icons.Default.Check, null) },
-                                            onClick = { voiceMenuExpanded = false; vm.changeVoice(voice.id) }
+                                            onClick = {
+                                                voiceMenuExpanded = false
+                                                // The local server has many speakers of its own: pick one here
+                                                // instead of sending the reader to Settings.
+                                                if (voice.id.startsWith(XTTS_VOICE_PREFIX)) {
+                                                    showXttsSpeakerDialog = true
+                                                } else {
+                                                    vm.changeVoice(voice.id)
+                                                }
+                                            }
                                         )
                                     }
+                                }
+                                if (showXttsSpeakerDialog) {
+                                    XttsSpeakerDialog(
+                                        onSelect = { speaker ->
+                                            showXttsSpeakerDialog = false
+                                            vm.changeXttsSpeaker(speaker)
+                                        },
+                                        onDismiss = { showXttsSpeakerDialog = false }
+                                    )
                                 }
                             }
                         },
@@ -727,17 +743,6 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                             selectedPhraseRange = range
                             selectedWord = null
                             selectedWordRange = null
-                            highlightPopupTarget = null
-                            highlightPopupRect = null
-                        },
-                        onHighlightClick = { highlight, rect ->
-                            selectedPhrase = null
-                            selectedPhraseRange = null
-                            selectedWord = null
-                            selectedWordRange = null
-                            highlightPopupTarget = highlight
-                            highlightPopupRect = rect
-                            changeHighlightColor = false
                         },
                         clearSelectionSignal = clearSelectionTick
                     )
@@ -849,17 +854,6 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                             selectedPhraseRange = range
                                             selectedWord = null
                                             selectedWordRange = null
-                                            highlightPopupTarget = null
-                                            highlightPopupRect = null
-                                        },
-                                        onHighlightClick = { highlight, rect ->
-                                            selectedPhrase = null
-                                            selectedPhraseRange = null
-                                            selectedWord = null
-                                            selectedWordRange = null
-                                            highlightPopupTarget = highlight
-                                            highlightPopupRect = rect
-                                            changeHighlightColor = false
                                         },
                                         clearSelectionSignal = clearSelectionTick,
                                         onSelectionActiveChange = { textSelectionActive = it },
@@ -1048,45 +1042,6 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                         }
                     },
                     onMore = { processTextTarget = phrase }
-                )
-            }
-        }
-    }
-
-    val existingHighlight = highlightPopupTarget
-    val existingHighlightRect = highlightPopupRect
-    if (existingHighlight != null && existingHighlightRect != null) {
-        Popup(
-            popupPositionProvider = SelectionRectPositionProvider(
-                rect = existingHighlightRect,
-                marginPx = with(density) { 8.dp.toPx() }
-            ),
-            onDismissRequest = {
-                highlightPopupTarget = null
-                highlightPopupRect = null
-                changeHighlightColor = false
-            }
-        ) {
-            if (changeHighlightColor) {
-                HighlightPalettePopupContent(
-                    onColorSelected = { colorKey ->
-                        vm.updateHighlightColor(existingHighlight.id, colorKey)
-                        HighlightPrefs.setLastColorKey(settingsContext, colorKey)
-                        lastHighlightColorKey = colorKey
-                        highlightPopupTarget = null
-                        highlightPopupRect = null
-                        changeHighlightColor = false
-                    },
-                    onBack = { changeHighlightColor = false }
-                )
-            } else {
-                HighlightActionsPopupContent(
-                    onChangeColor = { changeHighlightColor = true },
-                    onDelete = {
-                        vm.deleteHighlight(existingHighlight.id)
-                        highlightPopupTarget = null
-                        highlightPopupRect = null
-                    }
                 )
             }
         }
@@ -1338,7 +1293,6 @@ private fun ChunkParagraph(
     onRetry: () -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
-    onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
     clearSelectionSignal: Int,
     onSelectionActiveChange: (Boolean) -> Unit = {},
     textStartOffset: Int = 0,
@@ -1392,7 +1346,6 @@ private fun ChunkParagraph(
                         onSentenceClick = onSentenceClick,
                         onWordLookup = onWordLookup,
                         onPhraseSelected = onPhraseSelected,
-                        onHighlightClick = onHighlightClick,
                         clearSelectionSignal = clearSelectionSignal,
                         onSelectionActiveChange = onSelectionActiveChange,
                         justify = false,
@@ -1433,7 +1386,6 @@ private fun ChunkParagraph(
                             onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup,
                             onPhraseSelected = onPhraseSelected,
-                            onHighlightClick = onHighlightClick,
                             clearSelectionSignal = clearSelectionSignal,
                             onSelectionActiveChange = onSelectionActiveChange,
                             justify = false,
@@ -1459,7 +1411,6 @@ private fun ChunkParagraph(
                     onSentenceClick = onSentenceClick,
                     onWordLookup = onWordLookup,
                     onPhraseSelected = onPhraseSelected,
-                    onHighlightClick = onHighlightClick,
                     clearSelectionSignal = clearSelectionSignal,
                     onSelectionActiveChange = onSelectionActiveChange,
                     justify = true,
@@ -1478,7 +1429,6 @@ private fun ChunkParagraph(
                     onSentenceClick = onSentenceClick,
                     onWordLookup = onWordLookup,
                     onPhraseSelected = onPhraseSelected,
-                    onHighlightClick = onHighlightClick,
                     clearSelectionSignal = clearSelectionSignal,
                     onSelectionActiveChange = onSelectionActiveChange
                 )
@@ -1622,7 +1572,6 @@ private fun TableBlock(
     onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
-    onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
     clearSelectionSignal: Int,
     onSelectionActiveChange: (Boolean) -> Unit
 ) {
@@ -1720,7 +1669,6 @@ private fun TableBlock(
                                 onSentenceClick = { onSentenceClick(tableSentence ?: it) },
                                 onWordLookup = onWordLookup,
                                 onPhraseSelected = onPhraseSelected,
-                                onHighlightClick = onHighlightClick,
                                 clearSelectionSignal = clearSelectionSignal,
                                 onSelectionActiveChange = onSelectionActiveChange,
                                 justify = false
@@ -1754,7 +1702,6 @@ private fun SentenceFlowText(
     onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
-    onHighlightClick: (HighlightEntry, androidx.compose.ui.geometry.Rect) -> Unit,
     clearSelectionSignal: Int,
     onSelectionActiveChange: (Boolean) -> Unit = {},
     justify: Boolean,
@@ -1959,29 +1906,11 @@ private fun SentenceFlowText(
             onValueChange = { newValue ->
                 onSelectionActiveChange(!newValue.selection.collapsed)
                 if (newValue.selection.collapsed) {
-                    val localOffset = newValue.selection.start.coerceIn(0, annotated.length)
-                    val documentOffset = documentStartOffset + localOffset
-                    val tappedHighlight = highlights.lastOrNull {
-                        documentOffset >= it.startOffset && documentOffset < it.endOffset
-                    }
-                    if (tappedHighlight != null) {
-                        val layout = textLayout
-                        val coordinates = layoutCoordinates
-                        if (layout != null && coordinates != null && annotated.isNotEmpty()) {
-                            val box = layout.getBoundingBox(localOffset.coerceAtMost(annotated.lastIndex))
-                            val topLeft = coordinates.localToWindow(box.topLeft)
-                            val bottomRight = coordinates.localToWindow(box.bottomRight)
-                            onHighlightClick(
-                                tappedHighlight,
-                                androidx.compose.ui.geometry.Rect(topLeft, bottomRight)
-                            )
-                        }
-                        selection = TextRange.Zero
-                    } else {
-                        val idx = ranges.indexOfFirst { newValue.selection.start in it }
-                        if (idx >= 0) onSentenceClick(visibleSentences[idx].first)
-                        selection = TextRange.Zero
-                    }
+                    // A tap always jumps the audio to the tapped sentence, highlighted or
+                    // not; highlights are recoloured or removed from the selection toolbar.
+                    val idx = ranges.indexOfFirst { newValue.selection.start in it }
+                    if (idx >= 0) onSentenceClick(visibleSentences[idx].first)
+                    selection = TextRange.Zero
                 } else {
                     val kind = classifySelection(annotated.text, newValue.selection)
                     // Show the word-snapped range, not the raw handle offset, so a handle

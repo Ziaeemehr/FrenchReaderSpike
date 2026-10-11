@@ -197,27 +197,6 @@ fun HighlightPalettePopupContent(
     }
 }
 
-@Composable
-fun HighlightActionsPopupContent(onChangeColor: () -> Unit, onDelete: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 6.dp,
-        shadowElevation = 6.dp,
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Column(modifier = Modifier.width(190.dp).padding(vertical = 4.dp)) {
-            TextButton(onClick = onChangeColor, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text(stringResource(R.string.highlight_change_color), modifier = Modifier.fillMaxWidth())
-            }
-            TextButton(onClick = onDelete, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text(stringResource(R.string.highlight_delete), modifier = Modifier.fillMaxWidth())
-            }
-        }
-    }
-}
-
 /** The toolbar shown while a selection resolves to exactly one word: lets the user tap Define,
  * open the More actions, or keep dragging a handle to extend the selection into a phrase
  * (handled entirely by [SentenceFlowText] -- this toolbar doesn't need to do anything for

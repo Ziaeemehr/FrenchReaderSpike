@@ -16,6 +16,9 @@ interface HighlightDao {
     @Query("DELETE FROM highlights WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+    @Query("SELECT * FROM highlights WHERE textId = :textId AND startOffset < :endOffset AND endOffset > :startOffset")
+    suspend fun overlapping(textId: Long, startOffset: Int, endOffset: Int): List<HighlightEntry>
+
     @Query("SELECT * FROM highlights WHERE textId = :textId ORDER BY createdAtMs ASC, id ASC")
     fun observeForText(textId: Long): Flow<List<HighlightEntry>>
 }

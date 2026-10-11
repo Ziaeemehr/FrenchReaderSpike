@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.PlayerMessage
+import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.HighlightEntry
 import com.ziaee.frenchreader.data.HighlightRepository
@@ -33,11 +34,14 @@ import com.ziaee.frenchreader.shadowing.*
 import com.ziaee.frenchreader.translate.TranslationRepository
 import com.ziaee.frenchreader.tts.SentenceBoundary
 import com.ziaee.frenchreader.tts.TtsChunkRepository
+import com.ziaee.frenchreader.tts.TtsMediaSourceFactory
 import com.ziaee.frenchreader.tts.XTTS_VOICE_PREFIX
+import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -73,8 +77,15 @@ data class ChunkState(
 }
 
 /** Re-cuts TTS [sentences] (spoken text) into display segments that keep the block's symbols. */
-internal fun displaySentences(block: ParsedBlock, sentences: List<SentenceBoundary>): List<SentenceBoundary> {
-    val segments = alignSentencesToDisplay(block.plainText, block.spokenText, sentences.map { it.text })
+internal fun displaySentences(
+    block: ParsedBlock,
+    sentences: List<SentenceBoundary>,
+    // While a streaming synthesis is still running [sentences] is only a prefix;
+    // aligning against every planned sentence keeps the last received one from
+    // swallowing the rest of the block.
+    plannedTexts: List<String> = sentences.map { it.text }
+): List<SentenceBoundary> {
+    val segments = alignSentencesToDisplay(block.plainText, block.spokenText, plannedTexts)
         ?: return sentences
     return sentences.zip(segments) { sentence, segment -> sentence.copy(text = segment) }
 }
@@ -167,6 +178,7 @@ internal fun resetAudioForJump(chunks: List<ChunkState>): List<ChunkState> = chu
     }
 }
 
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     data class ShadowSummaryUi(val summary: ShadowTextSummary, val weakTexts: Map<SentenceRef, String>)
 
@@ -175,7 +187,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val ttsRepo = TtsChunkRepository(app)
     private val translationRepo = TranslationRepository(app)
     private val highlightRepository = HighlightRepository(db.highlightDao())
-    val player: ExoPlayer = ExoPlayer.Builder(app).build()
+    val player: ExoPlayer = ExoPlayer.Builder(app).setMediaSourceFactory(TtsMediaSourceFactory(app)).build()
     private val selectionPlayer: ExoPlayer = ExoPlayer.Builder(app).build()
     private var selectionPlaybackJob: Job? = null
 
@@ -305,14 +317,6 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             highlightRepository.addHighlight(textId, startOffset, endOffset, colorKey)
         }
-    }
-
-    fun updateHighlightColor(id: Long, colorKey: String) {
-        viewModelScope.launch { highlightRepository.updateColor(id, colorKey) }
-    }
-
-    fun deleteHighlight(id: Long) {
-        viewModelScope.launch { highlightRepository.delete(id) }
     }
 
     fun deleteHighlights(ids: Collection<Long>) {
@@ -540,7 +544,24 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
 
         updateChunk(index) { it.copy(status = ChunkStatus.LOADING, error = null) }
 
-        val result = ttsRepo.getOrSynthesize(chunk.spokenText, doc.voice, doc.ratePercent)
+        fun stillCurrent() = _state.value.textDoc?.voice == doc.voice && generation == playlistGeneration
+
+        // Streaming voices hand over the first sentence early: the chunk's audio is
+        // queued then, and later sentences only extend its sentence list.
+        var queuedWhileStreaming = false
+        val job = currentCoroutineContext()[Job]
+        val result = ttsRepo.getOrSynthesize(chunk.spokenText, doc.voice, doc.ratePercent) { partial ->
+            // Nobody is waiting for this audio any more (voice switch, jump, screen
+            // closed): stop the stream rather than queue it into a stale playlist.
+            if (job?.isActive != true || !stillCurrent()) throw CancellationException("Synthesis is no longer wanted")
+            val sentences = displaySentences(chunk.block, partial.sentences, partial.plannedTexts)
+            if (queuedWhileStreaming) {
+                updateChunk(index) { it.copy(sentences = sentences) }
+            } else {
+                queueChunkAudio(index, partial.audioFile, sentences)
+                queuedWhileStreaming = true
+            }
+        }
 
         // A voice switch (or a fresh load()) can reset this text's chunks
         // while this synthesis call is still in flight -- coroutine
@@ -551,50 +572,69 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         // it now would silently corrupt the chunk<->player-item mapping
         // (and desync the highlight from the audio) rather than fail
         // loudly, so it's discarded instead.
-        if (_state.value.textDoc?.voice != doc.voice || generation != playlistGeneration) return
+        if (!stillCurrent()) return
 
         result.fold(
             onSuccess = { synth ->
-                // Record the chunk -> player-item mapping *before* touching
-                // the player. Adding the very first item to an emptied
-                // playlist (right after a voice switch) can fire
-                // onMediaItemTransition synchronously, and that listener
-                // looks up the chunk by this mapping -- if it ran before
-                // the mapping was set, the lookup would miss and the
-                // highlighted chunk would fall out of sync with the audio.
-                // Keep the playlist in document order: a retried block that failed earlier is
-                // inserted before the later blocks already queued, not appended after them.
-                val itemIndex = playerItemToChunk.count { it < index }
-                val appended = itemIndex == playerItemToChunk.size
-                if (!appended) {
-                    for (i in _state.value.chunks.indices) {
-                        val item = _state.value.chunks[i].playerItemIndex ?: continue
-                        if (item >= itemIndex) updateChunk(i) { it.copy(playerItemIndex = item + 1) }
-                    }
-                }
-                updateChunk(index) {
-                    it.copy(
-                        status = ChunkStatus.READY,
-                        sentences = displaySentences(it.block, synth.sentences),
-                        playerItemIndex = itemIndex
-                    )
-                }
-                val wasWaitingAtEnd = player.playWhenReady && player.playbackState == Player.STATE_ENDED
-                playerItemToChunk.add(itemIndex, index)
-                player.addMediaItem(itemIndex, MediaItem.fromUri(synth.audioFile.toURI().toString()))
-                if (player.playbackState == Player.STATE_IDLE) player.prepare()
-                if (wasWaitingAtEnd && appended) {
-                    player.seekTo(itemIndex, 0L)
-                    player.prepare()
-                    player.play()
+                val sentences = displaySentences(chunk.block, synth.sentences)
+                if (queuedWhileStreaming) {
+                    updateChunk(index) { it.copy(sentences = sentences) }
+                } else {
+                    queueChunkAudio(index, synth.audioFile, sentences)
                 }
             },
             onFailure = { e ->
+                if (queuedWhileStreaming) unqueueChunkAudio(index)
                 updateChunk(index) {
                     it.copy(status = ChunkStatus.ERROR, error = e.message ?: e.toString())
                 }
             }
         )
+    }
+
+    private fun queueChunkAudio(index: Int, audioFile: File, sentences: List<SentenceBoundary>) {
+        // Record the chunk -> player-item mapping *before* touching
+        // the player. Adding the very first item to an emptied
+        // playlist (right after a voice switch) can fire
+        // onMediaItemTransition synchronously, and that listener
+        // looks up the chunk by this mapping -- if it ran before
+        // the mapping was set, the lookup would miss and the
+        // highlighted chunk would fall out of sync with the audio.
+        // Keep the playlist in document order: a retried block that failed earlier is
+        // inserted before the later blocks already queued, not appended after them.
+        val itemIndex = playerItemToChunk.count { it < index }
+        val appended = itemIndex == playerItemToChunk.size
+        if (!appended) {
+            for (i in _state.value.chunks.indices) {
+                val item = _state.value.chunks[i].playerItemIndex ?: continue
+                if (item >= itemIndex) updateChunk(i) { it.copy(playerItemIndex = item + 1) }
+            }
+        }
+        updateChunk(index) {
+            it.copy(status = ChunkStatus.READY, sentences = sentences, playerItemIndex = itemIndex)
+        }
+        val wasWaitingAtEnd = player.playWhenReady && player.playbackState == Player.STATE_ENDED
+        playerItemToChunk.add(itemIndex, index)
+        player.addMediaItem(itemIndex, MediaItem.fromUri(audioFile.toURI().toString()))
+        if (player.playbackState == Player.STATE_IDLE) player.prepare()
+        if (wasWaitingAtEnd && appended) {
+            player.seekTo(itemIndex, 0L)
+            player.prepare()
+            player.play()
+        }
+    }
+
+    /** Takes back a chunk's audio that was queued from a stream which then failed. */
+    private fun unqueueChunkAudio(index: Int) {
+        val itemIndex = _state.value.chunks.getOrNull(index)?.playerItemIndex ?: return
+        if (playerItemToChunk.getOrNull(itemIndex) != index) return
+        playerItemToChunk.removeAt(itemIndex)
+        for (i in _state.value.chunks.indices) {
+            val item = _state.value.chunks[i].playerItemIndex ?: continue
+            if (item > itemIndex) updateChunk(i) { it.copy(playerItemIndex = item - 1) }
+        }
+        updateChunk(index) { it.copy(sentences = emptyList(), playerItemIndex = null) }
+        player.removeMediaItem(itemIndex)
     }
 
     private fun rebuildPlaylist(startIndex: Int, resetChunks: Boolean = true) {
@@ -629,9 +669,25 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
      * player timeline is dropped, so tapping a sentence there is a no-op
      * until the text is reopened, rather than jumping to the wrong audio.
      */
-    fun changeVoice(voice: String) {
+    fun changeVoice(voice: String) = changeVoice(voice, force = false)
+
+    /**
+     * Switches this text to the local XTTS server with [speaker]. The speaker is
+     * a server-wide setting (the same one Settings edits), so the voice id of the
+     * text may stay the same while the audio still has to be regenerated.
+     */
+    fun changeXttsSpeaker(speaker: String) {
         val doc = _state.value.textDoc ?: return
-        if (doc.voice == voice) return
+        val context = getApplication<Application>()
+        val alreadyActive = doc.voice.startsWith(XTTS_VOICE_PREFIX) && XttsPrefs.getSpeaker(context) == speaker
+        if (alreadyActive) return
+        XttsPrefs.setSpeaker(context, speaker)
+        changeVoice("${XTTS_VOICE_PREFIX}local", force = true)
+    }
+
+    private fun changeVoice(voice: String, force: Boolean) {
+        val doc = _state.value.textDoc ?: return
+        if (doc.voice == voice && !force) return
         viewModelScope.launch {
             val updatedDoc = doc.copy(voice = voice)
             db.textDao().update(updatedDoc)

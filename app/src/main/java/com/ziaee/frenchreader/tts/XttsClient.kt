@@ -6,6 +6,8 @@ import com.ziaee.frenchreader.data.XttsPrefs
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -60,6 +62,79 @@ object XttsClient {
             )
         }
         return SynthesisResult(outFile, sentences)
+    }
+
+    /**
+     * Like [synthesizeSentences], but the server sends one JSON line per
+     * sentence as soon as it is generated. Each sentence's audio is appended
+     * to [outFile] and [onSentence] is told what has arrived so far, so
+     * playback can start long before a long paragraph is finished.
+     * Returns null when the server is too old to have the streaming endpoint.
+     */
+    fun synthesizeSentencesStreaming(
+        context: Context,
+        text: String,
+        speaker: String,
+        ratePercent: Int,
+        outFile: File,
+        onSentence: (received: List<SentenceBoundary>, plannedTexts: List<String>) -> Unit
+    ): SynthesisResult? {
+        val connection = openConnection(context, "/synthesize_stream").apply {
+            requestMethod = "POST"
+            readTimeout = 180_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+        }
+        try {
+            val request = JSONObject().apply {
+                put("text", text)
+                put("speaker", speaker)
+                put("rate_percent", ratePercent)
+                put("language", "fr")
+            }
+            connection.outputStream.use { it.write(request.toString().toByteArray(Charsets.UTF_8)) }
+            val status = connection.responseCode
+            if (status == HttpURLConnection.HTTP_NOT_FOUND || status == HttpURLConnection.HTTP_BAD_METHOD) return null
+            if (status !in 200..299) {
+                val body = connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                throw IllegalStateException("Local XTTS server returned HTTP $status${if (body.isBlank()) "" else ": $body"}")
+            }
+
+            outFile.parentFile?.mkdirs()
+            var plannedTexts = emptyList<String>()
+            val received = ArrayList<SentenceBoundary>()
+            var finished = false
+            FileOutputStream(outFile, false).use { audio ->
+                connection.inputStream.bufferedReader(Charsets.UTF_8).useLines { lines ->
+                    for (line in lines) {
+                        if (line.isBlank()) continue
+                        val event = JSONObject(line)
+                        when (event.getString("type")) {
+                            "start" -> plannedTexts = event.getJSONArray("sentences").let { array ->
+                                List(array.length()) { array.getString(it) }
+                            }
+                            "sentence" -> {
+                                audio.write(Base64.decode(event.getString("audio_b64"), Base64.DEFAULT))
+                                audio.flush()
+                                received.add(
+                                    SentenceBoundary(
+                                        event.getString("text"),
+                                        event.getDouble("offset_ms"),
+                                        event.getDouble("duration_ms")
+                                    )
+                                )
+                                onSentence(received.toList(), plannedTexts)
+                            }
+                            "end" -> finished = true
+                        }
+                    }
+                }
+            }
+            if (!finished || received.isEmpty()) throw IOException("Local XTTS server ended the stream early")
+            return SynthesisResult(outFile, received)
+        } finally {
+            connection.disconnect()
+        }
     }
 
     fun ping(context: Context): Boolean = try {

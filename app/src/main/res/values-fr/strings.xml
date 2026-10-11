@@ -60,6 +60,7 @@
     <string name="tts_cache_pinned_note">Les fichiers épinglés sont exclus des limites de taille et d’âge ainsi que du vidage du cache.</string>
     <string name="xtts_server_url">URL du serveur</string>
     <string name="xtts_speaker">Voix</string>
+    <string name="xtts_choose_speaker_title">Voix du serveur local</string>
     <string name="xtts_speakers_unavailable">Connectez-vous au serveur pour charger les voix</string>
     <string name="xtts_refresh_speakers">Actualiser</string>
     <string name="xtts_token">Jeton (facultatif)</string>
@@ -344,7 +345,6 @@
     <string name="selection_action_listen">Écouter</string>
     <string name="selection_action_highlight">Surligner</string>
     <string name="highlight_choose_color">Choisir une couleur</string>
-    <string name="highlight_change_color">Changer la couleur</string>
     <string name="highlight_delete">Supprimer le surlignage</string>
     <string name="manual_dictionary_action">Dictionnaire</string>
     <string name="manual_dictionary_title">Rechercher un mot</string>
@@ -431,6 +431,12 @@
     <string name="backup_success">Sauvegarde terminée</string>
     <string name="backup_failure">Échec de la sauvegarde</string>
     <string name="backup_restore_failure">Échec de la restauration</string>
+    <string name="auto_backup_section_title">Sauvegarde automatique</string>
+    <string name="auto_backup_toggle">Sauvegarder automatiquement en quittant l\'application</string>
+    <string name="auto_backup_description">Conserve les 5 dernières sauvegardes sur cet appareil. Si vous êtes connecté dans Sauvegarde cloud, elles sont aussi envoyées sur Google Drive.</string>
+    <string name="auto_backup_last">Dernière sauvegarde automatique : %1$s</string>
+    <string name="auto_backup_restore">Restaurer la dernière sauvegarde automatique</string>
+    <string name="auto_backup_restore_confirm_title">Restaurer la dernière sauvegarde automatique ?</string>
     <string name="local_backup_section_title">Sauvegarde locale</string>
     <string name="local_backup_save">Enregistrer la sauvegarde sur l’appareil</string>
     <string name="local_backup_restore">Restaurer depuis un fichier</string>
