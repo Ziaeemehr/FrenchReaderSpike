@@ -3,8 +3,11 @@ package com.ziaee.frenchreader.resources
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.LocalLibrary
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Newspaper
@@ -13,6 +16,7 @@ import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,6 +30,10 @@ enum class ResourceCategory(
 ) {
     PODCASTS("podcasts", R.string.resource_category_podcasts, Icons.Default.Headphones),
     VIDEO("video", R.string.resource_category_video, Icons.Default.OndemandVideo),
+    YOUTUBE_LESSONS("youtube_lessons", R.string.resource_category_youtube_lessons, Icons.Default.Subscriptions),
+    YOUTUBE_NEWS("youtube_news", R.string.resource_category_youtube_news, Icons.Default.LiveTv),
+    YOUTUBE_CULTURE("youtube_culture", R.string.resource_category_youtube_culture, Icons.Default.Explore),
+    YOUTUBE_KIDS("youtube_kids", R.string.resource_category_youtube_kids, Icons.Default.ChildCare),
     PERSIAN("persian", R.string.resource_category_persian, Icons.Default.RecordVoiceOver),
     TELEGRAM("telegram", R.string.resource_category_telegram, Icons.Default.Send),
     READING("reading", R.string.resource_category_reading, Icons.Default.MenuBook),
@@ -56,7 +64,7 @@ data class DefaultResource(
     val imageUrl: String? = null
 )
 
-private fun d(en: String, fr: String, fa: String) = mapOf("en" to en, "fr" to fr, "fa" to fa)
+internal fun d(en: String, fr: String, fa: String) = mapOf("en" to en, "fr" to fr, "fa" to fa)
 
 /**
  * Built-in resources. New entries are added once to existing installs (see ResourcesViewModel);
@@ -278,6 +286,12 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
             "Écoutez la prononciation de n'importe quel mot par des natifs.",
             "تلفظ هر واژه را از زبان فرانسوی‌زبان‌ها بشنوید.")
     ),
+    DefaultResource(
+        "Glosbe", "https://glosbe.com/fr/fa", ResourceCategory.DICTIONARIES, 54, null,
+        d("French–Persian dictionary with translations shown in example sentences.",
+            "Dictionnaire français–persan avec des traductions en contexte.",
+            "فرهنگ فرانسوی–فارسی با ترجمه‌ها در جمله‌های نمونه.")
+    ),
     // Exams
     DefaultResource(
         "TCF Canada (France Éducation international)",
@@ -285,12 +299,6 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
         d("Official information and sample tasks for the TCF Canada.",
             "Informations officielles et exemples d'épreuves du TCF Canada.",
             "اطلاعات رسمی و نمونه‌سؤال‌های آزمون TCF کانادا.")
-    ),
-    DefaultResource(
-        "Glosbe", "https://glosbe.com/fr/fa", ResourceCategory.DICTIONARIES, 54, null,
-        d("French–Persian dictionary with translations shown in example sentences.",
-            "Dictionnaire français–persan avec des traductions en contexte.",
-            "فرهنگ فرانسوی–فارسی با ترجمه‌ها در جمله‌های نمونه.")
     ),
     DefaultResource(
         "TCF tout public", "https://www.france-education-international.fr/test/tcf-tout-public",
@@ -423,7 +431,7 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
             "Livres numériques gratuits de littérature française, soigneusement édités.",
             "کتاب‌های الکترونیکی رایگان ادبیات فرانسه با ویرایش دقیق.")
     )
-)
+) + YOUTUBE_CHANNEL_RESOURCES
 
 /** Built-in entry for a stored URL, if any (trailing slash and case ignored). */
 fun defaultResourceFor(url: String): DefaultResource? {

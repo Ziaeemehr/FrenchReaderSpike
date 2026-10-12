@@ -611,6 +611,10 @@
     <string name="resources_web_search">Recherche web</string>
     <string name="resources_youtube_search">Recherche YouTube</string>
     <string name="resource_category_telegram">Chaînes Telegram</string>
+    <string name="resource_category_youtube_lessons">YouTube : cours de français</string>
+    <string name="resource_category_youtube_news">YouTube : actualités</string>
+    <string name="resource_category_youtube_culture">YouTube : culture et sciences</string>
+    <string name="resource_category_youtube_kids">YouTube : dessins animés</string>
     <string name="about_star">Mettre une étoile sur GitHub</string>
     <string name="about_star_detail">Si l\'app vous aide, une étoile aide d\'autres à la trouver</string>
     <string name="update_available_title">La version %1$s est disponible</string>
