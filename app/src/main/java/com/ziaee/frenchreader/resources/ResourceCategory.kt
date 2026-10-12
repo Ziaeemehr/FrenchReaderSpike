@@ -287,6 +287,12 @@ val DEFAULT_RESOURCES: List<DefaultResource> = listOf(
             "اطلاعات رسمی و نمونه‌سؤال‌های آزمون TCF کانادا.")
     ),
     DefaultResource(
+        "Glosbe", "https://glosbe.com/fr/fa", ResourceCategory.DICTIONARIES, 54, null,
+        d("French–Persian dictionary with translations shown in example sentences.",
+            "Dictionnaire français–persan avec des traductions en contexte.",
+            "فرهنگ فرانسوی–فارسی با ترجمه‌ها در جمله‌های نمونه.")
+    ),
+    DefaultResource(
         "TCF tout public", "https://www.france-education-international.fr/test/tcf-tout-public",
         ResourceCategory.EXAMS, 61, "A1–C2",
         d("Official page of the general TCF test, with sample questions.",

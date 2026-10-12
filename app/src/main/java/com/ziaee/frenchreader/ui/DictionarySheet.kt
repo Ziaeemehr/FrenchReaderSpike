@@ -98,6 +98,10 @@ private val DICTIONARY_PROVIDERS = listOf(
     DictionaryProvider("bamooz", "B-amooz", R.drawable.ic_dict_bamooz) {
         "https://dic.b-amooz.com/fr/dictionary/w?word=" + URLEncoder.encode(it, "UTF-8")
     },
+    // Path segment, not a query: Glosbe 404s on "+" for spaces.
+    DictionaryProvider("glosbe", "Glosbe", R.drawable.ic_dict_glosbe) {
+        "https://glosbe.com/fr/fa/" + URLEncoder.encode(it, "UTF-8").replace("+", "%20")
+    },
     DictionaryProvider("larousse", "Larousse", R.drawable.ic_dict_larousse) {
         "https://www.larousse.fr/dictionnaires/francais/" + URLEncoder.encode(it, "UTF-8")
     },
