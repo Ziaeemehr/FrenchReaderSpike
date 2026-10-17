@@ -50,6 +50,10 @@ Older versions are on the [Releases page](https://github.com/Ziaeemehr/FrenchRea
 - **Back up** to your phone or Google Drive.
 - App in English, French or Persian.
 
+## Local text-to-speech (optional)
+
+You can run an XTTS server on your computer and connect the app to it. See the [XTTS setup guide](tools/xtts_server/README.md) for installation, starting the server, and connecting over Wi-Fi or USB.
+
 ## ⭐ Support
 
 If French Reader helps you learn French, please give it a star on GitHub: it's free, and it helps other learners find the app.

@@ -1,15 +1,15 @@
 # Local XTTS server
 
-Install Python 3.10+, `ffmpeg`, and the server dependencies (`coqui-tts` does not pull in PyTorch, needs its `codec` extra with PyTorch 2.9+, and does not yet work with `transformers` 5):
+On macOS, install `uv` and `ffmpeg`, then create a Python 3.11 environment and install the server dependencies (`coqui-tts` does not pull in PyTorch, needs its `codec` extra with PyTorch 2.9+, and does not yet work with `transformers` 5). Replace `/path/to/xtts-env` with your preferred environment location; it can be outside the project:
 
 ```bash
-brew install ffmpeg
-python3 -m venv .venv
-source .venv/bin/activate
-pip install 'coqui-tts[codec]' 'transformers>=4.57,<5' torch torchaudio fastapi uvicorn numpy
+brew install uv ffmpeg
+uv venv --python 3.11 /path/to/xtts-env
+source /path/to/xtts-env/bin/activate
+uv pip install 'coqui-tts[codec]' 'transformers>=4.57,<5' torch torchaudio fastapi uvicorn numpy
 ```
 
-Run the server (the XTTS-v2 model downloads on first launch):
+With the environment activated, run the server from the project's `tools/xtts_server` directory (the XTTS-v2 model downloads on first launch):
 
 ```bash
 python server.py --host 0.0.0.0 --port 8020
