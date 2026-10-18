@@ -54,3 +54,6 @@ __pycache__/
 
 # Isolated Git worktrees used for feature implementation
 .worktrees/
+
+# oh-my-claudecode local state
+.omc/

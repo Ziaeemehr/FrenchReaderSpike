@@ -12,6 +12,9 @@ An Android app for learning French by reading: read real French texts, listen to
   <a href="https://github.com/Ziaeemehr/FrenchReaderSpike/releases/latest/download/FrenchReader.apk">
     <img src="https://img.shields.io/badge/Download-FrenchReader.apk-722b36?style=for-the-badge&logo=android&logoColor=white" alt="Download FrenchReader.apk">
   </a>
+  <a href="https://cafebazaar.ir/app/com.ziaee.frenchreader">
+    <img src="https://img.shields.io/badge/Cafe_Bazaar-FrenchReader-4caf50?style=for-the-badge&logo=android&logoColor=white" alt="Get it on Cafe Bazaar">
+  </a>
 </p>
 
 1. On your Android phone, tap the **Download** button above. It always gets the newest version.
@@ -19,6 +22,8 @@ An Android app for learning French by reading: read real French texts, listen to
 3. If Android asks, allow installing apps from your browser or file manager, then tap **Install**.
 
 Requires Android 8.0 or newer. To update later, download and install again: your words and texts are kept.
+
+You can also install and update the app from [Cafe Bazaar](https://cafebazaar.ir/app/com.ziaee.frenchreader).
 
 Older versions are on the [Releases page](https://github.com/Ziaeemehr/FrenchReaderSpike/releases).
 

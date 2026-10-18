@@ -16,6 +16,9 @@
   <a href="https://github.com/Ziaeemehr/FrenchReaderSpike/releases/latest/download/FrenchReader.apk">
     <img src="https://img.shields.io/badge/Download-FrenchReader.apk-722b36?style=for-the-badge&logo=android&logoColor=white" alt="دانلود FrenchReader.apk">
   </a>
+  <a href="https://cafebazaar.ir/app/com.ziaee.frenchreader">
+    <img src="https://img.shields.io/badge/Cafe_Bazaar-FrenchReader-4caf50?style=for-the-badge&logo=android&logoColor=white" alt="دریافت از کافه‌بازار">
+  </a>
 </p>
 
 <div dir="rtl">
@@ -27,6 +30,8 @@
 ۳. اگر اندروید اجازه خواست، نصب برنامه از مرورگر یا فایل‌منیجر را مجاز کنید و بعد **Install** را بزنید.
 
 به اندروید ۸ یا جدیدتر نیاز دارد. برای به‌روزرسانی، کافی است دوباره دانلود و نصب کنید؛ کلمه‌ها و متن‌هایتان حفظ می‌شوند.
+
+همچنین می‌توانید برنامه را از [کافه‌بازار](https://cafebazaar.ir/app/com.ziaee.frenchreader) نصب و به‌روزرسانی کنید.
 
 نسخه‌های قبلی در [صفحهٔ Releases](https://github.com/Ziaeemehr/FrenchReaderSpike/releases) هستند.
 
