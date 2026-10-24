@@ -182,8 +182,9 @@ private fun ShadowingSection(summary: ShadowingSummary) {
             today.minusDays(it.toLong()).dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
         },
         color = MaterialTheme.colorScheme.tertiary,
-        modifier = Modifier.fillMaxWidth().height(120.dp).padding(top = 8.dp),
-        maxValue = 100f
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        maxValue = 100f,
+        formatValue = { chartNumber(it, locale) + "%" }
     )
 }
 
@@ -307,6 +308,7 @@ private fun NewChartSections(state: StatisticsUiState) {
     val primary = MaterialTheme.colorScheme.primary
     val locale = LocalConfiguration.current.locales[0]
     val noData = stringResource(R.string.statistics_no_data)
+    val minutesUnit = stringResource(R.string.study_log_minutes_short)
 
     ChartTitle(R.string.statistics_heatmap_title)
     if (state.reviewHeatmap.all { it.count == 0 }) Text(noData) else HeatmapGrid(state.reviewHeatmap)
@@ -315,7 +317,9 @@ private fun NewChartSections(state: StatisticsUiState) {
     if (state.dueForecast.sum() == 0) Text(noData) else BarChart(
         state.dueForecast.map { it.toFloat() },
         state.dueForecast.indices.map { if (it % 5 == 0) "+${chartNumber(it, locale)}" else "" },
-        primary
+        primary,
+        integerTicks = true,
+        formatValue = { chartNumber(it, locale) }
     )
 
     ChartTitle(R.string.statistics_accuracy_trend_title)
@@ -323,14 +327,17 @@ private fun NewChartSections(state: StatisticsUiState) {
         state.accuracyTrend.map { it.percent.toFloat() },
         state.accuracyTrend.map { chartDate(it.weekStart, locale) },
         primary,
-        maxValue = 100f
+        maxValue = 100f,
+        formatValue = { chartNumber(it, locale) + "%" }
     )
 
     ChartTitle(R.string.statistics_words_added_title)
     if (state.wordsAddedPerWeek.all { it.count == 0 }) Text(noData) else BarChart(
         state.wordsAddedPerWeek.map { it.count.toFloat() },
         state.wordsAddedPerWeek.map { chartDate(it.weekStart, locale) },
-        primary
+        primary,
+        integerTicks = true,
+        formatValue = { chartNumber(it, locale) }
     )
 
     ChartTitle(R.string.statistics_retention_title)
@@ -338,13 +345,15 @@ private fun NewChartSections(state: StatisticsUiState) {
         state.retentionByBox.map { it.percent.toFloat() },
         state.retentionByBox.indices.map { chartNumber(it + 1, locale) },
         MaterialTheme.colorScheme.secondary,
-        maxValue = 100f
+        maxValue = 100f,
+        formatValue = { chartNumber(it, locale) + "%" }
     )
 
     ChartTitle(R.string.statistics_listening_month_title)
     if (state.monthlyListening.all { it.listeningMs == 0L }) Text(noData) else BarChart(
         state.monthlyListening.map { it.listeningMs / 60_000f },
         state.monthlyListening.mapIndexed { i, d -> if (i % 5 == 0) chartNumber(d.date.dayOfMonth, locale) else "" },
-        primary
+        primary,
+        formatValue = { chartNumber(it, locale) + " " + minutesUnit }
     )
 }

@@ -680,7 +680,7 @@
     <string name="study_log_empty_hint">Add study time to start seeing your progress.</string>
     <string name="study_log_settings">Study log settings</string>
     <string name="study_log_weekly_targets">Weekly targets (minutes)</string>
-    <string name="study_log_minutes_short">min</string>
+    <string name="study_log_minutes_short">min</string><string name="study_log_hours_short">h</string>
     <string name="study_log_saturday">Saturday</string>
     <string name="study_log_monday">Monday</string>
     <string name="study_log_today">Today</string>

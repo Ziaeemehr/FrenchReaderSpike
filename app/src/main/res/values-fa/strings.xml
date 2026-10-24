@@ -678,7 +678,7 @@
     <string name="study_log_empty_hint">برای دیدن پیشرفت خود، زمان مطالعه اضافه کنید.</string>
     <string name="study_log_settings">تنظیمات دفتر مطالعه</string>
     <string name="study_log_weekly_targets">هدف‌های هفتگی (دقیقه)</string>
-    <string name="study_log_minutes_short">دقیقه</string>
+    <string name="study_log_minutes_short">دقیقه</string><string name="study_log_hours_short">ساعت</string>
     <string name="study_log_saturday">شنبه</string>
     <string name="study_log_monday">دوشنبه</string>
     <string name="study_log_today">امروز</string>

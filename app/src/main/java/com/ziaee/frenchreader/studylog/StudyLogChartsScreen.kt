@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.StudySession
 import com.ziaee.frenchreader.data.StudySkill
+import com.ziaee.frenchreader.ui.statistics.chartNumber
 import com.ziaee.frenchreader.ui.statistics.MultiLineChart
 import com.ziaee.frenchreader.ui.statistics.StackedBarChart
 import java.text.NumberFormat
@@ -98,6 +99,9 @@ private fun ChartsContent(
     onPeriodChange: (StudyPeriod) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val locale = appLocale()
+    val minutesUnit = stringResource(R.string.study_log_minutes_short)
+    val hoursUnit = stringResource(R.string.study_log_hours_short)
     val colors = studySkillColors()
     val formatter = DateTimeFormatter.ofPattern("dd/MM", appLocale())
     val displayedSkills = chartSkills(state.activitySessions)
@@ -127,7 +131,8 @@ private fun ChartsContent(
                     }
                 },
                 labels = sparseLabels(state.buckets.map { it.epochDay }, formatter, state.period == StudyPeriod.ALL),
-                colors = displayedSkills.map { colors.getValue(it) }
+                colors = displayedSkills.map { colors.getValue(it) },
+                formatValue = { chartNumber(it, locale) + " " + minutesUnit }
             )
             SkillLegend(colors, displayedSkills)
         }
@@ -138,7 +143,8 @@ private fun ChartsContent(
                     state.cumulative[skill].orEmpty().map { it.minutes.toFloat() / 60f }
                 },
                 labels = sparseLabels(cumulativeDays, formatter, state.period == StudyPeriod.ALL),
-                colors = displayedSkills.map { colors.getValue(it) }
+                colors = displayedSkills.map { colors.getValue(it) },
+                formatValue = { chartNumber(it, locale) + " " + hoursUnit }
             )
             SkillLegend(colors, displayedSkills)
         }

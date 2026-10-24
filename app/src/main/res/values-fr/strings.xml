@@ -680,7 +680,7 @@
     <string name="study_log_empty_hint">Ajoutez du temps d’étude pour suivre vos progrès.</string>
     <string name="study_log_settings">Réglages du journal d’étude</string>
     <string name="study_log_weekly_targets">Objectifs hebdomadaires (minutes)</string>
-    <string name="study_log_minutes_short">min</string>
+    <string name="study_log_minutes_short">min</string><string name="study_log_hours_short">h</string>
     <string name="study_log_saturday">Samedi</string>
     <string name="study_log_monday">Lundi</string>
     <string name="study_log_today">Aujourd’hui</string>

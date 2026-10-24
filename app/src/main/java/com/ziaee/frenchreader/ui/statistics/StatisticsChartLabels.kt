@@ -11,3 +11,6 @@ internal fun chartNumber(value: Int, locale: Locale): String =
 
 internal fun chartDate(date: LocalDate, locale: Locale): String =
     date.format(DateTimeFormatter.ofPattern("d/M", locale).withDecimalStyle(DecimalStyle.of(locale)))
+
+internal fun chartNumber(value: Float, locale: Locale): String =
+    NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 2 }.format(value)

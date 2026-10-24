@@ -19,14 +19,93 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.pow
 import kotlin.math.roundToInt
+
+internal fun niceAxisMax(max: Float): Float {
+    if (max <= 0f) return 1f
+    val magnitude = 10.0.pow(floor(log10(max.toDouble())))
+    return listOf(1.0, 2.0, 2.5, 5.0, 10.0)
+        .map { (it * magnitude).toFloat() }
+        .first { it >= max }
+}
+
+internal fun chartAxisMax(dataMax: Float, maxValue: Float?, integerTicks: Boolean): Float {
+    if (maxValue != null && maxValue > 0f) return maxValue
+    val nice = niceAxisMax(dataMax)
+    return if (integerTicks) {
+        val max = if (dataMax <= 5f) dataMax.coerceAtLeast(1f) else nice
+        (ceil(max / 2f) * 2f).coerceAtLeast(2f)
+    } else nice
+}
+
+@Composable
+private fun ChartFrame(
+    labels: List<String>,
+    max: Float,
+    formatValue: ((Float) -> String)?,
+    height: Dp,
+    inset: Dp,
+    modifier: Modifier,
+    plot: @Composable (Modifier) -> Unit
+) {
+    Row(modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
+        if (formatValue != null) {
+            Layout(
+                content = {
+                    listOf(max, max / 2f, 0f).forEach { value ->
+                        Text(
+                            formatValue(value),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+                },
+                modifier = Modifier.height(height).padding(end = 8.dp)
+            ) { measurables, constraints ->
+                val ticks = measurables.map { it.measure(Constraints()) }
+                val width = ticks.maxOf { it.width }
+                val h = constraints.maxHeight
+                val edge = inset.toPx()
+                // Endpoint labels extend half their height beyond the plot so their centers
+                // match the gridlines, including the point-radius inset on line charts.
+                layout(width, h) {
+                    ticks.forEachIndexed { index, tick ->
+                        val center = edge + (h - 2 * edge) * index / 2f
+                        tick.placeRelative(width - tick.width, (center - tick.height / 2f).roundToInt())
+                    }
+                }
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            plot(Modifier.fillMaxWidth().height(height))
+            Box(Modifier.padding(top = if (formatValue != null) 8.dp else 0.dp)) {
+                LabelRow(labels)
+            }
+        }
+    }
+}
+
+private fun DrawScope.axisGrid(color: Color, inset: Float = 0f) {
+    repeat(3) { tick ->
+        val y = inset + (size.height - 2 * inset) * tick / 2f
+        drawLine(color, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
+    }
+}
 
 @Composable
 private fun LabelRow(labels: List<String>) {
@@ -94,11 +173,15 @@ fun BarChart(
     labels: List<String>,
     color: Color,
     modifier: Modifier = Modifier,
-    maxValue: Float? = null
+    maxValue: Float? = null,
+    formatValue: ((Float) -> String)? = null,
+    integerTicks: Boolean = false
 ) {
-    val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
-    Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
+    val max = chartAxisMax(values.maxOrNull() ?: 0f, maxValue, integerTicks)
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    ChartFrame(labels, max, formatValue, 100.dp, 0.dp, modifier) { plotModifier ->
+        Canvas(modifier = plotModifier) {
+            if (formatValue != null) axisGrid(gridColor)
             if (values.isEmpty()) return@Canvas
             val slot = size.width / values.size
             val barWidth = slot * 0.6f
@@ -110,7 +193,6 @@ fun BarChart(
                 drawRect(color, Offset(x, size.height - h), Size(barWidth, h))
             }
         }
-        LabelRow(labels)
     }
 }
 
@@ -119,19 +201,16 @@ fun StackedBarChart(
     valuesByBar: List<List<Float>>,
     labels: List<String>,
     colors: List<Color>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxValue: Float? = null,
+    formatValue: ((Float) -> String)? = null,
+    integerTicks: Boolean = false
 ) {
-    val max = maxOf(valuesByBar.maxOfOrNull { it.sum() } ?: 0f, 1f)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-    ) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-        ) {
+    val max = chartAxisMax(valuesByBar.maxOfOrNull { it.sum() } ?: 0f, maxValue, integerTicks)
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    ChartFrame(labels, max, formatValue, 140.dp, 0.dp, modifier) { plotModifier ->
+        Canvas(modifier = plotModifier) {
+            if (formatValue != null) axisGrid(gridColor)
             if (valuesByBar.isEmpty()) return@Canvas
             val slot = size.width / valuesByBar.size
             val width = slot * .65f
@@ -154,7 +233,6 @@ fun StackedBarChart(
                 }
             }
         }
-        LabelRow(labels)
     }
 }
 
@@ -164,11 +242,15 @@ fun LineChart(
     labels: List<String>,
     color: Color,
     modifier: Modifier = Modifier,
-    maxValue: Float? = null
+    maxValue: Float? = null,
+    formatValue: ((Float) -> String)? = null,
+    integerTicks: Boolean = false
 ) {
-    val max = maxValue ?: maxOf(values.maxOrNull() ?: 0f, 1f)
-    Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
+    val max = chartAxisMax(values.maxOrNull() ?: 0f, maxValue, integerTicks)
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    ChartFrame(labels, max, formatValue, 100.dp, 4.dp, modifier) { plotModifier ->
+        Canvas(modifier = plotModifier) {
+            if (formatValue != null) axisGrid(gridColor, 4.dp.toPx())
             if (values.isEmpty()) return@Canvas
             val slot = size.width / values.size
             val r = 4.dp.toPx()
@@ -184,7 +266,6 @@ fun LineChart(
             }
             points.forEach { drawCircle(color, radius = r, center = it) }
         }
-        LabelRow(labels)
     }
 }
 
@@ -193,11 +274,16 @@ fun MultiLineChart(
     valuesBySeries: List<List<Float>>,
     labels: List<String>,
     colors: List<Color>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxValue: Float? = null,
+    formatValue: ((Float) -> String)? = null,
+    integerTicks: Boolean = false
 ) {
-    val max = maxOf(valuesBySeries.maxOfOrNull { it.maxOrNull() ?: 0f } ?: 0f, 1f)
-    Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(140.dp)) {
+    val max = chartAxisMax(valuesBySeries.maxOfOrNull { it.maxOrNull() ?: 0f } ?: 0f, maxValue, integerTicks)
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    ChartFrame(labels, max, formatValue, 140.dp, 4.dp, modifier) { plotModifier ->
+        Canvas(modifier = plotModifier) {
+            if (formatValue != null) axisGrid(gridColor, 4.dp.toPx())
             val count = valuesBySeries.maxOfOrNull { it.size } ?: 0
             if (count == 0) return@Canvas
             val slot = size.width / count
@@ -226,7 +312,6 @@ fun MultiLineChart(
                 }
             }
         }
-        LabelRow(labels)
     }
 }
 
