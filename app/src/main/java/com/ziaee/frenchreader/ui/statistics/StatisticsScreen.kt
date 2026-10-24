@@ -324,7 +324,7 @@ private fun NewChartSections(state: StatisticsUiState) {
 
     ChartTitle(R.string.statistics_accuracy_trend_title)
     if (state.accuracyTrend.all { it.answers == 0 }) Text(noData) else LineChart(
-        state.accuracyTrend.map { it.percent.toFloat() },
+        state.accuracyTrend.map { if (it.answers == 0) null else it.percent.toFloat() },
         state.accuracyTrend.map { chartDate(it.weekStart, locale) },
         primary,
         maxValue = 100f,

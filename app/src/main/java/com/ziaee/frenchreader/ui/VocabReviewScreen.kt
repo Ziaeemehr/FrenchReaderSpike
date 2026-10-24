@@ -314,7 +314,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         val boxBefore = if (learnedReviewMode) 5 else entry.leitnerBox
         val updated = if (learnedReviewMode && answer != VocabAnswer.FORGOT) {
             entry.copy(lastReviewedAtMs = now)
-        } else VocabSrs.apply(entry, answer, now, intervals)
+        } else VocabSrs.apply(entry, answer, now, intervals).let {
+            // "Again" repeats the card this session; keep it due today so leaving early does not push it to tomorrow.
+            if (!learnedReviewMode && answer == VocabAnswer.FORGOT) it.copy(nextReviewAtMs = now) else it
+        }
         val boxAfter = if (learnedReviewMode && answer != VocabAnswer.FORGOT) 5 else updated.leitnerBox
         viewModelScope.launch {
             val logId = db.withTransaction {

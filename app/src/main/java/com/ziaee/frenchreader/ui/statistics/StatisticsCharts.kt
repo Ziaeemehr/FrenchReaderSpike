@@ -238,7 +238,7 @@ fun StackedBarChart(
 
 @Composable
 fun LineChart(
-    values: List<Float>,
+    values: List<Float?>,
     labels: List<String>,
     color: Color,
     modifier: Modifier = Modifier,
@@ -246,7 +246,7 @@ fun LineChart(
     formatValue: ((Float) -> String)? = null,
     integerTicks: Boolean = false
 ) {
-    val max = chartAxisMax(values.maxOrNull() ?: 0f, maxValue, integerTicks)
+    val max = chartAxisMax(values.filterNotNull().maxOrNull() ?: 0f, maxValue, integerTicks)
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     ChartFrame(labels, max, formatValue, 100.dp, 4.dp, modifier) { plotModifier ->
         Canvas(modifier = plotModifier) {
@@ -254,17 +254,19 @@ fun LineChart(
             if (values.isEmpty()) return@Canvas
             val slot = size.width / values.size
             val r = 4.dp.toPx()
+            // A null value is a gap (no data), not zero: no point and no line through it.
             val points = values.mapIndexed { i, v ->
+                if (v == null) return@mapIndexed null
                 val x0 = i * slot + slot / 2f
                 // DrawScope does not auto-mirror in RTL; flip x so points line up with the (mirrored) label Row.
                 val x = if (layoutDirection == LayoutDirection.Rtl) size.width - x0 else x0
                 val y = r + (size.height - 2 * r) * (1f - (v / max).coerceIn(0f, 1f))
                 Offset(x, y)
             }
-            for (i in 0 until points.size - 1) {
-                drawLine(color, points[i], points[i + 1], strokeWidth = 2.dp.toPx())
+            points.zipWithNext().forEach { (start, end) ->
+                if (start != null && end != null) drawLine(color, start, end, strokeWidth = 2.dp.toPx())
             }
-            points.forEach { drawCircle(color, radius = r, center = it) }
+            points.filterNotNull().forEach { drawCircle(color, radius = r, center = it) }
         }
     }
 }
