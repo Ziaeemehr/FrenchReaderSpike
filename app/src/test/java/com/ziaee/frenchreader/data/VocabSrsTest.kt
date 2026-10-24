@@ -7,6 +7,30 @@ import org.junit.Test
 import java.time.ZoneId
 
 class VocabSrsTest {
+    @Test fun `reminder after spring gap returns to configured hour tomorrow`() {
+        val now = java.time.ZonedDateTime.parse("2026-03-29T04:00:00+02:00[Europe/Paris]")
+        assertEquals(
+            java.time.ZonedDateTime.parse("2026-03-30T02:30:00+02:00[Europe/Paris]"),
+            nextReviewReminderAt(now, 2, 30)
+        )
+    }
+
+    @Test fun `reminder on spring gap day uses resolved local time`() {
+        val now = java.time.ZonedDateTime.parse("2026-03-29T00:00:00+01:00[Europe/Paris]")
+        assertEquals(
+            java.time.ZonedDateTime.parse("2026-03-29T03:30:00+02:00[Europe/Paris]"),
+            nextReviewReminderAt(now, 2, 30)
+        )
+    }
+
+    @Test fun `reminder exactly at scheduled time schedules tomorrow`() {
+        val now = java.time.ZonedDateTime.parse("2026-10-24T19:00:00+02:00[Europe/Paris]")
+        assertEquals(
+            java.time.ZonedDateTime.parse("2026-10-25T19:00:00+01:00[Europe/Paris]"),
+            nextReviewReminderAt(now, 19, 0)
+        )
+    }
+
     @Test fun likelyFrenchRejectsArabicAndNonLatinFronts() {
         assertTrue(isLikelyFrench("bonjour"))
         assertTrue(isLikelyFrench("C'est déjà l'été."))

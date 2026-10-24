@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui.statistics
 
+import com.ziaee.frenchreader.data.READ_MARK_FINISHED
+import com.ziaee.frenchreader.data.READ_MARK_NOT_FINISHED
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.ShadowAttempt
@@ -67,7 +69,7 @@ internal fun isTextCompleted(doc: TextDocument, body: String): Boolean {
 }
 
 internal fun leitnerBoxCounts(entries: List<VocabEntry>): Map<Int, Int> {
-    val counts = entries.groupingBy { it.leitnerBox }.eachCount()
+    val counts = entries.groupingBy { if (it.learned) LEITNER_BOX_COUNT else it.leitnerBox }.eachCount()
     return (1..LEITNER_BOX_COUNT).associateWith { box -> counts[box] ?: 0 }
 }
 
@@ -125,7 +127,13 @@ internal fun composeStatisticsState(
     accuracyPercent = computeAccuracyPercent(knewCount, totalReviewCount),
     leitnerBoxCounts = leitnerBoxCounts(vocabEntries),
     textsSaved = texts.size,
-    textsCompleted = texts.count { isTextCompleted(it, bodyByTextId[it.id].orEmpty()) },
+    textsCompleted = texts.count {
+        when (it.readMark) {
+            READ_MARK_FINISHED -> true
+            READ_MARK_NOT_FINISHED -> false
+            else -> isTextCompleted(it, bodyByTextId[it.id].orEmpty())
+        }
+    },
     wordsSaved = vocabEntries.size,
     reviewHeatmap = reviewHeatmap(reviewLogs, today, zone = zone),
     dueForecast = dueForecast(vocabEntries, today, zone = zone),

@@ -83,3 +83,13 @@ object VocabSrs {
         Instant.ofEpochMilli(startOfDayMs(nowMs, zoneId)).atZone(zoneId)
             .plusDays(intervals[box.coerceIn(1, 5) - 1]).toInstant().toEpochMilli()
 }
+
+/** Resolve each candidate date from the configured wall time, not a previous DST adjustment. */
+internal fun nextReviewReminderAt(
+    now: java.time.ZonedDateTime, hour: Int, minute: Int
+): java.time.ZonedDateTime {
+    val time = java.time.LocalTime.of(hour, minute)
+    val today = now.toLocalDate()
+    val next = today.atTime(time).atZone(now.zone)
+    return if (next.isAfter(now)) next else today.plusDays(1).atTime(time).atZone(now.zone)
+}

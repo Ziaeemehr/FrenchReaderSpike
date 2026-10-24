@@ -15,3 +15,18 @@ internal fun ReviewSessionStats.after(answer: VocabAnswer, boxBefore: Int, boxAf
     movedForward = movedForward + if (boxAfter > boxBefore) 1 else 0,
     returnedToBoxOne = returnedToBoxOne + if (answer == VocabAnswer.FORGOT && boxBefore > 1) 1 else 0
 )
+
+internal fun reviewStudyTimeByDate(
+    startMs: Long, endMs: Long, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()
+): Map<String, Long> {
+    val result = linkedMapOf<String, Long>()
+    var cursor = startMs
+    while (cursor < endMs) {
+        val date = java.time.Instant.ofEpochMilli(cursor).atZone(zone).toLocalDate()
+        val nextMidnight = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = minOf(endMs, nextMidnight)
+        result[date.toString()] = end - cursor
+        cursor = end
+    }
+    return result
+}

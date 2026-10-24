@@ -9,6 +9,11 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 class StatisticsUiStateTest {
+    @Test fun `manually learned cards count in learned box`() {
+        val entries = listOf(vocabEntry(1).copy(learned = true), vocabEntry(3))
+        assertEquals(mapOf(1 to 0, 2 to 0, 3 to 1, 4 to 0, 5 to 1), leitnerBoxCounts(entries))
+    }
+
 
     @Test
     fun `isTextCompleted is true when last chunk index reached the final chunk`() {
@@ -139,6 +144,19 @@ class StatisticsUiStateTest {
         assertEquals(8, state.accuracyTrend.size)
         assertEquals(5, state.retentionByBox.size)
         assertEquals(1, state.reviewHeatmap.last().count)
+    }
+
+    @Test fun `completed total respects explicit reading marks`() {
+        fun completed(doc: TextDocument) = composeStatisticsState(
+            texts = listOf(doc), bodyByTextId = mapOf(doc.id to doc.rawText),
+            vocabEntries = emptyList(), reviewedToday = 0, reviewedThisWeek = 0,
+            knewCount = 0, totalReviewCount = 0, weeklyListening = emptyList(),
+            activeDates = emptySet(), today = LocalDate.of(2026, 10, 24)
+        ).textsCompleted
+        val unfinished = TextDocument(title = "t", rawText = "P1.\n\nP2.")
+        assertEquals(1, completed(unfinished.copy(readMark = com.ziaee.frenchreader.data.READ_MARK_FINISHED)))
+        val finished = unfinished.copy(lastChunkIndex = 1)
+        assertEquals(0, completed(finished.copy(readMark = com.ziaee.frenchreader.data.READ_MARK_NOT_FINISHED)))
     }
 
     private fun vocabEntry(leitnerBox: Int) = VocabEntry(

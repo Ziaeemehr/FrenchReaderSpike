@@ -16,6 +16,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,18 +35,16 @@ import java.util.Locale
 class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
     private val bodyStore = TextBodyStore(app)
+    private var loadJob: kotlinx.coroutines.Job? = null
 
     var uiState by mutableStateOf(StatisticsUiState())
         private set
     var loading by mutableStateOf(true)
         private set
 
-    init {
-        load()
-    }
-
-    private fun load() {
-        viewModelScope.launch {
+    fun load() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             val today = LocalDate.now()
             val texts = db.textDao().getAllOnce()
             val bodyByTextId = texts.associate { it.id to bodyStore.read(it) }
@@ -100,6 +101,22 @@ private fun LocalDate.startOfDayMs(): Long =
 @Composable
 fun StatisticsScreen(onBack: () -> Unit, onOpenStudyLog: () -> Unit = {}) {
     val vm: StatisticsViewModel = viewModel()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(vm, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            var loadedDay = LocalDate.now()
+            vm.load()
+            while (true) {
+                // Checking the date is cheap; loading reads every saved text body.
+                kotlinx.coroutines.delay(60_000)
+                val day = LocalDate.now()
+                if (day != loadedDay) {
+                    loadedDay = day
+                    vm.load()
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -320,7 +337,8 @@ private fun NewChartSections(state: StatisticsUiState) {
     if (state.retentionByBox.all { it.answers == 0 }) Text(noData) else BarChart(
         state.retentionByBox.map { it.percent.toFloat() },
         state.retentionByBox.indices.map { (it + 1).toString() },
-        MaterialTheme.colorScheme.secondary
+        MaterialTheme.colorScheme.secondary,
+        maxValue = 100f
     )
 
     ChartTitle(R.string.statistics_listening_month_title)

@@ -27,13 +27,10 @@ object VocabReviewReminder {
         if (!VocabPrefs.getReminderEnabled(context)) return
         val alarm = context.getSystemService(AlarmManager::class.java)
         val now = ZonedDateTime.now()
-        var next = now.withHour(VocabPrefs.getReminderHour(context))
-            .withMinute(VocabPrefs.getReminderMinute(context)).withSecond(0).withNano(0)
-        if (!next.isAfter(now)) next = next.plusDays(1)
-        alarm.setInexactRepeating(
+        val next = nextReviewReminderAt(now, VocabPrefs.getReminderHour(context), VocabPrefs.getReminderMinute(context))
+        alarm.set(
             AlarmManager.RTC_WAKEUP,
             next.toInstant().toEpochMilli(),
-            AlarmManager.INTERVAL_DAY,
             pendingIntent(context)
         )
     }
@@ -61,6 +58,8 @@ class VocabReviewReminderReceiver : BroadcastReceiver() {
         val app = context.applicationContext
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                VocabReviewReminder.schedule(app)
+                if (!VocabPrefs.getReminderEnabled(app)) return@launch
                 val now = System.currentTimeMillis()
                 val date = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate().toString()
                 val remainingNew = (VocabPrefs.getMaxNewCards(app) - VocabPrefs.getNewReviewedToday(app, date)).coerceAtLeast(0)

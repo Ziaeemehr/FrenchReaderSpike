@@ -281,6 +281,9 @@ interface ReviewLogDao {
     @Query("SELECT COUNT(*) FROM review_log WHERE timestampMs >= :sinceMs")
     suspend fun countSince(sinceMs: Long): Int
 
+    @Query("SELECT COUNT(DISTINCT entryId) FROM review_log WHERE timestampMs >= :sinceMs")
+    suspend fun countDistinctCardsSince(sinceMs: Long): Int
+
     @Query("SELECT COUNT(*) FROM review_log WHERE timestampMs >= :sinceMs AND boxAfter > boxBefore")
     suspend fun countMovedForwardSince(sinceMs: Long): Int
 

@@ -41,6 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
@@ -123,6 +126,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var learnedReviewMode = false
     internal val isLearnedReview get() = learnedReviewMode
     private var undoing = false
+    private var startingReview = false
     private var loadJob: Job? = null
     private var audioJob: Job? = null
     private var listNames: Map<Long, String> = emptyMap()
@@ -195,11 +199,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         (VocabPrefs.getMaxNewCards(context) - VocabPrefs.getNewReviewedToday(context, localDateFor(now))).coerceAtLeast(0)
 
     fun load(scope: Long) {
+        if (scopeId != scope) loading = true
         scopeId = scope
         val requestedScope = scope
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            loading = true
             val now = System.currentTimeMillis()
             val dayStart = VocabSrs.startOfDayMs(now)
             val scopedEntries = scoped(db.vocabDao().getAllOnce(), requestedScope)
@@ -219,7 +223,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             ), LocalDate.now())
             val loadedBoxes = (1..4).map { box ->
                 val entries = all.filter { it.leitnerBox == box }
-                ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.minOfOrNull { it.nextReviewAtMs })
+                ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.filter { it.lastReviewedAtMs != null }.minOfOrNull { it.nextReviewAtMs })
             }
             if (scopeId != requestedScope) return@launch
             listNames = loadedListNames
@@ -237,40 +241,53 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun startReview(box: Int? = null) {
+        if (startingReview || stage == ReviewStage.REVIEW) return
+        startingReview = true
         viewModelScope.launch {
-            learnedReviewMode = false
-            val now = System.currentTimeMillis()
-            val dayStart = VocabSrs.startOfDayMs(now)
-            queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
-            completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
-            cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
-            pronunciationStats = CardPronunciationStats()
-            sessionStartedAtMs = now
-            show(queue.removeFirstOrNull())
-            stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
-            sessionInProgress = stage == ReviewStage.REVIEW
+            try {
+                learnedReviewMode = false
+                val now = System.currentTimeMillis()
+                val dayStart = VocabSrs.startOfDayMs(now)
+                queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
+                completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
+                cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+                pronunciationStats = CardPronunciationStats()
+                sessionStartedAtMs = now
+                show(queue.removeFirstOrNull())
+                if (current == null) finishSession() else {
+                    stage = ReviewStage.REVIEW
+                    sessionInProgress = true
+                }
+            } finally { startingReview = false }
         }
     }
 
     fun startLearnedReview(restart: Boolean = false) {
+        if (startingReview || stage == ReviewStage.REVIEW) return
+        startingReview = true
         viewModelScope.launch {
-            if (restart) VocabPrefs.setLearnedCursor(context, scopeId, 0)
-            val cursor = VocabPrefs.getLearnedCursor(context, scopeId)
-            val result = buildLearnedReviewQueue(db.vocabDao().getAllOnce(), cursor, scopeId)
-            if (result.resetCursor) VocabPrefs.setLearnedCursor(context, scopeId, 0)
-            learnedReviewMode = true
-            queue.clear(); queue.addAll(result.cards)
-            completedIds.clear()
-            scoped(db.vocabDao().getAllOnce()).filter { it.learned && it.id <= if (result.resetCursor) 0 else cursor }
-                .forEach { completedIds.add(it.id) }
-            totalCards = result.total
-            cardsReviewed = completedIds.size
-            applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
-            pronunciationStats = CardPronunciationStats()
-            sessionStartedAtMs = System.currentTimeMillis()
-            show(queue.removeFirstOrNull())
-            stage = if (current == null) ReviewStage.SUMMARY else ReviewStage.REVIEW
-            sessionInProgress = stage == ReviewStage.REVIEW
+            try {
+                if (restart) VocabPrefs.setLearnedCursor(context, scopeId, 0)
+                val cursor = VocabPrefs.getLearnedCursor(context, scopeId)
+                val entries = db.vocabDao().getAllOnce()
+                val result = buildLearnedReviewQueue(entries, cursor, scopeId)
+                if (result.resetCursor) VocabPrefs.setLearnedCursor(context, scopeId, 0)
+                learnedReviewMode = true
+                queue.clear(); queue.addAll(result.cards)
+                completedIds.clear()
+                scoped(entries).filter { it.learned && it.id <= if (result.resetCursor) 0 else cursor }
+                    .forEach { completedIds.add(it.id) }
+                totalCards = result.total
+                cardsReviewed = completedIds.size
+                applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+                pronunciationStats = CardPronunciationStats()
+                sessionStartedAtMs = System.currentTimeMillis()
+                show(queue.removeFirstOrNull())
+                if (current == null) finishSession() else {
+                    stage = ReviewStage.REVIEW
+                    sessionInProgress = true
+                }
+            } finally { startingReview = false }
         }
     }
 
@@ -385,14 +402,13 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     fun consumeMoveLabel() { moveLabel = null }
     private suspend fun finishSession() {
         val now = System.currentTimeMillis()
-        val sessionDurationMs = now - sessionStartedAtMs
-        val date = LocalDate.now().toString()
-        VocabPrefs.addStudyTimeMs(context, date, sessionDurationMs)
+        val date = localDateFor(now)
+        recordStudyTime(now)
         sessionInProgress = false
         studyTimeMs = VocabPrefs.getStudyTimeMsToday(context, date)
         nextScheduledAtMs = scoped(db.vocabDao().getAllOnce()).filter { !it.learned && it.nextReviewAtMs > now }.minOfOrNull { it.nextReviewAtMs }
         val dayStart = VocabSrs.startOfDayMs(now)
-        cardsReviewedToday = db.reviewLogDao().countSince(dayStart)
+        cardsReviewedToday = db.reviewLogDao().countDistinctCardsSince(dayStart)
         movedForwardToday = db.reviewLogDao().countMovedForwardSince(dayStart)
         returnedToBoxOneToday = db.reviewLogDao().countReturnedToBoxOneSince(dayStart)
         if (learnedReviewMode) {
@@ -480,10 +496,16 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         VOCAB_SCOPE_UNFILED -> all.filter { it.listId == null }
         else -> all.filter { it.listId == scope }
     }
+    private fun recordStudyTime(now: Long) {
+        reviewStudyTimeByDate(sessionStartedAtMs, now).forEach { (date, duration) ->
+            VocabPrefs.addStudyTimeMs(context, date, duration)
+        }
+    }
+
     override fun onCleared() {
         if (sessionInProgress && stage == ReviewStage.REVIEW && answerCount > 0) {
             val now = System.currentTimeMillis()
-            VocabPrefs.addStudyTimeMs(context, localDateFor(now), now - sessionStartedAtMs)
+            recordStudyTime(now)
             sessionInProgress = false
         }
         shadowingController.release()
@@ -534,7 +556,23 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     var showDictionary by remember { mutableStateOf(false) }
     var showEdit by remember { mutableStateOf(false) }
     var tappedWord by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(scope) { vm.load(scope) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(scope, vm.stage, lifecycleOwner) {
+        if (vm.stage == ReviewStage.OVERVIEW) {
+            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                var loadedDay = LocalDate.now()
+                vm.load(scope)
+                while (true) {
+                    kotlinx.coroutines.delay(60_000)
+                    val day = LocalDate.now()
+                    if (day != loadedDay) {
+                        loadedDay = day
+                        vm.load(scope)
+                    }
+                }
+            }
+        }
+    }
     LaunchedEffect(vm.currentSlot) { showDictionary = false; showEdit = false; tappedWord = null }
     // Held so the card container does not collapse while vm.current is briefly null between answers.
     var lastSlot by remember { mutableStateOf<CardSlot?>(null) }
