@@ -14,7 +14,7 @@ data class WeeklyCount(val weekStart: LocalDate, val count: Int)
 data class WeeklyAccuracy(val weekStart: LocalDate, val percent: Int, val answers: Int)
 data class BoxRetention(val box: Int, val percent: Int, val answers: Int)
 
-private fun LocalDate.weekStart(): LocalDate = with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+internal fun LocalDate.weekStart(): LocalDate = with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 private fun Long.toLocalDate(zone: ZoneId): LocalDate = Instant.ofEpochMilli(this).atZone(zone).toLocalDate()
 
 internal fun lastDays(today: LocalDate, n: Int): List<LocalDate> =

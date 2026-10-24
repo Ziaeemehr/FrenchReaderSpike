@@ -17,6 +17,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.AndroidViewModel
@@ -28,9 +29,7 @@ import com.ziaee.frenchreader.data.TextBodyStore
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 
 class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
     private val db = AppDatabase.get(app)
@@ -51,7 +50,7 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
             val vocabEntries = db.vocabDao().getAllOnce()
 
             val reviewedToday = db.reviewLogDao().countSince(today.startOfDayMs())
-            val reviewedThisWeek = db.reviewLogDao().countSince(today.minusDays(6).startOfDayMs())
+            val reviewedThisWeek = db.reviewLogDao().countSince(today.weekStart().startOfDayMs())
             val knewCount = db.reviewLogDao().countKnew()
             val totalReviewCount = db.reviewLogDao().countTotal()
 
@@ -175,7 +174,7 @@ private fun ShadowingSection(summary: ShadowingSummary) {
         style = MaterialTheme.typography.bodyMedium,
         modifier = Modifier.padding(top = 4.dp)
     )
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     val today = LocalDate.now()
     BarChart(
         values = summary.last7DaysPercent.map { it.toFloat() },
@@ -209,7 +208,7 @@ private fun WeeklyListeningSection(days: List<DailyListening>) {
     )
     val maxMs = (days.maxOfOrNull { it.listeningMs } ?: 0L).coerceAtLeast(1L)
     val barColor = MaterialTheme.colorScheme.primary
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     Row(
         modifier = Modifier.fillMaxWidth().height(120.dp).padding(top = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
@@ -249,6 +248,7 @@ private fun VocabReviewSection(state: StatisticsUiState) {
 
 @Composable
 private fun LeitnerChart(counts: Map<Int, Int>) {
+    val locale = LocalConfiguration.current.locales[0]
     Text(
         stringResource(R.string.statistics_leitner_chart_title),
         style = MaterialTheme.typography.titleSmall,
@@ -275,7 +275,7 @@ private fun LeitnerChart(counts: Map<Int, Int>) {
                         size = Size(size.width, barHeight)
                     )
                 }
-                Text(box.toString(), style = MaterialTheme.typography.labelSmall)
+                Text(chartNumber(box, locale), style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -305,7 +305,7 @@ private fun ChartTitle(res: Int) {
 @Composable
 private fun NewChartSections(state: StatisticsUiState) {
     val primary = MaterialTheme.colorScheme.primary
-    val dm = remember { DateTimeFormatter.ofPattern("d/M", Locale.getDefault()) }
+    val locale = LocalConfiguration.current.locales[0]
     val noData = stringResource(R.string.statistics_no_data)
 
     ChartTitle(R.string.statistics_heatmap_title)
@@ -314,14 +314,14 @@ private fun NewChartSections(state: StatisticsUiState) {
     ChartTitle(R.string.statistics_forecast_title)
     if (state.dueForecast.sum() == 0) Text(noData) else BarChart(
         state.dueForecast.map { it.toFloat() },
-        state.dueForecast.indices.map { if (it % 5 == 0) "+$it" else "" },
+        state.dueForecast.indices.map { if (it % 5 == 0) "+${chartNumber(it, locale)}" else "" },
         primary
     )
 
     ChartTitle(R.string.statistics_accuracy_trend_title)
     if (state.accuracyTrend.all { it.answers == 0 }) Text(noData) else LineChart(
         state.accuracyTrend.map { it.percent.toFloat() },
-        state.accuracyTrend.map { it.weekStart.format(dm) },
+        state.accuracyTrend.map { chartDate(it.weekStart, locale) },
         primary,
         maxValue = 100f
     )
@@ -329,14 +329,14 @@ private fun NewChartSections(state: StatisticsUiState) {
     ChartTitle(R.string.statistics_words_added_title)
     if (state.wordsAddedPerWeek.all { it.count == 0 }) Text(noData) else BarChart(
         state.wordsAddedPerWeek.map { it.count.toFloat() },
-        state.wordsAddedPerWeek.map { it.weekStart.format(dm) },
+        state.wordsAddedPerWeek.map { chartDate(it.weekStart, locale) },
         primary
     )
 
     ChartTitle(R.string.statistics_retention_title)
     if (state.retentionByBox.all { it.answers == 0 }) Text(noData) else BarChart(
         state.retentionByBox.map { it.percent.toFloat() },
-        state.retentionByBox.indices.map { (it + 1).toString() },
+        state.retentionByBox.indices.map { chartNumber(it + 1, locale) },
         MaterialTheme.colorScheme.secondary,
         maxValue = 100f
     )
@@ -344,7 +344,7 @@ private fun NewChartSections(state: StatisticsUiState) {
     ChartTitle(R.string.statistics_listening_month_title)
     if (state.monthlyListening.all { it.listeningMs == 0L }) Text(noData) else BarChart(
         state.monthlyListening.map { it.listeningMs / 60_000f },
-        state.monthlyListening.mapIndexed { i, d -> if (i % 5 == 0) d.date.dayOfMonth.toString() else "" },
+        state.monthlyListening.mapIndexed { i, d -> if (i % 5 == 0) chartNumber(d.date.dayOfMonth, locale) else "" },
         primary
     )
 }

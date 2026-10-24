@@ -7,6 +7,13 @@ import org.junit.Test
 import java.time.ZoneId
 
 class VocabSrsTest {
+    @Test fun `due date after a midnight gap returns to start of target day`() {
+        val zone = ZoneId.of("America/Santiago")
+        val now = java.time.LocalDate.of(2026, 9, 6).atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
+        val expected = java.time.LocalDate.of(2026, 9, 7).atStartOfDay(zone).toInstant().toEpochMilli()
+        assertEquals(expected, VocabSrs.dueAtMs(1, now, VocabSrs.DEFAULT_INTERVAL_DAYS, zone))
+    }
+
     @Test fun `reminder after spring gap returns to configured hour tomorrow`() {
         val now = java.time.ZonedDateTime.parse("2026-03-29T04:00:00+02:00[Europe/Paris]")
         assertEquals(

@@ -80,8 +80,8 @@ object VocabSrs {
         Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli()
 
     fun dueAtMs(box: Int, nowMs: Long, intervals: List<Long>, zoneId: ZoneId = ZoneId.systemDefault()): Long =
-        Instant.ofEpochMilli(startOfDayMs(nowMs, zoneId)).atZone(zoneId)
-            .plusDays(intervals[box.coerceIn(1, 5) - 1]).toInstant().toEpochMilli()
+        Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
+            .plusDays(intervals[box.coerceIn(1, 5) - 1]).atStartOfDay(zoneId).toInstant().toEpochMilli()
 }
 
 /** Resolve each candidate date from the configured wall time, not a previous DST adjustment. */

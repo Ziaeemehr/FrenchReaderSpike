@@ -497,9 +497,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         else -> all.filter { it.listId == scope }
     }
     private fun recordStudyTime(now: Long) {
-        reviewStudyTimeByDate(sessionStartedAtMs, now).forEach { (date, duration) ->
-            VocabPrefs.addStudyTimeMs(context, date, duration)
-        }
+        // Preferences retain one date only: writing an older day would erase today's total.
+        val date = localDateFor(now)
+        val duration = reviewStudyTimeByDate(sessionStartedAtMs, now)[date] ?: 0L
+        VocabPrefs.addStudyTimeMs(context, date, duration)
     }
 
     override fun onCleared() {

@@ -8,6 +8,12 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 class StatisticsAggregatesTest {
+    @Test fun `week starts on Monday including across year boundary`() {
+        assertEquals(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 21).weekStart())
+        assertEquals(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 27).weekStart())
+        assertEquals(LocalDate.of(2025, 12, 29), LocalDate.of(2026, 1, 1).weekStart())
+    }
+
     private val utc = ZoneOffset.UTC
     private val today = LocalDate.of(2026, 9, 21) // Monday
 
