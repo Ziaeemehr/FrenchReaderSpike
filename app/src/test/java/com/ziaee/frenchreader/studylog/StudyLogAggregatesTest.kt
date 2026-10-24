@@ -339,4 +339,10 @@ class StudyLogAggregatesTest {
         assertTrue(wouldExceedDailyLimit(Int.MAX_VALUE, 30))
     }
 
+    @Test
+    fun `duration formatting uses Persian digits when requested`() {
+        assertEquals("۱ h ۳۰ min", formatMinutes(90, java.util.Locale.forLanguageTag("fa")))
+        assertEquals("۳۰ min", formatMinutes(30, java.util.Locale.forLanguageTag("fa")))
+    }
+
 }

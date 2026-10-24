@@ -28,4 +28,20 @@ class StudyLogChartLabelsTest {
             sparseLabels(listOf(start, start + 1), formatter)
         )
     }
+    @Test
+    fun `sparse labels use Persian digits for Persian locale`() {
+        val day = LocalDate.of(2026, 9, 26).toEpochDay()
+        val persian = DateTimeFormatter.ofPattern("dd/MM", Locale.forLanguageTag("fa"))
+        assertEquals(listOf("۲۶/۰۹"), sparseLabels(listOf(day), persian))
+    }
+
+    @Test
+    fun `all period labels distinguish years`() {
+        val dates = listOf(LocalDate.of(2025, 9, 26), LocalDate.of(2026, 9, 26))
+        assertEquals(
+            listOf("26/09/2025", "26/09/2026"),
+            sparseLabels(dates.map { it.toEpochDay() }, formatter, includeYear = true)
+        )
+    }
+
 }

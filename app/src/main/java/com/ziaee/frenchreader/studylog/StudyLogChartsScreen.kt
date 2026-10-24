@@ -60,6 +60,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.DecimalStyle
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
 import java.util.Locale
@@ -125,7 +126,7 @@ private fun ChartsContent(
                         (bucket.minutesBySkill[skill] ?: 0).toFloat()
                     }
                 },
-                labels = sparseLabels(state.buckets.map { it.epochDay }, formatter),
+                labels = sparseLabels(state.buckets.map { it.epochDay }, formatter, state.period == StudyPeriod.ALL),
                 colors = displayedSkills.map { colors.getValue(it) }
             )
             SkillLegend(colors, displayedSkills)
@@ -136,7 +137,7 @@ private fun ChartsContent(
                 valuesBySeries = displayedSkills.map { skill ->
                     state.cumulative[skill].orEmpty().map { it.minutes.toFloat() / 60f }
                 },
-                labels = sparseLabels(cumulativeDays, formatter),
+                labels = sparseLabels(cumulativeDays, formatter, state.period == StudyPeriod.ALL),
                 colors = displayedSkills.map { colors.getValue(it) }
             )
             SkillLegend(colors, displayedSkills)
@@ -155,7 +156,11 @@ private fun ChartsContent(
                 Text(stringResource(R.string.study_log_no_data))
             } else {
                 displayedSkills.forEach { skill ->
-                    LegendRow(colors.getValue(skill), stringResource(skill.labelRes()), "${shares[skill]}%")
+                    LegendRow(
+                        colors.getValue(skill),
+                        stringResource(skill.labelRes()),
+                        NumberFormat.getPercentInstance(appLocale()).format(shares.getValue(skill) / 100.0)
+                    )
                 }
             }
         }
@@ -165,7 +170,7 @@ private fun ChartsContent(
             state.sourceTotals.entries.sortedByDescending { it.value }.forEach { (id, minutes) ->
                 val name = state.sources.firstOrNull { it.id == id }?.name
                     ?: stringResource(R.string.study_log_no_source)
-                Text("$name · ${formatMinutes(minutes)}")
+                Text("$name · ${formatMinutes(minutes, appLocale())}")
                 LinearProgressIndicator(
                     progress = relativeProgress(minutes, max),
                     modifier = Modifier.fillMaxWidth()
@@ -243,7 +248,7 @@ private fun ActivityMap(
         Text(
             stringResource(
                 R.string.study_log_year_summary,
-                formatMinutes(summary.totalMinutes),
+                formatMinutes(summary.totalMinutes, appLocale()),
                 selectedYear,
                 summary.activeDays,
                 summary.longestStreak
@@ -298,7 +303,7 @@ private fun YearActivityMap(
         }
     }
     ActivitySelector(
-        label = NumberFormat.getIntegerInstance(locale).format(year),
+        label = NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false }.format(year),
         previousEnabled = year > firstYear,
         nextEnabled = year < currentYear,
         onPrevious = { onYearChange(year - 1) },
@@ -349,7 +354,9 @@ private fun MonthActivityMap(
     val grid = remember(sessions, month, firstDayOfWeek, today) {
         monthGrid(sessions, month, firstDayOfWeek, today.toEpochDay())
     }
-    val label = month.format(DateTimeFormatter.ofPattern("LLLL yyyy", locale))
+    val label = month.format(
+        DateTimeFormatter.ofPattern("LLLL yyyy", locale).withDecimalStyle(DecimalStyle.of(locale))
+    )
     ActivitySelector(
         label = label,
         previousEnabled = month > firstMonth,
@@ -516,13 +523,16 @@ private fun ActivityDayDetails(
     val daySessions = sessions.filter { it.date == day.epochDay }
     val minutes = daySessions.sumOf { it.durationMin }
     val date = LocalDate.ofEpochDay(day.epochDay)
-        .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(appLocale()))
+        .format(
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                .withLocale(appLocale()).withDecimalStyle(DecimalStyle.of(appLocale()))
+        )
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             if (minutes == 0) {
                 "$date · ${stringResource(R.string.study_log_no_study)}"
             } else {
-                "$date · ${formatMinutes(minutes)}"
+                "$date · ${formatMinutes(minutes, appLocale())}"
             },
             style = MaterialTheme.typography.bodySmall
         )
@@ -532,7 +542,7 @@ private fun ActivityDayDetails(
                 LegendRow(
                     color = skillColors.getValue(skill),
                     label = skillFullName(skill),
-                    value = formatMinutes(totals.getValue(skill))
+                    value = formatMinutes(totals.getValue(skill), appLocale())
                 )
             }
         }
@@ -542,17 +552,18 @@ private fun ActivityDayDetails(
 @Composable
 private fun SummaryTiles(state: StudyLogUiState) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        SummaryTile(stringResource(R.string.study_log_total), formatMinutes(state.totalMinutes), Modifier.weight(1f))
+        SummaryTile(stringResource(R.string.study_log_total), formatMinutes(state.totalMinutes, appLocale()), Modifier.weight(1f))
         SummaryTile(
             stringResource(R.string.study_log_average),
-            formatMinutes(averagePerElapsedDay(state.totalMinutes, state.range)),
+            formatMinutes(averagePerElapsedDay(state.totalMinutes, state.range), appLocale()),
             Modifier.weight(1f)
         )
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         SummaryTile(
             stringResource(R.string.study_log_active_days),
-            "${state.activeDays} / ${state.range.elapsedDays}",
+            "${NumberFormat.getIntegerInstance(appLocale()).format(state.activeDays)} / " +
+                NumberFormat.getIntegerInstance(appLocale()).format(state.range.elapsedDays),
             Modifier.weight(1f)
         )
         SummaryTile(
@@ -614,7 +625,7 @@ private fun DeltaRow(label: String, delta: Int) {
     val sign = if (delta > 0) "+" else if (delta < 0) "−" else ""
     Row(modifier = Modifier.fillMaxWidth()) {
         Text(label, modifier = Modifier.weight(1f))
-        Text(sign + formatMinutes(kotlin.math.abs(delta)))
+        Text(sign + formatMinutes(kotlin.math.abs(delta), appLocale()))
     }
 }
 
@@ -625,7 +636,16 @@ private fun EmptyStudyLog() {
     }
 }
 
-internal fun sparseLabels(days: List<Long>, formatter: DateTimeFormatter): List<String> {
+internal fun sparseLabels(
+    days: List<Long>,
+    formatter: DateTimeFormatter,
+    includeYear: Boolean = false
+): List<String> {
+    val dateFormatter = (if (includeYear) {
+        DateTimeFormatter.ofPattern("dd/MM/uuuu", formatter.locale)
+    } else {
+        formatter
+    }).withDecimalStyle(DecimalStyle.of(formatter.locale))
     val labeledIndices = when (days.size) {
         0 -> emptySet()
         in 1..4 -> days.indices.toSet()
@@ -635,7 +655,7 @@ internal fun sparseLabels(days: List<Long>, formatter: DateTimeFormatter): List<
     }
     return days.mapIndexed { index, day ->
         if (index in labeledIndices) {
-            LocalDate.ofEpochDay(day).format(formatter)
+            LocalDate.ofEpochDay(day).format(dateFormatter)
         } else {
             ""
         }

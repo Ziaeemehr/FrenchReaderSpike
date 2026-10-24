@@ -2,6 +2,8 @@ package com.ziaee.frenchreader.studylog
 
 import com.ziaee.frenchreader.data.StudySession
 import com.ziaee.frenchreader.data.StudySkill
+import java.text.NumberFormat
+import java.util.Locale
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -323,10 +325,13 @@ internal fun targetProgress(minutes: Int, targetMinutes: Int): Float =
 internal fun relativeProgress(minutes: Int, largestMinutes: Int): Float =
     if (largestMinutes <= 0) 0f else (minutes.toFloat() / largestMinutes).coerceIn(0f, 1f)
 
-internal fun formatMinutes(minutes: Int): String = when {
-    minutes < 60 -> "$minutes min"
-    minutes % 60 == 0 -> "${minutes / 60} h"
-    else -> "${minutes / 60} h ${minutes % 60} min"
+internal fun formatMinutes(minutes: Int, locale: Locale = Locale.ROOT): String {
+    val numbers = NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false }
+    return when {
+        minutes < 60 -> "${numbers.format(minutes)} min"
+        minutes % 60 == 0 -> "${numbers.format(minutes / 60)} h"
+        else -> "${numbers.format(minutes / 60)} h ${numbers.format(minutes % 60)} min"
+    }
 }
 
 sealed interface SessionValidation {

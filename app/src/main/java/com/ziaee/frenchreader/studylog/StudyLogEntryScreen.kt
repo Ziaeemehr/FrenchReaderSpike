@@ -41,6 +41,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -65,31 +66,31 @@ fun StudyLogEntryScreen(
     val scope = rememberCoroutineScope()
     val sources by vm.sources.collectAsState()
     val today by vm.currentDay.collectAsState()
-    var original by remember { mutableStateOf<StudySession?>(null) }
-    var date by remember { mutableLongStateOf(LocalDate.now().toEpochDay()) }
-    var hours by remember { mutableStateOf("0") }
-    var minutes by remember { mutableStateOf("30") }
-    var skill by remember { mutableStateOf(StudyLogPrefs.getLastSkill(context)) }
-    var sourceId by remember { mutableStateOf<Long?>(null) }
-    var note by remember { mutableStateOf("") }
-    var warning by remember { mutableStateOf(false) }
+    var originalId by rememberSaveable(entryId) { mutableStateOf<Long?>(null) }
+    var date by rememberSaveable(entryId) { mutableLongStateOf(LocalDate.now().toEpochDay()) }
+    var hours by rememberSaveable(entryId) { mutableStateOf("0") }
+    var minutes by rememberSaveable(entryId) { mutableStateOf("30") }
+    var skill by rememberSaveable(entryId) { mutableStateOf(StudyLogPrefs.getLastSkill(context)) }
+    var sourceId by rememberSaveable(entryId) { mutableStateOf<Long?>(null) }
+    var note by rememberSaveable(entryId) { mutableStateOf("") }
+    var warning by rememberSaveable(entryId) { mutableStateOf(false) }
     var error by remember { mutableStateOf<SessionValidation?>(null) }
     var saving by remember { mutableStateOf(false) }
-    var newSource by remember { mutableStateOf(false) }
-    var newSourceName by remember { mutableStateOf("") }
+    var newSource by rememberSaveable(entryId) { mutableStateOf(false) }
+    var newSourceName by rememberSaveable(entryId) { mutableStateOf("") }
     var newSourceError by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showDatePicker by rememberSaveable(entryId) { mutableStateOf(false) }
     val parsedDuration = parseDuration(hours, minutes)
     val durationInvalid = parsedDuration == null || parsedDuration !in 1..1440
     val dateInvalid = date > today
 
     LaunchedEffect(entryId) {
-        if (entryId == null) return@LaunchedEffect
+        if (entryId == null || originalId != null) return@LaunchedEffect
         val row = vm.getSession(entryId)
         if (row == null) {
             error = SessionValidation.MissingEntry
         } else {
-            original = row
+            originalId = row.id
             date = row.date
             hours = (row.durationMin / 60).toString()
             minutes = (row.durationMin % 60).toString()
@@ -100,7 +101,7 @@ fun StudyLogEntryScreen(
     }
 
     fun submit(confirmed: Boolean = false) {
-        if (saving || entryId != null && original == null) return
+        if (saving || entryId != null && originalId == null) return
         val duration = parseDuration(hours, minutes)
         if (duration == null) {
             error = SessionValidation.InvalidDuration
@@ -109,7 +110,7 @@ fun StudyLogEntryScreen(
         saving = true
         scope.launch {
             val session = StudySession(
-                id = original?.id ?: 0,
+                id = originalId ?: 0,
                 date = date,
                 durationMin = duration,
                 skill = skill,
@@ -135,7 +136,7 @@ fun StudyLogEntryScreen(
                 title = {
                     Text(
                         stringResource(
-                            if (entryId == null) {
+                            if (entryId == null || originalId == 0L) {
                                 R.string.study_log_add_time
                             } else {
                                 R.string.study_log_edit_entry
@@ -154,7 +155,7 @@ fun StudyLogEntryScreen(
             )
         }
     ) { padding ->
-        if (entryId != null && original == null) {
+        if (entryId != null && originalId == null) {
             Box(Modifier.padding(padding).padding(16.dp)) {
                 if (error == null) {
                     CircularProgressIndicator()
@@ -175,8 +176,8 @@ fun StudyLogEntryScreen(
             validationError = error,
             durationInvalid = durationInvalid,
             dateInvalid = dateInvalid,
-            isEditing = original != null && original?.id != 0L,
-            saveEnabled = !saving && (entryId == null || original != null),
+            isEditing = originalId != null && originalId != 0L,
+            saveEnabled = !saving && (entryId == null || originalId != null),
             onShowDatePicker = { showDatePicker = true },
             onHoursChange = {
                 hours = it
@@ -207,7 +208,7 @@ fun StudyLogEntryScreen(
             },
             onSubmit = { submit() },
             onDuplicate = {
-                original = original?.let { duplicateSession(it) }
+                originalId = 0L
             },
             modifier = Modifier
                 .padding(padding)
