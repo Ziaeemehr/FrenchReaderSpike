@@ -37,8 +37,8 @@ internal fun dueForecast(
 ): List<Int> {
     val buckets = IntArray(days)
     entries.filter { !it.learned && it.lastReviewedAtMs != null }.forEach { e ->
-        val offset = ChronoUnit.DAYS.between(today, e.nextReviewAtMs.toLocalDate(zone)).toInt().coerceAtLeast(0)
-        if (offset < days) buckets[offset]++
+        val offset = ChronoUnit.DAYS.between(today, e.nextReviewAtMs.toLocalDate(zone)).coerceAtLeast(0L)
+        if (offset < days) buckets[offset.toInt()]++
     }
     return buckets.toList()
 }

@@ -268,10 +268,16 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
             onResult(false)
             return@launch
         }
-        runCatching { dao.updateSource(source.copy(name = normalized.name)) }.fold(
-            onSuccess = { onResult(true) },
+        runCatching {
+            dao.updateSourceDetails(source.id, normalized.name, source.kind, source.defaultSkill)
+        }.fold(
+            onSuccess = { onResult(it > 0) },
             onFailure = { onResult(false) }
         )
+    }
+
+    fun setSourceArchived(source: StudySource, archived: Boolean) = viewModelScope.launch {
+        dao.setSourceArchived(source.id, archived)
     }
 
     fun deleteSource(source: StudySource) = viewModelScope.launch {

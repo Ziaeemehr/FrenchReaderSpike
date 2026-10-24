@@ -9,6 +9,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.floor
+import kotlin.math.roundToInt
 
 enum class StudyPeriod {
     WEEK,
@@ -281,7 +282,7 @@ internal fun totalsBySource(sessions: List<StudySession>): Map<Long?, Int> =
         .fold(0) { total, row -> total + row.durationMin }
 
 internal fun largestRemainderShares(totals: Map<StudySkill, Int>): Map<StudySkill, Int> {
-    val total = totals.values.sum()
+    val total = totals.values.sumOf { it.toLong() }
     if (total <= 0) return StudySkill.entries.associateWith { 0 }
     val exact = StudySkill.entries.associateWith { skill ->
         (totals[skill] ?: 0) * 100.0 / total
@@ -298,7 +299,7 @@ internal fun largestRemainderShares(totals: Map<StudySkill, Int>): Map<StudySkil
 }
 
 internal fun averagePerElapsedDay(totalMinutes: Int, range: PeriodRange): Int =
-    if (range.elapsedDays == 0) 0 else totalMinutes / range.elapsedDays
+    if (range.elapsedDays == 0) 0 else (totalMinutes.toDouble() / range.elapsedDays).roundToInt()
 
 internal fun leastStudiedSkill(totals: Map<StudySkill, Int>): StudySkill? {
     val currentSkills = StudySkill.entries.filterNot { it.legacy }

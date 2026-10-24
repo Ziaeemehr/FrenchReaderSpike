@@ -55,6 +55,18 @@ class StatisticsAggregatesTest {
         assertEquals(3, f.sum())
     }
 
+    @Test fun `forecast does not wrap distant future dates into overdue`() {
+        val distant = today.plusDays(Int.MAX_VALUE.toLong() + 1)
+        assertEquals(List(30) { 0 }, dueForecast(listOf(vocab(today, distant)), today, zone = utc))
+    }
+
+    @Test fun `forecast still counts distant past dates as overdue`() {
+        val distant = today.minusDays(Int.MAX_VALUE.toLong() + 2)
+        val forecast = dueForecast(listOf(vocab(today, distant)), today, zone = utc)
+        assertEquals(1, forecast[0])
+        assertEquals(1, forecast.sum())
+    }
+
     @Test fun `accuracy trend buckets by week`() {
         val logs = listOf(
             log(today, true), log(today, false),               // this week: 50%

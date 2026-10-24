@@ -89,6 +89,7 @@ class StudyLogAggregatesTest {
     fun `average uses elapsed days and least studied is deterministic`() {
         val range = periodRange(today, StudyPeriod.WEEK, DayOfWeek.SATURDAY)
         assertEquals(10, averagePerElapsedDay(50, range))
+        assertEquals(2, averagePerElapsedDay(45, PeriodRange(0, 23, 23)))
         assertEquals(StudySkill.CE, leastStudiedSkill(mapOf(StudySkill.CO to 1, StudySkill.CE to 0)))
         assertNull(leastStudiedSkill(StudySkill.entries.associateWith { 0 }))
     }

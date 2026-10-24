@@ -119,7 +119,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private val voiceCache = HashMap<Long, Pair<String, Int>>()
     private val queue = mutableListOf<VocabEntry>()
     private val completedIds = mutableSetOf<Long>()
-    private var sessionStartedAtMs = 0L
+    private val studyTimer = ReviewStudyTimer()
+    private var reviewActive = false
     private var sessionInProgress = false
     private var scopeId = VOCAB_SCOPE_ALL
     private var stats = ReviewSessionStats()
@@ -252,11 +253,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
                 cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
                 pronunciationStats = CardPronunciationStats()
-                sessionStartedAtMs = now
                 show(queue.removeFirstOrNull())
                 if (current == null) finishSession() else {
                     stage = ReviewStage.REVIEW
                     sessionInProgress = true
+                    if (reviewActive) studyTimer.resume(System.currentTimeMillis())
                 }
             } finally { startingReview = false }
         }
@@ -281,11 +282,11 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 cardsReviewed = completedIds.size
                 applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
                 pronunciationStats = CardPronunciationStats()
-                sessionStartedAtMs = System.currentTimeMillis()
                 show(queue.removeFirstOrNull())
                 if (current == null) finishSession() else {
                     stage = ReviewStage.REVIEW
                     sessionInProgress = true
+                    if (reviewActive) studyTimer.resume(System.currentTimeMillis())
                 }
             } finally { startingReview = false }
         }
@@ -496,15 +497,23 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         VOCAB_SCOPE_UNFILED -> all.filter { it.listId == null }
         else -> all.filter { it.listId == scope }
     }
+    fun setReviewActive(active: Boolean) {
+        reviewActive = active
+        val now = System.currentTimeMillis()
+        if (active) {
+            if (sessionInProgress) studyTimer.resume(now)
+        } else recordStudyTime(now)
+    }
+
     private fun recordStudyTime(now: Long) {
         // Preferences retain one date only: writing an older day would erase today's total.
         val date = localDateFor(now)
-        val duration = reviewStudyTimeByDate(sessionStartedAtMs, now)[date] ?: 0L
-        VocabPrefs.addStudyTimeMs(context, date, duration)
+        val duration = studyTimer.pause(now)[date] ?: 0L
+        if (duration > 0L) VocabPrefs.addStudyTimeMs(context, date, duration)
     }
 
     override fun onCleared() {
-        if (sessionInProgress && stage == ReviewStage.REVIEW && answerCount > 0) {
+        if (sessionInProgress) {
             val now = System.currentTimeMillis()
             recordStudyTime(now)
             sessionInProgress = false
@@ -558,6 +567,13 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
     var showEdit by remember { mutableStateOf(false) }
     var tappedWord by remember { mutableStateOf<String?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(vm, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            vm.setReviewActive(true)
+            try { kotlinx.coroutines.awaitCancellation() }
+            finally { vm.setReviewActive(false) }
+        }
+    }
     LaunchedEffect(scope, vm.stage, lifecycleOwner) {
         if (vm.stage == ReviewStage.OVERVIEW) {
             lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {

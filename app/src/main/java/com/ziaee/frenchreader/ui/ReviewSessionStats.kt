@@ -30,3 +30,18 @@ internal fun reviewStudyTimeByDate(
     }
     return result
 }
+
+/** Consumes foreground intervals once, so settings/background time is never counted. */
+internal class ReviewStudyTimer(private val zone: java.time.ZoneId? = null) {
+    private var startedAtMs: Long? = null
+
+    fun resume(nowMs: Long) {
+        if (startedAtMs == null) startedAtMs = nowMs
+    }
+
+    fun pause(nowMs: Long): Map<String, Long> {
+        val start = startedAtMs ?: return emptyMap()
+        startedAtMs = null
+        return reviewStudyTimeByDate(start, nowMs, zone ?: java.time.ZoneId.systemDefault())
+    }
+}

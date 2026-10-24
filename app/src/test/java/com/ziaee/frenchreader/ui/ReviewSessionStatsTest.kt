@@ -31,4 +31,22 @@ class ReviewSessionStatsTest {
     @Test fun `backward clock does not record negative study time`() {
         assertEquals(emptyMap<String, Long>(), reviewStudyTimeByDate(100L, 99L))
     }
+    @Test fun `study timer excludes pauses and records each interval only once`() {
+        val timer = ReviewStudyTimer(java.time.ZoneOffset.UTC)
+        timer.resume(1_000L)
+        timer.resume(2_000L) // duplicate resume must not lose the first second
+        assertEquals(mapOf("1970-01-01" to 3_000L), timer.pause(4_000L))
+        assertEquals(emptyMap<String, Long>(), timer.pause(8_000L))
+        timer.resume(10_000L)
+        assertEquals(mapOf("1970-01-01" to 2_000L), timer.pause(12_000L))
+    }
+
+    @Test fun `study timer splits only active time across midnight`() {
+        val timer = ReviewStudyTimer(java.time.ZoneOffset.UTC)
+        timer.resume(86_399_000L)
+        assertEquals(mapOf("1970-01-01" to 1_000L, "1970-01-02" to 2_000L), timer.pause(86_402_000L))
+        timer.resume(172_801_000L)
+        assertEquals(mapOf("1970-01-03" to 1_000L), timer.pause(172_802_000L))
+    }
+
 }

@@ -15,6 +15,7 @@ import com.ziaee.frenchreader.ui.reviewableCount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.ZonedDateTime
 import java.time.Instant
 import java.time.ZoneId
@@ -48,7 +49,10 @@ object VocabReviewReminder {
 
 class VocabReviewBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        if (intent?.action == Intent.ACTION_BOOT_COMPLETED) VocabReviewReminder.schedule(context)
+        when (intent?.action) {
+            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_TIME_CHANGED ->
+                VocabReviewReminder.schedule(context)
+        }
     }
 }
 
@@ -64,7 +68,10 @@ class VocabReviewReminderReceiver : BroadcastReceiver() {
                 val date = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate().toString()
                 val remainingNew = (VocabPrefs.getMaxNewCards(app) - VocabPrefs.getNewReviewedToday(app, date)).coerceAtLeast(0)
                 val hasWork = reviewableCount(AppDatabase.get(app).vocabDao().getAllOnce(), now, remainingNew) > 0
-                if (hasWork) notifyDue(app)
+                if (hasWork) withContext(Dispatchers.Main) {
+                    // Settings toggles run on Main too: recheck after the suspended database read.
+                    if (VocabPrefs.getReminderEnabled(app)) notifyDue(app)
+                }
             } finally { pending.finish() }
         }
     }

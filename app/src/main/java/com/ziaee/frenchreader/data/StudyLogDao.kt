@@ -52,6 +52,12 @@ interface StudyLogDao {
     @Update
     suspend fun updateSource(source: StudySource)
 
+    @Query("UPDATE study_source SET name = :name, kind = :kind, default_skill = :defaultSkill WHERE id = :id")
+    suspend fun updateSourceDetails(id: Long, name: String, kind: SourceKind, defaultSkill: StudySkill?): Int
+
+    @Query("UPDATE study_source SET archived = :archived WHERE id = :id")
+    suspend fun setSourceArchived(id: Long, archived: Boolean)
+
     @Delete
     suspend fun deleteSource(source: StudySource)
 

@@ -105,7 +105,7 @@ fun StudySourcesScreen(
                         duplicateError = false
                     },
                     onToggleArchived = {
-                        vm.updateSource(source.copy(archived = !source.archived))
+                        vm.setSourceArchived(source, !source.archived)
                     },
                     onDelete = { vm.deleteSource(source) }
                 )
