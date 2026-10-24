@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CheckCircle
@@ -641,6 +642,38 @@ internal fun DocumentThumbnail(doc: TextDocument, modifier: Modifier = Modifier)
             contentAlignment = Alignment.Center
         ) {
             Icon(Icons.Default.Article, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(FrenchReaderDesign.spacing.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
+            )
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.videos_title),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = stringResource(R.string.videos_home_support),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
         }
     }
 }

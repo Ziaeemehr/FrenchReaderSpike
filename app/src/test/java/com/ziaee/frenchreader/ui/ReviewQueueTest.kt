@@ -103,6 +103,13 @@ class ReviewQueueTest {
         val rq = e(9, 1, 0)
         assertEquals(emptyList<VocabEntry>(), restoreQueueAfterUndo(emptyList(), rq, rq))
     }
+    @Test fun `undo matches edited requeued copies by id`() {
+        val rq = e(9, 1, 0)
+        val edited = rq.copy(meaning = "edited")
+        assertEquals(emptyList<VocabEntry>(), restoreQueueAfterUndo(emptyList(), edited, rq))
+        assertEquals(listOf(1L), ids(restoreQueueAfterUndo(listOf(edited, e(1, 1, 0)), null, rq)))
+    }
+
     @Test fun `undo restore without requeued only prepends current`() {
         val a = e(1, 1, 0); val cur = e(2, 1, 0)
         val r = restoreQueueAfterUndo(listOf(a), cur, null)

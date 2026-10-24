@@ -880,41 +880,27 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
 
     val modelFailed = stringResource(R.string.shadowing_model_failed)
     if (showModelPrompt) {
-        AlertDialog(
-            onDismissRequest = { if (modelProgress == null) showModelPrompt = false },
-            title = { Text(stringResource(R.string.shadowing_model_prompt_title)) },
-            text = {
-                val p = modelProgress
-                if (p == null) Text(stringResource(R.string.shadowing_model_prompt_body))
-                else Column {
-                    Text(stringResource(R.string.shadowing_model_downloading, (p * 100).toInt()))
-                    LinearProgressIndicator(progress = { p }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+        ShadowingModelDialog(
+            progress = modelProgress,
+            androidAvailable = AndroidSpeechEngine.isAvailable(settingsContext),
+            onDismiss = { showModelPrompt = false },
+            onDownload = {
+                modelProgress = 0f
+                scope.launch {
+                    val ok = try {
+                        modelManager.download { modelProgress = it }
+                        true
+                    } catch (error: CancellationException) { throw error
+                    } catch (_: Exception) { false }
+                    modelProgress = null
+                    showModelPrompt = false
+                    if (ok) vm.setShadowing(true) else snackbarHostState.showSnackbar(modelFailed)
                 }
             },
-            confirmButton = {
-                TextButton(enabled = modelProgress == null, onClick = {
-                    modelProgress = 0f
-                    scope.launch {
-                        val ok = try {
-                            modelManager.download { modelProgress = it }
-                            true
-                        } catch (error: CancellationException) {
-                            throw error
-                        } catch (_: Exception) {
-                            false
-                        }
-                        modelProgress = null
-                        showModelPrompt = false
-                        if (ok) vm.setShadowing(true) else snackbarHostState.showSnackbar(modelFailed)
-                    }
-                }) { Text(stringResource(R.string.shadowing_model_download)) }
-            },
-            dismissButton = {
-                if (AndroidSpeechEngine.isAvailable(settingsContext)) TextButton(enabled = modelProgress == null, onClick = {
-                    ShadowingPrefs.setEngine(settingsContext, SpeechEngineKind.ANDROID)
-                    showModelPrompt = false
-                    vm.setShadowing(true)
-                }) { Text(stringResource(R.string.shadowing_use_android_engine)) }
+            onUseAndroid = {
+                ShadowingPrefs.setEngine(settingsContext, SpeechEngineKind.ANDROID)
+                showModelPrompt = false
+                vm.setShadowing(true)
             }
         )
     }

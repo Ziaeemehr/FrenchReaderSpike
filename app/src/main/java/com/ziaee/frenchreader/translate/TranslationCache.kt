@@ -23,6 +23,10 @@ class TranslationCache(context: Context) {
         File(dir, "${keyFor(text, targetLang)}.txt").writeText(translation, Charsets.UTF_8)
     }
 
+    fun remove(text: String, targetLang: String) {
+        File(dir, "${keyFor(text, targetLang)}.txt").delete()
+    }
+
     fun clearAll() {
         dir.listFiles()?.forEach { it.delete() }
     }

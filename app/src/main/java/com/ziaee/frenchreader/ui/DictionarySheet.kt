@@ -9,9 +9,11 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -54,7 +56,10 @@ import com.ziaee.frenchreader.data.dictionarySavedState
 import com.ziaee.frenchreader.comprehension.FrenchLemmaLexicon
 import com.ziaee.frenchreader.comprehension.LemmaLexicon
 import com.ziaee.frenchreader.comprehension.normalizeFrench
+import com.ziaee.frenchreader.translate.MeaningOption
 import com.ziaee.frenchreader.translate.TranslationRepository
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -277,6 +282,39 @@ fun DictionarySheet(
     onCardRenamed: (word: String, meaning: String?) -> Unit = { _, _ -> },
     onDismiss: () -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        windowInsets = WindowInsets(0),
+        // A slim handle: the default one pads 22dp above and below.
+        dragHandle = {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp).size(width = 32.dp, height = 4.dp)
+            ) {}
+        }
+    ) {
+        DictionaryPane(textId, word, sentence, initialMeaning, initialListId, isNew, onCardRenamed, onDismiss, embedded = false)
+    }
+}
+
+/** Dictionary lookup content. [embedded] uses the parent's bounded height for the WebView. */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun DictionaryPane(
+    textId: Long,
+    word: String,
+    sentence: String,
+    initialMeaning: String? = null,
+    initialListId: Long? = null,
+    isNew: Boolean = true,
+    onCardRenamed: (word: String, meaning: String?) -> Unit = { _, _ -> },
+    onDismiss: () -> Unit = {},
+    embedded: Boolean = true,
+    modifier: Modifier = Modifier
+) {
     val vm: DictionaryViewModel = viewModel()
     val context = LocalContext.current
     // A new lookup can be edited (e.g. a conjugated form to its infinitive, or into a phrase);
@@ -301,6 +339,8 @@ fun DictionarySheet(
     var editedEntry by remember(originalWord) { mutableStateOf<com.ziaee.frenchreader.data.VocabEntry?>(null) }
     if (!isNew && isOriginal && editedEntry == null) savedState.exactEntry?.let { editedEntry = it }
 
+    var meaningEdited by remember(word, sentence) { mutableStateOf(false) }
+    var alternatives by remember(word, sentence) { mutableStateOf(emptyList<MeaningOption>()) }
     var meaning by remember(word, sentence) { mutableStateOf(initialMeaning.orEmpty()) }
     var selectedListId by remember(word, sentence) {
         mutableStateOf(initialListId ?: if (isNew) VocabPrefs.getLastListId(context) else null)
@@ -310,15 +350,17 @@ fun DictionarySheet(
     var webViewFailed by remember(word) { mutableStateOf(false) }
     var listMenuExpanded by remember { mutableStateOf(false) }
     var showNewListDialog by remember { mutableStateOf(false) }
-    var selectedProvider by remember(word) { mutableStateOf(DICTIONARY_PROVIDERS.first()) }
+    var selectedProvider by remember(word) {
+        mutableStateOf(DICTIONARY_PROVIDERS.firstOrNull {
+            embedded && it.id == VocabPrefs.getLastDictionaryProvider(context)
+        } ?: DICTIONARY_PROVIDERS.first())
+    }
+    var providerMenuExpanded by remember { mutableStateOf(false) }
     val url = remember(word, selectedProvider) { selectedProvider.urlFor(word) }
     val meaningLanguage = VocabPrefs.getMeaningLanguage(context)
     val meaningTarget = if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) "fa" else "en"
 
-    // Auto-fill the meaning field with a Persian translation of just the
-    // word, using the same free translation service/cache as paragraph
-    // translation -- only when there's nothing saved for it yet, and only
-    // if the person hasn't already started typing their own correction.
+    // Only auto-fill an unsaved meaning before the person starts editing it.
     LaunchedEffect(savedState.exactEntry?.id) {
         savedState.exactEntry?.let { existing ->
             meaning = existing.meaning.orEmpty()
@@ -327,15 +369,23 @@ fun DictionarySheet(
         }
     }
 
-    LaunchedEffect(word, sentence, initialMeaning, meaningTarget, savedState.isLoaded) {
-        if (savedState.isLoaded && savedState.exactEntry == null && initialMeaning.isNullOrBlank()) {
+    LaunchedEffect(word, sentence, initialMeaning, meaningTarget, savedState.isLoaded, savedState.exactEntry?.id, lemmas) {
+        if (savedState.isLoaded && savedState.exactEntry == null && initialMeaning.isNullOrBlank() && !meaningEdited) {
             autoTranslating = true
-            val repo = TranslationRepository(context.applicationContext)
-            val result = repo.getOrTranslate(word, meaningTarget)
-            if (meaning.isBlank()) {
-                result.onSuccess { meaning = it }
+            try {
+                val repo = TranslationRepository(context.applicationContext)
+                // An edited lookup word needs its own dictionary forms, not the tapped word's.
+                val wordLemmas = if (isOriginal) lemmas else runCatching {
+                    lemmaSuggestions(word, LemmaLexicon.get(context).get())
+                }.getOrDefault(emptyList())
+                val result = repo.meaningCandidates(word, wordLemmas, sentence, meaningTarget)
+                if (!meaningEdited && savedState.exactEntry == null) {
+                    result.best?.let { meaning = it }
+                    alternatives = result.options
+                }
+            } finally {
+                autoTranslating = false
             }
-            autoTranslating = false
         }
     }
 
@@ -347,27 +397,19 @@ fun DictionarySheet(
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        windowInsets = WindowInsets(0),
-        // A slim handle: the default one pads 22dp above and below.
-        dragHandle = {
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp).size(width = 32.dp, height = 4.dp)
-            ) {}
-        }
-    ) {
+    BoxWithConstraints(modifier) {
+        val controlsModifier = if (embedded) {
+            Modifier.heightIn(max = maxHeight * 0.65f).verticalScroll(rememberScrollState())
+        } else Modifier
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp)
+                .padding(horizontal = if (embedded) 12.dp else 20.dp)
+                .padding(bottom = if (embedded) 0.dp else 24.dp)
                 .imePadding()
         ) {
+            // Only the controls may scroll on short screens; the WebView has its own bounded viewport.
+            Column(controlsModifier) {
             // The word itself is the editable field: type a base form or a whole structure, then
             // Done (or ✓) looks it up and makes it what gets saved.
             val focusManager = LocalFocusManager.current
@@ -379,17 +421,19 @@ fun DictionarySheet(
             }
             val wordInteraction = remember { MutableInteractionSource() }
             val wordFocused by wordInteraction.collectIsFocusedAsState()
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            val shownLemmas = lemmas.filter { it != word }
+            val wordField: @Composable (Modifier) -> Unit = { fieldModifier ->
                 BasicTextField(
                     value = draft,
                     onValueChange = { draft = it },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                    textStyle = (if (embedded) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall)
+                        .copy(color = MaterialTheme.colorScheme.onSurface),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { applyDraft() }),
                     interactionSource = wordInteraction,
-                    modifier = Modifier.weight(1f),
+                    modifier = fieldModifier,
                     decorationBox = { inner ->
                         Column {
                             Box(Modifier.padding(vertical = 6.dp)) { inner() }
@@ -401,6 +445,8 @@ fun DictionarySheet(
                         }
                     }
                 )
+            }
+            val wordActions: @Composable () -> Unit = {
                 if (draftWord != null && draftWord != word) {
                     IconButton(onClick = applyDraft) {
                         Icon(
@@ -410,6 +456,26 @@ fun DictionarySheet(
                         )
                     }
                 }
+                // Embedded under a video, space is short: the provider picker is a compact menu in this row.
+                if (embedded) Box {
+                    TextButton(onClick = { providerMenuExpanded = true }) {
+                        Text(selectedProvider.label, maxLines = 1)
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.dictionary_provider))
+                    }
+                    DropdownMenu(expanded = providerMenuExpanded, onDismissRequest = { providerMenuExpanded = false }) {
+                        DICTIONARY_PROVIDERS.forEach { provider ->
+                            DropdownMenuItem(
+                                text = { Text(provider.label) },
+                                onClick = {
+                                    selectedProvider = provider
+                                    VocabPrefs.setLastDictionaryProvider(context, provider.id)
+                                    webViewFailed = false
+                                    providerMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
                 IconButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) {
                     Icon(Icons.Default.OpenInBrowser, contentDescription = stringResource(R.string.accessibility_open_in_browser))
                 }
@@ -417,35 +483,131 @@ fun DictionarySheet(
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.accessibility_close))
                 }
             }
-
-            // Base-form suggestions and the way back to the tapped form, as small pills.
-            val shownLemmas = lemmas.filter { it != word }
-            if (shownLemmas.isNotEmpty() || !isOriginal) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    shownLemmas.forEach { lemma ->
-                        WordPill("→ $lemma") { currentWord = lemma }
-                    }
-                    if (!isOriginal) {
-                        val resetLabel = stringResource(R.string.dictionary_reset_word)
-                        WordPill("↺ $originalWord", Modifier.semantics { contentDescription = "$resetLabel: $originalWord" }) {
-                            currentWord = originalWord
-                        }
+            val wordPills: @Composable (Boolean) -> Unit = { compact ->
+                shownLemmas.forEach { lemma ->
+                    WordPill("→ $lemma", compact = compact) { currentWord = lemma }
+                }
+                if (!isOriginal) {
+                    val resetLabel = stringResource(R.string.dictionary_reset_word)
+                    WordPill("↺ $originalWord", Modifier.semantics { contentDescription = "$resetLabel: $originalWord" }, compact = compact) {
+                        currentWord = originalWord
                     }
                 }
             }
+            if (embedded) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    wordField(Modifier.widthIn(min = 80.dp, max = 200.dp).width(IntrinsicSize.Min).align(Alignment.CenterVertically))
+                    wordPills(true)
+                    Row(verticalAlignment = Alignment.CenterVertically) { wordActions() }
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    wordField(Modifier.weight(1f))
+                    wordActions()
+                }
+                if (shownLemmas.isNotEmpty() || !isOriginal) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) { wordPills(false) }
+                }
+            }
 
+            val saveWord: () -> Unit = {
+                        val onSaved = {
+                            saved = true
+                            VocabPrefs.setLastListId(context, selectedListId)
+                        }
+                        val card = editedEntry
+                        if (card != null && !isOriginal) vm.rename(card, word, meaning, selectedListId) {
+                            onSaved()
+                            onCardRenamed(it.word, it.meaning)
+                        }
+                        else vm.save(textId, word, sentence, meaning, selectedListId, onSaved)
+                    }
+            val meaningAlternatives: @Composable () -> Unit = {
+                if (alternatives.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    MeaningOptionPills(alternatives.take(if (embedded) 5 else 8), meaning, meaningTarget) { option ->
+                        meaning = option.text
+                        meaningEdited = true
+                        saved = false
+                    }
+                }
+            }
+            if (embedded) {
+                // Under a video every line counts: meaning, deck and save share one slim row.
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    BasicTextField(
+                        value = meaning,
+                        onValueChange = { meaning = it; meaningEdited = true; saved = false },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.weight(1f),
+                        decorationBox = { inner ->
+                            Column {
+                                Box(Modifier.padding(vertical = 6.dp)) {
+                                    if (meaning.isEmpty()) Text(
+                                        stringResource(if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) R.string.dictionary_meaning_persian else R.string.dictionary_meaning_english),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    inner()
+                                }
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                        }
+                    )
+                    if (autoTranslating) CircularProgressIndicator(modifier = Modifier.padding(horizontal = 6.dp).size(16.dp), strokeWidth = 2.dp)
+                    Box {
+                        IconButton(onClick = { listMenuExpanded = true }, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Folder,
+                                contentDescription = lists.find { it.id == selectedListId }?.name ?: stringResource(R.string.vocab_list_uncategorized),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        }
+                        DropdownMenu(expanded = listMenuExpanded, onDismissRequest = { listMenuExpanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.vocab_list_uncategorized)) },
+                                onClick = { selectedListId = null; saved = false; listMenuExpanded = false }
+                            )
+                            lists.forEach { l ->
+                                DropdownMenuItem(
+                                    text = { Text(l.name) },
+                                    onClick = { selectedListId = l.id; saved = false; listMenuExpanded = false }
+                                )
+                            }
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("+ " + stringResource(R.string.vocab_list_new)) },
+                                onClick = { listMenuExpanded = false; showNewListDialog = true }
+                            )
+                        }
+                    }
+                    IconButton(onClick = saveWord, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            if (saved) Icons.Default.BookmarkAdded else Icons.Default.BookmarkAdd,
+                            contentDescription = stringResource(
+                                if (saved) R.string.accessibility_vocabulary_saved
+                                else R.string.accessibility_save_vocabulary
+                            ),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+                meaningAlternatives()
+            } else {
             Spacer(Modifier.height(12.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = meaning,
-                    onValueChange = { meaning = it; saved = false },
+                    onValueChange = { meaning = it; meaningEdited = true; saved = false },
                     placeholder = { Text(stringResource(if (meaningLanguage == VocabPrefs.MeaningLanguage.PERSIAN) R.string.dictionary_meaning_persian else R.string.dictionary_meaning_english)) },
                     trailingIcon = {
                         if (autoTranslating) {
@@ -458,18 +620,7 @@ fun DictionarySheet(
                 )
                 Spacer(Modifier.width(10.dp))
                 FilledIconButton(
-                    onClick = {
-                        val onSaved = {
-                            saved = true
-                            VocabPrefs.setLastListId(context, selectedListId)
-                        }
-                        val card = editedEntry
-                        if (card != null && !isOriginal) vm.rename(card, word, meaning, selectedListId) {
-                            onSaved()
-                            onCardRenamed(it.word, it.meaning)
-                        }
-                        else vm.save(textId, word, sentence, meaning, selectedListId, onSaved)
-                    },
+                    onClick = saveWord,
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
@@ -481,6 +632,8 @@ fun DictionarySheet(
                     )
                 }
             }
+
+            meaningAlternatives()
 
             // One quiet line of details: the list it's filed in, where else it was saved, delete.
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -559,6 +712,9 @@ fun DictionarySheet(
                 }
             }
 
+            }
+
+            if (!embedded) {
             // Dictionaries as tabs sitting directly on the page they switch.
             TabRow(
                 selectedTabIndex = DICTIONARY_PROVIDERS.indexOfFirst { it.id == selectedProvider.id }.coerceAtLeast(0),
@@ -581,7 +737,12 @@ fun DictionarySheet(
                 }
             }
 
-            Box(modifier = Modifier.fillMaxWidth().height(420.dp)) {
+            }
+
+            }
+            Box(modifier = Modifier.fillMaxWidth().then(
+                if (embedded) Modifier.weight(1f) else Modifier.height(420.dp)
+            )) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = { ctx ->
@@ -709,7 +870,7 @@ fun DictionarySheet(
 }
 
 @Composable
-private fun WordPill(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun WordPill(text: String, modifier: Modifier = Modifier, compact: Boolean = false, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(50),
@@ -719,8 +880,8 @@ private fun WordPill(text: String, modifier: Modifier = Modifier, onClick: () ->
     ) {
         Text(
             text,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = if (compact) 4.dp else 6.dp)
         )
     }
 }

@@ -1,0 +1,73 @@
+package com.ziaee.frenchreader.watch
+
+import com.ziaee.frenchreader.resources.ResourceCategory
+
+data class ExtraChannel(val channelId: String, val title: String, val category: ResourceCategory)
+
+/**
+ * More French YouTube channels offered only in the video picker, so the Resources screen stays short.
+ * Channel ids and names selected from the LingoMingo extension's French catalogue
+ * (https://github.com/mort3za/lingomingo, src/app/catalogue.ts); music artists, kids' songs, short-form,
+ * gaming and individual politicians' channels were left out.
+ */
+internal val EXTRA_YOUTUBE_CHANNELS: List<ExtraChannel> = listOf(
+    ExtraChannel("UCVgW9ZQaGBk6fsiPgE2mYDg", "Français avec Pierre", ResourceCategory.YOUTUBE_LESSONS),
+    ExtraChannel("UCFu6uJDqU_6vCIyN9KpMPLg", "Home Language", ResourceCategory.YOUTUBE_LESSONS),
+    ExtraChannel("UCByWJsWPztkY3Rta2B62tgg", "Hugoposé", ResourceCategory.YOUTUBE_LESSONS),
+    ExtraChannel("UCIMGfEAERXjmWwQeg15BFsg", "Europe 1", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCewhc0fvja891XkpIPGRMxQ", "LCI", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UC9GGzAhhvhJO1hL10-BcgNA", "LeHuffPost", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCXKJrYczY2_fJEZgFPGY0HQ", "CNEWS", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCT67YOMntJxfRnO_9bXDpvw", "Le Média", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UC__xRB5L4toU9yYawt_lIKg", "BLAST, Le souffle de l'info", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCar0yo-PpeMk51m116826pQ", "Journal l'Humanité", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UC9hHeywcPBnLglqnQRaNShQ", "Le Fil d'Actu - Officiel", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCLmlUMA_bGiMWWgfDwfNDgw", "Info ou Mytho ?", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCnf0fDz1vTYW-sl36wbVMbg", "Les Revues du Monde", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UCpi-4daExRSchtsJzO06rwA", "Quotidien", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UC50uCdUubc04xXZz7bqv5ng", "Investigation", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UC7DHcyYJpGiSO0NIE7w_Eug", "100% DOCS - Reportages & Documentaires", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UC_majyzBb8HZV0wCmU4Z4Ag", "imineo", ResourceCategory.YOUTUBE_NEWS),
+    ExtraChannel("UClhucq0kKFA5tSmk3H7Yz6w", "Le Corps La Maison L'esprit", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UChG8nxeVTk6jQJyH-_TG7xw", "InPower Podcast", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCQfakletOMk9zXVRSHUdyDA", "Solange te parle", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCTafEJoRl5myC8A50plIrng", "FabienOlicard", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCah8C0gmLkdtvsy0b2jrjrw", "Cyrus North", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCI-8QMy9n3I5Pv6mTmXoAXA", "Gaspard G", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCHQda5vLxrH0Ff0I0kMq4zw", "Konbini", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCmHfCD8c8CmjlyWa8d4GObg", "Clique TV", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCAdyNOE80FsFPYlFliyXfwQ", "France tv science & nature", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCbdwaLd91oU_tWcHJn9-hdg", "Gauthier Dm - Science", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCRhyS_ylPQ5GWBl1lK92ftA", "Léo - TechMaker", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCzyN_JSs95aDgDFrfOxagEw", "Food Story", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCKq9JxyISqBHDd-fXfV3QtQ", "FastGoodCuisine", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCBmGPY1gJ4XnXfek849BjTA", "La Folle Histoire", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCCGRtSqLfljpX9mzCYDsQIg", "Questions d'Histoire", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCeLnsoEsuM4rWzzCU9RIlPQ", "Notre Histoire", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCky8Z5AYEHA55-r2TFNC_KA", "L'étoile Noire", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UC_yP2DpIgs5Y1uWC0T03Chw", "Joueur Du Grenier", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCCMxHHciWRBBouzk-PGzmtQ", "Bazar du Grenier", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCoBCHzefW1ZGnGCA_r6spdw", "Benoit Chevalier", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCC_r3spMB5i5QKgtdNVO0OQ", "Pierre Croce", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UC4ii4_aeS8iOFzsHuhJTq2w", "Poisson Fécond", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCqfANd8RDXTcQddXMwwgUmA", "Louis-San", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCyWqModMQlbIo8274Wh_ZsQ", "Cyprien", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCww2zZWg4Cf5xcRKG-ThmXQ", "Norman", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCtihF1ZtlYVzoaj_bKLQZ-Q", "Natoo", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCWeg2Pkate69NFdBeuRFTAw", "SQUEEZIE", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCJruTcTs7Gn2Tk7YC-ENeHQ", "Golden Moustache (M6)", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCZ8kV8vuMdDLSerCIFfWnFQ", "Studio Bagel", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCoZoRz4-y6r87ptDp4Jk74g", "Palmashow", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCPHJfLg1VeNBsfzzTszpmmQ", "Montreux Comedy", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCMqzZ17aTG2hKj2mVl7U4MA", "Les Parodie Bros", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCvYqgo9dGBPVvaa4paVIhwQ", "Lou! La Série [Officiel]", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCv88958LRDfndKV_Y7XmAnA", "Les Kassos - CANAL+", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCl0u_YK8kwwZanklN6W-3tg", "Ça commence aujourd'hui - France Télévisions", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCeqsLJGWhZXEerY5JWvwLkg", "Le Monde à L'Envers", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UCgvqvBoSHB1ctlyyhoHrGwQ", "Amixem", ResourceCategory.YOUTUBE_CULTURE),
+    ExtraChannel("UC9pxNghOaqpW4FzW74_KS1Q", "Les P'tits z'Amis", ResourceCategory.YOUTUBE_KIDS),
+    ExtraChannel("UCdLdz4Jf5HDBrHv7_1acKiw", "Les Lapins Crétins Invasion", ResourceCategory.YOUTUBE_KIDS),
+    ExtraChannel("UCJ9JIVGOL07BqXp0CoG83fw", "Disney Junior FR", ResourceCategory.YOUTUBE_KIDS),
+    ExtraChannel("UCX2dIyMEQMWy3AQBlq1CYXQ", "TéléCrayon", ResourceCategory.YOUTUBE_KIDS),
+    ExtraChannel("UCH0HvBshlVE7gCoV6as51og", "Madame Récré FR", ResourceCategory.YOUTUBE_KIDS),
+)

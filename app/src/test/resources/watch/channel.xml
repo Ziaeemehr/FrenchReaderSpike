@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/">
+  <title>Feed title must not become a video</title>
+  <entry><yt:videoId>abcdefghijk</yt:videoId><title>École &amp; culture</title><published>2026-10-23T10:00:00+00:00</published><media:group><media:title>Not the Atom title</media:title><media:thumbnail url="https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg"/></media:group></entry>
+  <entry><yt:videoId>lmnopqrstuv</yt:videoId><title>Deuxième vidéo</title><published>2026-10-22T09:00:00Z</published></entry>
+</feed>

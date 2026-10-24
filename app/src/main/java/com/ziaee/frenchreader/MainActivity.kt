@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +58,8 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderTheme
 import com.ziaee.frenchreader.util.IncomingShare
 import com.ziaee.frenchreader.util.IncomingContentKind
 import com.ziaee.frenchreader.util.MAX_TEXT_IMPORT_BYTES
+import com.ziaee.frenchreader.util.PendingWatchHolder
+import com.ziaee.frenchreader.watch.sharedYoutubeVideoId
 import com.ziaee.frenchreader.util.SharedTextHolder
 import com.ziaee.frenchreader.util.readBytesLimited
 import com.ziaee.frenchreader.util.classifyIncomingContent
@@ -71,7 +75,9 @@ class MainActivity : AppCompatActivity() {
             Python.start(AndroidPlatform(this))
         }
 
-        handleIncomingIntent(intent)
+        // A recreated activity (rotation, process restore) already restored its screens; handling the
+        // launch intent again would import the same share twice or push a second Watch screen.
+        if (savedInstanceState == null) handleIncomingIntent(intent)
         DatasetSeeder.seedIfNeeded(applicationContext)
 
         // One-time load from persisted prefs into the live state object;
@@ -103,6 +109,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIncomingIntent(intent)
     }
 
@@ -129,6 +136,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 val body = sharedText ?: streamUri?.let(::readTextFromUri)
                 if (!body.isNullOrBlank()) {
+                    if (intent.type == "text/plain" && sharedText != null) {
+                        sharedYoutubeVideoId(sharedText)?.let { id ->
+                            PendingWatchHolder.post(id)
+                            return
+                        }
+                    }
                     val title = streamUri?.let { queryDisplayName(this, it) } ?: getString(R.string.text_untitled)
                     SharedTextHolder.post(IncomingShare(title, body))
                 }
@@ -142,6 +155,10 @@ class MainActivity : AppCompatActivity() {
             Intent.ACTION_PROCESS_TEXT -> {
                 val text = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
                 if (!text.isNullOrBlank()) {
+                    sharedYoutubeVideoId(text)?.let { id ->
+                        PendingWatchHolder.post(id)
+                        return
+                    }
                     SharedTextHolder.post(IncomingShare(getString(R.string.text_untitled), text))
                 }
             }
@@ -196,6 +213,13 @@ class MainActivity : AppCompatActivity() {
 @Composable
 private fun AppNavHost() {
     val navController = rememberNavController()
+    val pendingWatch by PendingWatchHolder.pending.collectAsState()
+    LaunchedEffect(pendingWatch) {
+        pendingWatch?.let { id ->
+            navController.navigate("watch?videoId=${Uri.encode(id)}")
+            PendingWatchHolder.consume()
+        }
+    }
     var openAddTextOnHome by rememberSaveable { mutableStateOf(false) }
 
     // Home <-> Library is bottom-navigation, not a push/pop stack: reusing
@@ -226,6 +250,7 @@ private fun AppNavHost() {
                 onOpenResources = { navigateToTab("resources") },
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
+                onOpenVideos = { navController.navigate("videos") },
                 onOpenGrammar = { navController.navigate("grammar") },
                 onOpenExams = { route -> navController.navigate(route) },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
@@ -249,8 +274,28 @@ private fun AppNavHost() {
                 onOpenLibrary = { navigateToTab("library") },
                 onAddText = ::navigateToHomeAndAddText,
                 onWords = { navigateToTab("vocab") },
-                onOpenGrammar = { navController.navigate("grammar") }
+                onOpenGrammar = { navController.navigate("grammar") },
+                onOpenVideos = { navController.navigate("videos") }
             )
+        }
+        composable("videos") {
+            com.ziaee.frenchreader.watch.VideoPickerScreen(
+                onBack = { navController.popBackStack() },
+                onWatch = { id, title, channel ->
+                    navController.navigate("watch?videoId=$id&title=${Uri.encode(title)}&channel=${Uri.encode(channel)}")
+                }
+            )
+        }
+        composable("watch?videoId={videoId}&title={title}&channel={channel}", arguments = listOf(
+            navArgument("videoId") { type = NavType.StringType },
+            navArgument("title") { type = NavType.StringType; defaultValue = "" },
+            navArgument("channel") { type = NavType.StringType; defaultValue = "" }
+        )) { entry ->
+            val videoId = entry.arguments?.getString("videoId").orEmpty()
+            if (com.ziaee.frenchreader.watch.YoutubeUrl.videoId(videoId) == videoId) {
+                com.ziaee.frenchreader.watch.WatchScreen(videoId, onBack = { navController.popBackStack() },
+                    onOpenText = { id -> navController.navigate("reading/$id") })
+            }
         }
         composable("grammar") {
             GrammarListScreen(

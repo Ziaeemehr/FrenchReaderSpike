@@ -55,6 +55,12 @@ object VocabPrefs {
             .apply()
     }
 
+    fun getLastDictionaryProvider(context: Context): String? =
+        prefs(context).getString("last_dictionary_provider", null)
+
+    fun setLastDictionaryProvider(context: Context, providerId: String) =
+        prefs(context).edit().putString("last_dictionary_provider", providerId).apply()
+
     fun getIntervals(context: Context): List<Long> =
         prefs(context).getString(KEY_INTERVALS, null)
             ?.split(',')

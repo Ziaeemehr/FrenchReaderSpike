@@ -64,7 +64,6 @@ data class DefaultResource(
     val imageUrl: String? = null
 )
 
-internal fun d(en: String, fr: String, fa: String) = mapOf("en" to en, "fr" to fr, "fa" to fa)
 
 /**
  * Built-in resources. New entries are added once to existing installs (see ResourcesViewModel);

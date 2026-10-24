@@ -96,6 +96,7 @@ fun HomeScreen(
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
     onOpenGrammar: () -> Unit = {},
+    onOpenVideos: () -> Unit = {},
     onOpenExams: (String) -> Unit = {},
     onStartReview: () -> Unit,
     onOpenStudyLog: () -> Unit = {},
@@ -223,6 +224,7 @@ fun HomeScreen(
         onStartReview = onStartReview,
         onOpenDataset = onOpenDataset,
         onOpenGrammar = onOpenGrammar,
+        onOpenVideos = onOpenVideos,
         onOpenExams = { onOpenExams(vm.examRoute) },
         examPracticeCounts = vm.examPracticeCounts,
         onOpenStudyLog = onOpenStudyLog,
@@ -298,6 +300,7 @@ fun HomeContent(
     onStartReview: () -> Unit,
     onOpenDataset: () -> Unit = {},
     onOpenGrammar: () -> Unit = {},
+    onOpenVideos: () -> Unit = {},
     onOpenExams: () -> Unit = {},
     onOpenStudyLog: () -> Unit = {},
     examPracticeCounts: Pair<Int, Int>? = null,
@@ -420,6 +423,13 @@ fun HomeContent(
                         onOpen = onOpenDataset,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
+                    WatchVideosCard(
+                        onOpen = onOpenVideos,
+                        modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
                 }

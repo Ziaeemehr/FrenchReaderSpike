@@ -344,7 +344,12 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (chunk.translationStatus == ChunkStatus.READY) continue
                 updateChunk(i) { it.copy(translationStatus = ChunkStatus.LOADING) }
-                val result = translationRepo.getOrTranslateParagraph(chunk.spokenText, targetLang)
+                val before = (i - 1 downTo 0).firstNotNullOfOrNull { previous ->
+                    _state.value.chunks.getOrNull(previous)?.takeIf {
+                        it.block.type != BlockType.IMAGE && it.spokenText.isNotBlank()
+                    }?.spokenText
+                }
+                val result = translationRepo.getOrTranslateParagraphInContext(chunk.spokenText, before, targetLang)
                 if (generation != translationGeneration) return@launch
                 result.fold(
                     onSuccess = { translated ->
