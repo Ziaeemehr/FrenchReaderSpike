@@ -19,18 +19,19 @@ internal fun millisUntilNextLocalMidnight(
 ).coerceAtLeast(1)
 
 internal fun localEpochDayFlow(
-    zoneId: ZoneId = ZoneId.systemDefault(),
+    zoneId: ZoneId? = null,
     now: () -> Instant = Instant::now
 ): Flow<Long> = flow {
     var last: Long? = null
     while (currentCoroutineContext().isActive) {
         val instant = now()
-        val day = LocalDate.ofInstant(instant, zoneId).toEpochDay()
+        val currentZone = zoneId ?: ZoneId.systemDefault()
+        val day = LocalDate.ofInstant(instant, currentZone).toEpochDay()
         if (day != last) {
             emit(day)
             last = day
         }
         // delay() does not advance during deep sleep, so re-check at least every minute.
-        delay(millisUntilNextLocalMidnight(instant, zoneId).coerceAtMost(60_000))
+        delay(millisUntilNextLocalMidnight(instant, currentZone).coerceAtMost(60_000))
     }
 }

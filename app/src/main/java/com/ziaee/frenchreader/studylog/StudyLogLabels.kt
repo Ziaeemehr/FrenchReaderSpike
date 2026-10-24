@@ -27,3 +27,11 @@ internal fun SourceKind.labelRes() = when (this) {
     SourceKind.MOCK_TEST -> R.string.study_log_kind_mock_test
     SourceKind.OTHER -> R.string.study_log_kind_other
 }
+
+@StringRes
+internal fun SessionValidation.messageRes() = when (this) {
+    SessionValidation.InvalidDuration -> R.string.study_log_duration_error
+    SessionValidation.FutureDate -> R.string.study_log_future_date_error
+    SessionValidation.MissingEntry, SessionValidation.MissingSource -> R.string.error_content_loading
+    SessionValidation.Valid -> R.string.study_log_validation_error
+}

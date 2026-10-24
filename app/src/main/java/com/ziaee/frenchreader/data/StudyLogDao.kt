@@ -55,6 +55,9 @@ interface StudyLogDao {
     @Delete
     suspend fun deleteSource(source: StudySource)
 
+    @Query("DELETE FROM study_source WHERE id = :sourceId AND NOT EXISTS (SELECT 1 FROM study_session WHERE source_id = :sourceId)")
+    suspend fun deleteSourceIfUnused(sourceId: Long)
+
     @Query("SELECT COUNT(*) FROM study_session WHERE source_id = :sourceId")
     suspend fun countSessionsForSource(sourceId: Long): Int
 

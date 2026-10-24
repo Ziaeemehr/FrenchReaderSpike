@@ -513,19 +513,21 @@ private fun ActivityDayDetails(
     sessions: List<StudySession>,
     skillColors: Map<StudySkill, Color>
 ) {
+    val daySessions = sessions.filter { it.date == day.epochDay }
+    val minutes = daySessions.sumOf { it.durationMin }
     val date = LocalDate.ofEpochDay(day.epochDay)
         .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(appLocale()))
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            if (day.minutes == 0) {
+            if (minutes == 0) {
                 "$date · ${stringResource(R.string.study_log_no_study)}"
             } else {
-                "$date · ${formatMinutes(day.minutes)}"
+                "$date · ${formatMinutes(minutes)}"
             },
             style = MaterialTheme.typography.bodySmall
         )
-        if (day.minutes > 0) {
-            val totals = totalsBySkill(sessions.filter { it.date == day.epochDay })
+        if (minutes > 0) {
+            val totals = totalsBySkill(daySessions)
             StudySkill.entries.filter { totals.getValue(it) > 0 }.forEach { skill ->
                 LegendRow(
                     color = skillColors.getValue(skill),

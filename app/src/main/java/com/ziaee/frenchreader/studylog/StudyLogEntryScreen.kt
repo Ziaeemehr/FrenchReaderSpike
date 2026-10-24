@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -72,7 +73,7 @@ fun StudyLogEntryScreen(
     var sourceId by remember { mutableStateOf<Long?>(null) }
     var note by remember { mutableStateOf("") }
     var warning by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<SessionValidation?>(null) }
     var saving by remember { mutableStateOf(false) }
     var newSource by remember { mutableStateOf(false) }
     var newSourceName by remember { mutableStateOf("") }
@@ -83,7 +84,11 @@ fun StudyLogEntryScreen(
     val dateInvalid = date > today
 
     LaunchedEffect(entryId) {
-        entryId?.let { vm.getSession(it) }?.let { row ->
+        if (entryId == null) return@LaunchedEffect
+        val row = vm.getSession(entryId)
+        if (row == null) {
+            error = SessionValidation.MissingEntry
+        } else {
             original = row
             date = row.date
             hours = (row.durationMin / 60).toString()
@@ -98,7 +103,7 @@ fun StudyLogEntryScreen(
         if (saving || entryId != null && original == null) return
         val duration = parseDuration(hours, minutes)
         if (duration == null) {
-            error = true
+            error = SessionValidation.InvalidDuration
             return
         }
         saving = true
@@ -111,16 +116,16 @@ fun StudyLogEntryScreen(
                 sourceId = sourceId,
                 note = note.trim().ifBlank { null }
             )
-            when (vm.save(session, confirmed)) {
-                SaveResult.Saved -> onBack()
-                SaveResult.NeedsDailyLimitConfirmation -> {
-                    saving = false
-                    warning = true
+            try {
+                when (val result = vm.save(session, confirmed)) {
+                    SaveResult.Saved -> onBack()
+                    SaveResult.NeedsDailyLimitConfirmation -> warning = true
+                    is SaveResult.Invalid -> error = result.reason
+                    SaveResult.InFlight -> Unit
                 }
-                is SaveResult.Invalid -> error = true
-                SaveResult.InFlight -> Unit
+            } finally {
+                saving = false
             }
-            saving = false
         }
     }
 
@@ -149,6 +154,16 @@ fun StudyLogEntryScreen(
             )
         }
     ) { padding ->
+        if (entryId != null && original == null) {
+            Box(Modifier.padding(padding).padding(16.dp)) {
+                if (error == null) {
+                    CircularProgressIndicator()
+                } else {
+                    Text(stringResource(error!!.messageRes()), color = MaterialTheme.colorScheme.error)
+                }
+            }
+            return@Scaffold
+        }
         EntryForm(
             date = date,
             hours = hours,
@@ -157,38 +172,38 @@ fun StudyLogEntryScreen(
             sourceId = sourceId,
             note = note,
             sources = sources,
-            hasError = error,
+            validationError = error,
             durationInvalid = durationInvalid,
             dateInvalid = dateInvalid,
-            isEditing = entryId != null,
+            isEditing = original != null && original?.id != 0L,
             saveEnabled = !saving && (entryId == null || original != null),
             onShowDatePicker = { showDatePicker = true },
             onHoursChange = {
                 hours = it
-                error = false
+                error = null
             },
             onMinutesChange = {
                 minutes = it
-                error = false
+                error = null
             },
             onSkillChange = {
                 skill = it
-                error = false
+                error = null
             },
             onSourceChange = { selectedId, defaultSkill ->
                 sourceId = selectedId
                 defaultSkill?.let { skill = it }
-                error = false
+                error = null
             },
             onNewSource = {
                 newSourceName = ""
                 newSourceError = false
-                error = false
+                error = null
                 newSource = true
             },
             onNoteChange = {
                 note = it
-                error = false
+                error = null
             },
             onSubmit = { submit() },
             onDuplicate = {
@@ -207,7 +222,7 @@ fun StudyLogEntryScreen(
             onDismiss = { showDatePicker = false },
             onSelect = {
                 date = it
-                error = false
+                error = null
                 showDatePicker = false
             }
         )
@@ -260,7 +275,7 @@ private fun EntryForm(
     sourceId: Long?,
     note: String,
     sources: List<StudySource>,
-    hasError: Boolean,
+    validationError: SessionValidation?,
     durationInvalid: Boolean,
     dateInvalid: Boolean,
     isEditing: Boolean,
@@ -297,7 +312,7 @@ private fun EntryForm(
                 modifier = Modifier.weight(1f)
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             listOf(15, 30, 45, 60, 90).forEach { value ->
                 AssistChip(
                     onClick = {
@@ -342,8 +357,16 @@ private fun EntryForm(
                 color = MaterialTheme.colorScheme.error
             )
         }
-        if (hasError && !durationInvalid && !dateInvalid) {
-            Text(stringResource(R.string.study_log_validation_error), color = MaterialTheme.colorScheme.error)
+        if (validationError != null && !durationInvalid && !dateInvalid) {
+            val message = stringResource(validationError.messageRes())
+            Text(
+                text = if (validationError == SessionValidation.MissingSource) {
+                    "${stringResource(R.string.study_log_source_name)} · $message"
+                } else {
+                    message
+                },
+                color = MaterialTheme.colorScheme.error
+            )
         }
         Button(
             onClick = onSubmit,
@@ -355,6 +378,7 @@ private fun EntryForm(
         if (isEditing) {
             OutlinedButton(
                 onClick = onDuplicate,
+                enabled = saveEnabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.study_log_duplicate))

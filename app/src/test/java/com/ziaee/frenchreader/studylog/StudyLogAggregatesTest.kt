@@ -327,4 +327,16 @@ class StudyLogAggregatesTest {
             yearSummary(rows, 2026)
         )
     }
+    @Test
+    fun `duration parsing rejects integer overflow`() {
+        assertNull(parseDuration("71582789", "10"))
+        assertNull(parseDuration(Int.MAX_VALUE.toString(), "59"))
+        assertEquals(1440, parseDuration("24", "0"))
+    }
+
+    @Test
+    fun `daily warning does not overflow at large totals`() {
+        assertTrue(wouldExceedDailyLimit(Int.MAX_VALUE, 30))
+    }
+
 }

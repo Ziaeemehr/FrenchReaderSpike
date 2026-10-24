@@ -335,6 +335,8 @@ sealed interface SessionValidation {
     data object FutureDate : SessionValidation
 
     data object MissingEntry : SessionValidation
+
+    data object MissingSource : SessionValidation
 }
 
 internal fun validateSession(durationMin: Int, date: Long, today: Long): SessionValidation = when {
@@ -348,7 +350,7 @@ internal fun wouldExceedDailyLimit(
     newMinutes: Int,
     previousDurationMin: Int = 0
 ): Boolean =
-    existingMinutes - previousDurationMin + newMinutes > 1440
+    existingMinutes.toLong() - previousDurationMin + newMinutes > 1440
 
 internal fun activeSourcesForPicker(
     sources: List<com.ziaee.frenchreader.data.StudySource>
@@ -373,7 +375,8 @@ internal fun parseDuration(hours: String, minutes: String): Int? {
     val h = hours.toIntOrNull() ?: return null
     val m = minutes.toIntOrNull() ?: return null
     if (h < 0 || m !in 0..59) return null
-    return h * 60 + m
+    val total = h.toLong() * 60 + m
+    return total.takeIf { it <= Int.MAX_VALUE }?.toInt()
 }
 
 internal fun duplicateSession(

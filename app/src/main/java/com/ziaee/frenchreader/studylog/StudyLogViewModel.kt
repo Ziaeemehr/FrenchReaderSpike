@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.studylog
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.ziaee.frenchreader.data.AppDatabase
 import com.ziaee.frenchreader.data.SourceKind
 import com.ziaee.frenchreader.data.StudyLogPrefs
@@ -14,8 +15,6 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -71,7 +70,8 @@ sealed interface SaveResult {
 }
 
 class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
-    private val dao = AppDatabase.get(app).studyLogDao()
+    private val database = AppDatabase.get(app)
+    private val dao = database.studyLogDao()
     private val application = app
     private val period = MutableStateFlow(StudyPeriod.WEEK)
     private val firstDay = MutableStateFlow(StudyLogPrefs.getFirstDayOfWeek(app))
@@ -82,18 +82,8 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     )
     val currentDay = today
     private val targets = MutableStateFlow(StudyLogPrefs.getWeeklyTargets(app))
-    private val firstDate = dao.observeFirstSessionDate()
     private val saveMutex = Mutex()
-    private val range = combine(today, period, firstDay, firstDate) { currentDay, selectedPeriod, day, first ->
-        periodRange(currentDay, selectedPeriod, day, first) ?: PeriodRange(currentDay, currentDay, currentDay)
-    }
-    private val sessions = range.flatMapLatest { selectedRange ->
-        dao.observeSessions(selectedRange.start, selectedRange.queryEnd)
-    }
-    private val allSessions = combine(firstDate, today) { first, currentDay -> first to currentDay }
-        .flatMapLatest { (first, currentDay) ->
-            if (first == null) flowOf(emptyList()) else dao.observeSessions(first, currentDay)
-        }
+    private val allSessions = dao.observeSessions(Long.MIN_VALUE, Long.MAX_VALUE)
 
     val sources = dao.observeSources().stateIn(
         scope = viewModelScope,
@@ -141,12 +131,15 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     val uiState = combine(
-        sessions,
         lists,
-        range,
         selection,
         today
-    ) { rows, data, selectedRange, selected, currentDay ->
+    ) { data, selected, currentDay ->
+        val activitySessions = data.allSessions.filter { it.date <= currentDay }
+        val selectedRange = periodRange(
+            currentDay, selected.period, selected.firstDay, activitySessions
+        ) ?: PeriodRange(currentDay, currentDay, currentDay)
+        val rows = activitySessions.filter { it.date in selectedRange.start..selectedRange.queryEnd }
         StudyLogUiState(
             today = currentDay,
             sessions = rows,
@@ -161,11 +154,11 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
             buckets = periodBuckets(rows, selectedRange, selected.period, selected.firstDay),
             weeklyTargets = selected.targets,
             cumulative = cumulativeSeries(rows, selectedRange, selected.period, selected.firstDay),
-            activitySessions = data.allSessions,
-            comparison = weekOverWeek(data.allSessions, currentDay, selected.firstDay),
-            streaks = streaks(data.allSessions, currentDay),
+            activitySessions = activitySessions,
+            comparison = weekOverWeek(activitySessions, currentDay, selected.firstDay),
+            streaks = streaks(activitySessions, currentDay),
             activeDays = activeDayCount(rows),
-            hasEntries = if (selected.period == StudyPeriod.ALL) data.allSessions.isNotEmpty() else true
+            hasEntries = if (selected.period == StudyPeriod.ALL) activitySessions.isNotEmpty() else true
         )
     }.stateIn(
         scope = viewModelScope,
@@ -195,27 +188,32 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     ): SaveResult {
         if (!saveMutex.tryLock()) return SaveResult.InFlight
         try {
-            val validation = validateSession(session.durationMin, session.date, today.value)
-            if (validation != SessionValidation.Valid) {
-                return SaveResult.Invalid(validation)
+            return database.withTransaction {
+                val validation = validateSession(session.durationMin, session.date, LocalDate.now().toEpochDay())
+                if (validation != SessionValidation.Valid) {
+                    return@withTransaction SaveResult.Invalid(validation)
+                }
+                if (session.sourceId != null && dao.getSource(session.sourceId) == null) {
+                    return@withTransaction SaveResult.Invalid(SessionValidation.MissingSource)
+                }
+                val existing = if (session.id == 0L) null else dao.getSession(session.id)
+                if (session.id != 0L && existing == null) {
+                    return@withTransaction SaveResult.Invalid(SessionValidation.MissingEntry)
+                }
+                val excludedId = session.id.takeIf { it != 0L } ?: -1
+                val dayTotal = dao.sumMinutesForDateExcluding(session.date, excludedId)
+                if (!confirmed && wouldExceedDailyLimit(dayTotal, session.durationMin)) {
+                    return@withTransaction SaveResult.NeedsDailyLimitConfirmation
+                }
+                val now = System.currentTimeMillis()
+                if (existing == null) {
+                    dao.insertSession(session.copy(createdAt = now, updatedAt = now))
+                } else {
+                    dao.updateSession(session.copy(createdAt = existing.createdAt, updatedAt = now))
+                }
+                StudyLogPrefs.setLastSkill(application, session.skill)
+                SaveResult.Saved
             }
-            val existing = if (session.id == 0L) null else dao.getSession(session.id)
-            if (session.id != 0L && existing == null) {
-                return SaveResult.Invalid(SessionValidation.MissingEntry)
-            }
-            val excludedId = session.id.takeIf { it != 0L } ?: -1
-            val dayTotal = dao.sumMinutesForDateExcluding(session.date, excludedId)
-            if (!confirmed && wouldExceedDailyLimit(dayTotal, session.durationMin)) {
-                return SaveResult.NeedsDailyLimitConfirmation
-            }
-            val now = System.currentTimeMillis()
-            if (existing == null) {
-                dao.insertSession(session.copy(createdAt = now, updatedAt = now))
-            } else {
-                dao.updateSession(session.copy(createdAt = existing.createdAt, updatedAt = now))
-            }
-            StudyLogPrefs.setLastSkill(application, session.skill)
-            return SaveResult.Saved
         } finally {
             saveMutex.unlock()
         }
@@ -230,7 +228,10 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun restore(session: StudySession) = viewModelScope.launch {
-        dao.insertSession(session.copy(id = 0))
+        database.withTransaction {
+            val sourceId = session.sourceId?.takeIf { dao.getSource(it) != null }
+            dao.insertSession(session.copy(id = 0, sourceId = sourceId))
+        }
     }
 
     fun addSource(
@@ -274,8 +275,6 @@ class StudyLogViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteSource(source: StudySource) = viewModelScope.launch {
-        if (dao.countSessionsForSource(source.id) == 0) {
-            dao.deleteSource(source)
-        }
+        dao.deleteSourceIfUnused(source.id)
     }
 }
