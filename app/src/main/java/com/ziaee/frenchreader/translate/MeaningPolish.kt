@@ -17,23 +17,43 @@ private val personEndings = listOf("ند", "ید", "یم", "د", "ی", "م", "")
 
 /** "بخورید", "می‌روند", "دارند" → the infinitive; null when the token is not a known verb form. */
 private fun verbFormInfinitive(token: String): String? {
+    val negativeContinuous = token.startsWith("نمی$ZWNJ")
     val stripped = token.removePrefix("نمی$ZWNJ").removePrefix("می$ZWNJ")
+    // Each candidate base, and whether reaching it removed a negative ن.
     val bases = buildList {
-        add(stripped)
+        add(stripped to negativeContinuous)
         // "بیا" is ب + آ: بیاید → آید, بیاور → آور; "بینداز" is ب + انداز.
-        if (stripped.startsWith("بیا")) add("آ" + stripped.removePrefix("بیا"))
-        if (stripped.startsWith("بی")) add("ا" + stripped.removePrefix("بی"))
-        if (stripped.startsWith("ب")) add(stripped.removePrefix("ب"))
-        if (stripped.startsWith("ن")) add(stripped.removePrefix("ن"))
+        if (stripped.startsWith("بیا")) add("آ" + stripped.removePrefix("بیا") to false)
+        if (stripped.startsWith("بی")) add("ا" + stripped.removePrefix("بی") to false)
+        if (stripped.startsWith("ب")) add(stripped.removePrefix("ب") to false)
+        // "نیا" is ن + آ, like "بیا".
+        if (stripped.startsWith("نیا")) add("آ" + stripped.removePrefix("نیا") to true)
+        if (stripped.startsWith("ن")) add(stripped.removePrefix("ن") to true)
     }
-    for (base in bases) for (ending in personEndings) {
+    for ((base, negative) in bases) for (ending in personEndings) {
         if (!base.endsWith(ending)) continue
         val stem = base.removeSuffix(ending)
-        presentStems[stem]?.let { return it }
         // "بگوید"/"بیایید": the stem's own final ی merges with the ending.
-        presentStems[stem + "ی"]?.let { return it }
+        val infinitive = presentStems[stem] ?: presentStems[stem + "ی"] ?: continue
+        return if (negative) negativeInfinitive(infinitive) else infinitive
     }
     return null
+}
+
+/** "پاسخ نده" must stay negative: ندادن, نیامدن. */
+private fun negativeInfinitive(infinitive: String) =
+    if (infinitive.startsWith("آ")) "نیا" + infinitive.removePrefix("آ") else "ن$infinitive"
+
+private val infinitives = presentStems.values.toSet()
+private val prepositions = setOf("به", "از", "در", "با", "برای", "تا", "بر")
+
+/**
+ * "بستن بند", "آویختن از دار": an infinitive before the last word means the last word is a noun.
+ * A noun ending in دن is not one: "بدن را بشوی" has an object marker after it, "به لندن برو" a preposition before.
+ */
+private fun hasEarlierInfinitive(tokens: List<String>): Boolean = tokens.dropLast(1).withIndex().any { (i, token) ->
+    val shaped = token in infinitives || (token.length >= 3 && (token.endsWith("دن") || token.endsWith("تن")))
+    shaped && tokens.getOrNull(i - 1) !in prepositions && "را" !in tokens.subList(i + 1, tokens.size)
 }
 
 private val notInfinitives = setOf("pour", "sur", "par", "leur", "hier", "premier", "dernier", "cher", "fier",
@@ -81,7 +101,10 @@ internal fun polishPersianMeaning(word: String, meaning: String, partOfSpeech: S
         s = s.removePrefix("برای ").trim()
         val tokens = s.split(' ').toMutableList()
         val last = tokens.lastOrNull().orEmpty()
-        if (tokens.size >= 2 && tokens[tokens.size - 2] == "داشته" && last.startsWith("باش")) {
+        // A meaning that already has its infinitive ("بستن بند") ends in a noun, not a verb form.
+        if (hasEarlierInfinitive(tokens)) {
+            // Nothing to convert.
+        } else if (tokens.size >= 2 && tokens[tokens.size - 2] == "داشته" && last.startsWith("باش")) {
             tokens.removeAt(tokens.lastIndex)
             tokens[tokens.lastIndex] = "داشتن"
         } else if (tokens.size >= 2 && tokens[tokens.size - 2] in setOf("می", "نمی") && verbFormInfinitive(last) != null) {

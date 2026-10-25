@@ -3,10 +3,11 @@ package com.ziaee.frenchreader.translate
 private const val ZWNJ = "‌"
 // Explicit ranges: Android's ICU regex and the JVM disagree on script property names.
 private const val LETTER = "[\\u0621-\\u063A\\u0641-\\u064A\\u067E\\u0686\\u0698\\u06A9\\u06AF\\u06C0\\u06CC]"
-private val verbPrefix = Regex("(?<![\\p{L}\\u200C])(ن?می) +(?=$LETTER)")
+// Only before a word ending like a verb (م ی د ت: می‌روم، می‌رفت), so the noun می ("می ناب") stays apart.
+private val verbPrefix = Regex("(?<![\\p{L}\\u200C])(ن?می) +(?=$LETTER+[میدت](?![\\p{L}\\u200C]))")
 private val joinedSuffix = Regex("(?<=$LETTER) +(ها|های|هایی|هایم|هایت|هایش|هایمان|هایتان|هایشان|ترین)(?![\\p{L}\\u200C])")
 // "مکالمه ای" → "مکالمه‌ای": after a final silent ه these endings are written with a half-space.
-private val afterSilentHe = Regex("(\\S*ه) +(ای|ایی|ام|ات|اش|ایم|اید|اند)(?![\\p{L}\\u200C])( +کاش)?")
+private val afterSilentHe = Regex("(?<!\\S)(\\S*ه) +(ای|ایی|ام|ات|اش|ایم|اید|اند)(?![\\p{L}\\u200C])( +کاش)?")
 // Function words, and words whose final ه is pronounced, are followed by a separate word instead
 // ("که ای کاش", "به ماه ای دوست").
 private val notSilentHe = setOf("به", "که", "نه", "چه", "آنچه", "هرچه", "آنکه", "ماه", "راه", "شاه", "کوه", "گروه",

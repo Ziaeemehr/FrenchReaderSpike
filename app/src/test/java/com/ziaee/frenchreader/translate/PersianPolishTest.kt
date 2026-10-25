@@ -65,4 +65,16 @@ class PersianPolishTest {
         assertEquals("they want , ok ?", polishTranslation("they want , ok ?", "en"))
         assertEquals("می${z}خواهند", polishTranslation("می خواهند", "fa"))
     }
+
+    @Test fun nounMeiIsNotAVerbPrefix() {
+        assertEquals("می ناب نوشید", polishPersian("می ناب نوشید"))
+        assertEquals("او می${z}رفت", polishPersian("او می رفت"))
+    }
+
+    @Test fun longWordsWithoutSpacesStayFast() {
+        val long = "ا".repeat(20_000)
+        val start = System.nanoTime()
+        assertEquals(long, polishPersian(long))
+        assertTrue((System.nanoTime() - start) / 1_000_000 < 200)
+    }
 }

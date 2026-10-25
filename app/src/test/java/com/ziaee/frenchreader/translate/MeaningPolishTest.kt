@@ -67,4 +67,18 @@ class MeaningPolishTest {
         assertEquals("اینجا با کسی آشنا شدن",
             polishPersianMeaning("faire la connaissance de quelqu’un ici", "اینجا با کسی آشنا شوید"))
     }
+
+    @Test fun negativeFormsStayNegative() {
+        assertEquals("پاسخ ندادن", polishPersianMeaning("s’abstenir de répondre", "پاسخ نده"))
+        assertEquals("نرفتن", polishPersianMeaning("aller", "نمی${z}روند"))
+        assertEquals("نیامدن", polishPersianMeaning("venir", "نیا"))
+        assertEquals("نشستن", polishPersianMeaning("s'asseoir", "بنشین"))
+    }
+
+    @Test fun meaningThatAlreadyHasItsInfinitiveIsKept() {
+        assertEquals("بستن بند", polishPersianMeaning("nouer", "بستن بند"))
+        assertEquals("آویختن از دار", polishPersianMeaning("se pendre", "آویختن از دار"))
+        assertEquals("بدن را تکان دادن", polishPersianMeaning("bouger le corps", "بدن را تکان بده"))
+        assertEquals("به لندن رفتن", polishPersianMeaning("aller à Londres", "به لندن برو"))
+    }
 }

@@ -1,7 +1,6 @@
 package com.ziaee.frenchreader.translate.llm
 
 import android.content.Context
-import com.ziaee.frenchreader.translate.polishMeaning
 import com.ziaee.frenchreader.translate.polishTranslation
 import org.json.JSONArray
 import org.json.JSONObject
@@ -68,7 +67,8 @@ class LlmTranslator(private val client: LlmClient, val cacheId: String) {
     }
 
     fun meaning(word: String, sentence: String?, targetLang: String): String =
-        polishMeaning(word, parseMeaning(client.complete(meaningPrompt(word, sentence, targetLang))), targetLang)
+        // The prompt already asks for headword form; Google's morphological repair would only damage it.
+        polishTranslation(parseMeaning(client.complete(meaningPrompt(word, sentence, targetLang))), targetLang)
 
     companion object {
         fun forContext(context: Context): LlmTranslator? {
