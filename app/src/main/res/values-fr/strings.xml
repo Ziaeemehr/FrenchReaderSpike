@@ -945,4 +945,44 @@
     <string name="computer_guide_5">5. Dans l’application : Paramètres → Traduction → Mon ordinateur → Trouver mon ordinateur → sélectionnez-le ; la connexion est ensuite automatique lorsque l’ordinateur et le pont fonctionnent et que les deux appareils sont sur le même Wi-Fi, même si l’adresse de l’ordinateur change.</string>
     <string name="computer_guide_trusted_network">Toute personne utilisant cette application sur le même Wi-Fi peut utiliser le modèle de votre ordinateur ; lancez donc le pont sur des réseaux de confiance, comme celui de votre domicile.</string>
     <string name="computer_guide_6">6. Si rien n’est trouvé : certains réseaux empêchent les appareils de se voir (Wi-Fi public, certains routeurs). Connectez plutôt l’ordinateur au point d’accès du téléphone, ou utilisez l’USB avec la commande ci-dessous et l’adresse manuelle.</string>
+
+    <!-- Ahead-of-time LLM translation -->
+    <string name="prepare_title">Préparer les traductions</string>
+    <string name="prepare_description">Choisissez les contenus à traduire pour les retrouver sans attendre plus tard.</string>
+    <string name="prepare_model">Modèle sélectionné : %1$s</string>
+    <string name="prepare_requires_llm">Sélectionnez un moteur de modèle de langage et configurez sa connexion.</string>
+    <string name="prepare_library">Textes de la bibliothèque</string>
+    <string name="prepare_all">Sélectionner tous les textes affichés</string>
+    <string name="prepare_none">Désélectionner tous les textes affichés</string>
+    <string name="prepare_videos">Vidéos regardées avec sous-titres enregistrés</string>
+    <string name="prepare_no_videos">Aucune transcription enregistrée dans l’historique.</string>
+    <string name="prepare_flashcards">Cartes de vocabulaire</string>
+    <string name="prepare_meanings">Sens des mots en contexte</string>
+    <string name="prepare_examples">Phrases d’exemple</string>
+    <string name="prepare_counts">%1$d à traduire · %2$d en cache · %3$d corrections personnelles</string>
+    <string name="prepare_estimate">Estimation : environ %1$d min · %2$s supplémentaires</string>
+    <string name="prepare_languages">Les textes utilisent leur langue de traduction enregistrée ; les sous-titres et les cartes utilisent la langue des définitions. Les estimations varient selon le modèle et la connexion.</string>
+    <string name="prepare_start">Lancer la préparation</string>
+    <string name="prepare_progress">%1$d / %2$d prêts</string>
+    <string name="prepare_queued">En attente de l’exécution en arrière-plan…</string>
+    <string name="prepare_running">Préparation des traductions…</string>
+    <string name="prepare_retry">En attente d’une nouvelle tentative. Vérifiez la connexion, la clé et la disponibilité du service, ou reprenez plus tard.</string>
+    <string name="prepare_paused">En pause. Les traductions terminées sont conservées.</string>
+    <string name="prepare_complete">Les traductions sont prêtes.</string>
+    <string name="prepare_engine_changed">Le moteur a changé ou n’est pas configuré. Rétablissez le moteur et le modèle d’origine pour reprendre, ou arrêtez et créez une nouvelle sélection.</string>
+    <string name="prepare_pause">Mettre en pause</string>
+    <string name="prepare_resume">Reprendre</string>
+    <string name="prepare_stop">Arrêter (conserver les traductions terminées)</string>
+    <string name="prepare_cache_size">Cache de traduction (tous les modèles) : %1$s</string>
+    <string name="prepare_clear">Effacer les traductions préparées</string>
+    <string name="prepare_clear_confirm">Arrêter la préparation et supprimer toutes les traductions des modèles, y compris celles faites en direct ? Vos corrections et le cache Google seront conservés.</string>
+    <string name="prepare_error">Impossible de préparer les traductions. Réessayez.</string>
+    <string name="prepare_all_decks">Paquets affichés (%1$d cartes)</string>
+    <string name="prepare_deck_count">%1$s (%2$d cartes)</string>
+    <string name="prepare_unfiled">Cartes sans paquet</string>
+    <string name="prepare_all_deck_choices">Sélectionner tous les paquets affichés</string>
+    <string name="prepare_no_deck_choices">Désélectionner tous les paquets affichés</string>
+    <string name="prepare_search">Rechercher des titres et des noms de paquets</string>
+    <string name="prepare_search_clear">Effacer</string>
+    <string name="prepare_search_no_results">Aucun résultat.</string>
 </resources>

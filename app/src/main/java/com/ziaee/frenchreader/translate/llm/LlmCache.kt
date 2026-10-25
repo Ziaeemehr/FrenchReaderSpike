@@ -21,17 +21,28 @@ class LlmCache(context: Context) {
         read(meaningCacheKey(model, lang, word, sentence), lang)
     fun putMeaning(word: String, sentence: String?, lang: String, model: String, value: String) =
         write(meaningCacheKey(model, lang, word, sentence), value)
-    fun remove(text: String, lang: String, model: String) {
+    fun remove(text: String, lang: String, model: String) = synchronized(lock) {
         File(dir, "${translationCacheKey(model, lang, text)}.txt").delete()
     }
 
-    private fun read(key: String, lang: String): String? {
+    /** Includes live and prepared entries, across all models. User overrides are separate. */
+    fun sizeBytes(): Long = synchronized(lock) { dir.listFiles().orEmpty().sumOf { it.length() } }
+    fun clearAll() = synchronized(lock) { dir.listFiles().orEmpty().forEach { it.delete() }; Unit }
+
+    private fun read(key: String, lang: String): String? = synchronized(lock) {
         val file = File(dir, "$key.txt")
-        return if (file.exists()) polishTranslation(file.readText(Charsets.UTF_8), lang).takeIf { it.isNotBlank() } else null
+        if (file.exists()) polishTranslation(file.readText(Charsets.UTF_8), lang).takeIf { it.isNotBlank() } else null
     }
 
-    private fun write(key: String, value: String) {
+    private fun write(key: String, value: String) = synchronized(lock) {
         dir.mkdirs()
-        File(dir, "$key.txt").writeText(value, Charsets.UTF_8)
+        val target = File(dir, "$key.txt")
+        val staging = File.createTempFile(".translation-", ".tmp", dir)
+        try {
+            staging.writeText(value, Charsets.UTF_8)
+            check(staging.renameTo(target)) { "Unable to store translation" }
+        } finally { staging.delete() }
     }
+
+    companion object { private val lock = Any() }
 }

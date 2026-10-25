@@ -942,4 +942,44 @@
     <string name="computer_guide_5">۵. در برنامه: تنظیمات ← ترجمه ← رایانهٔ من ← پیدا کردن رایانهٔ من ← انتخاب رایانه؛ سپس هر زمان رایانه و پل ارتباطی روشن باشند و هر دو دستگاه به یک وای‌فای وصل باشند، اتصال به‌صورت خودکار برقرار می‌شود؛ حتی اگر نشانی رایانه تغییر کند.</string>
     <string name="computer_guide_trusted_network">هر کسی که این برنامه را دارد و به همان وای‌فای وصل است، می‌تواند از مدل رایانهٔ شما استفاده کند؛ پس پل ارتباطی را در شبکه‌های مورداعتماد، مانند شبکهٔ خانه، اجرا کنید.</string>
     <string name="computer_guide_6">۶. اگر چیزی پیدا نشد: بعضی شبکه‌ها اجازه نمی‌دهند دستگاه‌ها یکدیگر را ببینند (وای‌فای عمومی و بعضی مسیریاب‌ها). رایانه را به نقطهٔ اتصال تلفن وصل کنید، یا با فرمان زیر و نشانی دستی از USB استفاده کنید.</string>
+
+    <!-- Ahead-of-time LLM translation -->
+    <string name="prepare_title">آماده‌سازی ترجمه‌ها</string>
+    <string name="prepare_description">انتخاب کنید چه بخش‌هایی از پیش ترجمه شوند تا هنگام خواندن و تماشا بدون انتظار آماده باشند.</string>
+    <string name="prepare_model">مدل انتخاب‌شده: %1$s</string>
+    <string name="prepare_requires_llm">ابتدا یک موتور ترجمه با مدل زبانی انتخاب و اتصال آن را تنظیم کنید.</string>
+    <string name="prepare_library">متن‌های کتابخانه</string>
+    <string name="prepare_all">انتخاب همهٔ متن‌های نمایش‌داده‌شده</string>
+    <string name="prepare_none">لغو انتخاب متن‌های نمایش‌داده‌شده</string>
+    <string name="prepare_videos">ویدیوهای دیده‌شده با زیرنویس ذخیره‌شده</string>
+    <string name="prepare_no_videos">در سابقهٔ تماشا، زیرنویس ذخیره‌شده‌ای وجود ندارد.</string>
+    <string name="prepare_flashcards">فلش‌کارت‌ها</string>
+    <string name="prepare_meanings">معنی واژه‌ها در جمله</string>
+    <string name="prepare_examples">جمله‌های نمونه</string>
+    <string name="prepare_counts">%1$d مورد باقی‌مانده · %2$d مورد در حافظهٔ ترجمه · %3$d اصلاح کاربر</string>
+    <string name="prepare_estimate">برآورد: حدود %1$d دقیقه · %2$s فضای بیشتر</string>
+    <string name="prepare_languages">متن‌ها به زبان ترجمهٔ ذخیره‌شدهٔ خودشان و زیرنویس‌ها و کارت‌ها به زبان معنی واژه‌ها ترجمه می‌شوند. زمان واقعی به مدل و اتصال بستگی دارد.</string>
+    <string name="prepare_start">شروع آماده‌سازی</string>
+    <string name="prepare_progress">%1$d از %2$d مورد آماده است</string>
+    <string name="prepare_queued">در انتظار اجرای پس‌زمینه…</string>
+    <string name="prepare_running">در حال آماده‌سازی ترجمه‌ها…</string>
+    <string name="prepare_retry">در انتظار تلاش دوباره. اتصال موتور، کلید و دسترسی به سرویس را بررسی کنید یا بعداً ادامه دهید.</string>
+    <string name="prepare_paused">متوقف شده است. ترجمه‌های آماده‌شده ذخیره شده‌اند.</string>
+    <string name="prepare_complete">ترجمه‌ها آماده‌اند.</string>
+    <string name="prepare_engine_changed">موتور تغییر کرده یا تنظیم نشده است. برای ادامه، موتور و مدل قبلی را انتخاب کنید؛ یا کار را پایان دهید و انتخاب تازه‌ای را شروع کنید.</string>
+    <string name="prepare_pause">توقف موقت</string>
+    <string name="prepare_resume">ادامه</string>
+    <string name="prepare_stop">پایان کار (با نگه‌داشتن ترجمه‌های آماده)</string>
+    <string name="prepare_cache_size">حافظهٔ ترجمهٔ مدل‌ها (همهٔ مدل‌ها): %1$s</string>
+    <string name="prepare_clear">پاک کردن ترجمه‌های آماده</string>
+    <string name="prepare_clear_confirm">آماده‌سازی متوقف و همهٔ ترجمه‌های مدل‌ها، از جمله ترجمه‌های هنگام مطالعه، پاک شوند؟ اصلاح‌های شما و حافظهٔ ترجمهٔ گوگل باقی می‌مانند.</string>
+    <string name="prepare_error">آماده‌سازی ترجمه‌ها انجام نشد. دوباره تلاش کنید.</string>
+    <string name="prepare_all_decks">دسته‌های نمایش‌داده‌شده (%1$d کارت)</string>
+    <string name="prepare_deck_count">%1$s (%2$d کارت)</string>
+    <string name="prepare_unfiled">کارت‌های بدون دسته</string>
+    <string name="prepare_all_deck_choices">انتخاب همهٔ دسته‌های نمایش‌داده‌شده</string>
+    <string name="prepare_no_deck_choices">لغو انتخاب دسته‌های نمایش‌داده‌شده</string>
+    <string name="prepare_search">جست‌وجوی عنوان‌ها و نام دسته‌ها</string>
+    <string name="prepare_search_clear">پاک کردن</string>
+    <string name="prepare_search_no_results">نتیجه‌ای پیدا نشد.</string>
 </resources>

@@ -96,6 +96,11 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit
 ) {
+    var showPreparation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    if (showPreparation) {
+        PrepareTranslationsScreen(onBack = { showPreparation = false })
+        return
+    }
     val context = LocalContext.current
     val appLanguage = LocalePrefs.get(context)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -204,7 +209,7 @@ fun SettingsScreen(
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
-                    8 -> TranslationEngineSettings(context, scope, snackbarHostState)
+                    8 -> TranslationEngineSettings(context, scope, snackbarHostState, onPrepare = { showPreparation = true })
                     7 -> {
                         Text(stringResource(R.string.dataset_subtitle), style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(12.dp))

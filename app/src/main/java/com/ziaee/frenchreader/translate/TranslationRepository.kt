@@ -23,11 +23,23 @@ class TranslationRepository(private val context: Context) {
         attempt: Int = 0
     ): Result<String> = withContext(Dispatchers.IO) {
         overrides.getOverride(text, targetLang)?.let { return@withContext Result.success(it) }
+        val translator = try { LlmTranslator.forContext(context) } catch (_: Exception) { null }
+        translator?.let { llmCache.get(text, targetLang, it.cacheId) }?.let {
+            return@withContext Result.success(it)
+        }
         cache.get(text, targetLang)?.let { return@withContext Result.success(it) }
         try {
-            val translated = TranslationService.translate(text, targetLang)
-            cache.put(text, targetLang, translated)
-            Result.success(translated)
+            val translated = try {
+                translator?.translateLines(listOf(text), null, null, targetLang)?.single()?.also {
+                    llmCache.put(text, targetLang, translator.cacheId, it)
+                }
+            } catch (cancelled: CancellationException) { throw cancelled
+            } catch (_: Exception) { null }
+            if (translated != null) return@withContext Result.success(translated)
+            val google = TranslationService.translate(text, targetLang)
+            cache.put(text, targetLang, google)
+            Result.success(google)
+        } catch (cancelled: CancellationException) { throw cancelled
         } catch (e: Exception) {
             if (attempt < 1) getOrTranslate(text, targetLang, attempt + 1)
             else Result.failure(e)
@@ -108,7 +120,7 @@ class TranslationRepository(private val context: Context) {
     }
 
     suspend fun getOrTranslateInContext(
-        targets: List<String>, before: String?, targetLang: String
+        targets: List<String>, before: String?, targetLang: String, after: String? = null
     ): Map<String, String?> = withContext(Dispatchers.IO) {
         val results = linkedMapOf<String, String?>()
         val missing = mutableListOf<String>()
@@ -130,9 +142,16 @@ class TranslationRepository(private val context: Context) {
                             missing.remove(text)
                         }
                     }
+                    // A Google hit is still available offline, after overrides and the model cache.
+                    for (text in missing.toList()) {
+                        cache.get(text, targetLang)?.let { value ->
+                            results[text] = value.takeUnless { TranslationService.isSameText(it, text) }
+                            missing.remove(text)
+                        }
+                    }
                     if (missing.isNotEmpty()) {
                         val pending = missing.toList()
-                        val translated = translator.translateLines(pending, before, null, targetLang)
+                        val translated = translator.translateLines(pending, before, after, targetLang)
                         pending.zip(translated).forEach { (text, value) ->
                             llmCache.put(text, targetLang, translator.cacheId, value)
                             results[text] = value.takeUnless { TranslationService.isSameText(it, text) }
@@ -190,6 +209,7 @@ class TranslationRepository(private val context: Context) {
         val translator = LlmTranslator.forContext(context)
             ?.takeUnless { TranslationService.baseLanguage(targetLang) == "fr" }
         if (translator == null) null else llmCache.get(text, targetLang, translator.cacheId)
+            ?: cache.get(text, targetLang)
             ?: translator.translateLines(listOf(text), before, null, targetLang).single().also {
                 llmCache.put(text, targetLang, translator.cacheId, it)
             }
@@ -206,10 +226,16 @@ class TranslationRepository(private val context: Context) {
         val llmMeaning = try {
             val translator = LlmTranslator.forContext(context)
             if (translator == null) null else {
-                val meaning = llmCache.getMeaning(word, sentence, targetLang, translator.cacheId)
-                    ?: translator.meaning(word, sentence, targetLang).also {
-                        llmCache.putMeaning(word, sentence, targetLang, translator.cacheId, it)
-                    }
+                val cached = llmCache.getMeaning(word, sentence, targetLang, translator.cacheId)
+                if (cached != null) {
+                    // Prepared meanings must be immediately usable offline; fetching Google's
+                    // alternative senses here would block a perfectly good model-cache hit.
+                    val meaning = polishMeaning(word, cached, targetLang)
+                    return@withContext MeaningCandidates(meaning, listOf(MeaningOption(meaning, null, null)))
+                }
+                val meaning = translator.meaning(word, sentence, targetLang).also {
+                    llmCache.putMeaning(word, sentence, targetLang, translator.cacheId, it)
+                }
                 polishMeaning(word, meaning, targetLang)
             }
         } catch (cancelled: CancellationException) {

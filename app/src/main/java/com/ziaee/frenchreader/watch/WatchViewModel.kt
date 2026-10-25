@@ -93,7 +93,7 @@ class WatchViewModel(application: Application, private val saved: SavedStateHand
     private val correctionVersions = mutableMapOf<Pair<String, String>, Int>()
     private var translationRequest: TranslationRequest? = null
 
-    private data class TranslationRequest(val videoId: String, val language: String, val texts: List<String>, val before: String?)
+    private data class TranslationRequest(val videoId: String, val language: String, val texts: List<String>, val before: String?, val after: String? = null)
 
     init {
         // One worker, never cancelled on cue changes or toggle-off: blocking HTTP can finish
@@ -109,7 +109,7 @@ class WatchViewModel(application: Application, private val saved: SavedStateHand
                     if (!mutableState.value.translationEnabled || translationRequest != request) return@withLock
                     val versions = request.texts.associateWith { correctionVersions[it to request.language] ?: 0 }
                     val translated = try {
-                        repository.getOrTranslateInContext(request.texts, request.before, request.language)
+                        repository.getOrTranslateInContext(request.texts, request.before, request.language, request.after)
                     } catch (error: CancellationException) { throw error
                     } catch (error: Exception) { emptyMap() }
                     val corrected = userTranslationCache.getOrPut(request.videoId to request.language) { mutableSetOf() }
@@ -232,7 +232,7 @@ class WatchViewModel(application: Application, private val saved: SavedStateHand
             return
         }
         val request = TranslationRequest(id, mutableState.value.translationLanguage,
-            units.drop(index).take(3).map { it.text }, units.getOrNull(index - 1)?.text)
+            units.drop(index).take(3).map { it.text }, units.getOrNull(index - 1)?.text, units.getOrNull(index + 3)?.text)
         translationRequest = request
         mutableState.update { it.copy(translations = translationCache[id to request.language]?.toMap().orEmpty(),
             userTranslations = userTranslationCache[id to request.language]?.toSet().orEmpty(),

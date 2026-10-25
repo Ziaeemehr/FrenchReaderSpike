@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, snackbarHostState: SnackbarHostState) {
+internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, snackbarHostState: SnackbarHostState, onPrepare: () -> Unit) {
     val prefs = remember { LlmPrefs(context) }
     val secrets = remember { LlmSecrets(context) }
     var engine by remember { mutableStateOf(prefs.engine) }
@@ -59,6 +59,13 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
         if (selected == TranslationEngine.ONLINE && !prefs.experimentalAccepted) confirmExperimental = true
         else { engine = selected; prefs.engine = selected }
     }
+
+    OutlinedButton(onClick = onPrepare, enabled = engine != TranslationEngine.GOOGLE,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Text(stringResource(R.string.prepare_title))
+    }
+    if (engine == TranslationEngine.GOOGLE) Text(stringResource(R.string.prepare_requires_llm),
+        style = MaterialTheme.typography.bodySmall)
 
     if (confirmExperimental) {
         AlertDialog(

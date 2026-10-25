@@ -67,7 +67,8 @@ class LlmClient(
         return try { request(requestUrl) } catch (error: LlmError) {
             if (error.kind != LlmError.Kind.UNREACHABLE) throw error
             val newUrl = refindBaseUrl?.invoke() ?: throw error
-            if (newUrl == requestUrl) throw error
+            // Discovery may confirm the same address after a transient cold-start failure.
+            // Retry it once, just as we would a changed address.
             activeBaseUrl = newUrl
             request(newUrl)
         }
