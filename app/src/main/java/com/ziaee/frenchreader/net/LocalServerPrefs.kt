@@ -8,7 +8,6 @@ data class PairedComputer(val id: String, val name: String, val host: String, va
 internal data class ComputerInfo(val id: String, val name: String, val llm: Boolean, val tts: Boolean)
 
 internal fun computerDisplayName(name: String): String = name.removeSuffix(" (French Reader)")
-internal fun validComputerCode(code: String): Boolean = Regex("[0-9]{6}").matches(code)
 internal fun computerBaseUrl(host: String, port: Int, service: String): String {
     require(service == "llm" || service == "tts")
     // An IPv6 link-local zone ("fe80::1%wlan0") must be escaped inside a URL.
@@ -33,9 +32,7 @@ class LocalServerPrefs(context: Context) {
             val host = prefs.getString("host", null) ?: return null
             return PairedComputer(id, prefs.getString("pairedName", "").orEmpty(), host, prefs.getInt("port", 8765))
         }
-    fun pair(computer: FoundComputer, code: String) {
-        require(validComputerCode(code))
-        secrets.set("computer_code", code)
+    fun pair(computer: FoundComputer) {
         prefs.edit().putString("pairedId", computer.id).putString("pairedName", computer.name)
             .putString("host", computer.host).putInt("port", computer.port).apply()
     }

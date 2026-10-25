@@ -933,18 +933,14 @@
     <string name="computer_paired">Associé à %1$s</string>
     <string name="computer_forget">Oublier</string>
     <string name="computer_manual">Adresse manuelle (USB)</string>
-    <string name="computer_code_rejected">L’ordinateur a refusé le code d’association. Associez-le à nouveau.</string>
     <string name="computer_use_voice">Utiliser mon ordinateur associé (%1$s)</string>
-    <string name="computer_pair_title">Associer %1$s</string>
-    <string name="computer_code">Code à 6 chiffres</string>
-    <string name="computer_pair">Associer</string>
-    <string name="computer_wrong_code">Code incorrect</string>
     <string name="computer_unreachable">Impossible de joindre l’ordinateur</string>
     <string name="computer_guide_1">1. Votre ordinateur exécute le modèle (et éventuellement la voix), et le téléphone l’utilise sur le même Wi-Fi. Les traductions faites par votre ordinateur restent sur votre réseau ; quand il est éteint, l’application utilise Google Traduction comme d’habitude.</string>
     <string name="computer_guide_bonjour">La détection automatique de l’ordinateur utilise Bonjour : intégré à macOS ; sous Linux installez avahi-utils, sous Windows installez Bonjour. Sinon, utilisez l’adresse manuelle.</string>
     <string name="computer_guide_2">2. Installez llama.cpp sur votre ordinateur : utilisez la commande ci-dessous sur macOS, ou téléchargez une version pour Windows/Linux. Lancez ensuite un modèle avec la commande d’exemple. Ce modèle est volumineux ; un modèle plus petit convient aux ordinateurs moins puissants.</string>
     <string name="computer_guide_3">3. Voix facultative : démarrez le serveur XTTS du projet au chemin ci-dessous.</string>
-    <string name="computer_guide_4">4. Téléchargez bridge.py depuis la page du projet ci-dessous et lancez-le avec Python 3. Il affiche un code à 6 chiffres. Autorisez les connexions entrantes si l’ordinateur le demande.</string>
-    <string name="computer_guide_5">5. Dans l’application : Paramètres → Traduction → Mon ordinateur → Trouver mon ordinateur → sélectionnez-le → saisissez le code une seule fois. La connexion est ensuite automatique lorsque l’ordinateur et le pont fonctionnent et que les deux appareils sont sur le même Wi-Fi, même si l’adresse de l’ordinateur change.</string>
+    <string name="computer_guide_4">4. Téléchargez bridge.py depuis la page du projet ci-dessous et lancez python3 bridge.py. Autorisez les connexions entrantes si l’ordinateur le demande.</string>
+    <string name="computer_guide_5">5. Dans l’application : Paramètres → Traduction → Mon ordinateur → Trouver mon ordinateur → sélectionnez-le ; la connexion est ensuite automatique lorsque l’ordinateur et le pont fonctionnent et que les deux appareils sont sur le même Wi-Fi, même si l’adresse de l’ordinateur change.</string>
+    <string name="computer_guide_trusted_network">Toute personne utilisant cette application sur le même Wi-Fi peut utiliser le modèle de votre ordinateur ; lancez donc le pont sur des réseaux de confiance, comme celui de votre domicile.</string>
     <string name="computer_guide_6">6. Si rien n’est trouvé : certains réseaux empêchent les appareils de se voir (Wi-Fi public, certains routeurs). Connectez plutôt l’ordinateur au point d’accès du téléphone, ou utilisez l’USB avec la commande ci-dessous et l’adresse manuelle.</string>
 </resources>

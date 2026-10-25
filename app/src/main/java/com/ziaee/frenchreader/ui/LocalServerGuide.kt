@@ -33,6 +33,7 @@ internal fun LocalServerGuide(onDismiss: () -> Unit) {
                         GuideCommand("https://github.com/Ziaeemehr/FrenchReaderSpike/tree/main/tools/local_server")
                         GuideCommand("python3 bridge.py")
                         Text(stringResource(R.string.computer_guide_5))
+                        Text(stringResource(R.string.computer_guide_trusted_network))
                         Text(stringResource(R.string.computer_guide_6))
                         GuideCommand("adb reverse tcp:8080 tcp:8080")
                         Text(stringResource(R.string.computer_guide_bonjour))

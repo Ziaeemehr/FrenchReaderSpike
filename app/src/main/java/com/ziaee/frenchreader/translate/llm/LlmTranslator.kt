@@ -87,7 +87,7 @@ class LlmTranslator(private val client: LlmClient, val cacheId: String) {
             val baseUrl = if (paired != null) local.baseUrl("llm").orEmpty() else if (computer) prefs.computerUrl else if (provider == LlmProvider.CUSTOM) prefs.customBaseUrl else provider.baseUrl
             if (baseUrl.isBlank()) return null
             val secrets = LlmSecrets(context)
-            val token = secrets.get(if (paired != null) "computer_code" else if (computer) "computer_token" else provider.name)
+            val token = if (paired != null) null else secrets.get(if (computer) "computer_token" else provider.name)
             if (!computer && token.isNullOrBlank()) return null
             val model = if (computer) prefs.computerModel else prefs.onlineModel
             val refind: (() -> String?)? = paired?.let { original -> {

@@ -3,7 +3,8 @@
 French Reader can translate with a language model and read texts aloud with an XTTS voice running on your computer. `bridge.py` connects the two over your Wi-Fi without typing an IP address.
 
 - The model servers keep listening on the computer only: other tools that use them (for example a browser extension) need nothing new.
-- The bridge is the only part reachable from the network. It asks for a 6-digit pairing code and announces the computer on the local network (Bonjour / mDNS), so the app finds it by itself, even when the computer's address changes.
+- The bridge is the only part reachable from the network. It announces the computer on the local network (Bonjour / mDNS), so the app finds it by itself, even when the computer's address changes.
+- There is no password: anyone on the same Wi-Fi with the app can use your computer's models. Run the bridge on networks you trust, such as at home.
 - It needs only Python 3, no extra packages.
 
 ## 1. Start a language model
@@ -24,14 +25,11 @@ Optional: start the XTTS voice server on port 8020 (see [`../xtts_server`](../xt
 python3 bridge.py
 ```
 
-It prints the pairing code. If the computer asks, allow incoming connections for Python.
-
-- `python3 bridge.py --code` prints the code again.
-- `python3 bridge.py --new-code` makes a new code; paired phones then ask for it once more.
+If the computer asks, allow incoming connections for Python.
 
 ## 3. Pair the phone
 
-In the app: **Settings → Translation → My computer → Find my computer**, choose your computer and enter the code. For the voice, turn on **Use my paired computer** in the voice server settings.
+In the app: **Settings → Translation → My computer → Find my computer** and choose your computer. For the voice, turn on **Use my paired computer** in the voice server settings.
 
 That is all: whenever the computer, the bridge and the phone are on the same Wi-Fi, the app uses the computer; otherwise it quietly falls back to Google Translate.
 

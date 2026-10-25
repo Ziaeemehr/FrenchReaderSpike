@@ -2,34 +2,28 @@
 """Network bridge between French Reader on the phone and model servers on this computer.
 
 The language model (llama.cpp's llama-server, port 8080) and the XTTS voice server (port 8020)
-keep listening on this computer only, so other local tools that use them need no code. This
-bridge is the single thing reachable from the network: it asks for a 6-digit pairing code,
-forwards /llm/... and /tts/... to those servers, and announces the computer on the local network
-(Bonjour / mDNS) so the app finds it without typing an IP address.
+keep listening on this computer only, so other local tools that use them are unaffected. This
+bridge is the single thing reachable from the network: it forwards /llm/... and /tts/... to those
+servers and announces the computer on the local network (Bonjour / mDNS), so the app finds it
+without typing an IP address. There is no password: anyone on the same Wi-Fi with the app can use
+the models, so run it on networks you trust, such as at home.
 
-Standard library only. Usage:
-    python3 bridge.py              run in the foreground
-    python3 bridge.py --code       print the pairing code
-    python3 bridge.py --new-code   make a new pairing code (paired phones must enter it again)
+Standard library only. Usage: python3 bridge.py
 """
 from __future__ import annotations
 
 import argparse
-import hmac
 import json
 import os
-import secrets
 import shutil
 import signal
 import socket
 import subprocess
 import sys
 import threading
-import time
 import urllib.error
 import urllib.request
 import uuid
-from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -38,29 +32,24 @@ SERVICE_TYPE = "_frenchreader._tcp"
 UPSTREAMS = {"llm": "http://127.0.0.1:8080", "tts": "http://127.0.0.1:8020"}
 HEALTH = {"llm": "/health", "tts": "/health"}
 CONFIG = Path.home() / ".config" / "frenchreader" / "bridge.json"
-# Six digits are easy to type once; each address gets at most 10 wrong codes per minute, for good.
-MAX_FAILURES, LOCKOUT_SECONDS = 10, 60
 # A voice server started with its own XTTS_TOKEN still works behind the bridge.
 UPSTREAM_TOKENS = {"tts": os.environ.get("XTTS_TOKEN")}
 MAX_BODY = 16 * 1024 * 1024
+# The phone's own credentials, if any, are not passed on; the voice server gets XTTS_TOKEN instead.
 HOP_HEADERS = {"connection", "keep-alive", "transfer-encoding", "upgrade", "host", "content-length",
                "authorization", "x-token"}
 
 
-def load_config(new_code: bool = False) -> dict:
+def load_config() -> dict:
+    """The computer's fixed id, so the app recognises it again when its address changes."""
     config = {}
     if CONFIG.exists():
         try:
             config = json.loads(CONFIG.read_text())
         except ValueError:
             config = {}
-    changed = False
     if not config.get("id"):
-        config["id"], changed = uuid.uuid4().hex[:12], True
-    if new_code or not str(config.get("code", "")).isdigit():
-        config["code"], changed = f"{secrets.randbelow(10**6):06d}", True
-    if changed:
-        # Written to a private temporary file and renamed, so a running bridge never reads half a file.
+        config = {"id": uuid.uuid4().hex[:12]}
         CONFIG.parent.mkdir(parents=True, exist_ok=True)
         temporary = CONFIG.with_suffix(".tmp")
         temporary.write_text(json.dumps(config))
@@ -92,23 +81,7 @@ def upstream_up(service: str) -> bool:
 
 class Bridge(BaseHTTPRequestHandler):
     config: dict = {}
-    config_mtime = 0.0
     name = ""
-    failures: dict[str, deque] = {}
-    lock = threading.Lock()
-
-    @classmethod
-    def current_code(cls) -> str:
-        """`bridge.py --new-code` takes effect at once: the old code stops working."""
-        try:
-            mtime = CONFIG.stat().st_mtime_ns
-            if mtime != cls.config_mtime:
-                fresh = json.loads(CONFIG.read_text())
-                if str(fresh.get("code", "")).isdigit() and fresh.get("id"):
-                    cls.config, cls.config_mtime = fresh, mtime
-        except (OSError, ValueError):
-            pass  # Keep the code in use; never generate one here.
-        return str(cls.config["code"])
 
     def log_message(self, fmt, *args):  # noqa: D401 - quieter, one line per request
         sys.stderr.write(f"{self.address_string()} {fmt % args}\n")
@@ -120,33 +93,6 @@ class Bridge(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
-
-    def _authorized(self) -> bool:
-        client = self.client_address[0]
-        now = time.time()
-        with self.lock:
-            # Sliding window of wrong codes in the last minute; the limit never lapses for good.
-            if len(self.failures) > 256:
-                for address in [a for a, times in self.failures.items() if not times or now - times[-1] >= LOCKOUT_SECONDS]:
-                    del self.failures[address]
-            recent = self.failures.setdefault(client, deque())
-            while recent and now - recent[0] >= LOCKOUT_SECONDS:
-                recent.popleft()
-            if len(recent) >= MAX_FAILURES:
-                return False
-            # Counted before the comparison, so simultaneous guesses cannot all slip under the limit.
-            recent.append(now)
-        supplied = self.headers.get("X-Token") or ""
-        auth = self.headers.get("Authorization") or ""
-        if auth.lower().startswith("bearer "):
-            supplied = supplied or auth[7:].strip()
-        ok = hmac.compare_digest(supplied.encode(), self.current_code().encode())
-        if ok:
-            with self.lock:
-                recent = self.failures.get(client)
-                if recent and now in recent:
-                    recent.remove(now)
-        return ok
 
     def _read_body(self) -> bytes | None:
         """The whole request body, including a chunked one, so keep-alive stays in sync."""
@@ -169,17 +115,13 @@ class Bridge(BaseHTTPRequestHandler):
 
     def _handle(self) -> None:
         if self.path.split("?")[0] == "/frenchreader/info":
-            # No code needed: the app uses this to recognise the computer before pairing.
-            self.current_code()
+            # The app uses this to recognise the computer when pairing and finding it again.
             self._send_json(200, {"id": self.config["id"], "name": self.name, "version": 1,
                                   "services": {s: upstream_up(s) for s in UPSTREAMS}})
             return
         service, _, rest = self.path.lstrip("/").partition("/")
         if service not in UPSTREAMS:
             self._send_json(404, {"error": {"message": "Unknown path"}})
-            return
-        if not self._authorized():
-            self._send_json(401, {"error": {"message": "Wrong pairing code"}})
             return
         try:
             body = self._read_body()
@@ -254,17 +196,10 @@ def local_addresses() -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--code", action="store_true", help="print the pairing code and exit")
-    parser.add_argument("--new-code", action="store_true", help="make a new pairing code and exit")
-    args = parser.parse_args()
-    config = load_config(new_code=args.new_code)
-    if args.code or args.new_code:
-        print(config["code"])
-        return
-    Bridge.config, Bridge.name = config, computer_name()
+    argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
+    Bridge.config, Bridge.name = load_config(), computer_name()
     server = DualStackServer(("::", PORT), Bridge)
-    announcer = advertise(f"{Bridge.name} (French Reader)", config["id"])
+    announcer = advertise(f"{Bridge.name} (French Reader)", Bridge.config["id"])
 
     def stop(*_):
         if announcer:
@@ -273,7 +208,8 @@ def main() -> None:
 
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
-    print(f"French Reader bridge on port {PORT} — pairing code {config['code']}", flush=True)
+    print(f"French Reader bridge on port {PORT}. In the app: Settings → Translation → My computer → "
+          "Find my computer.", flush=True)
     for address in local_addresses():
         print(f"  manual address: http://{address}:{PORT}", flush=True)
     server.serve_forever()

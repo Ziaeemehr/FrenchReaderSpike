@@ -2,6 +2,9 @@ package com.ziaee.frenchreader.net
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.net.InetAddress
+import java.net.ServerSocket
+import kotlin.concurrent.thread
 
 class LocalServerTest {
     @Test fun parsesInfo() {
@@ -22,9 +25,45 @@ class LocalServerTest {
         assertEquals("Mac", computerDisplayName("Mac"))
         assertEquals("(French Reader) Mac", computerDisplayName("(French Reader) Mac"))
     }
-    @Test fun codeIsExactlySixAsciiDigits() {
-        assertTrue(validComputerCode("012345"))
-        for (code in listOf("12345", "1234567", "abcdef", "۱۲۳۴۵۶", " 123456")) assertFalse(validComputerCode(code))
+    @Test fun verifiesIdentityWithOnlyUnauthenticatedInfoGet() {
+        withInfoServer { computer, requests ->
+            verifyComputer(computer)
+            assertEquals(listOf("GET /frenchreader/info"), requests)
+        }
+    }
+    @Test(expected = IllegalStateException::class) fun rejectsMismatchedIdentity() {
+        withInfoServer { computer, _ -> verifyComputer(computer.copy(id = "other")) }
+    }
+    @Test(expected = IllegalStateException::class) fun rejectsUnsuccessfulInfoResponse() {
+        withInfoServer(status = 503) { computer, _ -> verifyComputer(computer) }
+    }
+    @Test(expected = IllegalStateException::class) fun doesNotFollowInfoRedirects() {
+        withInfoServer(status = 302) { computer, _ -> verifyComputer(computer) }
+    }
+    /** A one-request HTTP server on a plain socket: com.sun.net.httpserver is not on this classpath. */
+    private fun withInfoServer(status: Int = 200, block: (FoundComputer, MutableList<String>) -> Unit) {
+        val requests = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val server = ServerSocket(0, 1, InetAddress.getLoopbackAddress())
+        val worker = thread {
+            runCatching {
+                server.accept().use { socket ->
+                    val reader = socket.getInputStream().bufferedReader()
+                    val requestLine = reader.readLine().orEmpty()
+                    val headers = generateSequence { reader.readLine()?.takeIf { it.isNotEmpty() } }.toList()
+                    requests.add(requestLine.substringBeforeLast(" "))
+                    val authenticated = headers.any {
+                        it.startsWith("Authorization:", ignoreCase = true) || it.startsWith("X-Token:", ignoreCase = true)
+                    }
+                    val body = """{"id":"computer-id","name":"Mac","version":1,"services":{"llm":true,"tts":false}}"""
+                    val code = if (authenticated) 401 else status
+                    socket.getOutputStream().write(("HTTP/1.1 $code X\r\nLocation: /redirected\r\n" +
+                        "Content-Type: application/json\r\nContent-Length: ${body.toByteArray().size}\r\n" +
+                        "Connection: close\r\n\r\n$body").toByteArray())
+                }
+            }
+        }
+        try { block(FoundComputer("computer-id", "Mac", "127.0.0.1", server.localPort), requests) }
+        finally { server.close(); worker.join(2_000) }
     }
     @Test fun buildsServiceUrlsIncludingIpv6() {
         assertEquals("http://h:8765/llm", computerBaseUrl("h", 8765, "llm"))

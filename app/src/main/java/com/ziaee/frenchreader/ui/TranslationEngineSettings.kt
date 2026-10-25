@@ -178,8 +178,7 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
             } catch (error: Exception) {
                 val reason = context.getString(when ((error as? LlmError)?.kind) {
                     LlmError.Kind.MISSING_KEY -> R.string.translation_error_missing_key
-                    LlmError.Kind.UNAUTHORIZED -> if (engine == TranslationEngine.COMPUTER && !computerManual)
-                        R.string.computer_code_rejected else R.string.translation_error_key
+                    LlmError.Kind.UNAUTHORIZED -> R.string.translation_error_key
                     LlmError.Kind.PAYMENT -> R.string.translation_error_payment
                     LlmError.Kind.FORBIDDEN -> R.string.translation_error_forbidden
                     LlmError.Kind.NOT_FOUND -> R.string.translation_error_model

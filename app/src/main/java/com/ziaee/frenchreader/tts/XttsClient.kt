@@ -5,7 +5,6 @@ import android.util.Base64
 import com.ziaee.frenchreader.data.XttsPrefs
 import com.ziaee.frenchreader.net.LocalServerPrefs
 import com.ziaee.frenchreader.net.LocalServerFinder
-import com.ziaee.frenchreader.translate.llm.LlmSecrets
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
@@ -166,7 +165,7 @@ object XttsClient {
         val local = LocalServerPrefs(context)
         val paired = XttsPrefs.getUsePairedComputer(context) && local.paired != null
         val serverUrl = (if (paired) local.baseUrl("tts").orEmpty() else XttsPrefs.getServerUrl(context)).trim().trimEnd('/')
-        val token = if (paired) LlmSecrets(context).get("computer_code").orEmpty() else XttsPrefs.getToken(context)
+        val token = if (paired) "" else XttsPrefs.getToken(context)
         if (serverUrl.isBlank()) throw IllegalStateException("Local XTTS server URL is blank")
         return (URL("$serverUrl$path").openConnection() as HttpURLConnection).apply {
             connectTimeout = 5_000

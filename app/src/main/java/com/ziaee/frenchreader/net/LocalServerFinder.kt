@@ -126,19 +126,6 @@ internal fun readComputerInfo(host: String, port: Int): ComputerInfo {
     } finally { connection.disconnect() }
 }
 
-internal fun verifyComputer(computer: FoundComputer, code: String) {
-    require(validComputerCode(code))
+internal fun verifyComputer(computer: FoundComputer) {
     check(readComputerInfo(computer.host, computer.port).id == computer.id)
-    val connection = URL(computerBaseUrl(computer.host, computer.port, "llm") + "/health")
-        .openConnection() as HttpURLConnection
-    try {
-        connection.connectTimeout = 4000
-        connection.readTimeout = 4000
-        connection.instanceFollowRedirects = false
-        connection.setRequestProperty("Authorization", "Bearer $code")
-        // The bridge checks the code before forwarding: anything but 401 means the code was accepted,
-        // including 503 when only the voice server is running.
-        if (connection.responseCode == 401) throw WrongComputerCode()
-    } finally { connection.disconnect() }
 }
-internal class WrongComputerCode : Exception()
