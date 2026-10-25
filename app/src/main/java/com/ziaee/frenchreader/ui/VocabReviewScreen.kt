@@ -537,7 +537,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         sentenceTranslationError = false
         sentenceTranslationLoading = true
         val targetLang = meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context))
-        val result = translationRepo.getOrTranslate(entry.sentence, targetLang)
+        val result = translationRepo.getOrTranslateExample(entry.sentence, targetLang)
         if (current !== entry) return
         result.fold(
             onSuccess = { sentenceTranslation = it },

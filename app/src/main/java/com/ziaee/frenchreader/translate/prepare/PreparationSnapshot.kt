@@ -12,7 +12,8 @@ internal fun encodePreparationJob(job: PreparationJob): String {
         .put("sentence", item.sentence ?: JSONObject.NULL).put("deckId", item.deckId ?: JSONObject.NULL)) }
     val decks = job.selectedDecks?.let { ids -> JSONArray().apply { ids.forEach { put(it ?: JSONObject.NULL) } } }
     return JSONObject().put("id", job.id).put("model", job.model).put("items", array)
-        .put("selectedDecks", decks ?: JSONObject.NULL).toString()
+        .put("selectedDecks", decks ?: JSONObject.NULL)
+        .put("regenerateBundledExamples", job.regenerateBundledExamples).toString()
 }
 
 internal fun decodePreparationJob(raw: String): PreparationJob {
@@ -28,7 +29,7 @@ internal fun decodePreparationJob(raw: String): PreparationJob {
             PreparationKind.valueOf(item.getString("kind")), optional("before"), optional("after"),
             item.getString("group"), item.getInt("position"), optional("sentence"),
             if (item.isNull("deckId")) null else item.getLong("deckId"))
-    }, decks)
+    }, decks, json.optBoolean("regenerateBundledExamples", false))
 }
 
 /** A missing preference predates deck selection; an explicitly empty set means no decks. */

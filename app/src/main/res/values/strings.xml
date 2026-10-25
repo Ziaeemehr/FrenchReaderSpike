@@ -985,4 +985,6 @@
     <string name="prepare_search">Search titles and deck names</string>
     <string name="prepare_search_clear">Clear</string>
     <string name="prepare_search_no_results">No results.</string>
+    <string name="prepare_regenerate_bundled">Regenerate example translations of bundled decks with my model</string>
+    <string name="prepare_included">%1$d included with the app</string>
 </resources>

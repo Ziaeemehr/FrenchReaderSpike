@@ -9,7 +9,7 @@ import java.util.UUID
 
 enum class PreparationStatus { QUEUED, RUNNING, RETRY, PAUSED, COMPLETE, ENGINE_CHANGED }
 data class PreparationJob(val id: String, val model: String, val items: List<PreparationItem>,
-    val selectedDecks: Set<Long?>? = null)
+    val selectedDecks: Set<Long?>? = null, val regenerateBundledExamples: Boolean = false)
 data class PreparationProgress(val id: String, val status: PreparationStatus, val done: Int, val total: Int)
 
 /** Terminal, paused and superseded jobs must never issue another provider request. */
@@ -20,6 +20,9 @@ internal fun PreparationProgress?.allowsRequest(jobId: String): Boolean =
 class PreparationStore(context: Context) {
     private val prefs = context.getSharedPreferences("translation_preparation", Context.MODE_PRIVATE)
     private val snapshot = AtomicFile(File(context.filesDir, "translation_preparation.json"))
+
+    fun regenerateBundledExamples(): Boolean = prefs.getBoolean("regenerateBundledExamples", false)
+    fun setRegenerateBundledExamples(value: Boolean) { prefs.edit().putBoolean("regenerateBundledExamples", value).apply() }
 
     fun selection(): Set<String> = prefs.getStringSet("selection", emptySet()).orEmpty().toSet()
     fun select(ids: Set<String>) { prefs.edit().putStringSet("selection", ids.toSet()).apply() }
@@ -41,8 +44,8 @@ class PreparationStore(context: Context) {
         }.getOrNull()
     }
 
-    fun create(model: String, items: List<PreparationItem>, selectedDecks: Set<Long?>? = null): PreparationJob = synchronized(lock) {
-        val job = PreparationJob(UUID.randomUUID().toString(), model, items, selectedDecks)
+    fun create(model: String, items: List<PreparationItem>, selectedDecks: Set<Long?>? = null, regenerateBundledExamples: Boolean = false): PreparationJob = synchronized(lock) {
+        val job = PreparationJob(UUID.randomUUID().toString(), model, items, selectedDecks, regenerateBundledExamples)
         val stream = snapshot.startWrite()
         try {
             stream.write(encodePreparationJob(job).toByteArray(Charsets.UTF_8))
@@ -89,3 +92,11 @@ fun PreparationItem.cached(cache: LlmCache, model: String): Boolean = if (kind =
     cache.getMeaning(text, sentence, language, model) != null else cache.get(text, language, model) != null
 
 fun PreparationItem.overridden(overrides: TranslationOverrides): Boolean = overrides.getOverride(text, language) != null
+
+/** Group identity distinguishes flashcard examples from reader lines with identical text. */
+fun PreparationItem.bundledTranslation(index: com.ziaee.frenchreader.content.BundledSentenceTranslations): String? =
+    if (kind == PreparationKind.LINE && group.startsWith("example:")) index.get(text, language) else null
+
+fun PreparationItem.prepared(cache: LlmCache, model: String, index: com.ziaee.frenchreader.content.BundledSentenceTranslations,
+    regenerate: Boolean): Boolean = examplePrepared(bundledTranslation(index) != null, regenerate,
+        personal = { cache.getRegenerated(text, language, model) != null }, ordinary = { cached(cache, model) })

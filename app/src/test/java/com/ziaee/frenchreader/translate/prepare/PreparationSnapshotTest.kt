@@ -19,6 +19,31 @@ class PreparationSnapshotTest {
         }
     }
 
+    @Test fun sharedReaderSentenceRetainsBothConsumersBecauseReaderCannotUseBundle() {
+        val reader = PreparationItem("Bonjour !", "fa", group = "text:1")
+        val example = reader.copy(group = "example:2", deckId = 12L)
+        val sources = listOf(PreparationSource("text:1", "Text", listOf(reader)),
+            PreparationSource("examples", "Examples", listOf(example)))
+        assertEquals(listOf(example, reader), selectedItems(sources, setOf("text:1", "examples")))
+        assertEquals(listOf(reader), selectedItems(sources, setOf("text:1", "examples"), emptySet()))
+    }
+
+    @Test fun includedSentencesSkipWorkUnlessRegenerationNeedsPersonalCache() {
+        assertTrue(examplePrepared(true, false, { error("Unexpected cache read") }, { error("Unexpected cache read") }))
+        assertFalse(examplePrepared(true, true, { false }, { true }))
+        assertTrue(examplePrepared(true, true, { true }, { error("Ordinary cache must not count") }))
+        assertFalse(examplePrepared(false, false, { true }, { false }))
+    }
+
+    @Test fun regenerationSelectionRoundTripsAndDefaultsOff() {
+        val legacy = """{"id":"job","model":"model","items":[]}"""
+        assertFalse(decodePreparationJob(legacy).regenerateBundledExamples)
+        for (enabled in listOf(false, true)) {
+            val job = PreparationJob("job", "model", emptyList(), setOf(12L), enabled)
+            assertEquals(job, decodePreparationJob(encodePreparationJob(job)))
+        }
+    }
+
     @Test fun oldSnapshotMeansAllDecks() {
         val old = """{"id":"job","model":"model","items":[]}"""
         assertNull(decodePreparationJob(old).selectedDecks)

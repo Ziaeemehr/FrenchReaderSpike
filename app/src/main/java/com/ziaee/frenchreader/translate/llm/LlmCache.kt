@@ -17,11 +17,17 @@ class LlmCache(context: Context) {
 
     fun get(text: String, lang: String, model: String): String? = read(translationCacheKey(model, lang, text), lang)
     fun put(text: String, lang: String, model: String, value: String) = write(translationCacheKey(model, lang, text), value)
+    // A separate cache namespace proves the user explicitly requested regeneration.
+    fun getRegenerated(text: String, lang: String, model: String): String? =
+        read("regenerated-" + translationCacheKey(model, lang, text), lang)
+    fun putRegenerated(text: String, lang: String, model: String, value: String) =
+        write("regenerated-" + translationCacheKey(model, lang, text), value)
     fun getMeaning(word: String, sentence: String?, lang: String, model: String): String? =
         read(meaningCacheKey(model, lang, word, sentence), lang)
     fun putMeaning(word: String, sentence: String?, lang: String, model: String, value: String) =
         write(meaningCacheKey(model, lang, word, sentence), value)
     fun remove(text: String, lang: String, model: String) = synchronized(lock) {
+        File(dir, "regenerated-${translationCacheKey(model, lang, text)}.txt").delete()
         File(dir, "${translationCacheKey(model, lang, text)}.txt").delete()
     }
 

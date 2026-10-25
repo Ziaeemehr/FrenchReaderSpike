@@ -200,7 +200,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun translationRepositoryResult(text: String) =
-        translationRepo.getOrTranslate(text, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)))
+        translationRepo.getOrTranslateExample(text, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)))
 
     private fun stopPreviewMedia() {
         previewAudioJob?.cancel()

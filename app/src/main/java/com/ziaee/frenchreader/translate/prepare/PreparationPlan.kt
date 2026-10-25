@@ -31,7 +31,14 @@ fun selectedItems(sources: List<PreparationSource>, selected: Set<String>, selec
         if (source.id in setOf("meanings", "examples") && selectedDecks != null)
             source.items.filter { it.deckId in selectedDecks }
         else source.items
-    }.filter { it.text.isNotBlank() }.distinctBy { it.identity }
+    }.filter { it.text.isNotBlank() }.groupBy { it.identity }.values.flatMap { duplicates ->
+        val example = duplicates.firstOrNull { it.kind == PreparationKind.LINE && it.group.startsWith("example:") }
+        if (example == null) listOf(duplicates.first()) else {
+            // Readers cannot use bundled examples. Keep their work too, with the example
+            // first so regeneration can fill the shared live cache before the reader checks it.
+            listOfNotNull(example, duplicates.firstOrNull { !it.group.startsWith("example:") })
+        }
+    }
 
 fun pendingItems(items: List<PreparationItem>, cached: (PreparationItem) -> Boolean): List<PreparationItem> =
     items.filterNot(cached)
@@ -64,3 +71,8 @@ fun estimatePreparation(items: List<PreparationItem>): PreparationEstimate = Pre
     },
     items.sumOf { it.text.toByteArray(Charsets.UTF_8).size * 2L + 128L }
 )
+
+/** Regeneration requires its own provenance cache, never an incidental live-cache hit. */
+internal fun examplePrepared(hasBundled: Boolean, regenerate: Boolean,
+    personal: () -> Boolean, ordinary: () -> Boolean): Boolean =
+    if (hasBundled) !regenerate || personal() else ordinary()

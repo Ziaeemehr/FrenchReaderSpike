@@ -17,6 +17,39 @@ class TranslationRepository(private val context: Context) {
     private val cache = TranslationCache(context)
     private val overrides = TranslationOverrides(context)
 
+    /** Only flashcard examples consult bundled translations; reader/meaning paths stay separate. */
+    suspend fun getOrTranslateExample(text: String, targetLang: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val bundled by lazy { com.ziaee.frenchreader.content.BundledSentenceTranslations.forContext(context).get(text, targetLang) }
+            val translator by lazy {
+                try { LlmTranslator.forContext(context) }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+            }
+            Result.success(resolveExampleTranslation(
+                override = { overrides.getOverride(text, targetLang) },
+                bundled = { bundled },
+                personal = { translator?.let { llmCache.getRegenerated(text, targetLang, it.cacheId) } },
+                live = {
+                    try {
+                        translator?.let { model ->
+                            // Ordinary live cache must never displace an included translation.
+                            llmCache.get(text, targetLang, model.cacheId)
+                                ?: model.translateLines(listOf(text), null, null, targetLang).single().also {
+                                    llmCache.put(text, targetLang, model.cacheId, it)
+                                }
+                        }
+                    } catch (cancelled: CancellationException) { throw cancelled
+                    } catch (_: Exception) { null }
+                },
+                google = { cache.get(text, targetLang) ?: TranslationService.translate(text, targetLang).also {
+                    cache.put(text, targetLang, it)
+                } }
+            ))
+        } catch (cancelled: CancellationException) { throw cancelled
+        } catch (error: Exception) { Result.failure(error) }
+    }
+
     suspend fun getOrTranslate(
         text: String,
         targetLang: String,

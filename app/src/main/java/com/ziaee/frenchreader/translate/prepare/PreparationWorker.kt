@@ -52,7 +52,9 @@ class PreparationWorker(context: Context, params: WorkerParameters) : CoroutineW
             try {
                 val cache = LlmCache(applicationContext)
                 val overrides = TranslationOverrides(applicationContext)
-                fun complete(item: PreparationItem) = item.overridden(overrides) || item.cached(cache, job.model)
+                val bundled = com.ziaee.frenchreader.content.BundledSentenceTranslations.forContext(applicationContext)
+                fun complete(item: PreparationItem) = item.overridden(overrides) ||
+                    item.prepared(cache, job.model, bundled, job.regenerateBundledExamples)
                 val started = SystemClock.elapsedRealtime()
                 var activeTranslator: LlmTranslator? = null
                 fun engine(): LlmTranslator {
@@ -98,7 +100,11 @@ class PreparationWorker(context: Context, params: WorkerParameters) : CoroutineW
                     if (!store.publishIfActive(job.id) {
                         batch.zip(values).forEach { (item, value) ->
                             if (item.kind == PreparationKind.MEANING) cache.putMeaning(item.text, item.sentence, item.language, job.model, value)
-                            else cache.put(item.text, item.language, job.model, value)
+                            else {
+                                cache.put(item.text, item.language, job.model, value)
+                                if (job.regenerateBundledExamples && item.bundledTranslation(bundled) != null)
+                                    cache.putRegenerated(item.text, item.language, job.model, value)
+                            }
                         }
                     }) throw Paused()
                     val done = job.items.count(::complete)

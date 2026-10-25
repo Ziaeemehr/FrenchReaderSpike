@@ -985,4 +985,6 @@
     <string name="prepare_search">Rechercher des titres et des noms de paquets</string>
     <string name="prepare_search_clear">Effacer</string>
     <string name="prepare_search_no_results">Aucun résultat.</string>
+    <string name="prepare_regenerate_bundled">Retraduire les exemples des paquets inclus avec mon modèle</string>
+    <string name="prepare_included">%1$d traductions incluses dans l’application</string>
 </resources>

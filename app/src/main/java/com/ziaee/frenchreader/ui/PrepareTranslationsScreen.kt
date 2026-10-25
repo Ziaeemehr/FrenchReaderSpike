@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private data class PreparationPreview(val missing: Int = 0, val cached: Int = 0, val overrides: Int = 0,
-    val seconds: Long = 0, val bytes: Long = 0, val cacheBytes: Long = 0)
+    val included: Int = 0, val seconds: Long = 0, val bytes: Long = 0, val cacheBytes: Long = 0)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +40,8 @@ internal fun PrepareTranslationsScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val store = remember { PreparationStore(context) }
     val cache = remember { LlmCache(context) }
+    val bundled = remember { com.ziaee.frenchreader.content.BundledSentenceTranslations.forContext(context) }
+    var regenerateBundled by remember { mutableStateOf(store.regenerateBundledExamples()) }
     val snackbar = remember { SnackbarHostState() }
     var sources by remember { mutableStateOf<List<PreparationSource>>(emptyList()) }
     var selected by remember { mutableStateOf(store.selection()) }
@@ -107,7 +109,7 @@ internal fun PrepareTranslationsScreen(onBack: () -> Unit) {
         catch (_: Exception) { snackbar.showSnackbar(context.getString(R.string.prepare_error)) }
         finally { loading = false }
     }
-    LaunchedEffect(selected, selectedDecks, sources, revision, busy) {
+    LaunchedEffect(selected, selectedDecks, regenerateBundled, sources, revision, busy) {
         if (busy) return@LaunchedEffect
         val actionRevision = revision
         var reportedError = false
@@ -117,12 +119,17 @@ internal fun PrepareTranslationsScreen(onBack: () -> Unit) {
                     val translator = LlmTranslator.forContext(context)
                     val chosen = selectedItems(sources, selected, selectedDecks)
                     val overrides = TranslationOverrides(context)
-                    val already = chosen.count { translator != null && it.cached(cache, translator.cacheId) }
-                    val corrected = chosen.count { it.overridden(overrides) && (translator == null || !it.cached(cache, translator.cacheId)) }
-                    val pending = pendingItems(chosen) { it.overridden(overrides) || (translator != null && it.cached(cache, translator.cacheId)) }
+                    fun included(item: PreparationItem) = !regenerateBundled && item.bundledTranslation(bundled) != null &&
+                        (translator == null || cache.getRegenerated(item.text, item.language, translator.cacheId) == null)
+                    fun ready(item: PreparationItem) = included(item) ||
+                        (translator != null && item.prepared(cache, translator.cacheId, bundled, regenerateBundled))
+                    val corrected = chosen.count { it.overridden(overrides) }
+                    val includedCount = chosen.count { !it.overridden(overrides) && included(it) }
+                    val already = chosen.count { !it.overridden(overrides) && !included(it) && ready(it) }
+                    val pending = pendingItems(chosen) { it.overridden(overrides) || ready(it) }
                     val estimate = estimatePreparation(pending)
                     Triple(translator?.cacheId, store.progress(), PreparationPreview(pending.size, already, corrected,
-                        estimate.seconds, estimate.bytes, cache.sizeBytes()))
+                        includedCount, estimate.seconds, estimate.bytes, cache.sizeBytes()))
                 }
                 if (busy || revision != actionRevision) return@LaunchedEffect
                 model = state.first; progress = state.second; preview = state.third
@@ -202,6 +209,13 @@ internal fun PrepareTranslationsScreen(onBack: () -> Unit) {
             }
             item { Text(stringResource(R.string.prepare_flashcards), style = MaterialTheme.typography.titleMedium) }
             item {
+                PreparationChoice(stringResource(R.string.prepare_regenerate_bundled), regenerateBundled, !locked && !busy) {
+                    regenerateBundled = it
+                    estimating = true
+                    store.setRegenerateBundledExamples(it)
+                }
+            }
+            item {
                 PreparationChoice(stringResource(R.string.prepare_all_decks, visibleDecks.sumOf { it.cardCount }),
                     visibleDecks.isNotEmpty() && visibleDeckIds.all { it in currentDeckIds },
                     !locked && !busy && !loading && visibleDecks.isNotEmpty()) { checked ->
@@ -231,6 +245,7 @@ internal fun PrepareTranslationsScreen(onBack: () -> Unit) {
             }
             item {
                 Text(stringResource(R.string.prepare_counts, preview.missing, preview.cached, preview.overrides))
+                Text(stringResource(R.string.prepare_included, preview.included))
                 Text(stringResource(R.string.prepare_estimate, (preview.seconds + 59) / 60,
                     Formatter.formatFileSize(context, preview.bytes)))
                 Text(stringResource(R.string.prepare_languages), style = MaterialTheme.typography.bodySmall)
@@ -240,7 +255,7 @@ internal fun PrepareTranslationsScreen(onBack: () -> Unit) {
                         // Retire a just-finished WorkManager run before KEEP can accept the new snapshot.
                         PreparationWork.pause(context)
                         val items = selectedItems(sources, selected, selectedDecks)
-                        val job = store.create(translator.cacheId, items, selectedDecks)
+                        val job = store.create(translator.cacheId, items, selectedDecks, regenerateBundled)
                         PreparationWork.enqueue(context, job.id)
                     } }) { Text(stringResource(R.string.prepare_start)) }
             }
