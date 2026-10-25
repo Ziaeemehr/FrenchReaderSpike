@@ -85,11 +85,11 @@ internal fun PagedReadingContent(
                     val start = down.position
                     var up = down
                     do {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val event = awaitPointerEvent(PointerEventPass.Final)
                         up = event.changes.firstOrNull { it.id == down.id } ?: break
                     } while (!up.changedToUpIgnoreConsumed())
                     val isTap = (up.position - start).getDistance() <= viewConfiguration.touchSlop
-                    if (!isTap || !userScrollEnabled || navigation == PageNavigation.SCROLL) return@awaitEachGesture
+                    if (up.isConsumed || up.uptimeMillis - down.uptimeMillis >= viewConfiguration.longPressTimeoutMillis || !isTap || !userScrollEnabled || navigation == PageNavigation.SCROLL) return@awaitEachGesture
                     val leading = start.x < size.width * .2f
                     val trailing = start.x > size.width * .8f
                     if (!leading && !trailing) return@awaitEachGesture

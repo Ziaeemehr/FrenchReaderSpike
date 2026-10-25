@@ -6,6 +6,11 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
@@ -124,10 +129,18 @@ internal fun resolveEpubImage(filesDir: File, ref: String): File? {
     return file.takeIf { it.isFile && it.parentFile?.parentFile == root }
 }
 
+private class ReadingViewport {
+    var bounds by mutableStateOf(androidx.compose.ui.geometry.Rect.Zero)
+    val offsets = mutableStateMapOf<Int, Int>()
+}
+
+private val LocalReadingViewport = compositionLocalOf<ReadingViewport?> { null }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, initialFind: String? = null) {
     val vm: ReadingViewModel = viewModel()
+    val readingViewport = remember { ReadingViewport() }
     val state by vm.state.collectAsState()
     val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
     val highlights by vm.highlights.collectAsState()
@@ -143,10 +156,6 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
 
     // word + the sentence it came from, while the dictionary sheet is open.
     var dictionaryTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
-    // Word/sentence a selection just resolved to -- shows a "Define" affordance next to
-    // the still-active selection handles; only opens the dictionary once the user taps it,
-    // so a long-press's initial single-word selection doesn't collapse itself before the
-    // user has a chance to drag a handle and extend it to a phrase.
     var selectedWord by remember { mutableStateOf<Pair<String, String>?>(null) }
     var selectedWordRange by remember { mutableStateOf<TextRange?>(null) }
     var selectedPhrase by remember { mutableStateOf<String?>(null) }
@@ -166,6 +175,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     val listState = rememberLazyListState()
     val pageNavigation = AppearanceState.pageNavigation
     var requestedPageAnchor by remember { mutableStateOf<ReadingAnchor?>(null) }
+    var visiblePage by remember { mutableStateOf<ReadingPage?>(null) }
     var visiblePageAnchor by remember { mutableStateOf(ReadingAnchor(0, 0)) }
     var autoScrollEnabled by remember { mutableStateOf(true) }
     // Paragraph the scroll-mode auto-follow last handled; -1 forces a check on load.
@@ -373,7 +383,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
             }
     }
 
-    androidx.compose.runtime.CompositionLocalProvider(LocalTextToolbar provides selectionToolbarController) {
+    androidx.compose.runtime.CompositionLocalProvider(LocalTextToolbar provides selectionToolbarController, LocalReadingViewport provides readingViewport) {
         Scaffold(
             containerColor = palette.background,
             topBar = {
@@ -704,7 +714,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                 return@Scaffold
             }
 
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.fillMaxSize().padding(padding).onGloballyPositioned { readingViewport.bounds = it.boundsInWindow() }, contentAlignment = Alignment.TopCenter) {
                 if (pageNavigation == PageNavigation.SCROLL) LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -727,12 +737,13 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                         fontScale = fontScale,
                         findRanges = if (findOpen) findRangesByChunk[chunkIndex].orEmpty() else emptyList(),
                         activeFindRange = activeFindMatch?.takeIf { findOpen && it.chunkIndex == chunkIndex }?.range,
-                        onSentenceClick = { sentence -> vm.seekToSentence(chunkIndex, sentence) },
-                        onPendingClick = { vm.jumpToChunk(chunkIndex) },
                         onRetry = { vm.retryChunk(chunkIndex) },
                         onWordLookup = { word, sentenceText, range ->
-                            selectedWord = word to sentenceText
-                            selectedWordRange = range
+                            vm.player.pause()
+                            dictionaryTarget = word to sentenceText
+                            clearSelectionTick++
+                            selectedWord = null
+                            selectedWordRange = null
                             selectedPhrase = null
                             selectedPhraseRange = null
                             showHighlightPalette = false
@@ -744,7 +755,8 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                             selectedWord = null
                             selectedWordRange = null
                         },
-                        clearSelectionSignal = clearSelectionTick
+                        clearSelectionSignal = clearSelectionTick,
+                        onSelectionActiveChange = { textSelectionActive = it }
                     )
                     val spacing = when {
                         chunk.block.type == BlockType.IMAGE -> FrenchReaderDesign.spacing.small
@@ -786,6 +798,7 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                         onAnchorConsumed = { requestedPageAnchor = null },
                         userScrollEnabled = !textSelectionActive,
                         onVisiblePage = { page ->
+                            visiblePage = page
                             page.fragments.firstOrNull()?.let {
                                 visiblePageAnchor = ReadingAnchor(it.chunkIndex, it.startOffset)
                             }
@@ -838,12 +851,13 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                         fontScale = fontScale,
                                         findRanges = pageFindRanges,
                                         activeFindRange = pageActiveFind,
-                                        onSentenceClick = { sentence -> vm.seekToSentence(fragment.chunkIndex, sentence) },
-                                        onPendingClick = { vm.jumpToChunk(fragment.chunkIndex) },
                                         onRetry = { vm.retryChunk(fragment.chunkIndex) },
                                         onWordLookup = { word, sentenceText, range ->
-                                            selectedWord = word to sentenceText
-                                            selectedWordRange = range
+                                            vm.player.pause()
+                                            dictionaryTarget = word to sentenceText
+                                            clearSelectionTick++
+                                            selectedWord = null
+                                            selectedWordRange = null
                                             selectedPhrase = null
                                             selectedPhraseRange = null
                                             showHighlightPalette = false
@@ -872,6 +886,55 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                                 }
                             }
                         }
+                    }
+                }
+                val locations = remember(state.chunks) { readingSentenceLocations(state.chunks) }
+                val active = locations.lastOrNull {
+                    it.chunkIndex == state.currentChunkIndex && it.sentence.offsetMs <= state.currentPositionMs
+                }
+                // Scroll mode: a paragraph is on screen when it reported a visible offset.
+                val topOffset = readingViewport.offsets.values.minOrNull()
+                val visibleChunks = readingViewport.offsets.keys.mapNotNull { start ->
+                    chunkDocumentOffsets.indexOfLast { it <= start }.takeIf { it >= 0 }
+                }.toSet()
+                // Where "Play from this page" starts: the first sentence on screen, or the
+                // first paragraph on screen when its audio has no sentence timings yet.
+                val visibleChunk = if (pageNavigation == PageNavigation.SCROLL) {
+                    topOffset?.let { offset -> chunkDocumentOffsets.indexOfLast { it <= offset }.takeIf { it >= 0 } }
+                } else visiblePage?.fragments?.firstOrNull()?.chunkIndex
+                val visible = if (pageNavigation == PageNavigation.SCROLL) {
+                    topOffset?.let { offset ->
+                        locations.firstOrNull {
+                            it.chunkIndex == visibleChunk &&
+                                chunkDocumentOffsets.getOrElse(it.chunkIndex) { 0 } + it.range.last >= offset
+                        }
+                    }
+                } else visiblePage?.let { pagePlaybackStart(it, locations) }
+                val containsActive = if (pageNavigation == PageNavigation.SCROLL) {
+                    state.currentChunkIndex in visibleChunks
+                } else visiblePage?.let { page ->
+                    if (active != null) pageContainsSentence(page, active)
+                    else page.fragments.any { it.chunkIndex == state.currentChunkIndex }
+                } == true
+                if (visibleChunk != null && !containsActive) {
+                    // A small pill floating over the text, not a full-width bar (owner's
+                    // request); as an overlay it does not shrink the page and repaginate it.
+                    FilledTonalButton(
+                        onClick = {
+                            if (visible != null) vm.seekToSentence(visible.chunkIndex, visible.sentence)
+                            else vm.jumpToChunk(visibleChunk, play = true)
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        // Low enough to sit beside the page number, under the page's last line.
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 4.dp).height(32.dp)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            stringResource(if (pageNavigation == PageNavigation.SCROLL)
+                                R.string.reading_play_from_here else R.string.reading_play_from_page),
+                            style = MaterialTheme.typography.labelMedium
+                        )
                     }
                 }
             }
@@ -1274,8 +1337,6 @@ private fun ChunkParagraph(
     fontScale: Float,
     findRanges: List<IntRange>,
     activeFindRange: IntRange?,
-    onSentenceClick: (SentenceBoundary) -> Unit,
-    onPendingClick: () -> Unit,
     onRetry: () -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
@@ -1287,17 +1348,12 @@ private fun ChunkParagraph(
     // Not-yet-synthesized chunks have no sentence timings, but must still render with
     // their Markdown structure (headings, lists, emphasis) -- so show the whole block as
     // one untimed sentence through the same path as READY chunks.
-    // A block whose audio failed still shows its text the same way; tapping it retries.
+    // A block whose audio failed still shows its text the same way.
     val unsynthesized = chunk.status == ChunkStatus.PENDING || chunk.status == ChunkStatus.LOADING
     val failed = chunk.status == ChunkStatus.ERROR
     val chunk = if ((unsynthesized || failed) && chunk.sentences.isEmpty()) {
         chunk.copy(sentences = listOf(SentenceBoundary(text = chunk.text, offsetMs = 0.0, durationMs = 0.0)))
     } else chunk
-    val onSentenceClick: (SentenceBoundary) -> Unit = when {
-        unsynthesized -> { _ -> onPendingClick() }
-        failed -> { _ -> onRetry() }
-        else -> onSentenceClick
-    }
 
     if (chunk.block.type == BlockType.IMAGE) {
         EpubImage(block = chunk.block, palette = palette, fontScale = fontScale)
@@ -1329,7 +1385,6 @@ private fun ChunkParagraph(
                         documentStartOffset = documentStartOffset,
                         findRanges = findRanges,
                         activeFindRange = activeFindRange,
-                        onSentenceClick = onSentenceClick,
                         onWordLookup = onWordLookup,
                         onPhraseSelected = onPhraseSelected,
                         clearSelectionSignal = clearSelectionSignal,
@@ -1369,7 +1424,6 @@ private fun ChunkParagraph(
                             documentStartOffset = documentStartOffset,
                             findRanges = findRanges,
                             activeFindRange = activeFindRange,
-                            onSentenceClick = onSentenceClick,
                             onWordLookup = onWordLookup,
                             onPhraseSelected = onPhraseSelected,
                             clearSelectionSignal = clearSelectionSignal,
@@ -1394,7 +1448,6 @@ private fun ChunkParagraph(
                     documentStartOffset = documentStartOffset,
                     findRanges = findRanges,
                     activeFindRange = activeFindRange,
-                    onSentenceClick = onSentenceClick,
                     onWordLookup = onWordLookup,
                     onPhraseSelected = onPhraseSelected,
                     clearSelectionSignal = clearSelectionSignal,
@@ -1412,7 +1465,6 @@ private fun ChunkParagraph(
                     documentStartOffset = documentStartOffset,
                     findRanges = findRanges,
                     activeFindRange = activeFindRange,
-                    onSentenceClick = onSentenceClick,
                     onWordLookup = onWordLookup,
                     onPhraseSelected = onPhraseSelected,
                     clearSelectionSignal = clearSelectionSignal,
@@ -1555,7 +1607,6 @@ private fun TableBlock(
     documentStartOffset: Int,
     findRanges: List<IntRange>,
     activeFindRange: IntRange?,
-    onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
     clearSelectionSignal: Int,
@@ -1652,7 +1703,6 @@ private fun TableBlock(
                                 activeFindRange = activeFindRange
                                     ?.takeIf { it.first >= cell.start && it.last < cell.end }
                                     ?.let { (it.first - cell.start)..(it.last - cell.start) },
-                                onSentenceClick = { onSentenceClick(tableSentence ?: it) },
                                 onWordLookup = onWordLookup,
                                 onPhraseSelected = onPhraseSelected,
                                 clearSelectionSignal = clearSelectionSignal,
@@ -1685,7 +1735,6 @@ private fun SentenceFlowText(
     documentStartOffset: Int,
     findRanges: List<IntRange>,
     activeFindRange: IntRange?,
-    onSentenceClick: (SentenceBoundary) -> Unit,
     onWordLookup: (word: String, sentence: String, range: TextRange) -> Unit,
     onPhraseSelected: (phrase: String, sentence: String, range: TextRange) -> Unit,
     clearSelectionSignal: Int,
@@ -1721,7 +1770,7 @@ private fun SentenceFlowText(
         chunk.sentences.map { sentence ->
             val start = sourceText.indexOf(sentence.text, cursor).takeIf { it >= 0 } ?: cursor
             val end = (start + sentence.text.length).coerceAtMost(sourceText.length)
-            cursor = (end + 1).coerceAtMost(sourceText.length)
+            cursor = end
             start until end
         }
     }
@@ -1832,6 +1881,10 @@ private fun SentenceFlowText(
 
     var selection by remember(chunk.sentences, sliceStart, sliceEnd, clearSelectionSignal) { mutableStateOf(TextRange.Zero) }
     LaunchedEffect(clearSelectionSignal) { onSelectionActiveChange(false) }
+    val viewport = LocalReadingViewport.current
+    DisposableEffect(viewport, documentStartOffset) {
+        onDispose { viewport?.offsets?.remove(documentStartOffset) }
+    }
     var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
     var layoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val headingFontFamily = FrenchReaderDesign.editorialTypography.articleHeadline.fontFamily
@@ -1892,10 +1945,6 @@ private fun SentenceFlowText(
             onValueChange = { newValue ->
                 onSelectionActiveChange(!newValue.selection.collapsed)
                 if (newValue.selection.collapsed) {
-                    // A tap always jumps the audio to the tapped sentence, highlighted or
-                    // not; highlights are recoloured or removed from the selection toolbar.
-                    val idx = ranges.indexOfFirst { newValue.selection.start in it }
-                    if (idx >= 0) onSentenceClick(visibleSentences[idx].first)
                     selection = TextRange.Zero
                 } else {
                     val kind = classifySelection(annotated.text, newValue.selection)
@@ -1913,7 +1962,7 @@ private fun SentenceFlowText(
                     }
                     when (kind) {
                         is SelectionKind.Word ->
-                            onWordLookup(
+                            onPhraseSelected(
                                 kind.word,
                                 sentenceTextFor(newValue.selection.start),
                                 TextRange(
@@ -1938,7 +1987,49 @@ private fun SentenceFlowText(
                 }
             },
             readOnly = true,
-            modifier = Modifier.onGloballyPositioned { layoutCoordinates = it }.drawBehind {
+            modifier = Modifier.pointerInput(displayed, documentStartOffset) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(false, PointerEventPass.Initial)
+                    var moved = false
+                    var up = down
+                    do {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        up = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if ((up.position - down.position).getDistance() > viewConfiguration.touchSlop) moved = true
+                    } while (up.pressed)
+                    if (!moved && !up.isConsumed &&
+                        up.uptimeMillis - down.uptimeMillis < viewConfiguration.longPressTimeoutMillis
+                    ) {
+                        val layout = textLayout ?: return@awaitEachGesture
+                        val cursor = layout.getOffsetForPosition(up.position)
+                        val offset = listOf(cursor, cursor - 1).firstOrNull {
+                            it in displayed.indices && layout.getBoundingBox(it).contains(up.position)
+                        } ?: return@awaitEachGesture
+                        val bounds = tappedWordBounds(displayed.text, offset) ?: return@awaitEachGesture
+                        up.consume()
+                        onWordLookup(
+                            displayed.text.substring(bounds.first, bounds.last + 1),
+                            sentenceTextFor(offset),
+                            TextRange(documentStartOffset + bounds.first, documentStartOffset + bounds.last + 1)
+                        )
+                    }
+                }
+            }.onGloballyPositioned { coordinates ->
+                layoutCoordinates = coordinates
+                val layout = textLayout
+                if (viewport != null && layout != null) {
+                    val bounds = coordinates.boundsInWindow()
+                    val visible = viewport.bounds
+                    if (bounds.bottom > visible.top && bounds.top < visible.bottom) {
+                        // boundsInWindow is clipped to the viewport; the line math needs the
+                        // unclipped top, or a paragraph scrolled half off reports its line 0.
+                        val textTop = coordinates.positionInWindow().y
+                        val line = layout.getLineForVerticalPosition((visible.top - textTop).coerceAtLeast(0f))
+                        val offset = layout.getLineStart(line)
+                        viewport.offsets[documentStartOffset] = documentStartOffset + offset
+                    } else viewport.offsets.remove(documentStartOffset)
+                }
+            }.drawBehind {
                 val layout = textLayout ?: return@drawBehind
                 val range = activeRange ?: return@drawBehind
                 if (range.isEmpty()) return@drawBehind
@@ -1981,7 +2072,7 @@ private fun SentenceFlowText(
     }
 }
 
-/** Word/selection boundary rules shared by the dictionary long-press lookup and the
+/** Word/selection boundary rules shared by the dictionary tap lookup and the
  * multi-word selection classifier below. Apostrophes are treated as boundaries (not word
  * characters) so "l'appartement" isolates "appartement", not the elided article with it --
  * WordReference wouldn't recognize the elided form. */
@@ -2004,15 +2095,14 @@ internal fun wordBoundsAt(text: String, offset: Int): IntRange? {
     return start until end
 }
 
-/** Extracts the word touching [offset] in [text] for the dictionary long-press lookup. */
+/** Extracts the word touching [offset] in [text] for the dictionary tap lookup. */
 internal fun extractWordAt(text: String, offset: Int): String {
     val bounds = wordBoundsAt(text, offset) ?: return ""
     return text.substring(bounds.first, bounds.last + 1)
 }
 
 /** What a (non-collapsed) text-field selection resolves to once snapped to word
- * boundaries: exactly one word (dictionary lookup), or a multi-word phrase (selection
- * toolbar). */
+ * boundaries: exactly one word or a multi-word phrase. Both use the selection toolbar. */
 internal sealed interface SelectionKind {
     data class Word(val word: String, val range: TextRange) : SelectionKind
     data class Phrase(val text: String, val range: TextRange) : SelectionKind
