@@ -984,4 +984,6 @@
     <string name="prepare_search_no_results">نتیجه‌ای پیدا نشد.</string>
     <string name="prepare_regenerate_bundled">ترجمهٔ جمله‌های نمونهٔ دسته‌های همراه برنامه را با مدل من دوباره بساز</string>
     <string name="prepare_included">%1$d ترجمه همراه برنامه</string>
+    <string name="reading_play_from_page">پخش از این صفحه</string>
+    <string name="reading_play_from_here">پخش از اینجا</string>
 </resources>

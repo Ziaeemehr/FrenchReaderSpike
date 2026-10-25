@@ -736,13 +736,14 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun jumpToChunk(index: Int) {
+    /** Moves playback to [index]; [play] starts it even when paused ("Play from this page"). */
+    fun jumpToChunk(index: Int, play: Boolean = false) {
         val chunks = _state.value.chunks
         if (chunks.isEmpty()) return
         val target = nextSpokenChunkIndex(chunks, index.coerceIn(0, chunks.lastIndex))
             ?: previousSpokenChunkIndex(chunks, index.coerceIn(0, chunks.lastIndex))
             ?: return
-        val keepPlaying = player.isPlaying || player.playWhenReady
+        val keepPlaying = play || player.isPlaying || player.playWhenReady
         viewModelScope.launch { jumpToChunkInternal(target, keepPlaying, seekToLastSentence = false) }
     }
 

@@ -1,6 +1,8 @@
 package com.ziaee.frenchreader.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -101,6 +103,7 @@ class SelectionRectPositionProvider(
 }
 
 /** The floating toolbar shown for a multi-word selection. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SelectionToolbarContent(
     onCopy: () -> Unit,
@@ -117,10 +120,10 @@ fun SelectionToolbarContent(
         shadowElevation = 6.dp,
         color = MaterialTheme.colorScheme.surface
     ) {
-        Row(
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 4.dp, vertical = 2.dp)
+        // Wraps onto a second line instead of scrolling sideways (owner's rule).
+        FlowRow(
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalArrangement = Arrangement.Center
         ) {
             TextButton(onClick = onHighlight) {
                 Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
@@ -202,6 +205,7 @@ fun HighlightPalettePopupContent(
  * (handled entirely by [SentenceFlowText] -- this toolbar doesn't need to do anything for
  * that case, it just doesn't get in the way). */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun DefineToolbarContent(
     onDefine: () -> Unit,
     onHighlight: () -> Unit,
@@ -215,10 +219,10 @@ fun DefineToolbarContent(
         shadowElevation = 6.dp,
         color = MaterialTheme.colorScheme.surface
     ) {
-        Row(
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 4.dp, vertical = 2.dp)
+        // Wraps onto a second line instead of scrolling sideways (owner's rule).
+        FlowRow(
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalArrangement = Arrangement.Center
         ) {
             TextButton(onClick = onHighlight) {
                 Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
