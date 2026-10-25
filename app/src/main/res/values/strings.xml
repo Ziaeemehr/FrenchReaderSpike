@@ -165,7 +165,7 @@
     <string name="add_text_save_open">Save and open</string>
     <string name="text_untitled">Untitled</string>
     <string name="home_section_today_news">Today\'s News</string>
-    <string name="home_section_continue_reading">Continue Reading</string>
+    <string name="home_section_continue">Pick up where you left off</string>
     <string name="home_section_my_texts">My Texts</string>
     <string name="home_action_see_all">See All</string>
     <string name="home_recent_empty">No texts yet. Add one to get started.</string>

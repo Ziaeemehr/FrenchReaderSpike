@@ -57,6 +57,7 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
+import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.ManualDictionaryHost
 import com.ziaee.frenchreader.ui.shared.AddTextHost
@@ -68,6 +69,7 @@ import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
 import com.ziaee.frenchreader.ui.shared.TextExtractionProgress
 import com.ziaee.frenchreader.ui.shared.rememberTextExtractionImporter
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
+import com.ziaee.frenchreader.watch.RecentVideo
 
 /** Lets instrumented tests scroll Home's content list to a node that's
  * below the initially-composed viewport (LazyColumn only composes visible
@@ -97,6 +99,7 @@ fun HomeScreen(
     onOpenDataset: () -> Unit,
     onOpenGrammar: () -> Unit = {},
     onOpenVideos: () -> Unit = {},
+    onWatchVideo: (videoId: String, title: String, channel: String) -> Unit,
     onOpenExams: (String) -> Unit = {},
     onStartReview: () -> Unit,
     onOpenStudyLog: () -> Unit = {},
@@ -105,16 +108,21 @@ fun HomeScreen(
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
+    val latestVideo by vm.latestVideo.collectAsState()
     val studyLogMinutes by vm.studyLogMinutes.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, vm) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) vm.refreshTimeSensitiveState()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.refreshTimeSensitiveState()
+                vm.refreshLatestVideo()
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
             vm.refreshTimeSensitiveState()
+            vm.refreshLatestVideo()
         }
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -228,6 +236,8 @@ fun HomeScreen(
         onOpenExams = { onOpenExams(vm.examRoute) },
         examPracticeCounts = vm.examPracticeCounts,
         onOpenStudyLog = onOpenStudyLog,
+        latestVideo = latestVideo,
+        onWatchVideo = onWatchVideo,
         studyLogMinutes = studyLogMinutes
     )
 
@@ -304,6 +314,8 @@ fun HomeContent(
     onOpenExams: () -> Unit = {},
     onOpenStudyLog: () -> Unit = {},
     examPracticeCounts: Pair<Int, Int>? = null,
+    latestVideo: RecentVideo? = null,
+    onWatchVideo: (videoId: String, title: String, channel: String) -> Unit = { _, _, _ -> },
     studyLogMinutes: Pair<Int, Int> = 0 to 0
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -400,12 +412,31 @@ fun HomeContent(
                         onRetry = onRetryNews
                     )
                 }
+                if (state.continueReading != null || latestVideo != null) {
+                    item {
+                        EditorialSectionHeader(
+                            title = stringResource(R.string.home_section_continue),
+                            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall)
+                        )
+                    }
+                }
                 state.continueReading?.let { doc ->
                     item {
                         ContinueReadingCard(
                             doc = doc,
                             body = state.bodyByTextId[doc.id].orEmpty(),
                             onClick = { onOpenText(doc.id) }
+                        )
+                    }
+                }
+                latestVideo?.let { video ->
+                    item {
+                        ContinueWatchingCard(
+                            video = video,
+                            onClick = { onWatchVideo(video.videoId, video.title, video.channel) },
+                            modifier = if (state.continueReading != null) {
+                                Modifier.padding(top = FrenchReaderDesign.spacing.xSmall)
+                            } else Modifier
                         )
                     }
                 }

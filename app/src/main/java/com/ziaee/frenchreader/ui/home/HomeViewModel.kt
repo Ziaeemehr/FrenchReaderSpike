@@ -37,6 +37,9 @@ import com.ziaee.frenchreader.news.normalizeArticleUrl
 import com.ziaee.frenchreader.news.personalizeHeadlines
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
+import com.ziaee.frenchreader.watch.RecentVideo
+import com.ziaee.frenchreader.watch.WatchHistory
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
@@ -57,6 +60,16 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
     listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource, WikisourceContentSource)
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
+    private val watchHistory = WatchHistory(app)
+    private val _latestVideo = MutableStateFlow<RecentVideo?>(null)
+    val latestVideo: StateFlow<RecentVideo?> = _latestVideo.asStateFlow()
+
+    fun refreshLatestVideo() {
+        viewModelScope.launch {
+            _latestVideo.value = watchHistory.readLatest().firstOrNull()
+        }
+    }
+
     private val db = AppDatabase.get(app)
     var examRoute by mutableStateOf("exams")
         private set

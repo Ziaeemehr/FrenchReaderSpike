@@ -165,7 +165,7 @@
     <string name="add_text_save_open">Enregistrer et ouvrir</string>
     <string name="text_untitled">Sans titre</string>
     <string name="home_section_today_news">Actualités du jour</string>
-    <string name="home_section_continue_reading">Continuer la lecture</string>
+    <string name="home_section_continue">Reprendre là où vous en étiez</string>
     <string name="home_section_my_texts">Mes textes</string>
     <string name="home_action_see_all">Tout voir</string>
     <string name="home_recent_empty">Aucun texte pour l’instant. Ajoutez-en un pour commencer.</string>
