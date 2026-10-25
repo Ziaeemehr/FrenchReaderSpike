@@ -69,10 +69,21 @@ class LlmTest {
         }
     }
 
+    @Test fun bridgeUrlNormalization() {
+        for (base in listOf("http://h:8765/llm", "http://h:8765/llm/")) {
+            assertEquals("http://h:8765/llm/v1/chat/completions", completionUrl(base, true))
+        }
+        assertEquals("https://h/api/v1/chat/completions", completionUrl("https://h/api/v1", false))
+        LlmProvider.entries.filter { it != LlmProvider.CUSTOM }.forEach {
+            assertEquals(it.baseUrl + "/chat/completions", completionUrl(it.baseUrl, false))
+        }
+    }
+
     @Test fun computerUrlNormalization() {
         assertEquals("http://127.0.0.1:8080/v1/chat/completions", completionUrl("http://127.0.0.1:8080", true))
+        assertEquals("http://127.0.0.1:8080/v1/chat/completions", completionUrl("http://127.0.0.1:8080/v1", true))
         assertEquals("http://127.0.0.1:8080/v1/chat/completions", completionUrl("http://127.0.0.1:8080/v1/", true))
-        assertEquals("http://localhost:8080/proxy/chat/completions", completionUrl("http://localhost:8080/proxy", true))
+        assertEquals("http://localhost:8080/proxy/v1/chat/completions", completionUrl("http://localhost:8080/proxy", true))
         assertEquals("https://api.deepseek.com/chat/completions", completionUrl("https://api.deepseek.com", false))
     }
 

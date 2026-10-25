@@ -28,6 +28,7 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
     val secrets = remember { LlmSecrets(context) }
     var engine by remember { mutableStateOf(prefs.engine) }
     var confirmExperimental by remember { mutableStateOf(false) }
+    var computerManual by remember { mutableStateOf(prefs.computerManual) }
     var computerUrl by remember { mutableStateOf(prefs.computerUrl) }
     var computerModel by remember { mutableStateOf(prefs.computerModel) }
     var provider by remember { mutableStateOf(prefs.onlineProvider) }
@@ -81,14 +82,21 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
     when (engine) {
         TranslationEngine.GOOGLE -> Unit
         TranslationEngine.COMPUTER -> {
-            OutlinedTextField(computerUrl, { computerUrl = it; prefs.computerUrl = it },
-                label = { Text(stringResource(R.string.translation_server_url)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(computerModel, { computerModel = it; prefs.computerModel = it },
-                label = { Text(stringResource(R.string.translation_model)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            LlmSecretField(secrets, "computer_token", R.string.translation_token, draftSecret, { draftSecret = it },
-                secretVersion, scope, snackbarHostState, context)
-            Text(stringResource(R.string.translation_computer_help), style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(vertical = 8.dp))
+            ComputerPairingSettings(context, scope, snackbarHostState)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(stringResource(R.string.computer_manual), modifier = Modifier.weight(1f))
+                Switch(computerManual, { computerManual = it; prefs.computerManual = it })
+            }
+            if (computerManual) {
+                OutlinedTextField(computerUrl, { computerUrl = it; prefs.computerUrl = it },
+                    label = { Text(stringResource(R.string.translation_server_url)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(computerModel, { computerModel = it; prefs.computerModel = it },
+                    label = { Text(stringResource(R.string.translation_model)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                LlmSecretField(secrets, "computer_token", R.string.translation_token, draftSecret, { draftSecret = it },
+                    secretVersion, scope, snackbarHostState, context)
+                Text(stringResource(R.string.translation_computer_help), style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 8.dp))
+            }
         }
         TranslationEngine.ONLINE -> {
             ExposedDropdownMenuBox(expanded = providerExpanded, onExpandedChange = { providerExpanded = it }) {
@@ -137,7 +145,7 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
 
     Button(enabled = !testing, onClick = {
         val secretName = when (engine) {
-            TranslationEngine.COMPUTER -> "computer_token"
+            TranslationEngine.COMPUTER -> if (computerManual) "computer_token" else null
             TranslationEngine.ONLINE -> provider.name
             TranslationEngine.GOOGLE -> null
         }
@@ -170,7 +178,8 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
             } catch (error: Exception) {
                 val reason = context.getString(when ((error as? LlmError)?.kind) {
                     LlmError.Kind.MISSING_KEY -> R.string.translation_error_missing_key
-                    LlmError.Kind.UNAUTHORIZED -> R.string.translation_error_key
+                    LlmError.Kind.UNAUTHORIZED -> if (engine == TranslationEngine.COMPUTER && !computerManual)
+                        R.string.computer_code_rejected else R.string.translation_error_key
                     LlmError.Kind.PAYMENT -> R.string.translation_error_payment
                     LlmError.Kind.FORBIDDEN -> R.string.translation_error_forbidden
                     LlmError.Kind.NOT_FOUND -> R.string.translation_error_model

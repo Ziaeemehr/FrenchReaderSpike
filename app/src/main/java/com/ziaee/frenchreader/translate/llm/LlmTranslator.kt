@@ -1,6 +1,9 @@
 package com.ziaee.frenchreader.translate.llm
 
 import android.content.Context
+import com.ziaee.frenchreader.net.LocalServerPrefs
+import com.ziaee.frenchreader.net.LocalServerFinder
+import kotlinx.coroutines.runBlocking
 import com.ziaee.frenchreader.translate.polishTranslation
 import org.json.JSONArray
 import org.json.JSONObject
@@ -78,14 +81,25 @@ class LlmTranslator(private val client: LlmClient, val cacheId: String) {
             val computer = engine == TranslationEngine.COMPUTER
             if (!computer && !prefs.experimentalAccepted) return null
             val provider = prefs.onlineProvider
-            val baseUrl = if (computer) prefs.computerUrl else if (provider == LlmProvider.CUSTOM) prefs.customBaseUrl else provider.baseUrl
+            val local = LocalServerPrefs(context)
+            val paired = if (computer && !prefs.computerManual) local.paired else null
+            if (computer && !prefs.computerManual && paired == null) return null
+            val baseUrl = if (paired != null) local.baseUrl("llm").orEmpty() else if (computer) prefs.computerUrl else if (provider == LlmProvider.CUSTOM) prefs.customBaseUrl else provider.baseUrl
             if (baseUrl.isBlank()) return null
             val secrets = LlmSecrets(context)
-            val token = secrets.get(if (computer) "computer_token" else provider.name)
+            val token = secrets.get(if (paired != null) "computer_code" else if (computer) "computer_token" else provider.name)
             if (!computer && token.isNullOrBlank()) return null
             val model = if (computer) prefs.computerModel else prefs.onlineModel
-            return LlmTranslator(LlmClient(baseUrl, model, token, computer, provider.takeUnless { computer }),
-                "${engine.name}|${baseUrl.trim().trimEnd('/')}|$model")
+            val refind: (() -> String?)? = paired?.let { original -> {
+                val found = runBlocking { LocalServerFinder.refind(context, original.id) }
+                if (found != null && local.paired?.id == original.id) {
+                    local.update(found.host, found.port)
+                    local.baseUrl("llm")
+                } else null
+            } }
+            return LlmTranslator(LlmClient(baseUrl, model, token, computer, provider.takeUnless { computer }, refind),
+                if (paired != null) "COMPUTER|paired:${paired.id}|$model"
+                else "${engine.name}|${baseUrl.trim().trimEnd('/')}|$model")
         }
     }
 }

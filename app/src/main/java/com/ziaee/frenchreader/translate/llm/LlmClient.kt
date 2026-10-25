@@ -29,7 +29,7 @@ private val keyShaped = Regex("\\b(sk|pk|or|key)[-_][A-Za-z0-9_-]{8,}|\\b[A-Za-z
 internal fun completionUrl(baseUrl: String, computer: Boolean): String {
     val base = baseUrl.trim().trimEnd('/')
     val path = URI(base).path.orEmpty()
-    return base + (if (computer && path.isEmpty()) "/v1" else "") + "/chat/completions"
+    return base + (if (computer && !path.endsWith("/v1")) "/v1" else "") + "/chat/completions"
 }
 
 /** A 400 that names the JSON-mode parameter, as opposed to any other bad request. */
@@ -48,25 +48,37 @@ internal fun parseLlmContent(content: String): JSONObject {
 }
 
 class LlmClient(
-    private val baseUrl: String,
+    baseUrl: String,
     private val model: String,
     private val token: String?,
     private val computer: Boolean,
-    private val provider: LlmProvider? = null
+    private val provider: LlmProvider? = null,
+    private val refindBaseUrl: (() -> String?)? = null
 ) {
-    internal fun complete(prompt: LlmPrompt): JSONObject = try {
-        complete(prompt, jsonMode = true)
-    } catch (error: JsonModeUnsupported) {
-        // Some providers' models reject response_format; the reply is still parsed and validated as JSON.
-        complete(prompt, jsonMode = false)
+    @Volatile private var activeBaseUrl = baseUrl
+
+    internal fun complete(prompt: LlmPrompt): JSONObject {
+        fun request(url: String): JSONObject = try {
+            complete(prompt, jsonMode = true, url)
+        } catch (_: JsonModeUnsupported) {
+            complete(prompt, jsonMode = false, url)
+        }
+        val requestUrl = activeBaseUrl
+        return try { request(requestUrl) } catch (error: LlmError) {
+            if (error.kind != LlmError.Kind.UNREACHABLE) throw error
+            val newUrl = refindBaseUrl?.invoke() ?: throw error
+            if (newUrl == requestUrl) throw error
+            activeBaseUrl = newUrl
+            request(newUrl)
+        }
     }
 
     private class JsonModeUnsupported : Exception()
 
-    private fun complete(prompt: LlmPrompt, jsonMode: Boolean): JSONObject {
+    private fun complete(prompt: LlmPrompt, jsonMode: Boolean, requestBaseUrl: String): JSONObject {
         var connection: HttpURLConnection? = null
         try {
-            connection = URL(completionUrl(baseUrl, computer)).openConnection() as HttpURLConnection
+            connection = URL(completionUrl(requestBaseUrl, computer)).openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.connectTimeout = if (computer) 4_000 else 10_000
             connection.readTimeout = 90_000

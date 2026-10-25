@@ -11,6 +11,9 @@ class LlmPrefs(context: Context) {
         get() = runCatching { TranslationEngine.valueOf(prefs.getString("engine", null).orEmpty()) }
             .getOrDefault(TranslationEngine.GOOGLE)
         set(value) { prefs.edit().putString("engine", value.name).apply() }
+    var computerManual: Boolean
+        get() = prefs.getBoolean("computerManual", false)
+        set(value) { prefs.edit().putBoolean("computerManual", value).apply() }
     var computerUrl: String
         get() = prefs.getString("computerUrl", "http://127.0.0.1:8080")!!
         set(value) { prefs.edit().putString("computerUrl", value).apply() }

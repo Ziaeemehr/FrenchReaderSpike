@@ -925,4 +925,26 @@
     <string name="translation_error_response">Unexpected reply from the model.</string>
     <string name="translation_error_save_key">Could not save the key securely.</string>
     <string name="translation_custom_provider">Custom</string>
+
+    <string name="computer_find">Find my computer</string>
+    <string name="computer_searching">Searching on this Wi-Fi…</string>
+    <string name="computer_not_found">No computer found on this Wi-Fi. Start the bridge on your computer (see the guide), or use a manual address over USB.</string>
+    <string name="computer_setup_guide">Setup guide</string>
+    <string name="computer_paired">Paired with %1$s</string>
+    <string name="computer_forget">Forget</string>
+    <string name="computer_manual">Manual address (USB)</string>
+    <string name="computer_code_rejected">The computer rejected the pairing code. Pair again.</string>
+    <string name="computer_use_voice">Use my paired computer (%1$s)</string>
+    <string name="computer_pair_title">Pair with %1$s</string>
+    <string name="computer_code">6-digit code</string>
+    <string name="computer_pair">Pair</string>
+    <string name="computer_wrong_code">Wrong code</string>
+    <string name="computer_unreachable">Could not reach the computer</string>
+    <string name="computer_guide_1">1. Your computer runs the model (and optionally the voice), and the phone uses it over the same Wi-Fi. Translations made by your computer stay on your network; when it is off, the app uses Google Translate as usual.</string>
+    <string name="computer_guide_bonjour">Finding the computer automatically uses Bonjour: built into macOS; on Linux install avahi-utils, on Windows install Bonjour. Without it, use the manual address.</string>
+    <string name="computer_guide_2">2. Install llama.cpp on your computer: use the command below on macOS, or download a release for Windows/Linux. Then start a model with the example command. This model is large; a smaller model works on smaller computers.</string>
+    <string name="computer_guide_3">3. Optional voice: start the XTTS server from the project at the path below.</string>
+    <string name="computer_guide_4">4. Download bridge.py from the project page below and run it with Python 3. It prints a 6-digit code. Allow incoming connections if the computer asks.</string>
+    <string name="computer_guide_5">5. In the app: Settings → Translation → My computer → Find my computer → choose it → enter the code once. It then connects automatically whenever the computer and bridge are on and both devices are on the same Wi-Fi, even if the computer’s address changes.</string>
+    <string name="computer_guide_6">6. If nothing is found: some networks block devices from seeing each other (public Wi-Fi, some routers). Connect the computer to the phone’s hotspot instead, or use USB with the command below and the manual address.</string>
 </resources>

@@ -20,5 +20,9 @@ object XttsPrefs {
 
     fun setToken(context: Context, value: String) = prefs(context).edit().putString(KEY_TOKEN, value).apply()
 
+    fun getUsePairedComputer(context: Context): Boolean = prefs(context).getBoolean("usePairedComputer", false)
+
+    fun setUsePairedComputer(context: Context, value: Boolean) = prefs(context).edit().putBoolean("usePairedComputer", value).apply()
+
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 }

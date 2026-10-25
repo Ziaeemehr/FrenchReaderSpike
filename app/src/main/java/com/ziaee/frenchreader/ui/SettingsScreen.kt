@@ -413,6 +413,9 @@ private fun NewsCategory.labelResource(): Int = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.CoroutineScope, snackbarHostState: SnackbarHostState) {
+    val pairedComputer = com.ziaee.frenchreader.net.LocalServerPrefs(context).paired
+    var usePaired by remember { mutableStateOf(XttsPrefs.getUsePairedComputer(context)) }
+    var showGuide by remember { mutableStateOf(false) }
     var serverUrl by remember { mutableStateOf(XttsPrefs.getServerUrl(context)) }
     var speaker by remember { mutableStateOf(XttsPrefs.getSpeaker(context)) }
     var speakers by remember { mutableStateOf(emptyList<String>()) }
@@ -433,7 +436,7 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
         }
     }
 
-    LaunchedEffect(serverUrl) {
+    LaunchedEffect(serverUrl, usePaired) {
         delay(600)
         speakers = withContext(Dispatchers.IO) {
             try {
@@ -444,14 +447,24 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
         }
     }
 
-    OutlinedTextField(
-        value = serverUrl,
-        onValueChange = { serverUrl = it; XttsPrefs.setServerUrl(context, it) },
-        label = { Text(stringResource(R.string.xtts_server_url)) },
-        placeholder = { Text("http://192.168.1.10:8020") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
+    if (pairedComputer != null) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.computer_use_voice, pairedComputer.name), modifier = Modifier.weight(1f))
+            Switch(usePaired, { usePaired = it; XttsPrefs.setUsePairedComputer(context, it) })
+        }
+    }
+    TextButton(onClick = { showGuide = true }) { Text(stringResource(R.string.computer_setup_guide)) }
+    if (showGuide) LocalServerGuide { showGuide = false }
+    if (!usePaired || pairedComputer == null) {
+        OutlinedTextField(
+            value = serverUrl,
+            onValueChange = { serverUrl = it; XttsPrefs.setServerUrl(context, it) },
+            label = { Text(stringResource(R.string.xtts_server_url)) },
+            placeholder = { Text("http://192.168.1.10:8020") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -498,13 +511,15 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
             Text(stringResource(R.string.xtts_refresh_speakers))
         }
     }
-    OutlinedTextField(
-        value = token,
-        onValueChange = { token = it; XttsPrefs.setToken(context, it) },
-        label = { Text(stringResource(R.string.xtts_token)) },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-    )
+    if (!usePaired || pairedComputer == null) {
+        OutlinedTextField(
+            value = token,
+            onValueChange = { token = it; XttsPrefs.setToken(context, it) },
+            label = { Text(stringResource(R.string.xtts_token)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        )
+    }
     OutlinedButton(
         onClick = {
             scope.launch {
