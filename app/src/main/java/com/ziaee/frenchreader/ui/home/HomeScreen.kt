@@ -419,14 +419,6 @@ fun HomeContent(
                     )
                 }
                 item {
-                    DatasetCard(
-                        onOpen = onOpenDataset,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
-                    )
-                }
-                item {
                     WatchVideosCard(
                         onOpen = onOpenVideos,
                         modifier = Modifier.fillMaxWidth()
@@ -445,6 +437,14 @@ fun HomeContent(
                     ExamsCard(
                         onOpen = onOpenExams,
                         practiceCounts = examPracticeCounts,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
+                    DatasetCard(
+                        onOpen = onOpenDataset,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
