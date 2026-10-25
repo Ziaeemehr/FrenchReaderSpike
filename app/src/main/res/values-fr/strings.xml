@@ -63,6 +63,8 @@
     <string name="xtts_choose_speaker_title">Voix du serveur local</string>
     <string name="xtts_speakers_unavailable">Connectez-vous au serveur pour charger les voix</string>
     <string name="xtts_refresh_speakers">Actualiser</string>
+    <string name="xtts_preview_play">Écouter %1$s</string>
+    <string name="xtts_preview_stop">Arrêter %1$s</string>
     <string name="xtts_token">Jeton (facultatif)</string>
     <string name="xtts_test_connection">Tester la connexion</string>
     <string name="xtts_connection_ok">Connexion réussie</string>

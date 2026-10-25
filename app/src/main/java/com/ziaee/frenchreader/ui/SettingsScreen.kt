@@ -23,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -423,6 +425,70 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
     var token by remember { mutableStateOf(XttsPrefs.getToken(context)) }
     val connectionOk = stringResource(R.string.xtts_connection_ok)
     val connectionFailed = stringResource(R.string.xtts_connection_failed)
+    // The speaker whose sample is playing, and the one whose sample is being generated.
+    var previewPlaying by remember { mutableStateOf<String?>(null) }
+    var previewLoading by remember { mutableStateOf<String?>(null) }
+    var previewRequest by remember { mutableStateOf(0L) }
+    var previewJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    DisposableEffect(serverUrl, usePaired, token, pairedComputer?.id) {
+        onDispose {
+            previewRequest++
+            previewJob?.cancel()
+            previewLoading = null
+            previewPlaying = null
+            com.ziaee.frenchreader.tts.XttsVoicePreview.stop()
+        }
+    }
+
+    fun togglePreview(name: String) {
+        val preview = com.ziaee.frenchreader.tts.XttsVoicePreview
+        val stopping = previewPlaying == name || previewLoading == name
+        val request = ++previewRequest
+        previewJob?.cancel()
+        preview.stop()
+        previewPlaying = null
+        previewLoading = null
+        if (stopping) return
+        previewLoading = name
+        previewJob = scope.launch {
+            try {
+                val file = withContext(Dispatchers.IO) { preview.prepare(context.applicationContext, name) }
+                if (previewRequest != request) return@launch
+                previewLoading = null
+                previewPlaying = name
+                preview.play(file) { if (previewRequest == request) previewPlaying = null }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (previewRequest == request) {
+                    previewLoading = null
+                    previewPlaying = null
+                    snackbarHostState.showSnackbar(connectionFailed)
+                }
+            } finally {
+                if (previewRequest == request) previewLoading = null
+            }
+        }
+    }
+
+    @Composable
+    fun PreviewButton(name: String) {
+        val description = stringResource(
+            if (name == previewPlaying || name == previewLoading) R.string.xtts_preview_stop
+            else R.string.xtts_preview_play,
+            name
+        )
+        IconButton(
+            onClick = { togglePreview(name) },
+            modifier = Modifier.size(40.dp).semantics { contentDescription = description }
+        ) {
+            when (name) {
+                previewLoading -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                previewPlaying -> Icon(Icons.Default.Stop, contentDescription = null)
+                else -> Icon(Icons.Default.PlayArrow, contentDescription = null)
+            }
+        }
+    }
 
     fun refreshSpeakers() {
         scope.launch {
@@ -497,6 +563,8 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
                     speakers.forEach { availableSpeaker ->
                         DropdownMenuItem(
                             text = { Text(availableSpeaker) },
+                            // Listening does not choose the voice or close the list.
+                            trailingIcon = { PreviewButton(availableSpeaker) },
                             onClick = {
                                 speaker = availableSpeaker
                                 XttsPrefs.setSpeaker(context, availableSpeaker)
@@ -507,6 +575,7 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
                 }
             }
         }
+        PreviewButton(speaker)
         TextButton(onClick = { refreshSpeakers() }) {
             Text(stringResource(R.string.xtts_refresh_speakers))
         }

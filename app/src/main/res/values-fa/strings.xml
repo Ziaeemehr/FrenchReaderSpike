@@ -63,6 +63,8 @@
     <string name="xtts_choose_speaker_title">صدای سرور محلی</string>
     <string name="xtts_speakers_unavailable">برای بارگیری گویندگان به سرور متصل شوید</string>
     <string name="xtts_refresh_speakers">تازه‌سازی</string>
+    <string name="xtts_preview_play">شنیدن صدای %1$s</string>
+    <string name="xtts_preview_stop">توقف صدای %1$s</string>
     <string name="xtts_token">توکن (اختیاری)</string>
     <string name="xtts_test_connection">آزمایش اتصال</string>
     <string name="xtts_connection_ok">اتصال موفق بود</string>
