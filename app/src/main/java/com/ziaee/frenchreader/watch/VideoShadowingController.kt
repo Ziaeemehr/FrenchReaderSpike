@@ -26,7 +26,8 @@ class VideoShadowingController(
     private val player: YoutubePlayerController,
     private val engineFactory: () -> SpeechEngine,
     private val requestRecording: (Int) -> Unit,
-    private val beforePlayback: () -> Unit = {}
+    private val beforePlayback: () -> Unit = {},
+    private val onUnitComplete: (SubtitleCue) -> Unit = {}
 ) {
     private val mutableState = MutableStateFlow(VideoShadowingState())
     val state = mutableState.asStateFlow()
@@ -101,6 +102,9 @@ class VideoShadowingController(
         mutableState.value = s.copy(playingUnit = false)
         seekObserved = false
         player.pause()
+        // The pause lands a few hundred ms late, inside the next line; return to just before this
+        // line's end so the transcript stays on it even after the screen's freeze is released.
+        s.unit?.let { player.seekTo(maxOf(it.startMs, it.endMs - 50), generation); onUnitComplete(it) }
         if (s.autoRecord) requestRecording(generation)
     }
 

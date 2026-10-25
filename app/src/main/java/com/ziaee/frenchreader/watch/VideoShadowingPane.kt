@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 fun VideoShadowingPane(
     controller: VideoShadowingController,
     recordRequest: Int?,
-    onSentenceSelected: (SubtitleCue) -> Unit
+    onStep: (Int) -> Unit
 ) {
     val state by controller.state.collectAsState()
     val context = LocalContext.current
@@ -105,7 +105,7 @@ fun VideoShadowingPane(
             FlowRow(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(0.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                IconButton(onClick = { pendingGeneration = null; controller.previous(); controller.state.value.unit?.let(onSentenceSelected) }, enabled = enabled && state.index > 0, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = { pendingGeneration = null; onStep(-1) }, enabled = enabled && state.index > 0, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.SkipPrevious, stringResource(R.string.watch_shadow_previous))
                 }
                 IconButton(onClick = { pendingGeneration = null; controller.playUnit() }, enabled = enabled, modifier = Modifier.size(40.dp)) {
@@ -114,7 +114,7 @@ fun VideoShadowingPane(
                 IconButton(onClick = { pendingGeneration = null; controller.repeat() }, enabled = enabled, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.Replay, stringResource(R.string.watch_shadow_repeat))
                 }
-                IconButton(onClick = { pendingGeneration = null; controller.next(); controller.state.value.unit?.let(onSentenceSelected) }, enabled = enabled && state.index < state.units.lastIndex, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = { pendingGeneration = null; onStep(1) }, enabled = enabled && state.index < state.units.lastIndex, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.SkipNext, stringResource(R.string.shadowing_next))
                 }
                 Box {

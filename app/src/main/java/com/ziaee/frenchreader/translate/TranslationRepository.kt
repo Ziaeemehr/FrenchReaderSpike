@@ -1,6 +1,9 @@
 package com.ziaee.frenchreader.translate
 
 import android.content.Context
+import com.ziaee.frenchreader.translate.llm.LlmCache
+import com.ziaee.frenchreader.translate.llm.LlmTranslator
+import kotlinx.coroutines.CancellationException
 import com.ziaee.frenchreader.text.isRtlText
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.async
@@ -9,7 +12,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class TranslationRepository(context: Context) {
+class TranslationRepository(private val context: Context) {
+    private val llmCache = LlmCache(context)
     private val cache = TranslationCache(context)
     private val overrides = TranslationOverrides(context)
 
@@ -42,6 +46,19 @@ class TranslationRepository(context: Context) {
     ): Result<String?> = withContext(Dispatchers.IO) {
         overrides.getOverride(text, targetLang)?.let { return@withContext Result.success(it) }
         if (isRtlTarget(targetLang) && isRtlText(text)) return@withContext Result.success(null)
+        llmParagraph(text, null, targetLang)?.let { translated ->
+            return@withContext Result.success(translated.takeUnless { TranslationService.isSameText(it, text) })
+        }
+        googleParagraph(text, targetLang, attempt)
+    }
+
+    private suspend fun googleParagraph(
+        text: String,
+        targetLang: String,
+        attempt: Int = 0
+    ): Result<String?> = withContext(Dispatchers.IO) {
+        overrides.getOverride(text, targetLang)?.let { return@withContext Result.success(it) }
+        if (isRtlTarget(targetLang) && isRtlText(text)) return@withContext Result.success(null)
         cache.get(text, targetLang)?.let { cached ->
             return@withContext Result.success(cached.takeUnless { TranslationService.isSameText(it, text) })
         }
@@ -50,7 +67,7 @@ class TranslationRepository(context: Context) {
             cache.put(text, targetLang, translated ?: text)
             Result.success(translated)
         } catch (e: Exception) {
-            if (attempt < 1) getOrTranslateParagraph(text, targetLang, attempt + 1)
+            if (attempt < 1) googleParagraph(text, targetLang, attempt + 1)
             else Result.failure(e)
         }
     }
@@ -61,11 +78,14 @@ class TranslationRepository(context: Context) {
     ): Result<String?> = withContext(Dispatchers.IO) {
         overrides.getOverride(text, targetLang)?.let { return@withContext Result.success(it) }
         if (isRtlTarget(targetLang) && isRtlText(text)) return@withContext Result.success(null)
+        llmParagraph(text, paragraphTranslationContext(text, before), targetLang)?.let {
+            return@withContext Result.success(it.takeUnless { value -> TranslationService.isSameText(value, text) })
+        }
         cache.get(text, targetLang)?.let { cached ->
             return@withContext Result.success(cached.takeUnless { TranslationService.isSameText(it, text) })
         }
         val context = paragraphTranslationContext(text, before)
-            ?: return@withContext getOrTranslateParagraph(text, targetLang)
+            ?: return@withContext googleParagraph(text, targetLang)
         repeat(2) {
             try {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -73,7 +93,7 @@ class TranslationRepository(context: Context) {
                 if (lines?.size == 2) {
                     val translated = lines[1]
                     if (shouldFallbackFromParagraphContext(text, translated)) {
-                        return@withContext getOrTranslateParagraph(text, targetLang)
+                        return@withContext googleParagraph(text, targetLang)
                     }
                     cache.put(text, targetLang, translated)
                     return@withContext Result.success(translated)
@@ -84,7 +104,7 @@ class TranslationRepository(context: Context) {
                 // Retry once, then use the established paragraph fallback.
             }
         }
-        getOrTranslateParagraph(text, targetLang)
+        googleParagraph(text, targetLang)
     }
 
     suspend fun getOrTranslateInContext(
@@ -94,12 +114,42 @@ class TranslationRepository(context: Context) {
         val missing = mutableListOf<String>()
         for (text in targets.distinct()) {
             val override = overrides.getOverride(text, targetLang)
-            val cached = cache.get(text, targetLang)
             when {
                 override != null -> results[text] = override
                 isRtlTarget(targetLang) && isRtlText(text) -> results[text] = null
-                cached != null -> results[text] = cached.takeUnless { TranslationService.isSameText(it, text) }
                 else -> missing.add(text)
+            }
+        }
+        if (missing.isNotEmpty()) {
+            try {
+                val translator = LlmTranslator.forContext(context)
+                if (translator != null) {
+                    for (text in missing.toList()) {
+                        llmCache.get(text, targetLang, translator.cacheId)?.let { value ->
+                            results[text] = value.takeUnless { TranslationService.isSameText(it, text) }
+                            missing.remove(text)
+                        }
+                    }
+                    if (missing.isNotEmpty()) {
+                        val pending = missing.toList()
+                        val translated = translator.translateLines(pending, before, null, targetLang)
+                        pending.zip(translated).forEach { (text, value) ->
+                            llmCache.put(text, targetLang, translator.cacheId, value)
+                            results[text] = value.takeUnless { TranslationService.isSameText(it, text) }
+                            missing.remove(text)
+                        }
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // Missing entries continue through the established Google path.
+            }
+            for (text in missing.toList()) {
+                cache.get(text, targetLang)?.let { cached ->
+                    results[text] = cached.takeUnless { TranslationService.isSameText(it, text) }
+                    missing.remove(text)
+                }
             }
         }
         if (missing.isNotEmpty()) {
@@ -113,7 +163,7 @@ class TranslationRepository(context: Context) {
                 }
             } else {
                 missing.forEach { text ->
-                    getOrTranslateParagraph(text, targetLang).onSuccess { results[text] = it }
+                    googleParagraph(text, targetLang).onSuccess { results[text] = it }
                 }
             }
         }
@@ -128,18 +178,64 @@ class TranslationRepository(context: Context) {
     suspend fun resetTranslation(text: String, targetLang: String) = withContext(Dispatchers.IO) {
         overrides.removeOverride(text, targetLang)
         cache.remove(text, targetLang)
+        LlmTranslator.forContext(context)?.let { llmCache.remove(text, targetLang, it.cacheId) }
     }
 
     suspend fun hasOverride(text: String, targetLang: String): Boolean = withContext(Dispatchers.IO) {
         overrides.getOverride(text, targetLang) != null
     }
 
+    private fun llmParagraph(text: String, before: String?, targetLang: String): String? = try {
+        // Texts are French: a French target is the same-language case, which Google's detection handles.
+        val translator = LlmTranslator.forContext(context)
+            ?.takeUnless { TranslationService.baseLanguage(targetLang) == "fr" }
+        if (translator == null) null else llmCache.get(text, targetLang, translator.cacheId)
+            ?: translator.translateLines(listOf(text), before, null, targetLang).single().also {
+                llmCache.put(text, targetLang, translator.cacheId, it)
+            }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        null
+    }
+
     suspend fun meaningCandidates(
         word: String, lemmas: List<String>, sentence: String?, targetLang: String
     ): MeaningCandidates = withContext(Dispatchers.IO) {
-        fun fallback(best: String?) = MeaningCandidates(best, emptyList())
+        overrides.getOverride(word, targetLang)?.let { return@withContext MeaningCandidates(it, emptyList()) }
+        val llmMeaning = try {
+            val translator = LlmTranslator.forContext(context)
+            if (translator == null) null else {
+                val meaning = llmCache.getMeaning(word, sentence, targetLang, translator.cacheId)
+                    ?: translator.meaning(word, sentence, targetLang).also {
+                        llmCache.putMeaning(word, sentence, targetLang, translator.cacheId, it)
+                    }
+                polishMeaning(word, meaning, targetLang)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+        if (llmMeaning == null) return@withContext googleMeaningCandidates(word, lemmas, sentence, targetLang)
+        val googleOptions = try {
+            googleMeaningCandidates(word, lemmas, sentence, targetLang).options
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            emptyList()
+        }
+        MeaningCandidates(llmMeaning, (listOf(MeaningOption(llmMeaning, null, null)) + googleOptions)
+            .distinctBy { normalizePersian(it.text) })
+    }
+
+    private suspend fun googleMeaningCandidates(
+        word: String, lemmas: List<String>, sentence: String?, targetLang: String
+    ): MeaningCandidates = withContext(Dispatchers.IO) {
+        fun fallback(best: String?) = MeaningCandidates(best?.let { polishMeaning(word, it, targetLang) }, emptyList())
         try {
-            overrides.getOverride(word, targetLang)?.let { return@withContext fallback(it) }
+            // The user's own meaning is shown exactly as written.
+            overrides.getOverride(word, targetLang)?.let { return@withContext MeaningCandidates(it, emptyList()) }
             var senses = TranslationService.wordSenses(word, "en")
             for (lemma in lemmas) {
                 if (senses.isNotEmpty()) break
@@ -177,7 +273,7 @@ class TranslationRepository(context: Context) {
             }
             val options = ranked.zip(translations).mapNotNull { (sense, text) ->
                 text ?: return@mapNotNull null
-                MeaningOption(text, sense.term.takeUnless { english }, sense.partOfSpeech)
+                MeaningOption(polishMeaning(word, text, targetLang, sense.partOfSpeech), sense.term.takeUnless { english }, sense.partOfSpeech)
             }.distinctBy { normalizePersian(it.text) }
             if (options.isEmpty()) fallback(getOrTranslate(word, targetLang).getOrNull())
             else MeaningCandidates(options.first().text, options)

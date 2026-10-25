@@ -862,6 +862,8 @@
     <string name="videos_remove">حذف از ادامهٔ تماشا</string>
     <string name="videos_play">پخش</string>
     <string name="videos_pause">مکث</string>
+    <string name="watch_skip_back">۵ ثانیه عقب</string>
+    <string name="watch_skip_forward">۵ ثانیه جلو</string>
     <string name="videos_expand_player">بزرگ کردن پخش‌کننده</string>
     <string name="videos_compact_player">کوچک کردن پخش‌کننده</string>
     <string name="watch_translation">ترجمهٔ زیرنویس</string>
@@ -887,4 +889,37 @@
     <string name="watch_export_srt_detail">با زمان‌بندی اصلی زیرنویس</string>
     <string name="watch_export_error">خروجی گرفتن از زیرنویس ممکن نشد. دوباره تلاش کنید.</string>
     <string name="watch_export_dismiss">بستن</string>
+
+    <string name="settings_section_translation">ترجمه</string>
+    <string name="translation_engine_google">مترجم گوگل (رایگان)</string>
+    <string name="translation_engine_computer">رایانهٔ من</string>
+    <string name="translation_engine_online">مدل آنلاین با کلید من</string>
+    <string name="translation_experimental">آزمایشی</string>
+    <string name="translation_experimental_title">قابلیت آزمایشی</string>
+    <string name="translation_experimental_message">ترجمه با مدل‌های آنلاین هنوز آزمایشی است. ترجمه‌ها ممکن است اشتباه داشته باشند. متن‌هایی که ترجمه می‌کنید به سرویس انتخابی شما فرستاده می‌شوند و هزینهٔ استفاده بر عهدهٔ کلید خودتان است.</string>
+    <string name="translation_understand">متوجه شدم</string>
+    <string name="translation_cancel">انصراف</string>
+    <string name="translation_server_url">نشانی سرور</string>
+    <string name="translation_model">مدل</string>
+    <string name="translation_token">توکن (اختیاری)</string>
+    <string name="translation_computer_help">یک سرور سازگار با OpenAI مانند llama-server از llama.cpp روی رایانهٔ خود اجرا کنید. برای اتصال USB، دستور adb reverse tcp:8080 tcp:8080 را اجرا کنید و نشانی http://127.0.0.1:8080 را نگه دارید.</string>
+    <string name="translation_provider">ارائه‌دهنده</string>
+    <string name="translation_base_url">نشانی پایه</string>
+    <string name="translation_api_key">کلید API</string>
+    <string name="translation_saved_key">کلید ذخیره‌شده ••••%1$s</string>
+    <string name="translation_replace">جایگزینی</string>
+    <string name="translation_remove">حذف</string>
+    <string name="translation_test_connection">آزمایش اتصال</string>
+    <string name="translation_testing">در حال آزمایش…</string>
+    <string name="translation_connected">متصل شد: %1$s</string>
+    <string name="translation_error_key">کلید اشتباه است.</string>
+    <string name="translation_error_missing_key">کلیدی ذخیره نشده است. کلید را وارد کنید و «ذخیره» را بزنید.</string>
+    <string name="translation_error_payment">اعتبار این حساب کافی نیست.</string>
+    <string name="translation_error_forbidden">دسترسی این کلید یا مدل رد شد (ممکن است در منطقه‌ی شما در دسترس نباشد).</string>
+    <string name="translation_error_model">مدل پیدا نشد. مدل و نشانی سرور را بررسی کنید.</string>
+    <string name="translation_error_rate">تعداد درخواست‌ها بیش از حد مجاز است. بعداً دوباره تلاش کنید.</string>
+    <string name="translation_error_unreachable">سرور در دسترس نیست. نشانی و اتصال را بررسی کنید.</string>
+    <string name="translation_error_response">پاسخ مدل نامعتبر است.</string>
+    <string name="translation_error_save_key">ذخیرهٔ امن کلید ممکن نشد.</string>
+    <string name="translation_custom_provider">دلخواه</string>
 </resources>

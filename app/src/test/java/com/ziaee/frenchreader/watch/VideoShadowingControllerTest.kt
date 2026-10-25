@@ -60,6 +60,20 @@ class VideoShadowingControllerTest {
         assertTrue(c.generation > generation)
     }
 
+    @Test fun completedLineReportsItselfDespiteOvershootIntoNextLine() = runTest {
+        val completed = mutableListOf<SubtitleCue>()
+        val c = VideoShadowingController(this, YoutubePlayerController(), { Engine() }, {}, onUnitComplete = { completed += it })
+        c.setCues(cues)
+        c.playUnit()
+        c.onTime(1500)
+        c.onTime(3100)
+        assertEquals(listOf("Le chat dort."), completed.map { it.text })
+        assertEquals(0, c.state.value.index)
+        assertFalse(c.state.value.playingUnit)
+        c.onTime(3300)
+        assertEquals(1, completed.size)
+    }
+
     @Test fun selectAtWithoutCaptionsIsInert() = runTest {
         val c = VideoShadowingController(this, YoutubePlayerController(), { Engine() }, {})
         val generation = c.generation

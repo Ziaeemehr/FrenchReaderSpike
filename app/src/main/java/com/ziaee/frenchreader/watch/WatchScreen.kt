@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.IosShare
@@ -37,6 +39,10 @@ import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Forward5
+import androidx.compose.material.icons.filled.Replay5
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
@@ -253,8 +259,12 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
             recordRequest = null
             freeze = freeze.resume()
             cueGestureActive = false
+        }, onUnitComplete = { unit ->
+            // Hold the shadowed line on screen while the late pause and seek-back settle.
+            freeze = PlaybackFreeze(maxOf(unit.startMs, unit.endMs - 1), SystemClock.uptimeMillis())
         })
     }
+    val practice by videoShadowing.state.collectAsState()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(videoShadowing, lifecycle) {
         vm.setForeground(lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
@@ -288,7 +298,9 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
         if (state.preferencesLoaded) controller.seekTo(state.currentTimeMs)
     }
     // In the gap between two cues keep showing the one that just ended, so the line doesn't blink away.
-    val cueTime = frozenCueTime ?: state.currentTimeMs
+    // While a practice line plays, polling overshoot past its end must not light the next line.
+    val cueTime = frozenCueTime ?: practice.unit?.takeIf { shadowing && practice.playingUnit }
+        ?.let { state.currentTimeMs.coerceIn(it.startMs, maxOf(it.startMs, it.endMs - 1)) } ?: state.currentTimeMs
     val index = remember(state.cues, cueTime) {
         findCueIndex(state.cues, cueTime).takeIf { it >= 0 }
             ?: state.cues.indexOfLast { it.endMs <= cueTime }
@@ -358,6 +370,32 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
             vm.setTime(it.startMs)
         }
     }
+    /**
+     * Line navigation never leaves the video stopped: ordinary watching plays on from the new line;
+     * in shadowing (stopped or playing a practice line) only the new line plays, then pauses for repeating.
+     */
+    fun playFromLine(index: Int) {
+        if (sentences.getOrNull(index) == null) return
+        // A just-finished practice line still reports "playing" until its late pause lands; its freeze marks it.
+        val watching = state.playerState == 1 && !videoShadowing.state.value.playingUnit && frozenCueTime == null
+        following = true
+        lastTouch = 0L
+        cueGestureActive = false
+        recordRequest = null
+        seek(index)
+        if (shadowing && !watching) videoShadowing.playUnit() else controller.play()
+    }
+    fun skipBy(deltaMs: Long) {
+        freeze = freeze.resume()
+        cueGestureActive = false
+        recordRequest = null
+        following = true
+        lastTouch = 0L
+        if (shadowing) videoShadowing.cancel(pauseVideo = false)
+        val target = (latestTime + deltaMs).coerceAtLeast(0L)
+        controller.seekTo(target)
+        vm.setTime(target)
+    }
     fun closeDictionary() {
         dictionaryOpen = false
         vm.dismissLookup()
@@ -391,13 +429,6 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                 val controls: @Composable () -> Unit = {
                     IconButton(onClick = { if (dictionaryOpen) closeDictionary() else onBack() }, modifier = Modifier.size(36.dp)) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.watch_back), modifier = Modifier.size(20.dp))
-                    }
-                    IconButton(onClick = {
-                        if (state.playerState == 1) controller.pause()
-                        else { recordRequest = null; freeze = freeze.resume(); cueGestureActive = false; videoShadowing.cancel(); controller.play() }
-                    }, modifier = Modifier.size(36.dp)) {
-                        Icon(if (state.playerState == 1) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            stringResource(if (state.playerState == 1) R.string.videos_pause else R.string.videos_play), modifier = Modifier.size(20.dp))
                     }
                     IconButton(onClick = {
                         vm.setCompactPlayer(!compactPlayer)
@@ -635,14 +666,7 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                             }
                         }
                         if (shadowing) VideoShadowingPane(videoShadowing, recordRequest,
-                            onSentenceSelected = { sentence ->
-                                freeze = freeze.resume()
-                                cueGestureActive = false
-                                following = true
-                                recordRequest = null
-                                controller.seekTo(sentence.startMs)
-                                vm.setTime(sentence.startMs)
-                            })
+                            onStep = { step -> playFromLine(videoShadowing.state.value.index + step) })
                     }
                     // The non-scoped overload: inside the Column the ColumnScope extension would be picked.
                     androidx.compose.animation.AnimatedVisibility(
@@ -692,6 +716,67 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                             }
                         }
                     }
+                }
+                // Shadowing navigates from the practice line, like its own pane; otherwise from the shown line.
+                val lineIndex = if (shadowing && practice.unit != null) practice.index else sentenceIndex
+                // The dictionary needs the whole height; the bar returns once its exit animation is done.
+                AnimatedVisibility(visible = !dictionaryOpen,
+                    enter = expandVertically(tween(160, delayMillis = 120)) + fadeIn(tween(160, delayMillis = 120)),
+                    exit = shrinkVertically(tween(160)) + fadeOut(tween(120))) {
+                WatchPlaybackBar(
+                    // Still visible while it animates out; the dictionary has already paused playback.
+                    enabled = !dictionaryOpen,
+                    playing = state.playerState == 1,
+                    hasPrevious = lineIndex > 0,
+                    hasNext = lineIndex in 0 until sentences.lastIndex || (lineIndex < 0 && sentences.isNotEmpty()),
+                    onPrevious = { playFromLine((lineIndex - 1).coerceAtLeast(0)) },
+                    onBack = { skipBy(-5_000) },
+                    onPlayPause = {
+                        if (state.playerState == 1) controller.pause()
+                        else { recordRequest = null; freeze = freeze.resume(); cueGestureActive = false; videoShadowing.cancel(); controller.play() }
+                    },
+                    onForward = { skipBy(5_000) },
+                    onNext = { playFromLine(lineIndex + 1) }
+                )
+                }
+            }
+        }
+    }
+}
+
+/** Thumb-reach transport: the most used actions sit at the bottom with play/pause in the middle. */
+@Composable
+private fun WatchPlaybackBar(
+    enabled: Boolean,
+    playing: Boolean,
+    hasPrevious: Boolean,
+    hasNext: Boolean,
+    onPrevious: () -> Unit,
+    onBack: () -> Unit,
+    onPlayPause: () -> Unit,
+    onForward: () -> Unit,
+    onNext: () -> Unit
+) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 2.dp) {
+        // Physical order, including in a Persian UI.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onPrevious, enabled = enabled && hasPrevious, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.SkipPrevious, stringResource(R.string.watch_shadow_previous), modifier = Modifier.size(28.dp))
+                }
+                IconButton(onClick = onBack, enabled = enabled, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.Replay5, stringResource(R.string.watch_skip_back), modifier = Modifier.size(28.dp))
+                }
+                FilledIconButton(onClick = onPlayPause, enabled = enabled, modifier = Modifier.size(64.dp)) {
+                    Icon(if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        stringResource(if (playing) R.string.videos_pause else R.string.videos_play), modifier = Modifier.size(36.dp))
+                }
+                IconButton(onClick = onForward, enabled = enabled, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.Forward5, stringResource(R.string.watch_skip_forward), modifier = Modifier.size(28.dp))
+                }
+                IconButton(onClick = onNext, enabled = enabled && hasNext, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.SkipNext, stringResource(R.string.shadowing_next), modifier = Modifier.size(28.dp))
                 }
             }
         }

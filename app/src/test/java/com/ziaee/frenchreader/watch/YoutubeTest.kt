@@ -102,3 +102,52 @@ class YoutubeCaptionRequestTest {
         cues.zipWithNext().forEach { (a, b) -> assertTrue(a.endMs <= b.startMs) }
     }
 }
+
+class YoutubeSeekFilterTest {
+    @Test fun samplesFromBeforeTheLatestSeekAreDropped() {
+        val c = YoutubePlayerController { 0L }
+        assertEquals(9_000L, c.acceptTime(0, 9_000))
+        c.seekTo(20_000)
+        assertNull(c.acceptTime(0, 20_000))
+        c.seekTo(30_000)
+        assertNull(c.acceptTime(1, 30_000))
+        assertEquals(30_100L, c.acceptTime(2, 30_100))
+    }
+
+    @Test fun cachedOldPositionIsDroppedUntilTheSeekLands() {
+        val c = YoutubePlayerController { 0L }
+        c.seekTo(10_000)
+        assertNull(c.acceptTime(1, 9_800))
+        assertNull(c.acceptTime(1, 11_000))
+        assertEquals(10_200L, c.acceptTime(1, 10_200))
+        assertEquals(9_000L, c.acceptTime(1, 9_000))
+    }
+
+    @Test fun landingJustShortCountsAsTheTarget() {
+        val c = YoutubePlayerController { 0L }
+        c.seekTo(260_840)
+        assertEquals(260_840L, c.acceptTime(1, 260_839))
+        assertEquals(260_840L, c.acceptTime(1, 260_810))
+    }
+
+    @Test fun deadlineReleasesASeekThatLandedElsewhere() {
+        var now = 0L
+        val c = YoutubePlayerController { now }
+        c.seekTo(20_000)
+        now = 1_999
+        assertNull(c.acceptTime(1, 30_000))
+        now = 2_000
+        assertEquals(30_000L, c.acceptTime(1, 30_000))
+        assertEquals(30_200L, c.acceptTime(1, 30_200))
+    }
+
+    @Test fun targetPastTheEndIsReleasedAtTheDeadline() {
+        var now = 0L
+        val c = YoutubePlayerController { now }
+        c.seekTo(60_050)
+        assertEquals(60_050L, c.acceptTime(1, 60_000))
+        now = 2_000
+        assertEquals(60_000L, c.acceptTime(1, 60_000))
+        assertEquals(60_000L, c.acceptTime(1, 60_000))
+    }
+}

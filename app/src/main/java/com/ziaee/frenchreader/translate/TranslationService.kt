@@ -21,13 +21,14 @@ import java.net.URLEncoder
 object TranslationService {
 
     fun translate(text: String, targetLang: String, sourceLang: String = "fr"): String {
-        return try {
+        val translated = try {
             translateWithGoogle(text, targetLang, sourceLang)
         } catch (e: Exception) {
             try { translateWithChrome(text, targetLang, sourceLang) } catch (e: Exception) {
                 translateWithMyMemory(text, targetLang, sourceLang)
             }
         }
+        return polishTranslation(translated, targetLang)
     }
 
     /**
@@ -45,7 +46,7 @@ object TranslationService {
                 translateWithMyMemory(text, targetLang, "fr")
             }
         }
-        return translated.takeUnless { isSameText(it, text) }
+        return polishTranslation(translated, targetLang).takeUnless { isSameText(it, text) }
     }
 
     fun translateLines(lines: List<String>, targetLang: String, sourceLang: String = "fr"): List<String>? {
@@ -57,6 +58,7 @@ object TranslationService {
     fun wordSenses(word: String, targetLang: String, sourceLang: String = "fr"): List<WordSense> =
         runCatching {
             parseWordSenses(googleRequest(word, targetLang, sourceLang, dictionary = true))
+                .map { it.copy(term = polishTranslation(it.term, targetLang)) }
         }.getOrDefault(emptyList())
 
     private fun translateWithChrome(text: String, targetLang: String, sourceLang: String): String {
@@ -82,7 +84,9 @@ object TranslationService {
 
     /** A "translation" that just echoes the source means the text was already in the target language. */
     fun isSameText(translated: String, source: String): Boolean {
-        fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+        // Persian polishing turns Arabic ي/ك/ى into ی/ک, so an echoed source must still match.
+        fun norm(s: String) = s.lowercase().replace('ي', 'ی').replace('ى', 'ی').replace('ك', 'ک')
+            .filter { it.isLetterOrDigit() }
         return norm(translated) == norm(source)
     }
 

@@ -865,6 +865,8 @@
     <string name="videos_remove">Remove from continue watching</string>
     <string name="videos_play">Play</string>
     <string name="videos_pause">Pause</string>
+    <string name="watch_skip_back">Back 5 seconds</string>
+    <string name="watch_skip_forward">Forward 5 seconds</string>
     <string name="videos_expand_player">Expand player</string>
     <string name="videos_compact_player">Compact player</string>
     <string name="watch_translation">Subtitle translation</string>
@@ -890,4 +892,37 @@
     <string name="watch_export_srt_detail">Keep the original subtitle timing</string>
     <string name="watch_export_error">Could not export subtitles. Please try again.</string>
     <string name="watch_export_dismiss">Close</string>
+
+    <string name="settings_section_translation">Translation</string>
+    <string name="translation_engine_google">Google Translate (free)</string>
+    <string name="translation_engine_computer">My computer</string>
+    <string name="translation_engine_online">Online model with my key</string>
+    <string name="translation_experimental">Experimental</string>
+    <string name="translation_experimental_title">Experimental feature</string>
+    <string name="translation_experimental_message">Translation with online models is still experimental. Translations may contain mistakes. The texts you translate are sent to the service you choose, and usage is billed to your own key.</string>
+    <string name="translation_understand">I understand</string>
+    <string name="translation_cancel">Cancel</string>
+    <string name="translation_server_url">Server URL</string>
+    <string name="translation_model">Model</string>
+    <string name="translation_token">Token (optional)</string>
+    <string name="translation_computer_help">Run an OpenAI-compatible server such as llama.cpp\'s llama-server on your computer. Over USB, run adb reverse tcp:8080 tcp:8080 and keep http://127.0.0.1:8080.</string>
+    <string name="translation_provider">Provider</string>
+    <string name="translation_base_url">Base URL</string>
+    <string name="translation_api_key">API key</string>
+    <string name="translation_saved_key">Saved key ••••%1$s</string>
+    <string name="translation_replace">Replace</string>
+    <string name="translation_remove">Remove</string>
+    <string name="translation_test_connection">Test connection</string>
+    <string name="translation_testing">Testing…</string>
+    <string name="translation_connected">Connected: %1$s</string>
+    <string name="translation_error_key">Wrong key.</string>
+    <string name="translation_error_missing_key">No key saved. Enter your key and press Save.</string>
+    <string name="translation_error_payment">Not enough credit on this account.</string>
+    <string name="translation_error_forbidden">Access denied for this key or model (it may not be available in your region).</string>
+    <string name="translation_error_model">Model not found. Check the model and server URL.</string>
+    <string name="translation_error_rate">Rate limited. Try again later.</string>
+    <string name="translation_error_unreachable">Server unreachable. Check the address and connection.</string>
+    <string name="translation_error_response">Unexpected reply from the model.</string>
+    <string name="translation_error_save_key">Could not save the key securely.</string>
+    <string name="translation_custom_provider">Custom</string>
 </resources>

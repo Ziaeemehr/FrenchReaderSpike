@@ -120,7 +120,8 @@ fun SettingsScreen(
             R.string.settings_section_shadowing,
             R.string.settings_section_tts_cache,
             R.string.settings_section_backup,
-            R.string.settings_section_dataset
+            R.string.settings_section_dataset,
+            R.string.settings_section_translation
         )
         var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
@@ -201,6 +202,7 @@ fun SettingsScreen(
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
+                    8 -> TranslationEngineSettings(context, scope, snackbarHostState)
                     7 -> {
                         Text(stringResource(R.string.dataset_subtitle), style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(12.dp))
@@ -723,8 +725,9 @@ private fun <T> CompactChoiceRow(
 }
 
 @Composable
-private fun <T> CompactChoiceColumn(
-    entries: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit
+internal fun <T> CompactChoiceColumn(
+    entries: List<T>, selected: T, label: @Composable (T) -> String,
+    trailing: @Composable (T) -> Unit = {}, onSelect: (T) -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
         entries.forEach { entry ->
@@ -733,7 +736,8 @@ private fun <T> CompactChoiceColumn(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(selected = entry == selected, onClick = { onSelect(entry) })
-                Text(label(entry), style = MaterialTheme.typography.bodyMedium)
+                Text(label(entry), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                trailing(entry)
             }
         }
     }

@@ -865,6 +865,8 @@
     <string name="videos_remove">Retirer de la liste de reprise</string>
     <string name="videos_play">Lire</string>
     <string name="videos_pause">Mettre en pause</string>
+    <string name="watch_skip_back">Reculer de 5 secondes</string>
+    <string name="watch_skip_forward">Avancer de 5 secondes</string>
     <string name="videos_expand_player">Agrandir le lecteur</string>
     <string name="videos_compact_player">Réduire le lecteur</string>
     <string name="watch_translation">Traduction des sous-titres</string>
@@ -890,4 +892,37 @@
     <string name="watch_export_srt_detail">Conserver le minutage des sous-titres</string>
     <string name="watch_export_error">Impossible d’exporter les sous-titres. Réessayez.</string>
     <string name="watch_export_dismiss">Fermer</string>
+
+    <string name="settings_section_translation">Traduction</string>
+    <string name="translation_engine_google">Google Traduction (gratuit)</string>
+    <string name="translation_engine_computer">Mon ordinateur</string>
+    <string name="translation_engine_online">Modèle en ligne avec ma clé</string>
+    <string name="translation_experimental">Expérimental</string>
+    <string name="translation_experimental_title">Fonctionnalité expérimentale</string>
+    <string name="translation_experimental_message">La traduction avec des modèles en ligne est encore expérimentale. Les traductions peuvent contenir des erreurs. Les textes que vous traduisez sont envoyés au service de votre choix, et les frais d’utilisation sont facturés à votre propre clé.</string>
+    <string name="translation_understand">Je comprends</string>
+    <string name="translation_cancel">Annuler</string>
+    <string name="translation_server_url">Adresse du serveur</string>
+    <string name="translation_model">Modèle</string>
+    <string name="translation_token">Jeton (facultatif)</string>
+    <string name="translation_computer_help">Lancez un serveur compatible OpenAI, tel que llama-server de llama.cpp, sur votre ordinateur. En USB, exécutez adb reverse tcp:8080 tcp:8080 et conservez http://127.0.0.1:8080.</string>
+    <string name="translation_provider">Fournisseur</string>
+    <string name="translation_base_url">Adresse de base</string>
+    <string name="translation_api_key">Clé API</string>
+    <string name="translation_saved_key">Clé enregistrée ••••%1$s</string>
+    <string name="translation_replace">Remplacer</string>
+    <string name="translation_remove">Supprimer</string>
+    <string name="translation_test_connection">Tester la connexion</string>
+    <string name="translation_testing">Test en cours…</string>
+    <string name="translation_connected">Connecté : %1$s</string>
+    <string name="translation_error_key">Clé incorrecte.</string>
+    <string name="translation_error_missing_key">Aucune clé enregistrée. Saisissez votre clé puis appuyez sur Enregistrer.</string>
+    <string name="translation_error_payment">Crédit insuffisant sur ce compte.</string>
+    <string name="translation_error_forbidden">Accès refusé pour cette clé ou ce modèle (il n’est peut-être pas disponible dans votre région).</string>
+    <string name="translation_error_model">Modèle introuvable. Vérifiez le modèle et l’adresse du serveur.</string>
+    <string name="translation_error_rate">Limite de requêtes atteinte. Réessayez plus tard.</string>
+    <string name="translation_error_unreachable">Serveur inaccessible. Vérifiez l’adresse et la connexion.</string>
+    <string name="translation_error_response">Réponse inattendue du modèle.</string>
+    <string name="translation_error_save_key">Impossible d’enregistrer la clé de manière sécurisée.</string>
+    <string name="translation_custom_provider">Personnalisé</string>
 </resources>
