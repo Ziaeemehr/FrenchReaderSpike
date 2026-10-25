@@ -23,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -94,6 +96,11 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit
 ) {
+    var showPreparation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    if (showPreparation) {
+        PrepareTranslationsScreen(onBack = { showPreparation = false })
+        return
+    }
     val context = LocalContext.current
     val appLanguage = LocalePrefs.get(context)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -120,7 +127,8 @@ fun SettingsScreen(
             R.string.settings_section_shadowing,
             R.string.settings_section_tts_cache,
             R.string.settings_section_backup,
-            R.string.settings_section_dataset
+            R.string.settings_section_dataset,
+            R.string.settings_section_translation
         )
         var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
@@ -201,6 +209,7 @@ fun SettingsScreen(
                         LocalBackupSection(context, scope, snackbarHostState)
                         CloudBackupSection(context, scope, snackbarHostState)
                     }
+                    8 -> TranslationEngineSettings(context, scope, snackbarHostState, onPrepare = { showPreparation = true })
                     7 -> {
                         Text(stringResource(R.string.dataset_subtitle), style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(12.dp))
@@ -411,6 +420,9 @@ private fun NewsCategory.labelResource(): Int = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.CoroutineScope, snackbarHostState: SnackbarHostState) {
+    val pairedComputer = com.ziaee.frenchreader.net.LocalServerPrefs(context).paired
+    var usePaired by remember { mutableStateOf(XttsPrefs.getUsePairedComputer(context)) }
+    var showGuide by remember { mutableStateOf(false) }
     var serverUrl by remember { mutableStateOf(XttsPrefs.getServerUrl(context)) }
     var speaker by remember { mutableStateOf(XttsPrefs.getSpeaker(context)) }
     var speakers by remember { mutableStateOf(emptyList<String>()) }
@@ -418,6 +430,70 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
     var token by remember { mutableStateOf(XttsPrefs.getToken(context)) }
     val connectionOk = stringResource(R.string.xtts_connection_ok)
     val connectionFailed = stringResource(R.string.xtts_connection_failed)
+    // The speaker whose sample is playing, and the one whose sample is being generated.
+    var previewPlaying by remember { mutableStateOf<String?>(null) }
+    var previewLoading by remember { mutableStateOf<String?>(null) }
+    var previewRequest by remember { mutableStateOf(0L) }
+    var previewJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    DisposableEffect(serverUrl, usePaired, token, pairedComputer?.id) {
+        onDispose {
+            previewRequest++
+            previewJob?.cancel()
+            previewLoading = null
+            previewPlaying = null
+            com.ziaee.frenchreader.tts.XttsVoicePreview.stop()
+        }
+    }
+
+    fun togglePreview(name: String) {
+        val preview = com.ziaee.frenchreader.tts.XttsVoicePreview
+        val stopping = previewPlaying == name || previewLoading == name
+        val request = ++previewRequest
+        previewJob?.cancel()
+        preview.stop()
+        previewPlaying = null
+        previewLoading = null
+        if (stopping) return
+        previewLoading = name
+        previewJob = scope.launch {
+            try {
+                val file = withContext(Dispatchers.IO) { preview.prepare(context.applicationContext, name) }
+                if (previewRequest != request) return@launch
+                previewLoading = null
+                previewPlaying = name
+                preview.play(file) { if (previewRequest == request) previewPlaying = null }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (previewRequest == request) {
+                    previewLoading = null
+                    previewPlaying = null
+                    snackbarHostState.showSnackbar(connectionFailed)
+                }
+            } finally {
+                if (previewRequest == request) previewLoading = null
+            }
+        }
+    }
+
+    @Composable
+    fun PreviewButton(name: String) {
+        val description = stringResource(
+            if (name == previewPlaying || name == previewLoading) R.string.xtts_preview_stop
+            else R.string.xtts_preview_play,
+            name
+        )
+        IconButton(
+            onClick = { togglePreview(name) },
+            modifier = Modifier.size(40.dp).semantics { contentDescription = description }
+        ) {
+            when (name) {
+                previewLoading -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                previewPlaying -> Icon(Icons.Default.Stop, contentDescription = null)
+                else -> Icon(Icons.Default.PlayArrow, contentDescription = null)
+            }
+        }
+    }
 
     fun refreshSpeakers() {
         scope.launch {
@@ -431,7 +507,7 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
         }
     }
 
-    LaunchedEffect(serverUrl) {
+    LaunchedEffect(serverUrl, usePaired) {
         delay(600)
         speakers = withContext(Dispatchers.IO) {
             try {
@@ -442,14 +518,24 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
         }
     }
 
-    OutlinedTextField(
-        value = serverUrl,
-        onValueChange = { serverUrl = it; XttsPrefs.setServerUrl(context, it) },
-        label = { Text(stringResource(R.string.xtts_server_url)) },
-        placeholder = { Text("http://192.168.1.10:8020") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
+    if (pairedComputer != null) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.computer_use_voice, pairedComputer.name), modifier = Modifier.weight(1f))
+            Switch(usePaired, { usePaired = it; XttsPrefs.setUsePairedComputer(context, it) })
+        }
+    }
+    TextButton(onClick = { showGuide = true }) { Text(stringResource(R.string.computer_setup_guide)) }
+    if (showGuide) LocalServerGuide { showGuide = false }
+    if (!usePaired || pairedComputer == null) {
+        OutlinedTextField(
+            value = serverUrl,
+            onValueChange = { serverUrl = it; XttsPrefs.setServerUrl(context, it) },
+            label = { Text(stringResource(R.string.xtts_server_url)) },
+            placeholder = { Text("http://192.168.1.10:8020") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -482,6 +568,8 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
                     speakers.forEach { availableSpeaker ->
                         DropdownMenuItem(
                             text = { Text(availableSpeaker) },
+                            // Listening does not choose the voice or close the list.
+                            trailingIcon = { PreviewButton(availableSpeaker) },
                             onClick = {
                                 speaker = availableSpeaker
                                 XttsPrefs.setSpeaker(context, availableSpeaker)
@@ -492,17 +580,20 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
                 }
             }
         }
+        PreviewButton(speaker)
         TextButton(onClick = { refreshSpeakers() }) {
             Text(stringResource(R.string.xtts_refresh_speakers))
         }
     }
-    OutlinedTextField(
-        value = token,
-        onValueChange = { token = it; XttsPrefs.setToken(context, it) },
-        label = { Text(stringResource(R.string.xtts_token)) },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-    )
+    if (!usePaired || pairedComputer == null) {
+        OutlinedTextField(
+            value = token,
+            onValueChange = { token = it; XttsPrefs.setToken(context, it) },
+            label = { Text(stringResource(R.string.xtts_token)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        )
+    }
     OutlinedButton(
         onClick = {
             scope.launch {
@@ -723,8 +814,9 @@ private fun <T> CompactChoiceRow(
 }
 
 @Composable
-private fun <T> CompactChoiceColumn(
-    entries: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit
+internal fun <T> CompactChoiceColumn(
+    entries: List<T>, selected: T, label: @Composable (T) -> String,
+    trailing: @Composable (T) -> Unit = {}, onSelect: (T) -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
         entries.forEach { entry ->
@@ -733,7 +825,8 @@ private fun <T> CompactChoiceColumn(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(selected = entry == selected, onClick = { onSelect(entry) })
-                Text(label(entry), style = MaterialTheme.typography.bodyMedium)
+                Text(label(entry), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                trailing(entry)
             }
         }
     }

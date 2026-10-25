@@ -3,6 +3,9 @@ package com.ziaee.frenchreader.tts
 import android.content.Context
 import android.util.Base64
 import com.ziaee.frenchreader.data.XttsPrefs
+import com.ziaee.frenchreader.net.LocalServerPrefs
+import com.ziaee.frenchreader.net.LocalServerFinder
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -12,10 +15,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object XttsClient {
-    fun listSpeakers(context: Context): List<String> {
+    fun listSpeakers(context: Context): List<String> = withComputerRetry(context) {
         val connection = openConnection(context, "/speakers").apply { requestMethod = "GET" }
         val array = JSONArray(readResponse(connection))
-        return List(array.length()) { index -> array.getString(index) }
+        List(array.length()) { index -> array.getString(index) }
     }
 
     fun synthesizeSentences(
@@ -24,7 +27,7 @@ object XttsClient {
         speaker: String,
         ratePercent: Int,
         outFile: File
-    ): SynthesisResult {
+    ): SynthesisResult = withComputerRetry(context) {
         val connection = openConnection(context, "/synthesize").apply {
             requestMethod = "POST"
             readTimeout = 180_000
@@ -61,7 +64,7 @@ object XttsClient {
                 )
             )
         }
-        return SynthesisResult(outFile, sentences)
+        SynthesisResult(outFile, sentences)
     }
 
     /**
@@ -78,7 +81,7 @@ object XttsClient {
         ratePercent: Int,
         outFile: File,
         onSentence: (received: List<SentenceBoundary>, plannedTexts: List<String>) -> Unit
-    ): SynthesisResult? {
+    ): SynthesisResult? = withComputerRetry(context) {
         val connection = openConnection(context, "/synthesize_stream").apply {
             requestMethod = "POST"
             readTimeout = 180_000
@@ -94,7 +97,7 @@ object XttsClient {
             }
             connection.outputStream.use { it.write(request.toString().toByteArray(Charsets.UTF_8)) }
             val status = connection.responseCode
-            if (status == HttpURLConnection.HTTP_NOT_FOUND || status == HttpURLConnection.HTTP_BAD_METHOD) return null
+            if (status == HttpURLConnection.HTTP_NOT_FOUND || status == HttpURLConnection.HTTP_BAD_METHOD) return@withComputerRetry null
             if (status !in 200..299) {
                 val body = connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
                 throw IllegalStateException("Local XTTS server returned HTTP $status${if (body.isBlank()) "" else ": $body"}")
@@ -131,26 +134,43 @@ object XttsClient {
                 }
             }
             if (!finished || received.isEmpty()) throw IOException("Local XTTS server ended the stream early")
-            return SynthesisResult(outFile, received)
+            SynthesisResult(outFile, received)
         } finally {
             connection.disconnect()
         }
     }
 
     fun ping(context: Context): Boolean = try {
-        val connection = openConnection(context, "/health").apply { requestMethod = "GET" }
-        JSONObject(readResponse(connection)).optBoolean("ok", false)
+        withComputerRetry(context) {
+            val connection = openConnection(context, "/health").apply { requestMethod = "GET" }
+            JSONObject(readResponse(connection)).optBoolean("ok", false)
+        }
     } catch (_: Exception) {
         false
     }
 
+    private fun <T> withComputerRetry(context: Context, request: () -> T): T {
+        val local = LocalServerPrefs(context)
+        val paired = if (XttsPrefs.getUsePairedComputer(context)) local.paired else null
+        return try { request() } catch (error: IOException) {
+            if (paired == null) throw error
+            val found = runBlocking { LocalServerFinder.refind(context, paired.id) } ?: throw error
+            if (local.paired?.id != paired.id || (found.host == paired.host && found.port == paired.port)) throw error
+            local.update(found.host, found.port)
+            request()
+        }
+    }
+
     private fun openConnection(context: Context, path: String): HttpURLConnection {
-        val serverUrl = XttsPrefs.getServerUrl(context).trim().trimEnd('/')
+        val local = LocalServerPrefs(context)
+        val paired = XttsPrefs.getUsePairedComputer(context) && local.paired != null
+        val serverUrl = (if (paired) local.baseUrl("tts").orEmpty() else XttsPrefs.getServerUrl(context)).trim().trimEnd('/')
+        val token = if (paired) "" else XttsPrefs.getToken(context)
         if (serverUrl.isBlank()) throw IllegalStateException("Local XTTS server URL is blank")
         return (URL("$serverUrl$path").openConnection() as HttpURLConnection).apply {
             connectTimeout = 5_000
             readTimeout = 5_000
-            XttsPrefs.getToken(context).takeIf { it.isNotBlank() }?.let { setRequestProperty("X-Token", it) }
+            token.takeIf { it.isNotBlank() }?.let { setRequestProperty("X-Token", it) }
         }
     }
 

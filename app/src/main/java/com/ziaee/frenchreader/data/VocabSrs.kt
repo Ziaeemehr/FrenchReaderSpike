@@ -16,7 +16,7 @@ fun VocabEntry.status(): VocabStatus = when {
     else -> VocabStatus.LEARNING
 }
 
-private val LESSON_TAG_REGEX = Regex("(?:^|\\s*—\\s*)Leçon (\\d+(?:\\.\\d+)?)$")
+internal val LESSON_TAG_REGEX =Regex("(?:^|\\s*—\\s*)Leçon (\\d+(?:\\.\\d+)?)$")
 
 /** Anki-imported decks (see Gram_diag_B1 / Communication progressive imports) stash a
  * "— Leçon N" suffix in [VocabEntry.meaning] since there's no dedicated column for it.

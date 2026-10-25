@@ -89,7 +89,8 @@ fun ResourcesScreen(
     onOpenLibrary: () -> Unit,
     onAddText: () -> Unit,
     onWords: () -> Unit = {},
-    onOpenGrammar: () -> Unit = {}
+    onOpenGrammar: () -> Unit = {},
+    onOpenVideos: () -> Unit = {}
 ) {
     val vm: ResourcesViewModel = viewModel()
     val state by vm.uiState.collectAsState()
@@ -107,7 +108,8 @@ fun ResourcesScreen(
         onOpenLibrary = onOpenLibrary,
         onAddText = onAddText,
         onWords = onWords,
-        onOpenGrammar = onOpenGrammar
+        onOpenGrammar = onOpenGrammar,
+        onOpenVideos = onOpenVideos
     )
 }
 
@@ -125,7 +127,8 @@ fun ResourcesContent(
     onOpenLibrary: () -> Unit,
     onAddText: () -> Unit,
     onWords: () -> Unit = {},
-    onOpenGrammar: () -> Unit = {}
+    onOpenGrammar: () -> Unit = {},
+    onOpenVideos: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val language = LocalConfiguration.current.locales[0].language
@@ -183,6 +186,10 @@ fun ResourcesContent(
                     Text(stringResource(R.string.grammar_title), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.grammar_entry_description), style = MaterialTheme.typography.bodyMedium)
                 }
+            }
+
+            TextButton(onClick = onOpenVideos, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.watch_action))
             }
 
             OutlinedTextField(

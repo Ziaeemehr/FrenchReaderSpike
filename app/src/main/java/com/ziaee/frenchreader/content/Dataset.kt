@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.content
 import com.ziaee.frenchreader.data.VocabEntry
 import org.json.JSONArray
 import org.json.JSONObject
+import java.security.MessageDigest
 
 data class DatasetDeckPack(
     val id: String,
@@ -25,14 +26,18 @@ data class DatasetStoryPack(
 data class DatasetManifest(
     val version: Int,
     val decks: List<DatasetDeckPack>,
-    val stories: List<DatasetStoryPack>
+    val stories: List<DatasetStoryPack>,
+    val sentenceTranslations: DatasetSentenceTranslationMetadata? = null
 )
+
+data class DatasetSentenceTranslationMetadata(val model: String, val promptRevision: String)
 
 data class DatasetDeckRow(
     val word: String,
     val meaning: String,
     val sentence: String,
-    val lesson: String?
+    val lesson: String?,
+    val sentenceTranslations: Map<String, String> = emptyMap()
 )
 
 data class DatasetStoryRow(
@@ -65,16 +70,33 @@ internal fun parseDatasetManifest(json: String): DatasetManifest {
             count = story.getInt("count")
         )
     }
-    return DatasetManifest(root.getInt("version"), decks, stories)
+    val metadata = root.optJSONObject("sentenceTranslations")?.let {
+        DatasetSentenceTranslationMetadata(it.optString("model"), it.optString("promptRevision"))
+    }
+    return DatasetManifest(root.getInt("version"), decks, stories, metadata)
 }
 
 internal fun parseDatasetDeck(json: String): List<DatasetDeckRow> =
     JSONArray(json).mapObjects { row ->
+        val sentence = row.optString("s", "")
+        val sourceHash by lazy {
+            MessageDigest.getInstance("SHA-256").digest(sentence.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+        }
         DatasetDeckRow(
             word = row.getString("w"),
             meaning = row.getString("m"),
-            sentence = row.optString("s", ""),
-            lesson = row.optString("l").takeIf(String::isNotBlank)
+            sentence = sentence,
+            lesson = row.optString("l").takeIf(String::isNotBlank),
+            sentenceTranslations = row.optJSONObject("st")?.let { translations ->
+                translations.keys().asSequence().mapNotNull { lang ->
+                    // Hash the exact asset source before normalizing lookup keys. Older decks
+                    // without provenance remain supported; edited sources must not reuse stale st.
+                    val source = row.optJSONObject("stMeta")?.optJSONObject(lang)?.opt("source") as? String
+                    if (source != null && source != sourceHash) return@mapNotNull null
+                    (translations.opt(lang) as? String)?.takeIf(String::isNotBlank)?.let { lang to it }
+                }.toMap()
+            }.orEmpty()
         )
     }
 

@@ -11,6 +11,9 @@ import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -20,6 +23,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ziaee.frenchreader.translate.MeaningOption
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.VocabEntry
 import com.ziaee.frenchreader.data.displayMeaning
@@ -100,8 +104,13 @@ internal fun EntryFlashcard(
     modifier: Modifier = Modifier,
     onDictionary: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null,
-    flipBackEnabled: Boolean = false
+    flipBackEnabled: Boolean = false,
+    meaningOptions: List<MeaningOption> = emptyList(),
+    meaningTarget: String = "fa",
+    onMeaningSelected: (String) -> Unit = {}
 ) {
+    var appliedMeaning by remember(entry.id, entry.word, entry.sentence, meaningTarget) { mutableStateOf<String?>(null) }
+    var previousMeaning by remember(entry.id, entry.word, entry.sentence, meaningTarget) { mutableStateOf<String?>(null) }
     val wordTap: (String) -> Unit = { word -> if (interactive) onWordTap(word) }
     Box(modifier) {
         FlipCard(
@@ -140,6 +149,19 @@ internal fun EntryFlashcard(
                     }
                     entry.displayMeaning()?.let {
                         Text(it, style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    if (revealed && meaningOptions.isNotEmpty()) {
+                        val options = reviewMeaningOptions(meaningOptions, entry.displayMeaning(), appliedMeaning, previousMeaning)
+                        MeaningOptionPills(options, appliedMeaning, meaningTarget, enabled = interactive,
+                            quietMeaning = previousMeaning) { option ->
+                            val replacement = replaceMeaningLine(entry.meaning, option.text)
+                            if (replacement.meaning != entry.meaning) {
+                                previousMeaning = replacement.previousLine
+                                appliedMeaning = option.text
+                                onMeaningSelected(replacement.meaning)
+                            }
+                        }
                         Spacer(Modifier.height(8.dp))
                     }
                     if (entry.sentence.isNotBlank()) {

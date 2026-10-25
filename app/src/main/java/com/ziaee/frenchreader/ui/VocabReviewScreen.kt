@@ -53,6 +53,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.*
 import com.ziaee.frenchreader.translate.TranslationRepository
+import com.ziaee.frenchreader.translate.MeaningOption
+import com.ziaee.frenchreader.comprehension.LemmaLexicon
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.CancellationException
 import com.ziaee.frenchreader.tts.TtsChunkRepository
 import com.ziaee.frenchreader.ui.statistics.computeStreak
 import com.ziaee.frenchreader.ui.statistics.loadActiveDates
@@ -116,6 +120,38 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelCardRecording() = shadowingController.cancel()
     fun replayCardRecording() = shadowingController.replayMine()
 
+    private var meaningOptionsJob: Job? = null
+    private val meaningOptionsCache = mutableMapOf<Pair<Long, String>, List<MeaningOption>>()
+    var meaningOptions by mutableStateOf<List<MeaningOption>>(emptyList()); private set
+    val meaningTarget get() = meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context))
+
+    fun loadMeaningOptions() {
+        val card = slot ?: return
+        val entry = card.entry
+        val target = meaningTarget
+        val key = entry.id to target
+        meaningOptionsJob?.cancel()
+        meaningOptionsCache[key]?.let { meaningOptions = it; return }
+        meaningOptions = emptyList()
+        meaningOptionsJob = viewModelScope.launch {
+            val options = try {
+                val lemmas = runCatching { lemmaSuggestions(entry.word, LemmaLexicon.get(context).get()) }
+                    .getOrDefault(emptyList())
+                ensureActive()
+                val candidates = translationRepo.meaningCandidates(entry.word, lemmas, entry.sentence, target)
+                ensureActive()
+                candidates.options
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                emptyList()
+            }
+            if (slot !== card || meaningTarget != target || card.entry.word != entry.word || card.entry.sentence != entry.sentence) return@launch
+            meaningOptionsCache[key] = options
+            meaningOptions = options
+        }
+    }
+
     private val voiceCache = HashMap<Long, Pair<String, Int>>()
     private val queue = mutableListOf<VocabEntry>()
     private val completedIds = mutableSetOf<Long>()
@@ -126,8 +162,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var stats = ReviewSessionStats()
     private var learnedReviewMode = false
     internal val isLearnedReview get() = learnedReviewMode
-    private var undoing = false
-    private var startingReview = false
+    private var undoing by mutableStateOf(false)
+    private var startingReview by mutableStateOf(false)
+    private var answering by mutableStateOf(false)
+    val reviewTransitionPending get() = undoing || startingReview || answering
     private var loadJob: Job? = null
     private var audioJob: Job? = null
     private var listNames: Map<Long, String> = emptyMap()
@@ -146,6 +184,8 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     internal val currentSlot: CardSlot? get() = slot
     val current: VocabEntry? get() = slot?.entry
     private fun show(entry: VocabEntry?) {
+        meaningOptionsJob?.cancel()
+        meaningOptions = emptyList()
         shadowingController.cancel()
         entry?.let(::setShadowTarget)
         sentenceTranslation = null
@@ -252,6 +292,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 queue.clear(); queue.addAll(buildReviewQueue(scoped(db.vocabDao().getAllOnce()), now, dayStart, remainingNewAt(now), box))
                 completedIds.clear(); totalCards = queue.map { it.id }.distinct().size
                 cardsReviewed = 0; applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+                meaningOptionsCache.clear()
                 pronunciationStats = CardPronunciationStats()
                 show(queue.removeFirstOrNull())
                 if (current == null) finishSession() else {
@@ -281,6 +322,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
                 totalCards = result.total
                 cardsReviewed = completedIds.size
                 applyStats(ReviewSessionStats()); undoRecord = null; canUndo = false
+                meaningOptionsCache.clear()
                 pronunciationStats = CardPronunciationStats()
                 show(queue.removeFirstOrNull())
                 if (current == null) finishSession() else {
@@ -299,8 +341,9 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun answer(answer: VocabAnswer) {
-        if (undoing) return
+        if (reviewTransitionPending) return
         val entry = current ?: return
+        answering = true
         show(null)
         canUndo = false
         audioJob?.cancel()
@@ -320,36 +363,38 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         }
         val boxAfter = if (learnedReviewMode && answer != VocabAnswer.FORGOT) 5 else updated.leitnerBox
         viewModelScope.launch {
-            val logId = db.withTransaction {
-                db.vocabDao().updateSchedule(updated.id, updated.leitnerBox, updated.nextReviewAtMs, updated.lastReviewedAtMs, updated.learned)
-                db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = boxBefore, boxAfter = boxAfter))
-            }
-            val statsBefore = stats
-            applyStats(stats.after(answer, boxBefore, boxAfter))
-            val date = localDateFor(now)
-            val wasNew = !learnedReviewMode && entry.lastReviewedAtMs == null
-            if (wasNew) VocabPrefs.incrementNewReviewed(context, date)
-            moveLabel = when {
-                boxAfter > boxBefore -> context.getString(R.string.review_moved_forward, boxAfter)
-                boxAfter < boxBefore -> context.getString(R.string.review_returned_box_one)
-                else -> context.getString(R.string.review_stayed_box, boxAfter)
-            }
-            val requeued = if (!learnedReviewMode && answer == VocabAnswer.FORGOT) updated else null
-            val completedId = if (requeued == null) entry.id else null
-            if (requeued != null) queue.add(3.coerceAtMost(queue.size), requeued)
-            else completedIds.add(entry.id)
-            val cursorBefore = if (learnedReviewMode) VocabPrefs.getLearnedCursor(context, scopeId) else null
-            if (learnedReviewMode) VocabPrefs.setLearnedCursor(context, scopeId, entry.id)
-            cardsReviewed = completedIds.size
-            undoRecord = UndoRecord(entry, logId, statsBefore, wasNew, requeued, completedId, date, cursorBefore)
-            show(queue.removeFirstOrNull())
-            if (current == null) finishSession() else canUndo = true
+            try {
+                val logId = db.withTransaction {
+                    db.vocabDao().updateSchedule(updated.id, updated.leitnerBox, updated.nextReviewAtMs, updated.lastReviewedAtMs, updated.learned)
+                    db.reviewLogDao().insert(ReviewLogEntry(entryId = entry.id, timestampMs = now, knew = answer != VocabAnswer.FORGOT, boxBefore = boxBefore, boxAfter = boxAfter))
+                }
+                val statsBefore = stats
+                applyStats(stats.after(answer, boxBefore, boxAfter))
+                val date = localDateFor(now)
+                val wasNew = !learnedReviewMode && entry.lastReviewedAtMs == null
+                if (wasNew) VocabPrefs.incrementNewReviewed(context, date)
+                moveLabel = when {
+                    boxAfter > boxBefore -> context.getString(R.string.review_moved_forward, boxAfter)
+                    boxAfter < boxBefore -> context.getString(R.string.review_returned_box_one)
+                    else -> context.getString(R.string.review_stayed_box, boxAfter)
+                }
+                val requeued = if (!learnedReviewMode && answer == VocabAnswer.FORGOT) updated else null
+                val completedId = if (requeued == null) entry.id else null
+                if (requeued != null) queue.add(3.coerceAtMost(queue.size), requeued)
+                else completedIds.add(entry.id)
+                val cursorBefore = if (learnedReviewMode) VocabPrefs.getLearnedCursor(context, scopeId) else null
+                if (learnedReviewMode) VocabPrefs.setLearnedCursor(context, scopeId, entry.id)
+                cardsReviewed = completedIds.size
+                undoRecord = UndoRecord(entry, logId, statsBefore, wasNew, requeued, completedId, date, cursorBefore)
+                show(queue.removeFirstOrNull())
+                if (current == null) finishSession() else canUndo = true
+            } finally { answering = false }
         }
     }
 
     fun undo() {
         val r = undoRecord ?: return
-        if (current == null || undoing) return
+        if (current == null || reviewTransitionPending) return
         shadowingController.cancel()
         undoing = true
         canUndo = false
@@ -382,17 +427,23 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Edits the card on screen in place (text only; schedule untouched) and returns the new instance. */
     fun editCurrent(word: String, meaning: String?, sentence: String): VocabEntry? {
+        if (reviewTransitionPending) return null
         val slot = slot ?: return null
         val old = slot.entry
+        if (old.word != word || old.sentence != sentence) {
+            meaningOptionsJob?.cancel()
+            meaningOptionsCache.keys.removeAll { it.first == old.id }
+            meaningOptions = emptyList()
+        }
         val edited = old.copy(word = word, meaning = meaning, sentence = sentence)
         slot.entry = edited
         setShadowTarget(edited)
         val r = undoRecord
         var requeued = r?.requeued
-        if (old === requeued) requeued = edited
+        if (old.id == requeued?.id) requeued = edited
         for (i in queue.indices) if (queue[i].id == edited.id) {
             val patched = queue[i].copy(word = word, meaning = meaning, sentence = sentence)
-            if (queue[i] === r?.requeued) requeued = patched
+            if (queue[i].id == r?.requeued?.id) requeued = patched
             queue[i] = patched
         }
         if (r != null) {
@@ -486,7 +537,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         sentenceTranslationError = false
         sentenceTranslationLoading = true
         val targetLang = meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context))
-        val result = translationRepo.getOrTranslate(entry.sentence, targetLang)
+        val result = translationRepo.getOrTranslateExample(entry.sentence, targetLang)
         if (current !== entry) return
         result.fold(
             onSuccess = { sentenceTranslation = it },
@@ -606,6 +657,9 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
             !currentRevealed && vm.current != null && autoplay.front -> vm.playWord() // skips non-French fronts
         }
     }
+    LaunchedEffect(currentRevealed, vm.currentSlot, vm.current?.word, vm.current?.sentence, vm.meaningTarget) {
+        if (currentRevealed) vm.loadMeaningOptions()
+    }
     LaunchedEffect(currentRevealed, vm.current) { if (currentRevealed && vm.current?.sentence?.isNotBlank() == true) vm.translateSentence() }
     vm.current?.takeIf { showEdit }?.let { e ->
         VocabEditDialog(e, onDismiss = { showEdit = false }) { w, m, s ->
@@ -643,7 +697,9 @@ fun VocabReviewScreen(scope: Long, onBack: () -> Unit, onOpenSettings: () -> Uni
                         transitionSpec = { (slideInHorizontally { dir * it / 4 } + fadeIn(tween(220))) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut(tween(160))) using SizeTransform(clip = false) },
                         modifier = Modifier.align(Alignment.Center),
                         label = "card"
-                    ) { slot -> slot?.let { sl -> val e = sl.entry; ReviewCard(vm, e, e === revealedEntry, e === vm.current, { revealedEntry = e }, { showDictionary = true }, { showEdit = true }, { w -> tappedWord = w }, Modifier) } }
+                    ) { slot -> slot?.let { sl -> val e = sl.entry; ReviewCard(vm, e, e === revealedEntry, e === vm.current && !vm.reviewTransitionPending, { revealedEntry = e }, { showDictionary = true }, { showEdit = true }, { w -> tappedWord = w }, { meaning ->
+                        vm.editCurrent(e.word, meaning, e.sentence)?.let { revealedEntry = it }
+                    }, Modifier) } }
                 }
             }
         }
@@ -801,6 +857,7 @@ private fun ReviewCard(
     onDictionary: () -> Unit,
     onEdit: () -> Unit,
     onWordTap: (String) -> Unit,
+    onMeaningSelected: (String) -> Unit,
     modifier: Modifier
 ) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -829,7 +886,10 @@ private fun ReviewCard(
             sentenceTranslationError = vm.sentenceTranslationError,
             onWordTap = onWordTap,
             onDictionary = onDictionary,
-            onEdit = onEdit
+            onEdit = onEdit,
+            meaningOptions = if (entry.id == vm.current?.id) vm.meaningOptions else emptyList(),
+            meaningTarget = vm.meaningTarget,
+            onMeaningSelected = onMeaningSelected
         )
         if (revealed && interactive && vm.pronunciationEnabled && flashcardShadowText(entry) != null) {
             val shadowState by vm.shadowing.collectAsState()

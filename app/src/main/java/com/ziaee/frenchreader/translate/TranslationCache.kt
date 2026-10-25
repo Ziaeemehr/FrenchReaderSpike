@@ -16,11 +16,16 @@ class TranslationCache(context: Context) {
 
     fun get(text: String, targetLang: String): String? {
         val file = File(dir, "${keyFor(text, targetLang)}.txt")
-        return if (file.exists()) file.readText(Charsets.UTF_8) else null
+        // Entries cached before Persian polishing read back polished.
+        return if (file.exists()) polishTranslation(file.readText(Charsets.UTF_8), targetLang) else null
     }
 
     fun put(text: String, targetLang: String, translation: String) {
         File(dir, "${keyFor(text, targetLang)}.txt").writeText(translation, Charsets.UTF_8)
+    }
+
+    fun remove(text: String, targetLang: String) {
+        File(dir, "${keyFor(text, targetLang)}.txt").delete()
     }
 
     fun clearAll() {

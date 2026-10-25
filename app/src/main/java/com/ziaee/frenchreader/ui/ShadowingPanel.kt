@@ -54,14 +54,7 @@ fun ShadowingPanel(
                 if (result == null) {
                     Text(state.sentenceText, color = palette.ink, style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    result.alignment.words.forEach { w ->
-                        Text(
-                            w.word,
-                            color = if (w.matched) MatchedColor else MissedColor,
-                            fontWeight = if (w.matched) FontWeight.Normal else FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+                    ShadowingAlignment(result.alignment)
                 }
             }
         }
@@ -134,6 +127,21 @@ fun ShadowingPanel(
                 TextButton(onClick = onNext) {
                     Text(stringResource(R.string.shadowing_next)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null)
                 }
+            }
+        }
+    }
+}
+
+/** Shared word result for reading and video shadowing. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ShadowingAlignment(alignment: com.ziaee.frenchreader.shadowing.AlignmentResult) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            alignment.words.forEach { word ->
+                Text(word.word, color = if (word.matched) MatchedColor else MissedColor,
+                    fontWeight = if (word.matched) FontWeight.Normal else FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

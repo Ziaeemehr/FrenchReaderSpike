@@ -1,5 +1,10 @@
 {
  "version": 3,
+ "sentenceTranslations": {
+  "model": "gemma4",
+  "promptRevision": "lines-fa-v1",
+  "status": "complete"
+ },
  "decks": [
   {
    "id": "gram-dial-a1-vocab",

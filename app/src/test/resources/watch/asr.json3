@@ -1,0 +1,10 @@
+{"wireMagic": "pb3", "events": [
+ {"tStartMs": 0, "dDurationMs": 50000, "id": 1, "wpWinPosId": 1, "wsWinStyleId": 1},
+ {"tStartMs": 654, "dDurationMs": 2020, "segs": [{"utf8": "[musique]"}]},
+ {"tStartMs": 4150, "aAppend": 1, "segs": [{"utf8": "\n"}]},
+ {"tStartMs": 4160, "dDurationMs": 4160, "segs": [{"utf8": "Alors,"}, {"utf8": " là", "tOffsetMs": 400}, {"utf8": " on est en", "tOffsetMs": 800}]},
+ {"tStartMs": 6600, "dDurationMs": 2370, "aAppend": 1, "segs": [{"utf8": "\n"}]},
+ {"tStartMs": 6610, "dDurationMs": 4840, "segs": [{"utf8": "plein milieu de l'été"}]},
+ {"tStartMs": 9000, "dDurationMs": 2490, "aAppend": 1, "segs": [{"utf8": "\n"}]},
+ {"tStartMs": 9010, "dDurationMs": 3000, "segs": [{"utf8": "et vous devriez l&#39;écouter"}]}
+]}

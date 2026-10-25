@@ -1,0 +1,11 @@
+{
+  "events": [
+    {"tStartMs": 1000, "dDurationMs": 4000, "segs": [
+      {"utf8": "la ", "tOffsetMs": 0},
+      {"utf8": "suite. ", "tOffsetMs": 400},
+      {"utf8": "La ", "tOffsetMs": 1200},
+      {"utf8": "deuxième", "tOffsetMs": 1600}
+    ]},
+    {"tStartMs": 5000, "dDurationMs": 1000, "segs": [{"utf8": "arrive."}]}
+  ]
+}
