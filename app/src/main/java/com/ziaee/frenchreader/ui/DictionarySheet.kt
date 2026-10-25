@@ -352,7 +352,7 @@ fun DictionaryPane(
     var showNewListDialog by remember { mutableStateOf(false) }
     var selectedProvider by remember(word) {
         mutableStateOf(DICTIONARY_PROVIDERS.firstOrNull {
-            embedded && it.id == VocabPrefs.getLastDictionaryProvider(context)
+            it.id == VocabPrefs.getLastDictionaryProvider(context)
         } ?: DICTIONARY_PROVIDERS.first())
     }
     var providerMenuExpanded by remember { mutableStateOf(false) }
@@ -724,7 +724,11 @@ fun DictionaryPane(
                 DICTIONARY_PROVIDERS.forEach { provider ->
                     Tab(
                         selected = selectedProvider.id == provider.id,
-                        onClick = { selectedProvider = provider; webViewFailed = false },
+                        onClick = {
+                            selectedProvider = provider
+                            VocabPrefs.setLastDictionaryProvider(context, provider.id)
+                            webViewFailed = false
+                        },
                         modifier = Modifier.height(40.dp),
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ) {

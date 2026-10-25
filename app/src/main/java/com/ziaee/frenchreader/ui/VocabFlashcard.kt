@@ -128,7 +128,7 @@ internal fun EntryFlashcard(
             },
             back = {
                 Column(Modifier.fillMaxWidth().padding(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    TappableFrenchText(entry.word, wordTap, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                    TappableFrenchText(entry.word, wordTap, selectable = true, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                     WordAudioButton(entry, wordAudioLoading, wordAudioError, interactive, onPlayWord)
                     Spacer(Modifier.height(14.dp)); HorizontalDivider(); Spacer(Modifier.height(12.dp))
                     if (onDictionary != null || onEdit != null) {
@@ -169,6 +169,7 @@ internal fun EntryFlashcard(
                             TappableFrenchText(
                                 entry.sentence,
                                 wordTap,
+                                selectable = true,
                                 fontStyle = FontStyle.Italic,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.weight(1f)
