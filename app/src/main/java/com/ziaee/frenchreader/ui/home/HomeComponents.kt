@@ -22,9 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LibraryBooks
@@ -63,7 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
@@ -71,7 +68,6 @@ import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
 import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
 import com.ziaee.frenchreader.watch.RecentVideo
-import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import java.io.File
@@ -197,103 +193,69 @@ fun DailyReviewCard(
     }
 }
 
+@Composable
+private fun HomeEntryCard(
+    icon: ImageVector,
+    accent: Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(48.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
 /** Entry point to the bundled starter decks and graded stories (see DatasetScreen). */
 @Composable
 fun DatasetCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.LibraryBooks,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.dataset_settings_entry),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
-                )
-                Text(
-                    text = stringResource(R.string.home_dataset_support),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.LibraryBooks,
+        accent = MaterialTheme.colorScheme.secondary,
+        title = stringResource(R.string.dataset_settings_entry),
+        subtitle = stringResource(R.string.home_dataset_support),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 /** Entry point to the built-in grammar reference (see GrammarListScreen). */
 @Composable
 fun GrammarCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Spellcheck,
-                contentDescription = null,
-                tint = LocalGrammarColors.current.accent,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.grammar_title),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
-                )
-                Text(
-                    text = stringResource(R.string.grammar_entry_description),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.Spellcheck,
+        accent = LocalGrammarColors.current.accent,
+        title = stringResource(R.string.grammar_title),
+        subtitle = stringResource(R.string.grammar_entry_description),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 @Composable
 fun ExamsCard(onOpen: () -> Unit, modifier: Modifier = Modifier, practiceCounts: Pair<Int, Int>? = null) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.School,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.exams_title),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
-                )
-                Text(
-                    text = practiceCounts?.let { stringResource(R.string.exam_home_progress, it.first, it.second) }
-                        ?: stringResource(R.string.exams_entry_description),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.School,
+        accent = MaterialTheme.colorScheme.primary,
+        title = stringResource(R.string.exams_title),
+        subtitle = practiceCounts?.let { stringResource(R.string.exam_home_progress, it.first, it.second) }
+            ?: stringResource(R.string.exams_entry_description),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -303,25 +265,16 @@ fun TodayNewsCard(
     modifier: Modifier = Modifier
 ) {
     val locale = LocalConfiguration.current.locales[0]
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(FrenchReaderDesign.spacing.small), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Newspaper, contentDescription = null, tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget))
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.home_section_today_news),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
-                Text(
-                    if (headlineCount > 0) pluralStringResource(R.plurals.home_news_headlines, headlineCount,
-                        NumberFormat.getIntegerInstance(locale).format(headlineCount))
-                    else stringResource(R.string.home_news_description),
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.Newspaper,
+        accent = MaterialTheme.colorScheme.secondary,
+        title = stringResource(R.string.home_section_today_news),
+        subtitle = if (headlineCount > 0) pluralStringResource(R.plurals.home_news_headlines, headlineCount,
+            NumberFormat.getIntegerInstance(locale).format(headlineCount))
+            else stringResource(R.string.home_news_description),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -404,34 +357,14 @@ internal fun DocumentThumbnail(doc: TextDocument, modifier: Modifier = Modifier)
 
 @Composable
 fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.PlayCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.videos_title),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
-                )
-                Text(
-                    text = stringResource(R.string.videos_home_support),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.PlayCircle,
+        accent = MaterialTheme.colorScheme.secondary,
+        title = stringResource(R.string.videos_title),
+        subtitle = stringResource(R.string.videos_home_support),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 @Composable
