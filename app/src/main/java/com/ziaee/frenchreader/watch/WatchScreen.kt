@@ -618,7 +618,9 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                     Column(Modifier
                                         .heightIn(max = itemHeight)
                                         .onSizeChanged { sentenceHeights[itemIndex] = it.height; innerHeight = it.height }
-                                        .verticalScroll(innerScroll)) {
+                                        .verticalScroll(innerScroll)
+                                        // Keeps the French line and the translation clear of the copy button overlay.
+                                        .padding(end = if (isCurrent) 32.dp else 0.dp)) {
                                         val lookup: (String, String?) -> Unit = { query, gloss ->
                                             resumeAfterDictionary = playingBeforeTouch
                                             playingBeforeTouch = false
@@ -642,8 +644,6 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                                 onPhrase = { lookup(it, null) },
                                                 onWord = lookup
                                             ) }
-                                            // Room for the copy button, which stays outside the scrolling sentence.
-                                            if (isCurrent) Spacer(Modifier.width(32.dp))
                                         }
                                         if (isCurrent && state.translationEnabled) {
                                             val failed = sentence.text in state.failedTranslations
