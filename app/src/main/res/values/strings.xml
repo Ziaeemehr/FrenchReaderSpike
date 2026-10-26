@@ -1015,4 +1015,6 @@
     <string name="study_log_home_summary_empty">Nothing logged this week yet</string>
     <string name="home_minutes_week">min this week</string>
     <string name="home_goal_caption">Today %1$s/%2$s min</string>
+    <string name="home_continue_reading">Continue reading</string>
+    <string name="home_continue_watching">Continue watching</string>
 </resources>

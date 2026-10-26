@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.foundation.shape.CircleShape
@@ -451,6 +452,7 @@ fun ContinueReadingCard(
             DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailMedium))
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
+                ContinueKindLabel(Icons.Default.MenuBook, stringResource(R.string.home_continue_reading))
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Text(
                         doc.title,
@@ -489,7 +491,7 @@ fun ContinueReadingCard(
                 )
             }
             Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+            ContinueButton(Icons.Default.MenuBook, stringResource(R.string.home_continue_reading), onClick)
         }
     }
 }
@@ -517,6 +519,7 @@ fun ContinueWatchingCard(
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
+                ContinueKindLabel(Icons.Default.PlayArrow, stringResource(R.string.home_continue_watching))
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Text(
                         video.title.ifBlank { video.videoId },
@@ -533,7 +536,26 @@ fun ContinueWatchingCard(
                 )
             }
             Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+            ContinueButton(Icons.Default.PlayArrow, stringResource(R.string.home_continue_watching), onClick)
         }
+    }
+}
+
+/** Says at a glance whether a continue card resumes a text or a video. */
+@Composable
+private fun ContinueKindLabel(icon: ImageVector, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 2.dp)) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** A round resume button whose icon matches the content kind; narrower than a text pill so titles keep their width. */
+@Composable
+private fun ContinueButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp))
     }
 }

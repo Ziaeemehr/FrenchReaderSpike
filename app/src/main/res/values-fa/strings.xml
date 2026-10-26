@@ -1012,4 +1012,6 @@
     <string name="study_log_home_summary_empty">این هفته هنوز چیزی ثبت نشده</string>
     <string name="home_minutes_week">دقیقه در این هفته</string>
     <string name="home_goal_caption">امروز %1$s از %2$s دقیقه</string>
+    <string name="home_continue_reading">ادامهٔ خواندن</string>
+    <string name="home_continue_watching">ادامهٔ تماشا</string>
 </resources>
