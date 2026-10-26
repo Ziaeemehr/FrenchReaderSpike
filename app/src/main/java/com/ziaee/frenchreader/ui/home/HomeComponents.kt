@@ -1,6 +1,9 @@
 package com.ziaee.frenchreader.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.aspectRatio
 import com.ziaee.frenchreader.ui.TextLevelBadge
 import androidx.compose.foundation.clickable
@@ -85,60 +88,55 @@ fun ProgressCard(
     val goalReached = progress >= 1f
     val colors = MaterialTheme.colorScheme
     Card(onClick = onOpen, modifier = modifier) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(start = 14.dp, end = 6.dp, top = 12.dp, bottom = 6.dp)) {
+            Row(Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ProgressStat(Icons.Default.LocalFireDepartment, Color(0xFFF2994A), numbers.format(state.streakDays),
+                    pluralStringResource(R.plurals.home_streak_days, state.streakDays), Modifier.weight(1f))
+                ProgressStat(Icons.Default.Timer, colors.primary,
+                    stringResource(R.string.home_minutes_ratio, numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
+                    stringResource(R.string.home_minutes_today), Modifier.weight(1f))
+                ProgressStat(Icons.Default.Bookmark, colors.tertiary, numbers.format(state.savedWordCount),
+                    pluralStringResource(R.plurals.home_saved_words, state.savedWordCount),
+                    Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable(onClick = onSavedWords))
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.progress_title), Modifier.weight(1f),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
-                FilledTonalIconButton(onClick = onAdd) {
-                    Icon(Icons.Default.Add, stringResource(R.string.study_log_add_time), Modifier.size(20.dp))
+                LinearProgressIndicator(
+                    progress = progress,
+                    color = if (goalReached) colors.tertiary else colors.primary,
+                    trackColor = colors.onSurface.copy(alpha = 0.10f),
+                    modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                )
+                if (goalReached) Icon(Icons.Default.CheckCircle, stringResource(R.string.activity_goal_done),
+                    tint = colors.tertiary, modifier = Modifier.padding(start = 8.dp).size(16.dp))
+                IconButton(onClick = onAdd, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.AddCircleOutline, stringResource(R.string.study_log_add_time),
+                        tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProgressTile(Icons.Default.LocalFireDepartment, numbers.format(state.streakDays),
-                    pluralStringResource(R.plurals.home_streak_days, state.streakDays),
-                    colors.tertiaryContainer, colors.onTertiaryContainer, Modifier.weight(1f))
-                ProgressTile(Icons.Default.Timer,
-                    stringResource(R.string.home_minutes_ratio, numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
-                    stringResource(R.string.home_minutes_today),
-                    colors.primaryContainer, colors.onPrimaryContainer, Modifier.weight(1f))
-                ProgressTile(Icons.Default.Bookmark, numbers.format(state.savedWordCount),
-                    pluralStringResource(R.plurals.home_saved_words, state.savedWordCount),
-                    colors.secondaryContainer, colors.onSecondaryContainer,
-                    Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).clickable(onClick = onSavedWords))
-            }
-            LinearProgressIndicator(
-                progress = progress,
-                color = if (goalReached) colors.tertiary else colors.primary,
-                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp))
-            )
-            Text(
-                if (goalReached) stringResource(R.string.activity_goal_done)
-                else stringResource(R.string.home_today_percent, NumberFormat.getPercentInstance(locale).format(progress.toDouble())),
-                style = MaterialTheme.typography.labelSmall,
-                color = if (goalReached) colors.tertiary else colors.onSurfaceVariant
-            )
         }
     }
 }
 
+/** One quiet stat: a softly tinted icon badge, a bold value, and a one-line caption. */
 @Composable
-private fun ProgressTile(
+private fun ProgressStat(
     icon: ImageVector,
+    accent: Color,
     value: String,
     label: String,
-    containerColor: Color,
-    contentColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier.clip(RoundedCornerShape(14.dp)).background(containerColor).padding(horizontal = 8.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(20.dp))
-        Text(value, color = contentColor, style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(label, color = contentColor, style = MaterialTheme.typography.labelSmall,
-            maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
+    Column(modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(28.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
