@@ -245,6 +245,7 @@ private fun AppNavHost() {
                 onOpenText = { id -> navController.navigate("reading/$id") },
                 onOpenLibrary = { navigateToTab("library") },
                 onOpenVocab = { navigateToTab("vocab") },
+                onOpenHelp = { navController.navigate("help") },
                 onOpenStatistics = { navController.navigate("statistics") },
                 onOpenSettings = { navController.navigate("settings") },
                 onOpenResources = { navigateToTab("resources") },
@@ -294,7 +295,8 @@ private fun AppNavHost() {
             val videoId = entry.arguments?.getString("videoId").orEmpty()
             if (com.ziaee.frenchreader.watch.YoutubeUrl.videoId(videoId) == videoId) {
                 com.ziaee.frenchreader.watch.WatchScreen(videoId, onBack = { navController.popBackStack() },
-                    onOpenText = { id -> navController.navigate("reading/$id") })
+                    onOpenText = { id -> navController.navigate("reading/$id") },
+                    onOpenGestureGuide = { navController.navigate("gestures?section=watch") })
             }
         }
         composable("grammar") {
@@ -332,7 +334,8 @@ private fun AppNavHost() {
                 textId = textId,
                 initialFind = backStackEntry.arguments?.getString("find"),
                 onBack = { navController.popBackStack() },
-                onOpenVocab = { navController.navigate("vocab_pushed") }
+                onOpenVocab = { navController.navigate("vocab_pushed") },
+                onOpenGestureGuide = { navController.navigate("gestures?section=reading") }
             )
         }
         composable("vocab") {
@@ -365,7 +368,31 @@ private fun AppNavHost() {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenAbout = { navController.navigate("about") },
-                onOpenDataset = { navController.navigate("dataset") }
+                onOpenDataset = { navController.navigate("dataset") },
+                onOpenHelp = { navController.navigate("help") },
+                onOpenVoiceGuide = { navController.navigate("help/voice") }
+            )
+        }
+        composable("help") {
+            com.ziaee.frenchreader.ui.HelpGuidesScreen(
+                onOpenGestures = { navController.navigate("gestures") },
+                onOpenLanguageModel = { navController.navigate("help/language-model") },
+                onOpenVoice = { navController.navigate("help/voice") },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("help/language-model") {
+            com.ziaee.frenchreader.ui.GuideSetupScreen(voice = false, onBack = { navController.popBackStack() })
+        }
+        composable("help/voice") {
+            com.ziaee.frenchreader.ui.GuideSetupScreen(voice = true, onBack = { navController.popBackStack() })
+        }
+        composable("gestures?section={section}", arguments = listOf(
+            navArgument("section") { type = NavType.StringType; defaultValue = "" }
+        )) { entry ->
+            com.ziaee.frenchreader.ui.GestureGuideScreen(
+                section = entry.arguments?.getString("section").orEmpty(),
+                onBack = { navController.popBackStack() }
             )
         }
         composable("dataset") { DatasetScreen { navController.popBackStack() } }

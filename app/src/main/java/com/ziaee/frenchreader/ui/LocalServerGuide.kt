@@ -22,6 +22,7 @@ internal fun LocalServerGuide(onDismiss: () -> Unit) {
                 Text(stringResource(R.string.computer_setup_guide), style = MaterialTheme.typography.titleLarge)
                 SelectionContainer(Modifier.weight(1f)) {
                     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        GuideFileActions("language-model-setup.md")
                         Text(stringResource(R.string.computer_guide_1))
                         Text(stringResource(R.string.computer_guide_2))
                         GuideCommand("brew install llama.cpp")

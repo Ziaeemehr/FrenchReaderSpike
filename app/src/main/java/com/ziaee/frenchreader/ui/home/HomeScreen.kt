@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -101,6 +102,7 @@ fun HomeScreen(
     onStartReview: () -> Unit,
     onOpenStudyLog: () -> Unit = {},
     openAddTextSheet: Boolean = false,
+    onOpenHelp: () -> Unit = {},
     onAddTextSheetOpened: () -> Unit = {}
 ) {
     val vm: HomeViewModel = viewModel()
@@ -215,6 +217,7 @@ fun HomeScreen(
         onAddTextClick = { showAddSourceSheet = true },
         onOpenGradedReaders = onOpenResources,
         onOpenAbout = onOpenAbout,
+        onOpenHelp = onOpenHelp,
         onSelectHeadline = { vm.selectHeadline(it) },
         onRetryNews = { vm.refresh(force = true) },
         onPullRefresh = { vm.refresh(force = true) },
@@ -291,6 +294,7 @@ fun HomeContent(
     onAddTextClick: () -> Unit,
     onOpenGradedReaders: () -> Unit,
     onOpenAbout: () -> Unit = {},
+    onOpenHelp: () -> Unit = {},
     onSelectHeadline: (HeadlineEntity) -> Unit,
     onRetryNews: () -> Unit,
     onPullRefresh: () -> Unit,
@@ -339,6 +343,11 @@ fun HomeContent(
                         Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.home_more_actions))
                     }
                     DropdownMenu(expanded = moreMenuExpanded, onDismissRequest = { moreMenuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.help_guides_title)) },
+                            leadingIcon = { Icon(Icons.Default.HelpOutline, contentDescription = null) },
+                            onClick = { moreMenuExpanded = false; onOpenHelp() }
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.home_action_statistics)) },
                             leadingIcon = { Icon(Icons.Default.BarChart, contentDescription = null) },
