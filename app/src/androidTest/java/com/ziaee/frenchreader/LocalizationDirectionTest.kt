@@ -7,6 +7,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasText
+import com.ziaee.frenchreader.ui.home.HOME_LAZY_COLUMN_TEST_TAG
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -82,9 +86,8 @@ class LocalizationDirectionTest {
                         isPreviewAlreadyDownloaded = false,
                         snackbarHostState = remember { SnackbarHostState() },
                         onSearchClick = {},
-                        onFilePickerClick = {},
                         onOpenVocab = {},
-                        onOpenStatistics = {},
+                        onOpenProgress = {},
                         onOpenSettings = {},
                         onOpenLibrary = {},
                         onAddTextClick = {},
@@ -92,7 +95,6 @@ class LocalizationDirectionTest {
                         onSelectHeadline = {},
                         onRetryNews = {},
                         onPullRefresh = {},
-                        onOpenText = {},
                         onDownloadOrOpen = {},
                         onDismissPreview = {},
                         onStartReview = {}
@@ -101,11 +103,9 @@ class LocalizationDirectionTest {
             }
         }
 
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG).performScrollToNode(hasText(frenchHeadline.title))
         val rootNode = composeTestRule.onNodeWithText(string(R.string.home_section_today_news))
-        // The headline title lives inside a clickable NewsCard, whose
-        // semantics merge its descendants into one node -- the merged
-        // node reports the Card's own (Rtl) direction, not the Text's own
-        // (Ltr) one, so the unmerged tree is needed to see the real value.
+        // Inspect the French text itself rather than the clickable row.
         val headlineNode = composeTestRule.onNodeWithText(frenchHeadline.title, useUnmergedTree = true)
         return rootNode to headlineNode
     }

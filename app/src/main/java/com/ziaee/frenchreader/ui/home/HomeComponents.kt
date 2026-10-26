@@ -1,44 +1,38 @@
 package com.ziaee.frenchreader.ui.home
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LibraryBooks
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,149 +41,68 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.ziaee.frenchreader.ui.TextLevelBadge
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
-import com.ziaee.frenchreader.ui.components.EditorialEmptyState
 import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
-import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
-import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-}
-
-/** Compact real-data learning strip: streak, learned words, and saved
- * words/texts, with progress toward today's activity goal. */
-@Composable
-fun LearningSummaryStrip(
-    streakDays: Int,
-    learnedWordCount: Int,
-    savedWordCount: Int,
-    onSavedWordsClick: () -> Unit,
-    todayMinutes: Double = 0.0,
-    goalMinutes: Int = 5,
+fun ProgressCard(
+    state: HomeUiState,
+    studyLogMinutes: Pair<Int, Int>,
+    onOpen: () -> Unit,
+    onAdd: () -> Unit,
+    onSavedWords: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = FrenchReaderDesign.elevations.card
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            SummaryCell(
-                icon = Icons.Default.LocalFireDepartment,
-                iconTint = MaterialTheme.colorScheme.tertiary,
-                value = streakDays.toString(),
-                label = stringResource(R.string.home_summary_streak_days, streakDays),
-                detail = if (todayMinutes >= goalMinutes) stringResource(R.string.activity_goal_done)
-                    else stringResource(R.string.activity_goal_progress, todayMinutes.toInt(), goalMinutes),
-                modifier = Modifier.weight(1f)
+    Card(onClick = onOpen, modifier = modifier) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.progress_title), Modifier.weight(1f),
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
+                IconButton(onClick = onAdd) {
+                    Icon(Icons.Default.Add, stringResource(R.string.study_log_add_time))
+                }
+            }
+            Text(stringResource(R.string.home_summary_streak_days, state.streakDays), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.activity_goal_progress, state.todayActivityMinutes.toInt(), state.activityGoalMinutes))
+            if (state.todayActivityMinutes >= state.activityGoalMinutes) {
+                Text(stringResource(R.string.activity_goal_done), color = MaterialTheme.colorScheme.primary)
+            }
+            LinearProgressIndicator(
+                progress = (state.todayActivityMinutes / state.activityGoalMinutes.coerceAtLeast(1)).toFloat().coerceIn(0f, 1f),
+                modifier = Modifier.fillMaxWidth().height(4.dp)
             )
-            SummaryDivider()
-            SummaryCell(
-                icon = Icons.Default.MenuBook,
-                iconTint = MaterialTheme.colorScheme.secondary,
-                value = learnedWordCount.toString(),
-                label = stringResource(R.string.home_summary_learned, learnedWordCount),
-                modifier = Modifier.weight(1f)
-            )
-            SummaryDivider()
-            SummaryCell(
-                icon = Icons.Default.Article,
-                iconTint = MaterialTheme.colorScheme.primary,
-                value = savedWordCount.toString(),
-                label = stringResource(R.string.home_summary_saved_words, savedWordCount),
-                onClick = onSavedWordsClick,
-                onClickLabel = stringResource(R.string.home_action_vocabulary),
-                modifier = Modifier.weight(1f)
-            )
+            Text(stringResource(R.string.study_log_title), style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.study_log_home_summary,
+                com.ziaee.frenchreader.studylog.formatMinutes(studyLogMinutes.first),
+                com.ziaee.frenchreader.studylog.formatMinutes(studyLogMinutes.second)),
+                style = MaterialTheme.typography.bodySmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.home_summary_learned, state.learnedWordCount),
+                    modifier = Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.labelLarge)
+                TextButton(onClick = onSavedWords) {
+                    Text(stringResource(R.string.home_summary_saved_words, state.savedWordCount))
+                }
+            }
         }
     }
 }
 
-@Composable
-private fun SummaryCell(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconTint: Color,
-    value: String,
-    label: String,
-    onClick: (() -> Unit)? = null,
-    onClickLabel: String? = null,
-    detail: String? = null,
-    modifier: Modifier = Modifier
-) {
-    val cellModifier = if (onClick != null) {
-        modifier.clickable(
-            onClickLabel = onClickLabel,
-            role = Role.Button,
-            onClick = onClick
-        )
-    } else {
-        modifier
-    }
-    Column(modifier = cellModifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(FrenchReaderDesign.sizes.iconSmall))
-            Spacer(Modifier.size(4.dp))
-            Text(value, style = MaterialTheme.typography.titleMedium)
-        }
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        if (detail != null) Text(detail, style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun SummaryDivider() {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(32.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-    )
-}
-
-/** Two explicit states: words are due (primary action to start), or the
- * user is caught up (a calm completed state, never a disabled-looking
- * empty rectangle). */
 @Composable
 fun DailyReviewCard(
     dueCount: Int,
@@ -213,7 +126,7 @@ fun DailyReviewCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.home_section_daily_review),
-                    style = MaterialTheme.typography.titleSmall
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
                 )
                 Text(
                     text = if (dueCount > 0) {
@@ -261,7 +174,7 @@ fun DatasetCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.dataset_settings_entry),
-                    style = MaterialTheme.typography.titleSmall
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
                 )
                 Text(
                     text = stringResource(R.string.home_dataset_support),
@@ -294,7 +207,7 @@ fun GrammarCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.grammar_title),
-                    style = MaterialTheme.typography.titleSmall
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
                 )
                 Text(
                     text = stringResource(R.string.grammar_entry_description),
@@ -326,7 +239,7 @@ fun ExamsCard(onOpen: () -> Unit, modifier: Modifier = Modifier, practiceCounts:
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.exams_title),
-                    style = MaterialTheme.typography.titleSmall
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
                 )
                 Text(
                     text = practiceCounts?.let { stringResource(R.string.exam_home_progress, it.first, it.second) }
@@ -340,7 +253,6 @@ fun ExamsCard(onOpen: () -> Unit, modifier: Modifier = Modifier, practiceCounts:
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TodayNewsSection(
     headlines: List<HeadlineEntity>,
@@ -348,114 +260,47 @@ fun TodayNewsSection(
     isEmptyError: Boolean,
     onSelect: (HeadlineEntity) -> Unit,
     onRetry: () -> Unit,
+    onSeeAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.home_section_today_news),
-            style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-        )
-        when {
-            isEmptyError -> HomeErrorState(
-                message = stringResource(R.string.home_news_empty_error),
-                onRetry = onRetry,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
-            else -> {
-                if (hasPartialError) {
-                    Text(
-                        stringResource(R.string.home_news_partial_error),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 12.sp),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
-                    )
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.home_section_today_news), Modifier.weight(1f),
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
+                TextButton(onClick = onSeeAll) {
+                    Text(stringResource(R.string.news_all_count, headlines.size))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null)
                 }
-                val listState = rememberLazyListState()
-                LazyRow(
-                    state = listState,
-                    flingBehavior = rememberSnapFlingBehavior(listState),
-                    contentPadding = PaddingValues(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(headlines, key = { it.sourceId + it.externalId }) { headline ->
-                        NewsCard(
-                            headline,
-                            onClick = { onSelect(headline) },
-                            modifier = Modifier.fillParentMaxWidth(0.30f)
-                        )
-                    }
-                }
+            }
+            NewsStatus(hasPartialError, isEmptyError, onRetry)
+            headlines.sortedByDescending { it.publishedAtMs ?: 0L }.take(3).forEach { headline ->
+                NewsHeadlineRow(headline, onClick = { onSelect(headline) })
             }
         }
     }
 }
 
 @Composable
-private fun HomeErrorState(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(message, style = MaterialTheme.typography.bodyMedium)
+internal fun NewsStatus(hasPartialError: Boolean, isEmptyError: Boolean, onRetry: () -> Unit) {
+    if (hasPartialError || isEmptyError) {
+        Text(stringResource(if (isEmptyError) R.string.home_news_empty_error else R.string.home_news_partial_error),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
     }
 }
 
-/** An immersive card: the photo fills the whole card, with the headline and
- * source overlaid at the bottom on a functional gradient scrim (added only
- * to guarantee text contrast, never decorative). */
 @Composable
-fun NewsCard(headline: HeadlineEntity, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.clickable(onClick = onClick), shape = MaterialTheme.shapes.medium) {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 5f)) {
-            NewsCardImage(headline, modifier = Modifier.fillMaxSize())
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)),
-                            startY = 0.35f
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(6.dp)
-            ) {
-                NewsSourceBadge(headline.sourceLabel)
-                Spacer(Modifier.height(3.dp))
-                // The headline title is French source content -- always LTR,
-                // regardless of a Persian (RTL) interface, same as article
-                // bodies on the Reading screen.
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    Text(
-                        headline.title,
-                        style = FrenchReaderDesign.editorialTypography.articleHeadline.copy(
-                            fontSize = 13.sp,
-                            lineHeight = 17.sp
-                        ),
-                        color = Color.White,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+internal fun NewsHeadlineRow(headline: HeadlineEntity, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (!headline.imageUrl.isNullOrBlank()) NewsCardImage(headline, Modifier.size(56.dp).clip(MaterialTheme.shapes.small))
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Column(Modifier.weight(1f)) {
+                Text(headline.sourceLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(headline.title, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
-    }
-}
-
-@Composable
-private fun NewsSourceBadge(text: String) {
-    Surface(
-        shape = MaterialTheme.shapes.extraSmall,
-        color = Color.White.copy(alpha = 0.16f),
-        contentColor = Color.White
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 11.sp),
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
-        )
     }
 }
 
@@ -489,144 +334,6 @@ private fun NewsSourcePlaceholder(sourceId: String, modifier: Modifier) {
             contentDescription = stringResource(R.string.home_news_image_unavailable),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-fun ContinueReadingCard(
-    doc: TextDocument,
-    body: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val metrics = remember(doc.id, body, doc.lastChunkIndex) { homeReadingMetrics(doc, body) }
-    Column(modifier = modifier) {
-        EditorialSectionHeader(
-            title = stringResource(R.string.home_section_continue_reading),
-            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall)
-        )
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clickable(onClick = onClick)
-        ) {
-            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailMedium))
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        Text(
-                            doc.title,
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        doc.sourceName?.let {
-                            Text(
-                                it,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                            Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
-                        }
-                        doc.level?.let { TextLevelBadge(it) }
-                    }
-                    Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
-                    EditorialProgressIndicator(
-                        progress = metrics.progressFraction,
-                        label = stringResource(R.string.home_progress_percent, metrics.progressPercent)
-                    )
-                    Text(
-                        text = if (metrics.estimatedRemainingMinutes > 0) {
-                            stringResource(R.string.home_remaining_minutes, metrics.estimatedRemainingMinutes)
-                        } else {
-                            stringResource(R.string.home_reading_complete)
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-                EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
-            }
-        }
-    }
-}
-
-@Composable
-fun RecentTextsSection(
-    documents: List<TextDocument>,
-    bodyByTextId: Map<Long, String> = emptyMap(),
-    onOpen: (TextDocument) -> Unit,
-    onSeeAll: () -> Unit,
-    onAddText: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        EditorialSectionHeader(
-            title = stringResource(R.string.home_section_my_texts),
-            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall),
-            trailing = { TextButton(onClick = onSeeAll) { Text(stringResource(R.string.home_action_see_all)) } }
-        )
-        if (documents.isEmpty()) {
-            EditorialEmptyState(
-                icon = Icons.Default.Article,
-                title = stringResource(R.string.home_recent_empty),
-                body = "",
-                actionLabel = stringResource(R.string.action_add_text),
-                onAction = onAddText
-            )
-        } else {
-            documents.forEach { doc ->
-                RecentTextRow(
-                    doc,
-                    bodyByTextId[doc.id].orEmpty(),
-                    onClick = { onOpen(doc) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentTextRow(doc: TextDocument, body: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailSmall))
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                Text(doc.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            }
-            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(doc.createdAtMs))
-            val minutes = remember(doc.id, body) { estimatedReadingMinutes(body) }
-            val metadata = doc.sourceName?.let { "$it · $date" } ?: date
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (minutes > 0) "$metadata · " + stringResource(R.string.home_estimated_minutes, minutes) else metadata,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                doc.level?.let {
-                    Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
-                    TextLevelBadge(it)
-                }
-            }
-        }
     }
 }
 
@@ -671,7 +378,7 @@ fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.videos_title),
-                    style = MaterialTheme.typography.titleSmall
+                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
                 )
                 Text(
                     text = stringResource(R.string.videos_home_support),
@@ -680,6 +387,33 @@ fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
                 )
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+fun ContinueWatchingCard(
+    video: com.ziaee.frenchreader.watch.RecentVideo,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(onClick = onClick, modifier = modifier) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.videos_continue),
+                style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                AsyncImage(model = "https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg", contentDescription = null,
+                    contentScale = ContentScale.Crop, modifier = Modifier.size(80.dp, 45.dp).clip(MaterialTheme.shapes.small))
+                Column(Modifier.weight(1f)) {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Text(video.title.ifBlank { video.videoId }, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleSmall)
+                    }
+                    val seconds = video.positionMs / 1000
+                    Text(stringResource(R.string.videos_progress, seconds / 60, seconds % 60),
+                        style = MaterialTheme.typography.labelSmall)
+                }
+            }
         }
     }
 }

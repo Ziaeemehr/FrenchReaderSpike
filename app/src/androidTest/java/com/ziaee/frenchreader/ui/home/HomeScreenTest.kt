@@ -5,10 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
@@ -59,9 +55,10 @@ class HomeScreenTest {
         state: HomeUiState,
         selectedHeadline: HeadlineEntity? = null,
         onSelectHeadline: (HeadlineEntity) -> Unit = {},
-        onFilePickerClick: () -> Unit = {},
         onOpenVocab: () -> Unit = {},
-        onOpenStatistics: () -> Unit = {},
+        onOpenProgress: () -> Unit = {},
+        onOpenNews: () -> Unit = {},
+        onAddStudyLog: () -> Unit = {},
         onOpenLibrary: () -> Unit = {},
         onAddTextClick: () -> Unit = {},
         onOpenGradedReaders: () -> Unit = {},
@@ -80,9 +77,10 @@ class HomeScreenTest {
                     snackbarHostState = remember { SnackbarHostState() },
                     onOpenDictionary = onOpenDictionary,
                     onSearchClick = onSearchClick,
-                    onFilePickerClick = onFilePickerClick,
                     onOpenVocab = onOpenVocab,
-                    onOpenStatistics = onOpenStatistics,
+                    onOpenProgress = onOpenProgress,
+                    onOpenNews = onOpenNews,
+                    onAddStudyLog = onAddStudyLog,
                     onOpenSettings = {},
                     onOpenLibrary = onOpenLibrary,
                     onAddTextClick = onAddTextClick,
@@ -90,7 +88,6 @@ class HomeScreenTest {
                     onSelectHeadline = onSelectHeadline,
                     onRetryNews = {},
                     onPullRefresh = {},
-                    onOpenText = {},
                     onDownloadOrOpen = {},
                     onDismissPreview = {},
                     onStartReview = onStartReview
@@ -114,13 +111,9 @@ class HomeScreenTest {
             .performScrollToNode(hasText(string(R.string.home_section_today_news)))
         composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).assertExists()
         composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
-            .performScrollToNode(hasText(string(R.string.home_section_continue_reading)))
-        composeTestRule.onNodeWithText(string(R.string.home_section_continue_reading)).assertExists()
-        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
-            .performScrollToNode(hasText(string(R.string.home_section_my_texts)))
-        composeTestRule.onNodeWithText(string(R.string.home_section_my_texts)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.home_action_see_all)).assertExists()
+        composeTestRule.onNodeWithText("En cours de lecture").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Mon texte").assertDoesNotExist()
+
     }
 
     @Test
@@ -139,9 +132,8 @@ class HomeScreenTest {
                     isPreviewAlreadyDownloaded = false,
                     snackbarHostState = remember { SnackbarHostState() },
                     onSearchClick = {},
-                    onFilePickerClick = {},
                     onOpenVocab = {},
-                    onOpenStatistics = {},
+                    onOpenProgress = {},
                     onOpenSettings = {},
                     onOpenLibrary = {},
                     onAddTextClick = {},
@@ -149,7 +141,6 @@ class HomeScreenTest {
                     onSelectHeadline = { selected = it },
                     onRetryNews = {},
                     onPullRefresh = {},
-                    onOpenText = {},
                     onDownloadOrOpen = {},
                     onDismissPreview = {},
                     onStartReview = {}
@@ -157,8 +148,41 @@ class HomeScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(sampleHeadline.title))
         composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).performClick()
         composeTestRule.onNodeWithText(string(R.string.preview_action_download_read)).assertExists()
+    }
+
+    @Test
+    fun progressActionsHaveIndependentCallbacks() {
+        var progressClicks = 0
+        var addClicks = 0
+        setHomeContent(HomeUiState(todayActivityMinutes = 5.0),
+            onOpenProgress = { progressClicks++ }, onAddStudyLog = { addClicks++ })
+
+        composeTestRule.onNodeWithText(string(R.string.activity_goal_done)).assertExists()
+        composeTestRule.onNodeWithContentDescription(string(R.string.study_log_add_time)).performClick()
+        assertEquals(1, addClicks)
+        assertEquals(0, progressClicks)
+        composeTestRule.onNodeWithText(string(R.string.progress_title)).performClick()
+        assertEquals(1, progressClicks)
+    }
+
+    @Test
+    fun compactNewsShowsLatestThreeAndAllOpensNews() {
+        val headlines = (1..4).map { index ->
+            headline("guid-$index").copy(title = "Headline $index", publishedAtMs = index.toLong())
+        }
+        var clicks = 0
+        setHomeContent(HomeUiState(headlines = headlines), onOpenNews = { clicks++ })
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG).performScrollToNode(hasText("Headline 2"))
+        composeTestRule.onNodeWithText("Headline 1").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Headline 2").assertExists()
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(string(R.string.news_all_count, 4)))
+        composeTestRule.onNodeWithText(string(R.string.news_all_count, 4)).performClick()
+        assertEquals(1, clicks)
     }
 
     @Test
@@ -179,16 +203,14 @@ class HomeScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertDoesNotExist()
 
         composeTestRule.onNode(
             androidx.compose.ui.test.hasContentDescription(string(R.string.home_more_actions))
         ).performClick()
 
-        composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertExists()
     }
 
@@ -203,7 +225,6 @@ class HomeScreenTest {
         composeTestRule
             .onNodeWithText(string(R.string.home_summary_saved_words, 7))
             .assertHasClickAction()
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .performClick()
 
         assertEquals(1, clicks)
@@ -247,9 +268,6 @@ class HomeScreenTest {
     fun homeIsSelectedInBottomNavigationAndLibraryAddRetainCallbacks() {
         var libraryClicks = 0
         var addTextClicks = 0
-        // A non-empty recentTexts list keeps My Texts' own "Add text" empty-state
-        // action from also rendering, which would otherwise make the bottom
-        // nav's "Add text" label ambiguous.
         setHomeContent(
             state = HomeUiState(recentTexts = listOf(TextDocument(id = 1L, title = "Mon texte", rawText = "Texte"))),
             onOpenLibrary = { libraryClicks++ },

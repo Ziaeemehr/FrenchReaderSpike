@@ -245,16 +245,20 @@ private fun AppNavHost() {
                 onOpenText = { id -> navController.navigate("reading/$id") },
                 onOpenLibrary = { navigateToTab("library") },
                 onOpenVocab = { navigateToTab("vocab") },
-                onOpenStatistics = { navController.navigate("statistics") },
+                onOpenProgress = { navController.navigate("progress") },
+                onOpenNews = { navController.navigate("news") },
                 onOpenSettings = { navController.navigate("settings") },
                 onOpenResources = { navigateToTab("resources") },
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
                 onOpenVideos = { navController.navigate("videos") },
+                onContinueWatching = { video ->
+                    navController.navigate("watch?videoId=${video.videoId}&title=${Uri.encode(video.title)}&channel=${Uri.encode(video.channel)}")
+                },
                 onOpenGrammar = { navController.navigate("grammar") },
                 onOpenExams = { route -> navController.navigate(route) },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },
-                onOpenStudyLog = { navController.navigate("study_log") },
+                onAddStudyLog = { navController.navigate("study_log/entry?id=-1") },
                 openAddTextSheet = openAddTextOnHome,
                 onAddTextSheetOpened = { openAddTextOnHome = false }
             )
@@ -369,6 +373,22 @@ private fun AppNavHost() {
             )
         }
         composable("dataset") { DatasetScreen { navController.popBackStack() } }
+        composable("progress?tab={tab}", arguments = listOf(navArgument("tab") { type = NavType.IntType; defaultValue = 0 })) { entry ->
+            com.ziaee.frenchreader.ui.home.ProgressScreen(
+                onBack = { navController.popBackStack("home", false) },
+                onAdd = { navController.navigate("study_log/entry?id=-1") },
+                onEdit = { navController.navigate("study_log/entry?id=$it") },
+                onSources = { navController.navigate("study_log/sources") },
+                onCharts = { navController.navigate("study_log/charts") },
+                initialTab = entry.arguments?.getInt("tab") ?: 0
+            )
+        }
+        composable("news") {
+            com.ziaee.frenchreader.ui.home.NewsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenText = { navController.navigate("reading/$it") }
+            )
+        }
         composable("statistics") {
             StatisticsScreen(
                 onBack = { navController.popBackStack() },

@@ -165,10 +165,6 @@
     <string name="add_text_save_open">Enregistrer et ouvrir</string>
     <string name="text_untitled">Sans titre</string>
     <string name="home_section_today_news">Actualités du jour</string>
-    <string name="home_section_continue_reading">Continuer la lecture</string>
-    <string name="home_section_my_texts">Mes textes</string>
-    <string name="home_action_see_all">Tout voir</string>
-    <string name="home_recent_empty">Aucun texte pour l’instant. Ajoutez-en un pour commencer.</string>
     <string name="home_news_empty_error">Impossible de charger les actualités. Vérifiez votre connexion et réessayez.</string>
     <string name="home_news_partial_error">Une source n’a pas pu être actualisée.</string>
     <string name="preview_action_download_read">Télécharger et lire</string>
@@ -365,7 +361,6 @@
     <string name="home_search_hint">Rechercher un sujet, un mot ou un article…</string>
     <string name="home_summary_learned">%1$d appris</string>
     <string name="home_summary_saved_words">%1$d mots enregistrés</string>
-    <string name="home_summary_saved_texts">%1$d textes</string>
     <string name="home_summary_streak_days">%1$d jours d\'affilée</string>
     <string name="home_section_daily_review">Révision du jour</string>
     <string name="home_review_due">%1$d mots sont prêts</string>
@@ -373,11 +368,6 @@
     <string name="home_review_start">Commencer</string>
     <string name="home_review_complete">Tout est à jour</string>
     <string name="home_review_complete_support">Aucun mot n\'est à réviser pour le moment.</string>
-    <string name="home_action_resume">Reprendre</string>
-    <string name="home_progress_percent">%1$d %% terminé</string>
-    <string name="home_remaining_minutes">Environ %1$d min restantes</string>
-    <string name="home_reading_complete">Lecture terminée</string>
-    <string name="home_estimated_minutes">Lecture de %1$d min</string>
     <string name="home_more_actions">Plus d\'actions d\'accueil</string>
     <string name="home_action_import_file">Importer un fichier</string>
     <string name="home_action_import_folder">Importer un dossier</string>
@@ -387,7 +377,6 @@
     <string name="epub_import_failed">Impossible de lire cet EPUB</string>
     <string name="batch_import_summary">%1$d importés, %2$d ignorés, %3$d échoués</string>
     <string name="home_action_vocabulary">Vocabulaire enregistré</string>
-    <string name="home_action_statistics">Statistiques d\'apprentissage</string>
     <string name="home_action_graded_readers">Mes ressources</string>
     <string name="resources_title">Mes ressources</string>
     <string name="resources_add">Ajouter</string>
@@ -660,7 +649,7 @@
     <string name="editor_discard_message">Vos modifications seront perdues.</string>
     <string name="editor_discard">Ignorer</string>
     <string name="editor_keep_editing">Continuer la modification</string>
-    <string name="study_log_title">Journal d’étude</string><string name="study_log_home_card">Suivez votre temps d’étude</string>
+    <string name="study_log_title">Journal d’étude</string>
     <string name="study_log_add_time">Ajouter du temps d’étude</string><string name="study_log_edit_entry">Modifier l’entrée</string><string name="study_log_this_week">Cette semaine : %1$s</string><string name="study_log_least_studied">Compétence la moins étudiée : %1$s</string><string name="study_log_no_data">Aucune donnée</string>
     <string name="study_log_sources">Sources</string><string name="study_log_charts">Graphiques</string><string name="study_log_delete">Supprimer</string><string name="study_log_delete_confirm">Supprimer cette entrée ?</string><string name="study_log_cancel">Annuler</string>
     <string name="study_log_hours">Heures</string><string name="study_log_minutes">Minutes</string><string name="study_log_skill">Compétence</string><string name="study_log_no_source">Sans source</string><string name="study_log_new_source">+ Nouvelle source…</string><string name="study_log_note">Note</string><string name="study_log_validation_error">Saisissez de 1 à 1 440 minutes et ne choisissez pas une date future.</string>
@@ -697,7 +686,7 @@
     <string name="study_log_more">Plus</string>
     <string name="study_log_no_study">Aucune étude</string>
     <string name="study_log_year_summary">%1$s en %2$d · %3$d jours actifs · plus longue série : %4$d jours</string>
-    <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string><string name="study_log_home_summary_empty">Rien d’enregistré cette semaine</string>
+    <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string>
     <string name="grammar_title">Référence grammaticale</string>
     <string name="grammar_entry_description">Notes avec exemples français et explications en persan</string>
     <string name="grammar_empty">Aucune note disponible</string>
@@ -993,4 +982,8 @@
     <string name="activity_goal_minutes">%1$d min</string>
     <string name="activity_goal_progress">%1$d / %2$d min aujourd’hui</string>
     <string name="activity_goal_done">Objectif du jour atteint ✓</string>
+    <string name="progress_title">Progrès</string>
+    <string name="progress_overview">Vue d’ensemble</string>
+    <string name="progress_study_time">Temps d’étude</string>
+    <string name="news_all_count">Tout (%1$d)</string>
 </resources>

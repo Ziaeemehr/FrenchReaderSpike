@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -57,6 +56,10 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
     listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource, WikisourceContentSource)
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
+    private val watchHistory = com.ziaee.frenchreader.watch.WatchHistory(app)
+    var continueWatching by mutableStateOf<com.ziaee.frenchreader.watch.RecentVideo?>(null)
+        private set
+
     private val db = AppDatabase.get(app)
     var examRoute by mutableStateOf("exams")
         private set
@@ -111,25 +114,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private var headlineLookupJob: Job? = null
     private var searchJob: Job? = null
 
-    private data class TextsWithBodies(
-        val documents: List<TextDocument>,
-        val bodies: Map<Long, String>
-    )
-
-    private val textsWithBodies = db.textDao().observeAll().mapLatest { documents ->
-        TextsWithBodies(
-            documents,
-            documents.take(MAX_RECENT_TEXTS).associate { it.id to bodyStore.read(it) }
-        )
-    }
-
-    private val continueWithBody = db.textDao().observeMostRecentlyAccessed().mapLatest { document ->
-        document to document?.let { bodyStore.read(it) }
-    }
-
     private val activityStreak = observeActivityStreak(app, db)
 
-    /** Minutes studied today and this week (study log), shown on the Home study-log button. */
+    /** Minutes studied today and this week (study log), shown on the Home progress card. */
     val studyLogMinutes: StateFlow<Pair<Int, Int>> = com.ziaee.frenchreader.studylog.localEpochDayFlow()
         .flatMapLatest { today ->
             val start = com.ziaee.frenchreader.studylog.weekStart(
@@ -144,9 +131,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     val uiState: StateFlow<HomeUiState> = combine(
         newsRepository.observeHeadlines(),
-        textsWithBodies,
+        db.textDao().observeAll(),
         db.vocabDao().observeAll(),
-        continueWithBody,
         isRefreshing,
         sourceErrors,
         importingKey,
@@ -154,24 +140,20 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         timeRefresh
     ) { values ->
         @Suppress("UNCHECKED_CAST")
-        val texts = values[1] as TextsWithBodies
-        val continuing = values[3] as Pair<TextDocument?, String?>
+        val texts = values[1] as List<TextDocument>
         composeHomeState(
             headlines = personalizeHeadlines(
                 values[0] as List<HeadlineEntity>,
                 NewsPrefs.getKeywords(app),
                 NewsPrefs.getMatchingFirst(app)
             ),
-            allTexts = texts.documents,
+            allTexts = texts,
             vocabEntries = values[2] as List<VocabEntry>,
-            continueReading = continuing.first,
-            bodyByTextId = texts.bodies + listOfNotNull(
-                continuing.first?.id?.let { id -> continuing.second?.let { id to it } }
-            ),
-            isRefreshing = values[4] as Boolean,
-            sourceErrors = values[5] as List<String>,
-            importingKey = values[6] as String?,
-            activityStreak = values[7] as ActivityStreak,
+            continueReading = null,
+            isRefreshing = values[3] as Boolean,
+            sourceErrors = values[4] as List<String>,
+            importingKey = values[5] as String?,
+            activityStreak = values[6] as ActivityStreak,
             nowMs = System.currentTimeMillis(),
             today = LocalDate.now(),
             remainingNewCards = (VocabPrefs.getMaxNewCards(app) -
@@ -335,6 +317,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun refreshTimeSensitiveState() {
+        viewModelScope.launch { continueWatching = watchHistory.readLatest().firstOrNull() }
         timeRefresh.value = System.currentTimeMillis()
     }
 

@@ -101,6 +101,17 @@ private fun LocalDate.startOfDayMs(): Long =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreen(onBack: () -> Unit, onOpenStudyLog: () -> Unit = {}) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.statistics_title)) }, navigationIcon = {
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) }
+        })
+    }) { padding ->
+        StatisticsContent(onOpenStudyLog, Modifier.padding(padding))
+    }
+}
+
+@Composable
+fun StatisticsContent(onOpenStudyLog: () -> Unit = {}, modifier: Modifier = Modifier) {
     val vm: StatisticsViewModel = viewModel()
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(vm, lifecycleOwner) {
@@ -119,35 +130,11 @@ fun StatisticsScreen(onBack: () -> Unit, onOpenStudyLog: () -> Unit = {}) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.statistics_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        if (vm.loading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-            return@Scaffold
-        }
+    if (vm.loading) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    } else {
         val state = vm.uiState
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp)
-        ) {
+        Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
             OutlinedButton(onClick = onOpenStudyLog, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.study_log_title)) }
             StreakSection(state.streakDays)
             WeeklyListeningSection(state.weeklyListening)
