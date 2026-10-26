@@ -628,7 +628,7 @@
     <string name="update_up_to_date">Vous avez la dernière version</string>
     <string name="update_check_failed">Impossible de vérifier les mises à jour. Vérifiez votre connexion.</string>
     <string name="update_checking">Vérification…</string>
-    <string name="update_auto_check">Rechercher automatiquement les mises à jour</string>
+    <string name="update_auto_check">Rechercher les nouvelles versions</string>
     <string name="dictionary_apply_word">Rechercher</string>
     <string name="dictionary_reset_word">Rétablir</string>
     <string name="interval_this_session">Cette séance</string>

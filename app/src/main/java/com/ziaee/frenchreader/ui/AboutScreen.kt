@@ -65,6 +65,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.update.isStoreManagedInstall
 import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 
@@ -78,6 +79,7 @@ private const val PROJECT_URL = "https://github.com/Ziaeemehr/FrenchReaderSpike"
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val storeManaged = remember(context) { isStoreManagedInstall(context) }
     val version = remember(context) { readAppVersion(context) }
     val openFailedMessage = stringResource(R.string.about_open_link_failed)
     val scope = rememberCoroutineScope()
@@ -86,7 +88,9 @@ fun AboutScreen(onBack: () -> Unit) {
     val upToDate = stringResource(R.string.update_up_to_date)
     val checkFailed = stringResource(R.string.update_check_failed)
     // Asked for explicitly here, so offer it even if this version was skipped before.
-    foundUpdate?.let { UpdateDialog(it, onDismiss = { foundUpdate = null }, showSkip = false) }
+    if (!storeManaged) {
+        foundUpdate?.let { UpdateDialog(it, onDismiss = { foundUpdate = null }, showSkip = false) }
+    }
     val openUrl: (String) -> Unit = { url ->
         launchIntent(context, Intent(Intent.ACTION_VIEW, Uri.parse(url)), openFailedMessage)
     }
@@ -171,20 +175,22 @@ fun AboutScreen(onBack: () -> Unit) {
             AboutSection(stringResource(R.string.about_project_section)) {
                 AboutLinkRow(Icons.Default.Star, stringResource(R.string.about_star), stringResource(R.string.about_star_detail)) { openUrl(PROJECT_URL) }
                 AboutLinkRow(Icons.Default.Code, stringResource(R.string.about_source_code), PROJECT_URL) { openUrl(PROJECT_URL) }
-                AboutLinkRow(
-                    Icons.Default.Update,
-                    stringResource(R.string.about_check_updates),
-                    if (checkingUpdate) stringResource(R.string.update_checking) else "v${version.name}"
-                ) {
-                    if (checkingUpdate) return@AboutLinkRow
-                    checkingUpdate = true
-                    scope.launch {
-                        val latest = fetchLatestRelease()
-                        checkingUpdate = false
-                        when {
-                            latest == null -> Toast.makeText(context, checkFailed, Toast.LENGTH_SHORT).show()
-                            isNewerVersion(latest.version, version.name) -> foundUpdate = latest
-                            else -> Toast.makeText(context, upToDate, Toast.LENGTH_SHORT).show()
+                if (!storeManaged) {
+                    AboutLinkRow(
+                        Icons.Default.Update,
+                        stringResource(R.string.about_check_updates),
+                        if (checkingUpdate) stringResource(R.string.update_checking) else "v${version.name}"
+                    ) {
+                        if (checkingUpdate) return@AboutLinkRow
+                        checkingUpdate = true
+                        scope.launch {
+                            val latest = fetchLatestRelease()
+                            checkingUpdate = false
+                            when {
+                                latest == null -> Toast.makeText(context, checkFailed, Toast.LENGTH_SHORT).show()
+                                isNewerVersion(latest.version, version.name) -> foundUpdate = latest
+                                else -> Toast.makeText(context, upToDate, Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }

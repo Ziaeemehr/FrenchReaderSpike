@@ -8,6 +8,16 @@ import org.junit.Test
 
 class AppUpdateTest {
     @Test
+    fun onlyBazaarInstallsAreStoreManaged() {
+        assertTrue(isStoreManagedInstall("com.farsitel.bazaar"))
+        assertFalse(isStoreManagedInstall(null as String?))
+        assertFalse(isStoreManagedInstall(""))
+        assertFalse(isStoreManagedInstall("com.android.vending"))
+        assertFalse(isStoreManagedInstall("com.android.shell"))
+        assertFalse(isStoreManagedInstall("com.farsitel.bazaar.other"))
+    }
+
+    @Test
     fun comparesVersionsNumericallyWithOptionalPrefixAndMissingParts() {
         assertTrue(isNewerVersion("v0.9.0", "0.8.0"))
         assertTrue(isNewerVersion("0.10.0", "0.9.9"))

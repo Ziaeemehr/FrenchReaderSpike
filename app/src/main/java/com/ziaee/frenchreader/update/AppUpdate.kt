@@ -9,6 +9,21 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
+/** Bazaar manages updates for its installs. Unknown installers keep the normal behavior. */
+fun isStoreManagedInstall(installer: String?): Boolean = installer == "com.farsitel.bazaar"
+
+@Suppress("DEPRECATION")
+fun isStoreManagedInstall(context: Context): Boolean {
+    val installer = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+        } else {
+            context.packageManager.getInstallerPackageName(context.packageName)
+        }
+    }.getOrNull()
+    return isStoreManagedInstall(installer)
+}
+
 /** A published GitHub release: [version] without the leading "v", [notes] as written on GitHub. */
 data class ReleaseInfo(val version: String, val notes: String, val pageUrl: String)
 

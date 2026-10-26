@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.update.isStoreManagedInstall
 import com.ziaee.frenchreader.backup.AuthorizationOutcome
 import com.ziaee.frenchreader.backup.AutoBackup
 import com.ziaee.frenchreader.backup.BackupPrefs
@@ -148,11 +149,6 @@ fun SettingsScreen(
             ) {
                 when (selectedTab) {
                     0 -> {
-                        var autoUpdate by remember { mutableStateOf(UpdatePrefs.isAutoCheckEnabled(context)) }
-                        SettingsSwitchRow(stringResource(R.string.update_auto_check), autoUpdate) {
-                            autoUpdate = it
-                            UpdatePrefs.setAutoCheckEnabled(context, it)
-                        }
                         CompactSettingLabel(R.string.language_title)
                         CompactChoiceRow(AppLanguage.entries, appLanguage, { stringResource(it.labelResource()) }) { language ->
                             LocalePrefs.set(context, language)
@@ -224,6 +220,13 @@ fun SettingsScreen(
                         Button(onClick = onOpenDataset, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.dataset_settings_entry))
                         }
+                    }
+                }
+                if (!remember(context) { isStoreManagedInstall(context) }) {
+                    var autoUpdate by remember { mutableStateOf(UpdatePrefs.isAutoCheckEnabled(context)) }
+                    SettingsSwitchRow(stringResource(R.string.update_auto_check), autoUpdate) {
+                        autoUpdate = it
+                        UpdatePrefs.setAutoCheckEnabled(context, it)
                     }
                 }
                 OutlinedButton(

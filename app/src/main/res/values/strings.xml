@@ -628,7 +628,7 @@
     <string name="update_up_to_date">You have the latest version</string>
     <string name="update_check_failed">Couldn\'t check for updates. Check your connection.</string>
     <string name="update_checking">Checking…</string>
-    <string name="update_auto_check">Check for app updates automatically</string>
+    <string name="update_auto_check">Check for new versions</string>
     <string name="dictionary_apply_word">Look up</string>
     <string name="dictionary_reset_word">Reset</string>
     <string name="interval_this_session">This session</string>
