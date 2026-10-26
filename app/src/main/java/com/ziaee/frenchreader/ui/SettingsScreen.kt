@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
@@ -94,7 +95,9 @@ import java.util.Locale
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenAbout: () -> Unit,
-    onOpenDataset: () -> Unit
+    onOpenDataset: () -> Unit,
+    onOpenHelp: () -> Unit,
+    onOpenVoiceGuide: () -> Unit
 ) {
     var showPreparation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     if (showPreparation) {
@@ -133,6 +136,11 @@ fun SettingsScreen(
         var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
         Column(Modifier.fillMaxWidth().padding(padding)) {
+            Button(onClick = onOpenHelp, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Icon(Icons.Default.HelpOutline, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.help_guides_title))
+            }
             SettingsTabRow(tabTitles = tabTitles, selectedTab = selectedTab, onSelect = { selectedTab = it })
             Column(
                 Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
@@ -201,7 +209,7 @@ fun SettingsScreen(
                         VocabularyReviewSettings(context)
                     }
                     2 -> NewsSettings(context)
-                    3 -> LocalXttsSettings(context, scope, snackbarHostState)
+                    3 -> LocalXttsSettings(context, scope, snackbarHostState, onOpenVoiceGuide)
                     4 -> ShadowingSettings(context, scope, snackbarHostState)
                     5 -> TtsCacheSettings(context, scope, snackbarHostState)
                     6 -> {
@@ -419,10 +427,9 @@ private fun NewsCategory.labelResource(): Int = when (this) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.CoroutineScope, snackbarHostState: SnackbarHostState) {
+private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.CoroutineScope, snackbarHostState: SnackbarHostState, onOpenVoiceGuide: () -> Unit) {
     val pairedComputer = com.ziaee.frenchreader.net.LocalServerPrefs(context).paired
     var usePaired by remember { mutableStateOf(XttsPrefs.getUsePairedComputer(context)) }
-    var showGuide by remember { mutableStateOf(false) }
     var serverUrl by remember { mutableStateOf(XttsPrefs.getServerUrl(context)) }
     var speaker by remember { mutableStateOf(XttsPrefs.getSpeaker(context)) }
     var speakers by remember { mutableStateOf(emptyList<String>()) }
@@ -524,8 +531,8 @@ private fun LocalXttsSettings(context: Context, scope: kotlinx.coroutines.Corout
             Switch(usePaired, { usePaired = it; XttsPrefs.setUsePairedComputer(context, it) })
         }
     }
-    TextButton(onClick = { showGuide = true }) { Text(stringResource(R.string.computer_setup_guide)) }
-    if (showGuide) LocalServerGuide { showGuide = false }
+    TextButton(onClick = onOpenVoiceGuide) { Text(stringResource(R.string.computer_setup_guide)) }
+    GuideFileActions("voice-xtts-setup.md")
     if (!usePaired || pairedComputer == null) {
         OutlinedTextField(
             value = serverUrl,

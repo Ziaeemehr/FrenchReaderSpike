@@ -138,7 +138,7 @@ private val LocalReadingViewport = compositionLocalOf<ReadingViewport?> { null }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, initialFind: String? = null) {
+fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, initialFind: String? = null, onOpenGestureGuide: () -> Unit = {}) {
     val vm: ReadingViewModel = viewModel()
     val readingViewport = remember { ReadingViewport() }
     val state by vm.state.collectAsState()
@@ -417,6 +417,9 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                             }
                         },
                         actions = {
+                            IconButton(onClick = onOpenGestureGuide) {
+                                Icon(Icons.Default.HelpOutline, stringResource(R.string.gesture_guide_title))
+                            }
                             if (headings.size >= 2) {
                                 IconButton(onClick = { showContentsSheet = true }) {
                                     Icon(

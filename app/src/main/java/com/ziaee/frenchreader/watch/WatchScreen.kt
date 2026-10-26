@@ -72,6 +72,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collect
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Subtitles
@@ -107,7 +108,7 @@ import com.ziaee.frenchreader.ui.DictionaryPane
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit) {
+fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit, onOpenGestureGuide: () -> Unit = {}) {
     val vm: WatchViewModel = viewModel()
     var editingTranslation by remember(videoId) { mutableStateOf<String?>(null) }
     val state by vm.uiState.collectAsState()
@@ -441,6 +442,9 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                 val controls: @Composable () -> Unit = {
                     IconButton(onClick = { if (dictionaryOpen) closeDictionary() else onBack() }, modifier = Modifier.size(36.dp)) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.watch_back), modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = onOpenGestureGuide, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Default.HelpOutline, stringResource(R.string.gesture_guide_title), modifier = Modifier.size(20.dp))
                     }
                     IconButton(onClick = {
                         vm.setCompactPlayer(!compactPlayer)
