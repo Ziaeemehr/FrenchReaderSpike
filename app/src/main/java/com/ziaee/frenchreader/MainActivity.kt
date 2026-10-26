@@ -251,6 +251,9 @@ private fun AppNavHost() {
                 onOpenAbout = { navController.navigate("about") },
                 onOpenDataset = { navController.navigate("dataset") },
                 onOpenVideos = { navController.navigate("videos") },
+                onWatchVideo = { id, title, channel ->
+                    navController.navigate("watch?videoId=$id&title=${Uri.encode(title)}&channel=${Uri.encode(channel)}")
+                },
                 onOpenGrammar = { navController.navigate("grammar") },
                 onOpenExams = { route -> navController.navigate(route) },
                 onStartReview = { navController.navigate("vocab_review/$VOCAB_SCOPE_ALL") },

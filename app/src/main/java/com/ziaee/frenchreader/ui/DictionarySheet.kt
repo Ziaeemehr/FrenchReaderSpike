@@ -300,6 +300,30 @@ fun DictionarySheet(
     }
 }
 
+/** How many other contexts this word is already saved in; nothing when there are none. */
+@Composable
+private fun SavedElsewhereBadge(count: Int, modifier: Modifier = Modifier) {
+    if (count <= 0) return
+    val savedElsewhere = stringResource(R.string.dictionary_saved_elsewhere, count)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = savedElsewhere }
+    ) {
+        Icon(
+            Icons.Default.BookmarkAdded,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(15.dp)
+        )
+        Spacer(Modifier.width(3.dp))
+        Text(
+            count.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 /** Dictionary lookup content. [embedded] uses the parent's bounded height for the WebView. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -564,6 +588,8 @@ fun DictionaryPane(
                         }
                     )
                     if (autoTranslating) CircularProgressIndicator(modifier = Modifier.padding(horizontal = 6.dp).size(16.dp), strokeWidth = 2.dp)
+                    // Saving from another subtitle line makes a separate card, so say the word is already saved.
+                    SavedElsewhereBadge(savedState.otherContextCount, Modifier.padding(start = 6.dp))
                     Box {
                         IconButton(onClick = { listMenuExpanded = true }, modifier = Modifier.size(36.dp)) {
                             Icon(Icons.Default.Folder,
@@ -668,28 +694,7 @@ fun DictionaryPane(
                         )
                     }
                 }
-                if (savedState.otherContextCount > 0) {
-                    val savedElsewhere = stringResource(R.string.dictionary_saved_elsewhere, savedState.otherContextCount)
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .semantics(mergeDescendants = true) { contentDescription = savedElsewhere }
-                    ) {
-                        Icon(
-                            Icons.Default.BookmarkAdded,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(Modifier.width(3.dp))
-                        Text(
-                            savedState.otherContextCount.toString(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                SavedElsewhereBadge(savedState.otherContextCount, Modifier.padding(start = 8.dp))
                 Spacer(Modifier.weight(1f))
                 if (saved && savedState.exactEntry != null) {
                     IconButton(

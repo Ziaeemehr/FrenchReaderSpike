@@ -70,6 +70,7 @@ import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
 import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
+import com.ziaee.frenchreader.watch.RecentVideo
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -494,61 +495,100 @@ fun ContinueReadingCard(
     modifier: Modifier = Modifier,
 ) {
     val metrics = remember(doc.id, body, doc.lastChunkIndex) { homeReadingMetrics(doc, body) }
-    Column(modifier = modifier) {
-        EditorialSectionHeader(
-            title = stringResource(R.string.home_section_continue_reading),
-            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall)
-        )
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clickable(onClick = onClick)
-        ) {
-            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailMedium))
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        Text(
-                            doc.title,
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        doc.sourceName?.let {
-                            Text(
-                                it,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                            Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
-                        }
-                        doc.level?.let { TextLevelBadge(it) }
-                    }
-                    Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
-                    EditorialProgressIndicator(
-                        progress = metrics.progressFraction,
-                        label = stringResource(R.string.home_progress_percent, metrics.progressPercent)
-                    )
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailMedium))
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Text(
-                        text = if (metrics.estimatedRemainingMinutes > 0) {
-                            stringResource(R.string.home_remaining_minutes, metrics.estimatedRemainingMinutes)
-                        } else {
-                            stringResource(R.string.home_reading_complete)
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        doc.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-                EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    doc.sourceName?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
+                    }
+                    doc.level?.let { TextLevelBadge(it) }
+                }
+                Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
+                EditorialProgressIndicator(
+                    progress = metrics.progressFraction,
+                    label = stringResource(R.string.home_progress_percent, metrics.progressPercent)
+                )
+                Text(
+                    text = if (metrics.estimatedRemainingMinutes > 0) {
+                        stringResource(R.string.home_remaining_minutes, metrics.estimatedRemainingMinutes)
+                    } else {
+                        stringResource(R.string.home_reading_complete)
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+        }
+    }
+}
+
+@Composable
+fun ContinueWatchingCard(
+    video: RecentVideo,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val seconds = video.positionMs / 1000
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = "https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg",
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                // Same rounded, tinted frame as DocumentThumbnail while the thumbnail loads or when offline.
+                modifier = Modifier.width(FrenchReaderDesign.sizes.thumbnailMedium).aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        video.title.ifBlank { video.videoId },
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.videos_progress, seconds / 60, seconds % 60) +
+                        video.channel.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
         }
     }
 }
