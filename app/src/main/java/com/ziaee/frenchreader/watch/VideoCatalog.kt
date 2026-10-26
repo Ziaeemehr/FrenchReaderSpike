@@ -3,7 +3,11 @@ package com.ziaee.frenchreader.watch
 import com.ziaee.frenchreader.resources.DefaultResource
 import java.io.StringReader
 import java.text.Normalizer
+import java.time.LocalDate
 import java.util.Locale
+import org.json.JSONArray
+import org.json.JSONObject
+import org.json.JSONTokener
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
@@ -84,4 +88,96 @@ fun searchVideoChannels(
 fun searchChannelVideos(videos: List<ChannelVideo>, query: String): List<ChannelVideo> {
     val search = normalizeVideoSearch(query.trim())
     return videos.filter { search.isBlank() || normalizeVideoSearch(it.title).contains(search) }
+}
+
+/**
+ * Videos listed on a channel's /videos page, read from its embedded ytInitialData. YouTube's RSS feed
+ * returns 404 for many channels at times; this page carries the same latest uploads. The page gives
+ * only relative dates ("3 days ago", requested with hl=en), so [today] turns them into approximate days.
+ */
+fun parseYoutubeChannelPage(html: String, today: LocalDate): List<ChannelVideo> {
+    val data = initialData(html) ?: return emptyList()
+    val videos = mutableListOf<ChannelVideo>()
+    fun text(value: Any?): String = (value as? JSONObject)?.let { title ->
+        title.optString("simpleText").ifBlank {
+            title.optJSONArray("runs")?.let { runs -> (0 until runs.length()).joinToString("") { runs.optJSONObject(it)?.optString("text").orEmpty() } }.orEmpty()
+        }
+    }.orEmpty()
+    fun walk(node: Any?) {
+        when (node) {
+            is JSONObject -> node.keys().forEach { key ->
+                val value = node.opt(key)
+                // videoRenderer / compactVideoRenderer / videoWithContextRenderer, depending on which page YouTube serves.
+                if (key.endsWith("Renderer") && value is JSONObject && value.has("videoId")) {
+                    val id = value.optString("videoId")
+                    if (Regex("[A-Za-z0-9_-]{11}").matches(id)) videos += ChannelVideo(id, text(value.opt("title")).ifBlank { text(value.opt("headline")) },
+                        relativeDay(text(value.opt("publishedTimeText")), today)?.toString().orEmpty(),
+                        "https://i.ytimg.com/vi/$id/mqdefault.jpg")
+                } else if (key == "lockupViewModel" && value is JSONObject) {
+                    val id = value.optString("contentId")
+                    val metadata = value.optJSONObject("metadata")?.optJSONObject("lockupMetadataViewModel")
+                    if (Regex("[A-Za-z0-9_-]{11}").matches(id)) videos += ChannelVideo(id,
+                        metadata?.optJSONObject("title")?.optString("content").orEmpty(), "",
+                        "https://i.ytimg.com/vi/$id/mqdefault.jpg")
+                } else walk(value)
+            }
+            is JSONArray -> for (index in 0 until node.length()) walk(node.opt(index))
+        }
+    }
+    walk(data)
+    return videos.distinctBy { it.videoId }
+}
+
+/** The page embeds ytInitialData as a JSON script element, a JS string literal (mobile) or a JS object literal. */
+private fun initialData(html: String): JSONObject? = runCatching {
+    Regex("""<script id="yt-initial-data"[^>]*>(.*?)</script>""", RegexOption.DOT_MATCHES_ALL).find(html)?.let {
+        return@runCatching JSONObject(it.groupValues[1])
+    }
+    val quoted = html.indexOf("var ytInitialData = '")
+    if (quoted >= 0) {
+        val start = quoted + "var ytInitialData = '".length
+        return@runCatching JSONObject(decodeJsString(html.substring(start, html.indexOf("';", start))))
+    }
+    val literal = html.indexOf("var ytInitialData = {")
+    if (literal >= 0) JSONTokener(html.substring(literal + "var ytInitialData = ".length)).nextValue() as JSONObject else null
+}.getOrNull()
+
+private fun decodeJsString(value: String): String {
+    val out = StringBuilder(value.length)
+    var index = 0
+    while (index < value.length) {
+        val char = value[index]
+        if (char != '\\' || index + 1 >= value.length) { out.append(char); index++; continue }
+        when (val next = value[index + 1]) {
+            'x' -> { out.append(value.substring(index + 2, index + 4).toInt(16).toChar()); index += 4 }
+            'u' -> { out.append(value.substring(index + 2, index + 6).toInt(16).toChar()); index += 6 }
+            'n' -> { out.append('\n'); index += 2 }
+            't' -> { out.append('\t'); index += 2 }
+            else -> { out.append(next); index += 2 }
+        }
+    }
+    return out.toString()
+}
+
+internal fun relativeDay(text: String, today: LocalDate): LocalDate? {
+    val match = Regex("""(?:Streamed |Premiered )?(\d+) (second|minute|hour|day|week|month|year)s? ago""").find(text) ?: return null
+    val amount = match.groupValues[1].toLong()
+    return when (match.groupValues[2]) {
+        "second", "minute", "hour" -> today
+        "day" -> today.minusDays(amount)
+        "week" -> today.minusWeeks(amount)
+        "month" -> today.minusMonths(amount)
+        else -> today.minusYears(amount)
+    }
+}
+
+/** The same list as a minimal Atom feed, so the RSS cache and [parseYoutubeFeed] keep working unchanged. */
+fun youtubeFeedXml(videos: List<ChannelVideo>): String = buildString {
+    fun escape(value: String) = value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+    append("""<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/">""")
+    videos.forEach { video ->
+        append("<entry><yt:videoId>${video.videoId}</yt:videoId><title>${escape(video.title)}</title>")
+        append("<published>${escape(video.published)}</published><media:group><media:thumbnail url=\"${escape(video.thumbnail)}\"/></media:group></entry>")
+    }
+    append("</feed>")
 }
