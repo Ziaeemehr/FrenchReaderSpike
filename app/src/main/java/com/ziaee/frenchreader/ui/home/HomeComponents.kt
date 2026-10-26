@@ -1,6 +1,8 @@
 package com.ziaee.frenchreader.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.AddCircleOutline
@@ -153,46 +155,43 @@ fun DailyReviewCard(
     onStart: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    val due = dueCount > 0
+    val accent = if (due) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
+    Card(onClick = onStart, enabled = due, modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (dueCount > 0) Icons.Default.MenuBook else Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = if (dueCount > 0) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            // Flashcards, not a book: the book icon belongs to "continue reading".
+            Box(Modifier.size(48.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(if (due) Icons.Default.Style else Icons.Default.CheckCircle, contentDescription = null,
+                    tint = accent, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.home_section_daily_review),
-                    style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp)
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (dueCount > 0) {
-                        stringResource(R.string.home_review_due, dueCount)
-                    } else {
-                        stringResource(R.string.home_review_complete)
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = if (dueCount > 0) {
-                        stringResource(R.string.home_review_due_support)
-                    } else {
-                        stringResource(R.string.home_review_complete_support)
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = if (due) stringResource(R.string.home_review_due, dueCount)
+                        else stringResource(R.string.home_review_complete),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            if (dueCount > 0) {
+            if (due) {
                 Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-                EditorialPrimaryButton(text = stringResource(R.string.home_review_start), onClick = onStart)
+                FilledTonalIconButton(onClick = onStart, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, stringResource(R.string.home_review_start), Modifier.size(24.dp))
+                }
             }
         }
     }
