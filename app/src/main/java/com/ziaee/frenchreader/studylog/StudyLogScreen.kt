@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,13 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,7 +59,6 @@ import com.ziaee.frenchreader.data.StudySource
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,55 +71,44 @@ fun StudyLogScreen(
     onCharts: () -> Unit,
     vm: StudyLogViewModel = viewModel()
 ) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.study_log_title)) }, navigationIcon = {
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) }
+        })
+    }) { padding ->
+        StudyLogContent(onAdd, onEdit, onSources, onCharts, Modifier.padding(padding), vm)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun StudyLogContent(
+    onAdd: () -> Unit,
+    onEdit: (Long) -> Unit,
+    onSources: () -> Unit,
+    onCharts: () -> Unit,
+    modifier: Modifier = Modifier,
+    vm: StudyLogViewModel = viewModel()
+) {
     val state by vm.uiState.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var deleting by remember { mutableStateOf<StudySession?>(null) }
-    var menu by remember { mutableStateOf(false) }
     var settings by remember { mutableStateOf(false) }
     val undoLabel = stringResource(R.string.study_log_undo)
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.study_log_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { menu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = null)
-                        }
-                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.study_log_settings)) },
-                                onClick = {
-                                    menu = false
-                                    settings = true
-                                }
-                            )
-                        }
-                    }
-                }
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbar) },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = onAdd) {
-                Text(stringResource(R.string.study_log_add_time))
+    Box(modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(onClick = onAdd) { Text(stringResource(R.string.study_log_add_time)) }
+                TextButton(onClick = { settings = true }) { Text(stringResource(R.string.study_log_settings)) }
             }
+            StudyLogList(state, onEdit, onSources, onCharts, { deleting = it },
+                Modifier.weight(1f).fillMaxWidth().padding(16.dp))
         }
-    ) { padding ->
-        StudyLogList(
-            state = state,
-            onEdit = onEdit,
-            onSources = onSources,
-            onCharts = onCharts,
-            onDelete = { deleting = it },
-            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)
-        )
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
     deleting?.let { row ->
         DeleteSessionDialog(

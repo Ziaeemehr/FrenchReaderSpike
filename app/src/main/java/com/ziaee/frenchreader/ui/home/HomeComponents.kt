@@ -1,27 +1,26 @@
 package com.ziaee.frenchreader.ui.home
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.aspectRatio
+import com.ziaee.frenchreader.ui.TextLevelBadge
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CheckCircle
@@ -29,16 +28,19 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Newspaper
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,191 +49,171 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.ziaee.frenchreader.ui.TextLevelBadge
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
-import com.ziaee.frenchreader.ui.components.EditorialEmptyState
-import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
-import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
+import com.ziaee.frenchreader.watch.RecentVideo
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
-import com.ziaee.frenchreader.watch.RecentVideo
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.text.NumberFormat
 
 @Composable
-internal fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-}
-
-/** Compact real-data learning strip: streak, learned words, and saved
- * words/texts. Deliberately has no weekly-goal cell -- no stored or
- * configurable goal target exists anywhere in the app. */
-@Composable
-fun LearningSummaryStrip(
-    streakDays: Int,
-    learnedWordCount: Int,
-    savedWordCount: Int,
-    onSavedWordsClick: () -> Unit,
+fun ProgressCard(
+    state: HomeUiState,
+    onOpen: () -> Unit,
+    onAdd: () -> Unit,
+    onSavedWords: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = FrenchReaderDesign.elevations.card
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            SummaryCell(
-                icon = Icons.Default.LocalFireDepartment,
-                iconTint = MaterialTheme.colorScheme.tertiary,
-                value = streakDays.toString(),
-                label = stringResource(R.string.home_summary_streak_days, streakDays),
-                modifier = Modifier.weight(1f)
-            )
-            SummaryDivider()
-            SummaryCell(
-                icon = Icons.Default.MenuBook,
-                iconTint = MaterialTheme.colorScheme.secondary,
-                value = learnedWordCount.toString(),
-                label = stringResource(R.string.home_summary_learned, learnedWordCount),
-                modifier = Modifier.weight(1f)
-            )
-            SummaryDivider()
-            SummaryCell(
-                icon = Icons.Default.Article,
-                iconTint = MaterialTheme.colorScheme.primary,
-                value = savedWordCount.toString(),
-                label = stringResource(R.string.home_summary_saved_words, savedWordCount),
-                onClick = onSavedWordsClick,
-                onClickLabel = stringResource(R.string.home_action_vocabulary),
-                modifier = Modifier.weight(1f)
-            )
+    val locale = LocalConfiguration.current.locales[0]
+    val numbers = remember(locale) { NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false } }
+    val progress = (state.todayActivityMinutes / state.activityGoalMinutes.coerceAtLeast(1)).toFloat().coerceIn(0f, 1f)
+    val goalReached = progress >= 1f
+    val colors = MaterialTheme.colorScheme
+    Card(onClick = onOpen, modifier = modifier) {
+        Column(Modifier.padding(start = 14.dp, end = 6.dp, top = 12.dp, bottom = 6.dp)) {
+            Row(Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ProgressStat(Icons.Default.LocalFireDepartment, Color(0xFFF2994A), numbers.format(state.streakDays),
+                    pluralStringResource(R.plurals.home_streak_days, state.streakDays), Modifier.weight(1f))
+                // The week's total keeps growing; today's goal is the bar below.
+                ProgressStat(Icons.Default.Timer, colors.primary, numbers.format(state.weekActivityMinutes.toInt()),
+                    stringResource(R.string.home_minutes_week), Modifier.weight(1f))
+                // Learned words only: saving is one tap, learning is the progress that matters.
+                ProgressStat(Icons.Default.School, colors.tertiary, numbers.format(state.learnedWordCount),
+                    stringResource(R.string.review_learned_words),
+                    Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable(onClick = onSavedWords))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LinearProgressIndicator(
+                    progress = progress,
+                    color = if (goalReached) colors.tertiary else colors.primary,
+                    trackColor = colors.onSurface.copy(alpha = 0.10f),
+                    modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                )
+                if (goalReached) Icon(Icons.Default.CheckCircle, stringResource(R.string.activity_goal_done),
+                    tint = colors.tertiary, modifier = Modifier.padding(start = 8.dp).size(16.dp))
+                else Text(stringResource(R.string.home_goal_caption,
+                    numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
+                    style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
+                    maxLines = 1, modifier = Modifier.padding(start = 8.dp))
+                IconButton(onClick = onAdd, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.AddCircleOutline, stringResource(R.string.study_log_add_time),
+                        tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                }
+            }
         }
     }
 }
 
+/** One quiet stat: a softly tinted icon badge, a bold value, and a one-line caption. */
 @Composable
-private fun SummaryCell(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconTint: Color,
+private fun ProgressStat(
+    icon: ImageVector,
+    accent: Color,
     value: String,
     label: String,
-    onClick: (() -> Unit)? = null,
-    onClickLabel: String? = null,
     modifier: Modifier = Modifier
 ) {
-    val cellModifier = if (onClick != null) {
-        modifier.clickable(
-            onClickLabel = onClickLabel,
-            role = Role.Button,
-            onClick = onClick
-        )
-    } else {
-        modifier
-    }
-    Column(modifier = cellModifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(FrenchReaderDesign.sizes.iconSmall))
-            Spacer(Modifier.size(4.dp))
-            Text(value, style = MaterialTheme.typography.titleMedium)
+            Box(Modifier.size(28.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
-@Composable
-private fun SummaryDivider() {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(32.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-    )
-}
-
-/** Two explicit states: words are due (primary action to start), or the
- * user is caught up (a calm completed state, never a disabled-looking
- * empty rectangle). */
 @Composable
 fun DailyReviewCard(
     dueCount: Int,
     onStart: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    val due = dueCount > 0
+    val accent = if (due) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
+    Card(onClick = onStart, enabled = due, modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (dueCount > 0) Icons.Default.MenuBook else Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = if (dueCount > 0) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            // Flashcards, not a book: the book icon belongs to "continue reading".
+            Box(Modifier.size(48.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(if (due) Icons.Default.Style else Icons.Default.CheckCircle, contentDescription = null,
+                    tint = accent, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.home_section_daily_review),
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (dueCount > 0) {
-                        stringResource(R.string.home_review_due, dueCount)
-                    } else {
-                        stringResource(R.string.home_review_complete)
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = if (dueCount > 0) {
-                        stringResource(R.string.home_review_due_support)
-                    } else {
-                        stringResource(R.string.home_review_complete_support)
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = if (due) stringResource(R.string.home_review_due, dueCount)
+                        else stringResource(R.string.home_review_complete),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            if (dueCount > 0) {
+            if (due) {
                 Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-                EditorialPrimaryButton(text = stringResource(R.string.home_review_start), onClick = onStart)
+                FilledTonalIconButton(onClick = onStart, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, stringResource(R.string.home_review_start), Modifier.size(24.dp))
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeEntryCard(
+    icon: ImageVector,
+    accent: Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(48.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -239,218 +221,81 @@ fun DailyReviewCard(
 /** Entry point to the bundled starter decks and graded stories (see DatasetScreen). */
 @Composable
 fun DatasetCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.LibraryBooks,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.dataset_settings_entry),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = stringResource(R.string.home_dataset_support),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.LibraryBooks,
+        accent = MaterialTheme.colorScheme.secondary,
+        title = stringResource(R.string.dataset_settings_entry),
+        subtitle = stringResource(R.string.home_dataset_support),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 /** Entry point to the built-in grammar reference (see GrammarListScreen). */
 @Composable
 fun GrammarCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Spellcheck,
-                contentDescription = null,
-                tint = LocalGrammarColors.current.accent,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.grammar_title),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = stringResource(R.string.grammar_entry_description),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.Spellcheck,
+        accent = LocalGrammarColors.current.accent,
+        title = stringResource(R.string.grammar_title),
+        subtitle = stringResource(R.string.grammar_entry_description),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 @Composable
 fun ExamsCard(onOpen: () -> Unit, modifier: Modifier = Modifier, practiceCounts: Pair<Int, Int>? = null) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.School,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.exams_title),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = practiceCounts?.let { stringResource(R.string.exam_home_progress, it.first, it.second) }
-                        ?: stringResource(R.string.exams_entry_description),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
-    }
+    HomeEntryCard(
+        icon = Icons.Default.School,
+        accent = MaterialTheme.colorScheme.primary,
+        title = stringResource(R.string.exams_title),
+        subtitle = practiceCounts?.let { stringResource(R.string.exam_home_progress, it.first, it.second) }
+            ?: stringResource(R.string.exams_entry_description),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TodayNewsSection(
-    headlines: List<HeadlineEntity>,
-    hasPartialError: Boolean,
-    isEmptyError: Boolean,
-    onSelect: (HeadlineEntity) -> Unit,
-    onRetry: () -> Unit,
+fun TodayNewsCard(
+    headlineCount: Int,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.home_section_today_news),
-            style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-        )
-        when {
-            isEmptyError -> HomeErrorState(
-                message = stringResource(R.string.home_news_empty_error),
-                onRetry = onRetry,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
-            else -> {
-                if (hasPartialError) {
-                    Text(
-                        stringResource(R.string.home_news_partial_error),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 12.sp),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp)
-                    )
-                }
-                val listState = rememberLazyListState()
-                LazyRow(
-                    state = listState,
-                    flingBehavior = rememberSnapFlingBehavior(listState),
-                    contentPadding = PaddingValues(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(headlines, key = { it.sourceId + it.externalId }) { headline ->
-                        NewsCard(
-                            headline,
-                            onClick = { onSelect(headline) },
-                            modifier = Modifier.fillParentMaxWidth(0.30f)
-                        )
-                    }
-                }
-            }
-        }
-    }
+    val locale = LocalConfiguration.current.locales[0]
+    HomeEntryCard(
+        icon = Icons.Default.Newspaper,
+        accent = MaterialTheme.colorScheme.secondary,
+        title = stringResource(R.string.home_section_today_news),
+        subtitle = if (headlineCount > 0) pluralStringResource(R.plurals.home_news_headlines, headlineCount,
+            NumberFormat.getIntegerInstance(locale).format(headlineCount))
+            else stringResource(R.string.home_news_description),
+        onClick = onOpen,
+        modifier = modifier
+    )
 }
 
 @Composable
-private fun HomeErrorState(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(message, style = MaterialTheme.typography.bodyMedium)
+internal fun NewsStatus(hasPartialError: Boolean, isEmptyError: Boolean, onRetry: () -> Unit) {
+    if (hasPartialError || isEmptyError) {
+        Text(stringResource(if (isEmptyError) R.string.home_news_empty_error else R.string.home_news_partial_error),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
     }
 }
 
-/** An immersive card: the photo fills the whole card, with the headline and
- * source overlaid at the bottom on a functional gradient scrim (added only
- * to guarantee text contrast, never decorative). */
 @Composable
-fun NewsCard(headline: HeadlineEntity, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.clickable(onClick = onClick), shape = MaterialTheme.shapes.medium) {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 5f)) {
-            NewsCardImage(headline, modifier = Modifier.fillMaxSize())
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)),
-                            startY = 0.35f
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(6.dp)
-            ) {
-                NewsSourceBadge(headline.sourceLabel)
-                Spacer(Modifier.height(3.dp))
-                // The headline title is French source content -- always LTR,
-                // regardless of a Persian (RTL) interface, same as article
-                // bodies on the Reading screen.
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    Text(
-                        headline.title,
-                        style = FrenchReaderDesign.editorialTypography.articleHeadline.copy(
-                            fontSize = 13.sp,
-                            lineHeight = 17.sp
-                        ),
-                        color = Color.White,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+internal fun NewsHeadlineRow(headline: HeadlineEntity, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (!headline.imageUrl.isNullOrBlank()) NewsCardImage(headline, Modifier.size(56.dp).clip(MaterialTheme.shapes.small))
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Column(Modifier.weight(1f)) {
+                Text(headline.sourceLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(headline.title, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
-    }
-}
-
-@Composable
-private fun NewsSourceBadge(text: String) {
-    Surface(
-        shape = MaterialTheme.shapes.extraSmall,
-        color = Color.White.copy(alpha = 0.16f),
-        contentColor = Color.White
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 11.sp),
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
-        )
     }
 }
 
@@ -488,6 +333,40 @@ private fun NewsSourcePlaceholder(sourceId: String, modifier: Modifier) {
 }
 
 @Composable
+internal fun DocumentThumbnail(doc: TextDocument, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val imageFile = doc.imagePath?.let { File(context.filesDir, it) }?.takeIf { it.exists() }
+    val shape = RoundedCornerShape(8.dp)
+    if (imageFile != null) {
+        AsyncImage(
+            model = imageFile,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(shape)
+        )
+    } else {
+        Box(
+            modifier = modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Article, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    HomeEntryCard(
+        icon = Icons.Default.PlayCircle,
+        accent = MaterialTheme.colorScheme.secondary,
+        title = stringResource(R.string.videos_title),
+        subtitle = stringResource(R.string.videos_home_support),
+        onClick = onOpen,
+        modifier = modifier
+    )
+}
+
+@Composable
 fun ContinueReadingCard(
     doc: TextDocument,
     body: String,
@@ -498,13 +377,13 @@ fun ContinueReadingCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .clickable(onClick = onClick)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailMedium))
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
+                ContinueKindLabel(Icons.Default.MenuBook, stringResource(R.string.home_continue_reading))
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Text(
                         doc.title,
@@ -543,7 +422,7 @@ fun ContinueReadingCard(
                 )
             }
             Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+            ContinueButton(Icons.Default.MenuBook, stringResource(R.string.home_continue_reading), onClick)
         }
     }
 }
@@ -558,7 +437,6 @@ fun ContinueWatchingCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .clickable(onClick = onClick)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -572,6 +450,7 @@ fun ContinueWatchingCard(
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
+                ContinueKindLabel(Icons.Default.PlayArrow, stringResource(R.string.home_continue_watching))
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Text(
                         video.title.ifBlank { video.videoId },
@@ -588,132 +467,26 @@ fun ContinueWatchingCard(
                 )
             }
             Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+            ContinueButton(Icons.Default.PlayArrow, stringResource(R.string.home_continue_watching), onClick)
         }
     }
 }
 
+/** Says at a glance whether a continue card resumes a text or a video. */
 @Composable
-fun RecentTextsSection(
-    documents: List<TextDocument>,
-    bodyByTextId: Map<Long, String> = emptyMap(),
-    onOpen: (TextDocument) -> Unit,
-    onSeeAll: () -> Unit,
-    onAddText: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        EditorialSectionHeader(
-            title = stringResource(R.string.home_section_my_texts),
-            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall),
-            trailing = { TextButton(onClick = onSeeAll) { Text(stringResource(R.string.home_action_see_all)) } }
-        )
-        if (documents.isEmpty()) {
-            EditorialEmptyState(
-                icon = Icons.Default.Article,
-                title = stringResource(R.string.home_recent_empty),
-                body = "",
-                actionLabel = stringResource(R.string.action_add_text),
-                onAction = onAddText
-            )
-        } else {
-            documents.forEach { doc ->
-                RecentTextRow(
-                    doc,
-                    bodyByTextId[doc.id].orEmpty(),
-                    onClick = { onOpen(doc) }
-                )
-            }
-        }
+private fun ContinueKindLabel(icon: ImageVector, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 2.dp)) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
+/** A round resume button whose icon matches the content kind; narrower than a text pill so titles keep their width. */
 @Composable
-private fun RecentTextRow(doc: TextDocument, body: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailSmall))
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                Text(doc.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            }
-            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(doc.createdAtMs))
-            val minutes = remember(doc.id, body) { estimatedReadingMinutes(body) }
-            val metadata = doc.sourceName?.let { "$it · $date" } ?: date
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (minutes > 0) "$metadata · " + stringResource(R.string.home_estimated_minutes, minutes) else metadata,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                doc.level?.let {
-                    Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
-                    TextLevelBadge(it)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-internal fun DocumentThumbnail(doc: TextDocument, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val imageFile = doc.imagePath?.let { File(context.filesDir, it) }?.takeIf { it.exists() }
-    val shape = RoundedCornerShape(8.dp)
-    if (imageFile != null) {
-        AsyncImage(
-            model = imageFile,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = modifier.clip(shape)
-        )
-    } else {
-        Box(
-            modifier = modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Article, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-@Composable
-fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(FrenchReaderDesign.spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.PlayCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget)
-            )
-            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.videos_title),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = stringResource(R.string.videos_home_support),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
-        }
+private fun ContinueButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp))
     }
 }

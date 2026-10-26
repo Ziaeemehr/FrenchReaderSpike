@@ -4,7 +4,6 @@ import com.ziaee.frenchreader.text.normalizeTextLevel
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.room.invalidationTrackerFlow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -36,10 +35,8 @@ import com.ziaee.frenchreader.news.NewsRepository
 import com.ziaee.frenchreader.news.normalizeArticleUrl
 import com.ziaee.frenchreader.news.personalizeHeadlines
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
-import com.ziaee.frenchreader.ui.statistics.loadActiveDates
-import com.ziaee.frenchreader.watch.RecentVideo
-import com.ziaee.frenchreader.watch.WatchHistory
-import kotlinx.coroutines.flow.asStateFlow
+import com.ziaee.frenchreader.ui.statistics.observeActivityStreak
+import com.ziaee.frenchreader.ui.statistics.ActivityStreak
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
@@ -60,15 +57,9 @@ private val TOPIC_SEARCH_SOURCES: List<ContentSource> =
     listOf(VikidiaContentSource, RfiFacileContentSource, FranceInfoContentSource, WikisourceContentSource)
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
-    private val watchHistory = WatchHistory(app)
-    private val _latestVideo = MutableStateFlow<RecentVideo?>(null)
-    val latestVideo: StateFlow<RecentVideo?> = _latestVideo.asStateFlow()
-
-    fun refreshLatestVideo() {
-        viewModelScope.launch {
-            _latestVideo.value = watchHistory.readLatest().firstOrNull()
-        }
-    }
+    private val watchHistory = com.ziaee.frenchreader.watch.WatchHistory(app)
+    var continueWatching by mutableStateOf<com.ziaee.frenchreader.watch.RecentVideo?>(null)
+        private set
 
     private val db = AppDatabase.get(app)
     var examRoute by mutableStateOf("exams")
@@ -124,34 +115,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private var headlineLookupJob: Job? = null
     private var searchJob: Job? = null
 
-    private data class TextsWithBodies(
-        val documents: List<TextDocument>,
-        val bodies: Map<Long, String>
-    )
-
-    private val textsWithBodies = db.textDao().observeAll().mapLatest { documents ->
-        TextsWithBodies(
-            documents,
-            documents.take(MAX_RECENT_TEXTS).associate { it.id to bodyStore.read(it) }
-        )
-    }
-
     private val continueWithBody = db.textDao().observeMostRecentlyAccessed().mapLatest { document ->
         document to document?.let { bodyStore.read(it) }
     }
 
-    /** Re-derives the real, non-fabricated reading streak whenever a review
-     * or a listening session is logged -- driven by Room's own invalidation
-     * tracker rather than a timer, so it stays correct without polling. */
-    private val activeDates = db.invalidationTrackerFlow("review_log", "activity_log", emitInitialState = true)
-        .map {
-            loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = { db.activityLogDao().activeDates() }
-            )
-        }
+    private val activityStreak = observeActivityStreak(app, db)
 
-    /** Minutes studied today and this week (study log), shown on the Home study-log button. */
+    /** Minutes studied today and this week (study log), shown on the Home progress card. */
     val studyLogMinutes: StateFlow<Pair<Int, Int>> = com.ziaee.frenchreader.studylog.localEpochDayFlow()
         .flatMapLatest { today ->
             val start = com.ziaee.frenchreader.studylog.weekStart(
@@ -166,34 +136,34 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     val uiState: StateFlow<HomeUiState> = combine(
         newsRepository.observeHeadlines(),
-        textsWithBodies,
+        db.textDao().observeAll(),
         db.vocabDao().observeAll(),
-        continueWithBody,
         isRefreshing,
         sourceErrors,
         importingKey,
-        activeDates,
-        timeRefresh
+        activityStreak,
+        timeRefresh,
+        continueWithBody
     ) { values ->
         @Suppress("UNCHECKED_CAST")
-        val texts = values[1] as TextsWithBodies
-        val continuing = values[3] as Pair<TextDocument?, String?>
+        val texts = values[1] as List<TextDocument>
+        val continuing = values[8] as Pair<TextDocument?, String?>
         composeHomeState(
             headlines = personalizeHeadlines(
                 values[0] as List<HeadlineEntity>,
                 NewsPrefs.getKeywords(app),
                 NewsPrefs.getMatchingFirst(app)
             ),
-            allTexts = texts.documents,
+            allTexts = texts,
             vocabEntries = values[2] as List<VocabEntry>,
             continueReading = continuing.first,
-            bodyByTextId = texts.bodies + listOfNotNull(
-                continuing.first?.id?.let { id -> continuing.second?.let { id to it } }
-            ),
-            isRefreshing = values[4] as Boolean,
-            sourceErrors = values[5] as List<String>,
-            importingKey = values[6] as String?,
-            activeDates = values[7] as Set<LocalDate>,
+            bodyByTextId = continuing.first?.let { doc ->
+                mapOf(doc.id to continuing.second.orEmpty())
+            }.orEmpty(),
+            isRefreshing = values[3] as Boolean,
+            sourceErrors = values[4] as List<String>,
+            importingKey = values[5] as String?,
+            activityStreak = values[6] as ActivityStreak,
             nowMs = System.currentTimeMillis(),
             today = LocalDate.now(),
             remainingNewCards = (VocabPrefs.getMaxNewCards(app) -
@@ -357,6 +327,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun refreshTimeSensitiveState() {
+        viewModelScope.launch { continueWatching = watchHistory.readLatest().firstOrNull() }
         timeRefresh.value = System.currentTimeMillis()
     }
 

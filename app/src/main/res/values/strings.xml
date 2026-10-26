@@ -165,10 +165,6 @@
     <string name="add_text_save_open">Save and open</string>
     <string name="text_untitled">Untitled</string>
     <string name="home_section_today_news">Today\'s News</string>
-    <string name="home_section_continue">Pick up where you left off</string>
-    <string name="home_section_my_texts">My Texts</string>
-    <string name="home_action_see_all">See All</string>
-    <string name="home_recent_empty">No texts yet. Add one to get started.</string>
     <string name="home_news_empty_error">News couldn\'t be loaded. Check your connection and try again.</string>
     <string name="home_news_partial_error">One source couldn\'t be refreshed.</string>
     <string name="preview_action_download_read">Download and Read</string>
@@ -363,21 +359,12 @@
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>
     <string name="home_search_hint">Search a topic, word, or article…</string>
-    <string name="home_summary_learned">%1$d learned</string>
-    <string name="home_summary_saved_words">%1$d saved words</string>
-    <string name="home_summary_saved_texts">%1$d texts</string>
-    <string name="home_summary_streak_days">%1$d-day streak</string>
     <string name="home_section_daily_review">Today\'s Review</string>
     <string name="home_review_due">%1$d words are ready</string>
     <string name="home_review_due_support">A short review keeps your vocabulary active.</string>
     <string name="home_review_start">Start</string>
     <string name="home_review_complete">You\'re all caught up</string>
     <string name="home_review_complete_support">No words are due right now.</string>
-    <string name="home_action_resume">Resume</string>
-    <string name="home_progress_percent">%1$d%% complete</string>
-    <string name="home_remaining_minutes">About %1$d min left</string>
-    <string name="home_reading_complete">Reading complete</string>
-    <string name="home_estimated_minutes">%1$d min read</string>
     <string name="home_more_actions">More Home actions</string>
     <string name="home_action_import_file">Import a file</string>
     <string name="home_action_import_folder">Import a folder</string>
@@ -387,7 +374,6 @@
     <string name="epub_import_failed">Couldn\'t read this EPUB</string>
     <string name="batch_import_summary">Imported %1$d, skipped %2$d, failed %3$d</string>
     <string name="home_action_vocabulary">Saved vocabulary</string>
-    <string name="home_action_statistics">Learning statistics</string>
     <string name="home_action_graded_readers">My resources</string>
     <string name="resources_title">My resources</string>
     <string name="resources_add">Add resource</string>
@@ -628,7 +614,7 @@
     <string name="update_up_to_date">You have the latest version</string>
     <string name="update_check_failed">Couldn\'t check for updates. Check your connection.</string>
     <string name="update_checking">Checking…</string>
-    <string name="update_auto_check">Check for app updates automatically</string>
+    <string name="update_auto_check">Check for new versions</string>
     <string name="dictionary_apply_word">Look up</string>
     <string name="dictionary_reset_word">Reset</string>
     <string name="interval_this_session">This session</string>
@@ -660,7 +646,7 @@
     <string name="editor_discard_message">Your edits will be lost.</string>
     <string name="editor_discard">Discard</string>
     <string name="editor_keep_editing">Keep editing</string>
-    <string name="study_log_title">Study log</string><string name="study_log_home_card">Track your study time</string>
+    <string name="study_log_title">Study log</string>
     <string name="study_log_add_time">Add study time</string><string name="study_log_edit_entry">Edit entry</string><string name="study_log_this_week">This week: %1$s</string><string name="study_log_least_studied">Least studied: %1$s</string><string name="study_log_no_data">No data yet</string>
     <string name="study_log_sources">Sources</string><string name="study_log_charts">Charts</string><string name="study_log_delete">Delete</string><string name="study_log_delete_confirm">Delete this entry?</string><string name="study_log_cancel">Cancel</string>
     <string name="study_log_hours">Hours</string><string name="study_log_minutes">Minutes</string><string name="study_log_skill">Skill</string><string name="study_log_no_source">No source</string><string name="study_log_new_source">+ New source…</string><string name="study_log_note">Note</string><string name="study_log_validation_error">Enter 1–1440 minutes and do not choose a future date.</string>
@@ -697,7 +683,6 @@
     <string name="study_log_more">More</string>
     <string name="study_log_no_study">No study</string>
     <string name="study_log_year_summary">%1$s in %2$d · %3$d active days · longest streak %4$d days</string>
-    <string name="study_log_home_summary">Today %1$s · This week %2$s</string><string name="study_log_home_summary_empty">Nothing logged this week yet</string>
     <string name="grammar_title">Grammar reference</string>
     <string name="grammar_entry_description">In-app notes with French examples and Persian explanations</string>
     <string name="grammar_empty">No grammar notes available</string>
@@ -989,6 +974,45 @@
     <string name="prepare_included">%1$d included with the app</string>
     <string name="reading_play_from_page">Play from this page</string>
     <string name="reading_play_from_here">Play from here</string>
+    <string name="activity_goal_title">Daily activity goal</string>
+    <string name="activity_goal_minutes">%1$d min</string>
+    <string name="activity_goal_progress">%1$d / %2$d min today</string>
+    <string name="activity_goal_done">Today’s goal done ✓</string>
+    <string name="progress_title">Progress</string>
+    <string name="progress_overview">Overview</string>
+    <string name="progress_study_time">Study time</string>
+    <string name="home_minutes_ratio">%1$s/%2$s</string>
+    <string name="home_minutes_today">min today</string>
+    <string name="home_today_percent">Today %1$s</string>
+    <string name="home_news_description">Read the latest news in French</string>
+    <plurals name="home_streak_days">
+        <item quantity="one">day in a row</item>
+        <item quantity="other">days in a row</item>
+    </plurals>
+    <plurals name="home_saved_words">
+        <item quantity="one">saved word</item>
+        <item quantity="other">saved words</item>
+    </plurals>
+    <plurals name="home_news_headlines">
+        <item quantity="one">%1$s headline available</item>
+        <item quantity="other">%1$s headlines available</item>
+    </plurals>
+    <string name="home_section_my_texts">My Texts</string>
+    <string name="home_action_see_all">See All</string>
+    <string name="home_recent_empty">No texts yet. Add one to get started.</string>
+    <string name="home_summary_learned">%1$d learned</string>
+    <string name="home_summary_saved_words">%1$d saved words</string>
+    <string name="home_summary_saved_texts">%1$d texts</string>
+    <string name="home_summary_streak_days">%1$d-day streak</string>
+    <string name="home_action_resume">Resume</string>
+    <string name="home_progress_percent">%1$d%% complete</string>
+    <string name="home_remaining_minutes">About %1$d min left</string>
+    <string name="home_reading_complete">Reading complete</string>
+    <string name="home_estimated_minutes">%1$d min read</string>
+    <string name="home_action_statistics">Learning statistics</string>
+    <string name="study_log_home_summary">Today %1$s · This week %2$s</string>
+    <string name="study_log_home_card">Track your study time</string>
+    <string name="study_log_home_summary_empty">Nothing logged this week yet</string>
     <string name="copy_sentence">Copy sentence</string>
     <string name="sentence_copied">Sentence copied</string>
     <string name="guide_read">Read guide</string>
@@ -1047,4 +1071,8 @@
     <string name="gesture_dictionary_row_2">Where enabled → start text selection</string>
     <string name="gesture_dictionary_row_3">Selection handles → select text</string>
     <string name="gesture_statistics_row_1">Statistics → browse statistics and charts</string>
+    <string name="home_minutes_week">min this week</string>
+    <string name="home_goal_caption">Today %1$s/%2$s min</string>
+    <string name="home_continue_reading">Continue reading</string>
+    <string name="home_continue_watching">Continue watching</string>
 </resources>

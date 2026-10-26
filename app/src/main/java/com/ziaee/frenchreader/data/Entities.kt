@@ -165,13 +165,15 @@ data class ReviewLogEntry(
     val boxAfter: Int
 )
 
-/** One row per calendar day with any listening activity, accumulated from
+/** One row per calendar day with measured activity, accumulated from
  * [ReadingViewModel][com.ziaee.frenchreader.ui.ReadingViewModel]'s position
- * ticker. [date] is `LocalDate.toString()` (`yyyy-MM-dd`). */
+ * ticker and screen activity timers. [date] is `LocalDate.toString()` (`yyyy-MM-dd`). */
 @Entity(tableName = "activity_log")
 data class ActivityLogEntry(
     @PrimaryKey val date: String,
-    val listeningMs: Long
+    val listeningMs: Long,
+    @ColumnInfo(defaultValue = "0") val readingMs: Long = 0,
+    @ColumnInfo(defaultValue = "0") val watchingMs: Long = 0
 )
 
 /** A user-managed web bookmark shown on the Resources screen. */

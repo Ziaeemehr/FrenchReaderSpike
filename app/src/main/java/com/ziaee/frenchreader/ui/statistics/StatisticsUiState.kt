@@ -80,20 +80,11 @@ internal fun last7Days(today: LocalDate): List<LocalDate> =
     (6 downTo 0).map { today.minusDays(it.toLong()) }
 
 /** "Any activity" streak: a day counts if it's in [activeDates] (listening
- * OR a vocab review happened that day). Falls back to checking yesterday
+ * OR a vocab review happened that day). Retained for legacy snapshots. Falls back to checking yesterday
  * if today has no activity logged yet, so the streak doesn't drop to zero
  * first thing in the morning before the user has done anything today. */
-internal fun computeStreak(activeDates: Set<LocalDate>, today: LocalDate): Int {
-    val start = if (today in activeDates) today else today.minusDays(1)
-    if (start !in activeDates) return 0
-    var streak = 0
-    var day = start
-    while (day in activeDates) {
-        streak++
-        day = day.minusDays(1)
-    }
-    return streak
-}
+internal fun computeStreak(activeDates: Set<LocalDate>, today: LocalDate): Int =
+    computeActivityStreak(emptyMap(), activeDates, today.plusDays(1), { 5 }, today)
 
 /** Shared by Statistics and Home so both derive the exact same "any
  * activity" date set from `review_log` + `activity_log` without duplicating
@@ -118,9 +109,10 @@ internal fun composeStatisticsState(
     today: LocalDate,
     reviewLogs: List<ReviewLogEntry> = emptyList(),
     monthlyListening: List<DailyListening> = emptyList(),
-    zone: ZoneId = ZoneId.systemDefault()
+    zone: ZoneId = ZoneId.systemDefault(),
+    streakDays: Int = computeStreak(activeDates, today)
 ): StatisticsUiState = StatisticsUiState(
-    streakDays = computeStreak(activeDates, today),
+    streakDays = streakDays,
     weeklyListening = weeklyListening,
     reviewedToday = reviewedToday,
     reviewedThisWeek = reviewedThisWeek,

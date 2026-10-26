@@ -684,6 +684,7 @@ private fun VocabularyReviewSettings(context: Context) {
     var minute by remember { mutableIntStateOf(VocabPrefs.getReminderMinute(context)) }
     var maxNew by remember { mutableIntStateOf(VocabPrefs.getMaxNewCards(context)) }
     var dailyGoal by remember { mutableIntStateOf(VocabPrefs.getDailyGoal(context)) }
+    var activityGoal by remember { mutableIntStateOf(com.ziaee.frenchreader.data.ActivityStreakPrefs.goal(context)) }
     var autoplay by remember { mutableStateOf(VocabPrefs.getAudioAutoplay(context)) }
     var cardVoice by remember { mutableStateOf(VocabPrefs.getCardVoice(context)) }
     var cardVoiceMenu by remember { mutableStateOf(false) }
@@ -715,6 +716,15 @@ private fun VocabularyReviewSettings(context: Context) {
     }
     StepperSetting(stringResource(R.string.review_daily_goal), dailyGoal, 1, 200) {
         dailyGoal = it; VocabPrefs.setDailyGoal(context, it)
+    }
+    CompactSettingLabel(R.string.activity_goal_title)
+    CompactChoiceRow(
+        com.ziaee.frenchreader.data.ActivityStreakPrefs.goals,
+        activityGoal,
+        { stringResource(R.string.activity_goal_minutes, it) }
+    ) {
+        activityGoal = it
+        com.ziaee.frenchreader.data.ActivityStreakPrefs.setGoal(context, it)
     }
     CompactSettingLabel(R.string.review_audio_autoplay)
     CompactChoiceRow(
@@ -805,11 +815,12 @@ private fun CompactSettingLabel(resource: Int) {
     Text(stringResource(resource), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp, bottom = 3.dp))
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun <T> CompactChoiceRow(
     entries: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit
 ) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         entries.forEach { entry ->
             FilterChip(
                 selected = entry == selected,

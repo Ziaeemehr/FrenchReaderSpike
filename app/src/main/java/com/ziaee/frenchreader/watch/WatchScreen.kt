@@ -271,6 +271,9 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit,
         })
     }
     val practice by videoShadowing.state.collectAsState()
+    val activityTimer = com.ziaee.frenchreader.ui.activity.rememberScreenActivityTimer(
+        videoId, com.ziaee.frenchreader.ui.activity.ScreenActivity.WATCHING, state.playerState == 1 && state.playerError == null
+    )
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(videoShadowing, lifecycle) {
         vm.setForeground(lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
@@ -509,9 +512,10 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit,
                                     if (!videoShadowing.state.value.playingUnit) recordRequest = null
                                 }
                             }
+                            activityTimer.setEligible(value == 1)
                             vm.setPlayerState(value)
                             videoShadowing.onPlayerState(value, generation)
-                        }, { code -> videoShadowing.cancel(); vm.setPlayerError(code) },
+                        }, { code -> activityTimer.setEligible(false); videoShadowing.cancel(); vm.setPlayerError(code) },
                             Modifier.size(width = playerWidth, height = playerHeight))
                     } else Spacer(Modifier.size(width = playerWidth, height = playerHeight))
                 }

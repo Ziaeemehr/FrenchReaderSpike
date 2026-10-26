@@ -41,6 +41,12 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
     var loading by mutableStateOf(true)
         private set
 
+    init {
+        viewModelScope.launch {
+            observeActivityStreak(app, db).collect { uiState = uiState.copy(streakDays = it.days) }
+        }
+    }
+
     fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -63,12 +69,7 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
             val weeklyListening = monthlyListening.takeLast(7)
             val reviewLogs = db.reviewLogDao().getAll()
 
-            val activeDates = loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = {
-                    db.activityLogDao().activeDates() + db.shadowAttemptDao().distinctActiveDates()
-                }
-            )
+            val activity = loadActivityStreak(getApplication(), db, today)
 
             uiState = composeStatisticsState(
                 texts = texts,
@@ -79,10 +80,11 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 knewCount = knewCount,
                 totalReviewCount = totalReviewCount,
                 weeklyListening = weeklyListening,
-                activeDates = activeDates,
+                activeDates = emptySet(),
                 today = today,
                 reviewLogs = reviewLogs,
-                monthlyListening = monthlyListening
+                monthlyListening = monthlyListening,
+                streakDays = activity.days
             )
             val shadowRecent = db.shadowAttemptDao().getSince(today.minusDays(6).startOfDayMs())
             uiState = uiState.copy(
@@ -99,6 +101,17 @@ private fun LocalDate.startOfDayMs(): Long =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreen(onBack: () -> Unit, onOpenStudyLog: () -> Unit = {}) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.statistics_title)) }, navigationIcon = {
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) }
+        })
+    }) { padding ->
+        StatisticsContent(onOpenStudyLog, Modifier.padding(padding))
+    }
+}
+
+@Composable
+fun StatisticsContent(onOpenStudyLog: () -> Unit = {}, modifier: Modifier = Modifier) {
     val vm: StatisticsViewModel = viewModel()
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(vm, lifecycleOwner) {
@@ -117,35 +130,11 @@ fun StatisticsScreen(onBack: () -> Unit, onOpenStudyLog: () -> Unit = {}) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.statistics_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.accessibility_back))
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        if (vm.loading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-            return@Scaffold
-        }
+    if (vm.loading) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    } else {
         val state = vm.uiState
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp)
-        ) {
+        Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
             OutlinedButton(onClick = onOpenStudyLog, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.study_log_title)) }
             StreakSection(state.streakDays)
             WeeklyListeningSection(state.weeklyListening)

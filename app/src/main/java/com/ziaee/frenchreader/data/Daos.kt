@@ -325,6 +325,37 @@ interface ActivityLogDao {
         }
     }
 
+    @Transaction
+    suspend fun addReading(date: String, deltaMs: Long) {
+        val existing = getForDate(date)
+        if (existing == null) insert(ActivityLogEntry(date, 0, readingMs = deltaMs))
+        else update(existing.copy(readingMs = existing.readingMs + deltaMs))
+    }
+
+    @Transaction
+    suspend fun addWatching(date: String, deltaMs: Long) {
+        val existing = getForDate(date)
+        if (existing == null) insert(ActivityLogEntry(date, 0, watchingMs = deltaMs))
+        else update(existing.copy(watchingMs = existing.watchingMs + deltaMs))
+    }
+
+    @Query("""
+        SELECT date, SUM(activityMs) AS activityMs, MAX(legacyActive) AS legacyActive FROM (
+            SELECT date, listeningMs + readingMs + watchingMs AS activityMs,
+                listeningMs > 0 AS legacyActive FROM activity_log
+            UNION ALL
+            SELECT date(timestampMs / 1000, 'unixepoch', 'localtime'), COUNT(*) * 10000, 1
+                FROM review_log GROUP BY date(timestampMs / 1000, 'unixepoch', 'localtime')
+            UNION ALL
+            SELECT date(timestampMs / 1000, 'unixepoch', 'localtime'), COUNT(*) * 20000, 1
+                FROM shadow_attempts GROUP BY date(timestampMs / 1000, 'unixepoch', 'localtime')
+            UNION ALL
+            SELECT date(date * 86400, 'unixepoch'), SUM(duration_min) * 60000, 0
+                FROM study_session GROUP BY date
+        ) GROUP BY date
+    """)
+    suspend fun dailyActivity(): List<DailyActivityRow>
+
     @Query("SELECT * FROM activity_log WHERE date IN (:dates)")
     suspend fun getForDates(dates: List<String>): List<ActivityLogEntry>
 

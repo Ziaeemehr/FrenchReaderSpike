@@ -25,8 +25,7 @@ internal const val HOME_NEWS_SOURCE_COUNT = 2
  *
  * The learning-summary fields are all derived from real stored rows
  * ([VocabEntry], [TextDocument], review/activity log dates) -- never
- * fabricated. There is deliberately no weekly-goal field: no stored or
- * configurable goal target exists anywhere in the app.
+ * fabricated. Daily activity progress comes from the shared streak loader.
  */
 data class HomeUiState(
     val headlines: List<HeadlineEntity> = emptyList(),
@@ -40,7 +39,10 @@ data class HomeUiState(
     val savedWordCount: Int = 0,
     val learnedWordCount: Int = 0,
     val dueReviewCount: Int = 0,
-    val streakDays: Int = 0
+    val streakDays: Int = 0,
+    val todayActivityMinutes: Double = 0.0,
+    val weekActivityMinutes: Double = 0.0,
+    val activityGoalMinutes: Int = 5
 ) {
     /** One source failed but there's still something to show -- a
      * non-blocking warning, not a full error screen. */
@@ -63,7 +65,8 @@ internal fun composeHomeState(
     activeDates: Set<LocalDate> = emptySet(),
     nowMs: Long = System.currentTimeMillis(),
     today: LocalDate = LocalDate.now(),
-    remainingNewCards: Int = Int.MAX_VALUE
+    remainingNewCards: Int = Int.MAX_VALUE,
+    activityStreak: com.ziaee.frenchreader.ui.statistics.ActivityStreak? = null
 ): HomeUiState = HomeUiState(
     headlines = headlines,
     recentTexts = allTexts.take(MAX_RECENT_TEXTS),
@@ -76,7 +79,10 @@ internal fun composeHomeState(
     savedWordCount = vocabEntries.size,
     learnedWordCount = vocabEntries.count { it.learned },
     dueReviewCount = reviewableCount(vocabEntries, nowMs, remainingNewCards),
-    streakDays = computeStreak(activeDates, today)
+    streakDays = activityStreak?.days ?: computeStreak(activeDates, today),
+    todayActivityMinutes = activityStreak?.todayMinutes ?: 0.0,
+    weekActivityMinutes = activityStreak?.weekMinutes ?: 0.0,
+    activityGoalMinutes = activityStreak?.goalMinutes ?: 5
 )
 
 /** Locally derived reading-time/progress estimate for one [TextDocument]. */

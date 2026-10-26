@@ -1,14 +1,7 @@
 package com.ziaee.frenchreader.ui.home
 
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
@@ -58,16 +51,19 @@ class HomeScreenTest {
     private fun setHomeContent(
         state: HomeUiState,
         selectedHeadline: HeadlineEntity? = null,
-        onSelectHeadline: (HeadlineEntity) -> Unit = {},
-        onFilePickerClick: () -> Unit = {},
         onOpenVocab: () -> Unit = {},
-        onOpenStatistics: () -> Unit = {},
+        onOpenProgress: () -> Unit = {},
+        onOpenNews: () -> Unit = {},
+        onAddStudyLog: () -> Unit = {},
         onOpenLibrary: () -> Unit = {},
         onAddTextClick: () -> Unit = {},
         onOpenGradedReaders: () -> Unit = {},
         onSearchClick: () -> Unit = {},
         onOpenDictionary: () -> Unit = {},
-        onStartReview: () -> Unit = {}
+        onStartReview: () -> Unit = {},
+        onOpenText: (Long) -> Unit = {},
+        continueWatching: com.ziaee.frenchreader.watch.RecentVideo? = null,
+        onContinueWatching: (com.ziaee.frenchreader.watch.RecentVideo) -> Unit = {}
     ) {
         composeTestRule.setContent {
             FrenchReaderTheme(ThemeMode.LIGHT) {
@@ -80,20 +76,21 @@ class HomeScreenTest {
                     snackbarHostState = remember { SnackbarHostState() },
                     onOpenDictionary = onOpenDictionary,
                     onSearchClick = onSearchClick,
-                    onFilePickerClick = onFilePickerClick,
                     onOpenVocab = onOpenVocab,
-                    onOpenStatistics = onOpenStatistics,
+                    onOpenProgress = onOpenProgress,
+                    onOpenNews = onOpenNews,
+                    onAddStudyLog = onAddStudyLog,
                     onOpenSettings = {},
                     onOpenLibrary = onOpenLibrary,
                     onAddTextClick = onAddTextClick,
                     onOpenGradedReaders = onOpenGradedReaders,
-                    onSelectHeadline = onSelectHeadline,
-                    onRetryNews = {},
                     onPullRefresh = {},
-                    onOpenText = {},
                     onDownloadOrOpen = {},
                     onDismissPreview = {},
-                    onStartReview = onStartReview
+                    onStartReview = onStartReview,
+                    onOpenText = onOpenText,
+                    continueWatching = continueWatching,
+                    onContinueWatching = onContinueWatching
                 )
             }
         }
@@ -113,52 +110,74 @@ class HomeScreenTest {
         composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
             .performScrollToNode(hasText(string(R.string.home_section_today_news)))
         composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).assertExists()
-        composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertDoesNotExist()
         composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
-            .performScrollToNode(hasText(string(R.string.home_section_continue)))
-        composeTestRule.onNodeWithText(string(R.string.home_section_continue)).assertExists()
-        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
-            .performScrollToNode(hasText(string(R.string.home_section_my_texts)))
-        composeTestRule.onNodeWithText(string(R.string.home_section_my_texts)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.home_action_see_all)).assertExists()
+            .performScrollToNode(hasText("En cours de lecture"))
+        composeTestRule.onNodeWithText("En cours de lecture").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.home_section_my_texts)).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Mon texte").assertDoesNotExist()
+
     }
 
     @Test
-    fun selectingAHeadlineShowsTheDownloadAction() {
+    fun bothContinueCardsResumeTheirOwnContentWithoutASectionHeader() {
+        val document = TextDocument(id = 42L, title = "Latest reading", rawText = "Texte")
+        val video = com.ziaee.frenchreader.watch.RecentVideo("abcdefghijk", "Latest video", "Channel", 65000L)
+        var openedText: Long? = null
+        var openedVideo: com.ziaee.frenchreader.watch.RecentVideo? = null
+        setHomeContent(
+            state = HomeUiState(continueReading = document, bodyByTextId = mapOf(document.id to "Texte")),
+            onOpenText = { openedText = it },
+            continueWatching = video,
+            onContinueWatching = { openedVideo = it }
+        )
+
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(document.title))
+        composeTestRule.onNodeWithText(document.title).performClick()
+        assertEquals(document.id, openedText)
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(video.title))
+        composeTestRule.onNodeWithText(video.title).performClick()
+        assertEquals(video, openedVideo)
+        composeTestRule.onNodeWithText("Pick up where you left off").assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.home_section_my_texts)).assertDoesNotExist()
+    }
+
+    @Test
+    fun selectedHeadlinePreviewStillShowsTheDownloadAction() {
         val sampleHeadline = headline()
-        val state = HomeUiState(headlines = listOf(sampleHeadline))
-
-        composeTestRule.setContent {
-            var selected by remember { mutableStateOf<HeadlineEntity?>(null) }
-            FrenchReaderTheme(ThemeMode.LIGHT) {
-                HomeContent(
-                    state = state,
-                    selectedHeadline = selected,
-                    isPreviewImporting = false,
-                    previewHasError = false,
-                    isPreviewAlreadyDownloaded = false,
-                    snackbarHostState = remember { SnackbarHostState() },
-                    onSearchClick = {},
-                    onFilePickerClick = {},
-                    onOpenVocab = {},
-                    onOpenStatistics = {},
-                    onOpenSettings = {},
-                    onOpenLibrary = {},
-                    onAddTextClick = {},
-                    onOpenGradedReaders = {},
-                    onSelectHeadline = { selected = it },
-                    onRetryNews = {},
-                    onPullRefresh = {},
-                    onOpenText = {},
-                    onDownloadOrOpen = {},
-                    onDismissPreview = {},
-                    onStartReview = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).performClick()
+        setHomeContent(HomeUiState(headlines = listOf(sampleHeadline)), selectedHeadline = sampleHeadline)
         composeTestRule.onNodeWithText(string(R.string.preview_action_download_read)).assertExists()
+    }
+
+    @Test
+    fun progressActionsHaveIndependentCallbacks() {
+        var progressClicks = 0
+        var addClicks = 0
+        setHomeContent(HomeUiState(todayActivityMinutes = 5.0),
+            onOpenProgress = { progressClicks++ }, onAddStudyLog = { addClicks++ })
+
+        composeTestRule.onNodeWithText(string(R.string.activity_goal_done)).assertExists()
+        composeTestRule.onNodeWithContentDescription(string(R.string.study_log_add_time)).performClick()
+        assertEquals(1, addClicks)
+        assertEquals(0, progressClicks)
+        composeTestRule.onNodeWithText(string(R.string.progress_title)).performClick()
+        assertEquals(1, progressClicks)
+    }
+
+    @Test
+    fun newsEntryOpensNewsWithoutShowingHeadlines() {
+        val headlines = (1..4).map { index ->
+            headline("guid-$index").copy(title = "Headline $index", publishedAtMs = index.toLong())
+        }
+        var clicks = 0
+        setHomeContent(HomeUiState(headlines = headlines), onOpenNews = { clicks++ })
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(string(R.string.home_section_today_news)))
+        headlines.forEach { composeTestRule.onNodeWithText(it.title).assertDoesNotExist() }
+        composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).performClick()
+        assertEquals(1, clicks)
     }
 
     @Test
@@ -179,16 +198,14 @@ class HomeScreenTest {
 
         composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertDoesNotExist()
 
         composeTestRule.onNode(
             androidx.compose.ui.test.hasContentDescription(string(R.string.home_more_actions))
         ).performClick()
 
-        composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.home_action_import_file)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.home_action_vocabulary)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(R.string.home_action_statistics)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.home_action_graded_readers)).assertExists()
     }
 
@@ -201,9 +218,8 @@ class HomeScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText(string(R.string.home_summary_saved_words, 7))
+            .onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(R.plurals.home_saved_words, 7))
             .assertHasClickAction()
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .performClick()
 
         assertEquals(1, clicks)
@@ -247,9 +263,6 @@ class HomeScreenTest {
     fun homeIsSelectedInBottomNavigationAndLibraryAddRetainCallbacks() {
         var libraryClicks = 0
         var addTextClicks = 0
-        // A non-empty recentTexts list keeps My Texts' own "Add text" empty-state
-        // action from also rendering, which would otherwise make the bottom
-        // nav's "Add text" label ambiguous.
         setHomeContent(
             state = HomeUiState(recentTexts = listOf(TextDocument(id = 1L, title = "Mon texte", rawText = "Texte"))),
             onOpenLibrary = { libraryClicks++ },

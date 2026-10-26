@@ -28,7 +28,7 @@ private const val SETTINGS_ENTRY = "prefs/settings.json"
 private val FILE_DIRECTORIES = listOf("text_bodies", "text_images")
 internal val PREFERENCE_FILES = listOf(
     "vocab_prefs", "appearance_prefs", "locale_prefs", "news_prefs",
-    "highlight_prefs", "tts_cache_prefs", "xtts_prefs", "study_log_prefs", "grammar_prefs"
+    "highlight_prefs", "tts_cache_prefs", "xtts_prefs", "study_log_prefs", "grammar_prefs", "activity_streak"
 )
 private const val MAX_BACKUP_ENTRIES = 20_000
 

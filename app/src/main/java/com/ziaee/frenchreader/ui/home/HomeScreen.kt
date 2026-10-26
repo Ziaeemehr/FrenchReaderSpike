@@ -8,20 +8,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,7 +53,6 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.ui.components.EditorialBottomBar
 import com.ziaee.frenchreader.ui.components.EditorialDestination
-import com.ziaee.frenchreader.ui.components.EditorialSectionHeader
 import com.ziaee.frenchreader.ui.components.EditorialTopAppBar
 import com.ziaee.frenchreader.ui.ManualDictionaryHost
 import com.ziaee.frenchreader.ui.shared.AddTextHost
@@ -70,61 +64,45 @@ import com.ziaee.frenchreader.ui.shared.rememberFilePickerLauncher
 import com.ziaee.frenchreader.ui.shared.TextExtractionProgress
 import com.ziaee.frenchreader.ui.shared.rememberTextExtractionImporter
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
-import com.ziaee.frenchreader.watch.RecentVideo
 
 /** Lets instrumented tests scroll Home's content list to a node that's
  * below the initially-composed viewport (LazyColumn only composes visible
  * items) -- see [HomeScreenTest]. */
 internal const val HOME_LAZY_COLUMN_TEST_TAG = "home_lazy_column"
 
-/** Fabulang's graded-reader catalog -- opened in the phone's own browser
- * (see the design doc's decision to link out rather than scrape/import:
- * Fabulang's stories aren't openly licensed like Wikisource/Vikidia's). */
-/**
- * The app's landing screen: today's cached news, the most recently active
- * document, and a handful of recently added texts -- see the design doc's
- * Home Information Architecture. Opening this screen or a headline preview
- * never downloads a full article body. Sources live state from
- * [HomeViewModel] and delegates rendering to the stateless [HomeContent],
- * which a UI test can drive with a static [HomeUiState] instead.
- */
+/** Home dashboard with activity progress and shortcuts to study and news. */
 @Composable
 fun HomeScreen(
     onOpenText: (Long) -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenVocab: () -> Unit,
-    onOpenStatistics: () -> Unit,
+    onOpenProgress: () -> Unit,
+    onOpenNews: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onOpenResources: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDataset: () -> Unit,
     onOpenGrammar: () -> Unit = {},
     onOpenVideos: () -> Unit = {},
-    onWatchVideo: (videoId: String, title: String, channel: String) -> Unit,
+    onContinueWatching: (com.ziaee.frenchreader.watch.RecentVideo) -> Unit = {},
     onOpenExams: (String) -> Unit = {},
     onStartReview: () -> Unit,
-    onOpenStudyLog: () -> Unit = {},
+    onAddStudyLog: () -> Unit = {},
     openAddTextSheet: Boolean = false,
     onOpenHelp: () -> Unit = {},
     onAddTextSheetOpened: () -> Unit = {}
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
-    val latestVideo by vm.latestVideo.collectAsState()
-    val studyLogMinutes by vm.studyLogMinutes.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, vm) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                vm.refreshTimeSensitiveState()
-                vm.refreshLatestVideo()
-            }
+            if (event == Lifecycle.Event.ON_RESUME) vm.refreshTimeSensitiveState()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
             vm.refreshTimeSensitiveState()
-            vm.refreshLatestVideo()
         }
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -216,32 +194,28 @@ fun HomeScreen(
         snackbarHostState = snackbarHostState,
         onOpenDictionary = { showManualDictionary = true },
         onSearchClick = { showFindArticleSheet = true },
-        onFilePickerClick = openFilePicker,
-        onFolderPickerClick = { folderPicker.launch(null) },
         onOpenVocab = onOpenVocab,
-        onOpenStatistics = onOpenStatistics,
+        onOpenProgress = onOpenProgress,
+        onOpenNews = onOpenNews,
         onOpenSettings = onOpenSettings,
         onOpenLibrary = onOpenLibrary,
         onAddTextClick = { showAddSourceSheet = true },
         onOpenGradedReaders = onOpenResources,
         onOpenAbout = onOpenAbout,
         onOpenHelp = onOpenHelp,
-        onSelectHeadline = { vm.selectHeadline(it) },
-        onRetryNews = { vm.refresh(force = true) },
         onPullRefresh = { vm.refresh(force = true) },
-        onOpenText = onOpenText,
         onDownloadOrOpen = { vm.importSelected { id -> onOpenText(id) } },
         onDismissPreview = { vm.dismissPreview() },
         onStartReview = onStartReview,
         onOpenDataset = onOpenDataset,
         onOpenGrammar = onOpenGrammar,
         onOpenVideos = onOpenVideos,
+        onOpenText = onOpenText,
+        continueWatching = vm.continueWatching,
+        onContinueWatching = onContinueWatching,
         onOpenExams = { onOpenExams(vm.examRoute) },
         examPracticeCounts = vm.examPracticeCounts,
-        onOpenStudyLog = onOpenStudyLog,
-        latestVideo = latestVideo,
-        onWatchVideo = onWatchVideo,
-        studyLogMinutes = studyLogMinutes
+        onAddStudyLog = onAddStudyLog
     )
 
     AddTextHost(
@@ -295,32 +269,28 @@ fun HomeContent(
     snackbarHostState: SnackbarHostState,
     onOpenDictionary: () -> Unit = {},
     onSearchClick: () -> Unit,
-    onFilePickerClick: () -> Unit,
-    onFolderPickerClick: () -> Unit = {},
     onOpenVocab: () -> Unit,
-    onOpenStatistics: () -> Unit,
+    onOpenProgress: () -> Unit,
+    onOpenNews: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onOpenLibrary: () -> Unit,
     onAddTextClick: () -> Unit,
     onOpenGradedReaders: () -> Unit,
     onOpenAbout: () -> Unit = {},
     onOpenHelp: () -> Unit = {},
-    onSelectHeadline: (HeadlineEntity) -> Unit,
-    onRetryNews: () -> Unit,
     onPullRefresh: () -> Unit,
-    onOpenText: (Long) -> Unit,
     onDownloadOrOpen: () -> Unit,
     onDismissPreview: () -> Unit,
     onStartReview: () -> Unit,
     onOpenDataset: () -> Unit = {},
     onOpenGrammar: () -> Unit = {},
     onOpenVideos: () -> Unit = {},
+    onOpenText: (Long) -> Unit = {},
+    continueWatching: com.ziaee.frenchreader.watch.RecentVideo? = null,
+    onContinueWatching: (com.ziaee.frenchreader.watch.RecentVideo) -> Unit = {},
     onOpenExams: () -> Unit = {},
-    onOpenStudyLog: () -> Unit = {},
-    examPracticeCounts: Pair<Int, Int>? = null,
-    latestVideo: RecentVideo? = null,
-    onWatchVideo: (videoId: String, title: String, channel: String) -> Unit = { _, _, _ -> },
-    studyLogMinutes: Pair<Int, Int> = 0 to 0
+    onAddStudyLog: () -> Unit = {},
+    examPracticeCounts: Pair<Int, Int>? = null
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -361,11 +331,6 @@ fun HomeContent(
                             onClick = { moreMenuExpanded = false; onOpenHelp() }
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.home_action_statistics)) },
-                            leadingIcon = { Icon(Icons.Default.BarChart, contentDescription = null) },
-                            onClick = { moreMenuExpanded = false; onOpenStatistics() }
-                        )
-                        DropdownMenuItem(
                             text = { Text(stringResource(R.string.home_action_graded_readers)) },
                             leadingIcon = { Icon(Icons.Default.AutoStories, contentDescription = null) },
                             onClick = { moreMenuExpanded = false; onOpenGradedReaders() }
@@ -394,59 +359,28 @@ fun HomeContent(
         Box(modifier = Modifier.padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
             LazyColumn(modifier = Modifier.fillMaxSize().testTag(HOME_LAZY_COLUMN_TEST_TAG)) {
                 item {
-                    StudyLogButton(
-                        todayMinutes = studyLogMinutes.first,
-                        weekMinutes = studyLogMinutes.second,
-                        onClick = onOpenStudyLog,
+                    ProgressCard(
+                        state = state,
+                        onOpen = onOpenProgress,
+                        onAdd = onAddStudyLog,
+                        onSavedWords = onOpenVocab,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                     )
-                }
-                item {
-                    LearningSummaryStrip(
-                        streakDays = state.streakDays,
-                        learnedWordCount = state.learnedWordCount,
-                        savedWordCount = state.savedWordCount,
-                        onSavedWordsClick = onOpenVocab,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
-                    )
-                }
-                item {
-                    TodayNewsSection(
-                        headlines = state.headlines,
-                        hasPartialError = state.hasPartialError,
-                        isEmptyError = state.isEmptyError,
-                        onSelect = onSelectHeadline,
-                        onRetry = onRetryNews
-                    )
-                }
-                if (state.continueReading != null || latestVideo != null) {
-                    item {
-                        EditorialSectionHeader(
-                            title = stringResource(R.string.home_section_continue),
-                            modifier = Modifier.padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.xSmall)
-                        )
-                    }
                 }
                 state.continueReading?.let { doc ->
                     item {
                         ContinueReadingCard(
                             doc = doc,
                             body = state.bodyByTextId[doc.id].orEmpty(),
-                            onClick = { onOpenText(doc.id) }
+                            onClick = { onOpenText(doc.id) },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
                 }
-                latestVideo?.let { video ->
+                continueWatching?.let { video ->
                     item {
-                        ContinueWatchingCard(
-                            video = video,
-                            onClick = { onWatchVideo(video.videoId, video.title, video.channel) },
-                            modifier = if (state.continueReading != null) {
-                                Modifier.padding(top = FrenchReaderDesign.spacing.xSmall)
-                            } else Modifier
-                        )
+                        ContinueWatchingCard(video, onClick = { onContinueWatching(video) },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
                     }
                 }
                 item {
@@ -463,6 +397,13 @@ fun HomeContent(
                         onOpen = onOpenVideos,
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
+                    )
+                }
+                item {
+                    TodayNewsCard(
+                        headlineCount = state.headlines.size,
+                        onOpen = onOpenNews,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
                 item {
@@ -490,15 +431,7 @@ fun HomeContent(
                             .padding(horizontal = FrenchReaderDesign.spacing.small, vertical = FrenchReaderDesign.spacing.half)
                     )
                 }
-                item {
-                    RecentTextsSection(
-                        documents = state.recentTexts,
-                        bodyByTextId = state.bodyByTextId,
-                        onOpen = { onOpenText(it.id) },
-                        onSeeAll = onOpenLibrary,
-                        onAddText = onAddTextClick
-                    )
-                }
+
             }
             PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
         }
@@ -513,52 +446,5 @@ fun HomeContent(
             onDownloadOrOpen = onDownloadOrOpen,
             onDismiss = onDismissPreview
         )
-    }
-}
-
-@Composable
-private fun StudyLogButton(
-    todayMinutes: Int,
-    weekMinutes: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    androidx.compose.material3.Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-        color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
-        contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer
-    ) {
-        androidx.compose.foundation.layout.Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Timer, contentDescription = null)
-            androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp))
-            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.study_log_home_card),
-                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-                Text(
-                    text = if (weekMinutes == 0) {
-                        stringResource(R.string.study_log_home_summary_empty)
-                    } else {
-                        stringResource(
-                            R.string.study_log_home_summary,
-                            com.ziaee.frenchreader.studylog.formatMinutes(todayMinutes),
-                            com.ziaee.frenchreader.studylog.formatMinutes(weekMinutes)
-                        )
-                    },
-                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-        }
     }
 }
