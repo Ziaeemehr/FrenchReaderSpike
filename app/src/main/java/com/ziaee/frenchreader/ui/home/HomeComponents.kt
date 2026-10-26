@@ -95,8 +95,10 @@ fun ProgressCard(
                 ProgressStat(Icons.Default.Timer, colors.primary,
                     stringResource(R.string.home_minutes_ratio, numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
                     stringResource(R.string.home_minutes_today), Modifier.weight(1f))
-                ProgressStat(Icons.Default.Bookmark, colors.tertiary, numbers.format(state.savedWordCount),
-                    pluralStringResource(R.plurals.home_saved_words, state.savedWordCount),
+                // Learned out of saved: saving is one tap, learning is the progress that matters.
+                ProgressStat(Icons.Default.School, colors.tertiary,
+                    stringResource(R.string.home_minutes_ratio, numbers.format(state.learnedWordCount), numbers.format(state.savedWordCount)),
+                    stringResource(R.string.review_learned_words),
                     Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable(onClick = onSavedWords))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
