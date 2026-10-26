@@ -61,6 +61,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.LazyColumn
@@ -618,13 +619,10 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit,
                                             }
                                         }
                                     }
-                                    Box {
                                     Column(Modifier
                                         .heightIn(max = itemHeight)
                                         .onSizeChanged { sentenceHeights[itemIndex] = it.height; innerHeight = it.height }
-                                        .verticalScroll(innerScroll)
-                                        // Keeps the French line and the translation clear of the copy button overlay.
-                                        .padding(end = if (isCurrent) 32.dp else 0.dp)) {
+                                        .verticalScroll(innerScroll)) {
                                         val lookup: (String, String?) -> Unit = { query, gloss ->
                                             resumeAfterDictionary = playingBeforeTouch
                                             playingBeforeTouch = false
@@ -635,20 +633,31 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit,
                                             dictionaryOpen = true
                                             vm.lookup(query, sentence.text, fallbackTitle, gloss)
                                         }
-                                        // The copy button sits beside the French line so it is not read as copying the translation.
-                                        Row(verticalAlignment = Alignment.Top) {
-                                            Box(Modifier.weight(1f)) { TranscriptSentence(
-                                                text = sentence.text,
-                                                highlighter = vocabHighlighter,
-                                                textStyle = subtitleStyle,
-                                                current = isCurrent,
-                                                activeRange = if (isCurrent) activeRange else null,
-                                                matchIdioms = vm::matchIdioms,
-                                                onLayout = { activeLayout = it },
-                                                onPhrase = { lookup(it, null) },
-                                                onWord = lookup
-                                            ) }
-                                        }
+                                        TranscriptSentence(
+                                            text = sentence.text,
+                                            highlighter = vocabHighlighter,
+                                            textStyle = subtitleStyle,
+                                            current = isCurrent,
+                                            activeRange = if (isCurrent) activeRange else null,
+                                            matchIdioms = vm::matchIdioms,
+                                            onLayout = { activeLayout = it },
+                                            onPhrase = { lookup(it, null) },
+                                            onWord = lookup,
+                                            // An inline icon after the French text: it reads as copying that sentence and takes no column.
+                                            onCopy = if (!isCurrent) null else { ->
+                                                clipboard.setText(androidx.compose.ui.text.AnnotatedString(sentence.text))
+                                                // Touching the transcript paused playback; copying alone should not stop the video.
+                                                if (playingBeforeTouch && !shadowing) {
+                                                    freeze = freeze.resume()
+                                                    cueGestureActive = false
+                                                    controller.play()
+                                                }
+                                                playingBeforeTouch = false
+                                                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+                                                    android.widget.Toast.makeText(context, R.string.sentence_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        )
                                         if (isCurrent && state.translationEnabled) {
                                             val failed = sentence.text in state.failedTranslations
                                             val translated = state.translations[sentence.text]
@@ -687,26 +696,6 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit,
                                                 }
                                             }
                                         }
-                                    }
-                                    if (isCurrent) {
-                                        IconButton(onClick = {
-                                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(sentence.text))
-                                            // Touching the transcript paused playback; copying alone should not stop the video.
-                                            if (playingBeforeTouch && !shadowing) {
-                                                freeze = freeze.resume()
-                                                cueGestureActive = false
-                                                controller.play()
-                                            }
-                                            playingBeforeTouch = false
-                                            if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
-                                                android.widget.Toast.makeText(context, R.string.sentence_copied, android.widget.Toast.LENGTH_SHORT).show()
-                                            }
-                                        }, modifier = Modifier.align(Alignment.TopEnd).size(32.dp)) {
-                                            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_sentence),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                                modifier = Modifier.size(16.dp))
-                                        }
-                                    }
                                     }
                                 }
                                 if (sentences.isEmpty()) item { Text(stringResource(R.string.watch_no_current_cue)) }
@@ -879,7 +868,8 @@ private fun TranscriptSentence(
     maxLines: Int = Int.MAX_VALUE,
     onLayout: (TextLayoutResult) -> Unit = {},
     onWord: (String, String?) -> Unit,
-    onPhrase: (String) -> Unit = { onWord(it, null) }
+    onPhrase: (String) -> Unit = { onWord(it, null) },
+    onCopy: (() -> Unit)? = null
 ) {
     val idioms by produceState(emptyList<IdiomMatch>(), text) {
         try { value = matchIdioms(text) }
@@ -919,15 +909,23 @@ private fun TranscriptSentence(
     val latestWords by rememberUpdatedState(words)
     var selection by remember { mutableStateOf<IntRange?>(null) }
     val selectionColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-    val displayed = remember(annotated, selection, selectionColor) {
+    val copyable = onCopy != null
+    val latestCopy by rememberUpdatedState(onCopy)
+    val displayed = remember(annotated, selection, selectionColor, copyable) {
         buildAnnotatedString {
             append(annotated)
             selection?.let { addStyle(SpanStyle(background = selectionColor), it.first, it.last + 1) }
+            if (copyable) { append("  "); appendInlineContent("copy", "\uFFFC") }
         }
     }
+    val copyIcon = mapOf("copy" to InlineTextContent(Placeholder(1.1.em, 1.1.em, PlaceholderVerticalAlign.TextCenter)) {
+        Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_sentence),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.fillMaxSize())
+    })
     var textLayout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
     BasicText(
         text = displayed,
+        inlineContent = copyIcon,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
         style = textStyle.copy(color = ink, textDirection = TextDirection.Ltr),
@@ -953,7 +951,10 @@ private fun TranscriptSentence(
                                 break
                             }
                             if (!change.pressed) {
-                                offsetAt(change.position, true)?.let { latestClick(it) }
+                                // A generous hit area around the small inline copy icon.
+                                val copyRect = textLayout?.placeholderRects?.lastOrNull()?.inflate(12.dp.toPx())
+                                if (latestCopy != null && copyRect?.contains(change.position) == true) latestCopy?.invoke()
+                                else offsetAt(change.position, true)?.let { latestClick(it) }
                                 break
                             }
                             val final = awaitPointerEvent(PointerEventPass.Final)
