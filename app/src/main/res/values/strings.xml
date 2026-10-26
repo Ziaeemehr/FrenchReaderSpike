@@ -989,4 +989,8 @@
     <string name="prepare_included">%1$d included with the app</string>
     <string name="reading_play_from_page">Play from this page</string>
     <string name="reading_play_from_here">Play from here</string>
+    <string name="activity_goal_title">Daily activity goal</string>
+    <string name="activity_goal_minutes">%1$d min</string>
+    <string name="activity_goal_progress">%1$d / %2$d min today</string>
+    <string name="activity_goal_done">Today’s goal done ✓</string>
 </resources>

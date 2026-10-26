@@ -188,7 +188,7 @@ class ReadingViewModel(app: Application) : AndroidViewModel(app) {
     private val translationRepo = TranslationRepository(app)
     private val highlightRepository = HighlightRepository(db.highlightDao())
     val player: ExoPlayer = ExoPlayer.Builder(app).setMediaSourceFactory(TtsMediaSourceFactory(app)).build()
-    private val selectionPlayer: ExoPlayer = ExoPlayer.Builder(app).build()
+    internal val selectionPlayer: ExoPlayer = ExoPlayer.Builder(app).build()
     private var selectionPlaybackJob: Job? = null
 
     private val shadowingController = ShadowingController(

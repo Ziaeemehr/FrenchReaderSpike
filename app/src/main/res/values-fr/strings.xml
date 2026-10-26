@@ -989,4 +989,8 @@
     <string name="prepare_included">%1$d traductions incluses dans l’application</string>
     <string name="reading_play_from_page">Lire à partir de cette page</string>
     <string name="reading_play_from_here">Lire à partir d’ici</string>
+    <string name="activity_goal_title">Objectif d’activité quotidienne</string>
+    <string name="activity_goal_minutes">%1$d min</string>
+    <string name="activity_goal_progress">%1$d / %2$d min aujourd’hui</string>
+    <string name="activity_goal_done">Objectif du jour atteint ✓</string>
 </resources>

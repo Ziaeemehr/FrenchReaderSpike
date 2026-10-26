@@ -986,4 +986,8 @@
     <string name="prepare_included">%1$d ترجمه همراه برنامه</string>
     <string name="reading_play_from_page">پخش از این صفحه</string>
     <string name="reading_play_from_here">پخش از اینجا</string>
+    <string name="activity_goal_title">هدف فعالیت روزانه</string>
+    <string name="activity_goal_minutes">%1$d دقیقه</string>
+    <string name="activity_goal_progress">امروز %1$d از %2$d دقیقه</string>
+    <string name="activity_goal_done">هدف امروز تکمیل شد ✓</string>
 </resources>

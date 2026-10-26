@@ -85,14 +85,15 @@ internal fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 }
 
 /** Compact real-data learning strip: streak, learned words, and saved
- * words/texts. Deliberately has no weekly-goal cell -- no stored or
- * configurable goal target exists anywhere in the app. */
+ * words/texts, with progress toward today's activity goal. */
 @Composable
 fun LearningSummaryStrip(
     streakDays: Int,
     learnedWordCount: Int,
     savedWordCount: Int,
     onSavedWordsClick: () -> Unit,
+    todayMinutes: Double = 0.0,
+    goalMinutes: Int = 5,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -112,6 +113,8 @@ fun LearningSummaryStrip(
                 iconTint = MaterialTheme.colorScheme.tertiary,
                 value = streakDays.toString(),
                 label = stringResource(R.string.home_summary_streak_days, streakDays),
+                detail = if (todayMinutes >= goalMinutes) stringResource(R.string.activity_goal_done)
+                    else stringResource(R.string.activity_goal_progress, todayMinutes.toInt(), goalMinutes),
                 modifier = Modifier.weight(1f)
             )
             SummaryDivider()
@@ -144,6 +147,7 @@ private fun SummaryCell(
     label: String,
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
+    detail: String? = null,
     modifier: Modifier = Modifier
 ) {
     val cellModifier = if (onClick != null) {
@@ -168,6 +172,8 @@ private fun SummaryCell(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+        if (detail != null) Text(detail, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

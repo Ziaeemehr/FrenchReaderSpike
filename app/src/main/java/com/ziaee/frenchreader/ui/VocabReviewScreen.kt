@@ -58,8 +58,8 @@ import com.ziaee.frenchreader.comprehension.LemmaLexicon
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CancellationException
 import com.ziaee.frenchreader.tts.TtsChunkRepository
-import com.ziaee.frenchreader.ui.statistics.computeStreak
-import com.ziaee.frenchreader.ui.statistics.loadActiveDates
+import com.ziaee.frenchreader.ui.statistics.loadActivityStreak
+import com.ziaee.frenchreader.ui.statistics.observeActivityStreak
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import java.time.Instant
@@ -201,6 +201,10 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     var reviewedToday by mutableIntStateOf(0); private set
     var dailyGoal by mutableIntStateOf(20); private set
     var streak by mutableIntStateOf(0); private set
+    init {
+        viewModelScope.launch { observeActivityStreak(context, db).collect { streak = it.days } }
+    }
+
     var boxes by mutableStateOf<List<ReviewBoxSummary>>(emptyList()); private set
     var learnedCount by mutableIntStateOf(0); private set
     var learnedReviewed by mutableIntStateOf(0); private set
@@ -258,10 +262,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             val loadedNewCapReached = availableNew > 0 && remainingNew == 0
             val loadedReviewedToday = db.reviewLogDao().countSince(dayStart)
             val loadedDailyGoal = VocabPrefs.getDailyGoal(context)
-            val loadedStreak = computeStreak(loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = { db.activityLogDao().activeDates() }
-            ), LocalDate.now())
+            val loadedStreak = loadActivityStreak(context, db).days
             val loadedBoxes = (1..4).map { box ->
                 val entries = all.filter { it.leitnerBox == box }
                 ReviewBoxSummary(box, entries.size, intervals[box - 1], entries.count { it.lastReviewedAtMs != null && it.nextReviewAtMs <= now }, entries.filter { it.lastReviewedAtMs != null }.minOfOrNull { it.nextReviewAtMs })

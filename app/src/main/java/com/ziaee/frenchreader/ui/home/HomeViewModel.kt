@@ -4,7 +4,6 @@ import com.ziaee.frenchreader.text.normalizeTextLevel
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.room.invalidationTrackerFlow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -36,7 +35,8 @@ import com.ziaee.frenchreader.news.NewsRepository
 import com.ziaee.frenchreader.news.normalizeArticleUrl
 import com.ziaee.frenchreader.news.personalizeHeadlines
 import com.ziaee.frenchreader.ui.shared.ContentSearchUiState
-import com.ziaee.frenchreader.ui.statistics.loadActiveDates
+import com.ziaee.frenchreader.ui.statistics.observeActivityStreak
+import com.ziaee.frenchreader.ui.statistics.ActivityStreak
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
@@ -127,16 +127,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         document to document?.let { bodyStore.read(it) }
     }
 
-    /** Re-derives the real, non-fabricated reading streak whenever a review
-     * or a listening session is logged -- driven by Room's own invalidation
-     * tracker rather than a timer, so it stays correct without polling. */
-    private val activeDates = db.invalidationTrackerFlow("review_log", "activity_log", emitInitialState = true)
-        .map {
-            loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = { db.activityLogDao().activeDates() }
-            )
-        }
+    private val activityStreak = observeActivityStreak(app, db)
 
     /** Minutes studied today and this week (study log), shown on the Home study-log button. */
     val studyLogMinutes: StateFlow<Pair<Int, Int>> = com.ziaee.frenchreader.studylog.localEpochDayFlow()
@@ -159,7 +150,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         isRefreshing,
         sourceErrors,
         importingKey,
-        activeDates,
+        activityStreak,
         timeRefresh
     ) { values ->
         @Suppress("UNCHECKED_CAST")
@@ -180,7 +171,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             isRefreshing = values[4] as Boolean,
             sourceErrors = values[5] as List<String>,
             importingKey = values[6] as String?,
-            activeDates = values[7] as Set<LocalDate>,
+            activityStreak = values[7] as ActivityStreak,
             nowMs = System.currentTimeMillis(),
             today = LocalDate.now(),
             remainingNewCards = (VocabPrefs.getMaxNewCards(app) -

@@ -142,6 +142,22 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
     val vm: ReadingViewModel = viewModel()
     val readingViewport = remember { ReadingViewport() }
     val state by vm.state.collectAsState()
+    val activityTimer = com.ziaee.frenchreader.ui.activity.rememberScreenActivityTimer(
+        textId, com.ziaee.frenchreader.ui.activity.ScreenActivity.READING, state.textDoc != null && !vm.player.isPlaying && !vm.selectionPlayer.isPlaying
+    )
+    DisposableEffect(vm.player, activityTimer) {
+        val listener = object : androidx.media3.common.Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                activityTimer.setEligible(vm.state.value.textDoc != null && !vm.player.isPlaying && !vm.selectionPlayer.isPlaying)
+            }
+        }
+        vm.player.addListener(listener)
+        vm.selectionPlayer.addListener(listener)
+        onDispose {
+            vm.player.removeListener(listener)
+            vm.selectionPlayer.removeListener(listener)
+        }
+    }
     val allSavedVocabStatuses by vm.savedVocabStatuses.collectAsState()
     val highlights by vm.highlights.collectAsState()
     val savedVocabStatuses = if (AppearanceState.highlightSavedWords) allSavedVocabStatuses else emptyMap()
@@ -385,6 +401,14 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
 
     androidx.compose.runtime.CompositionLocalProvider(LocalTextToolbar provides selectionToolbarController, LocalReadingViewport provides readingViewport) {
         Scaffold(
+            modifier = Modifier.pointerInput(activityTimer) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.changes.any { it.pressed || it.previousPressed }) activityTimer.interact()
+                    }
+                }
+            },
             containerColor = palette.background,
             topBar = {
                 Column {

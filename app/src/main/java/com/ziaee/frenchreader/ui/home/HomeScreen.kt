@@ -383,6 +383,8 @@ fun HomeContent(
                 item {
                     LearningSummaryStrip(
                         streakDays = state.streakDays,
+                        todayMinutes = state.todayActivityMinutes,
+                        goalMinutes = state.activityGoalMinutes,
                         learnedWordCount = state.learnedWordCount,
                         savedWordCount = state.savedWordCount,
                         onSavedWordsClick = onOpenVocab,

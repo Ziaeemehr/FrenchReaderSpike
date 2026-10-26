@@ -293,6 +293,13 @@ val MIGRATION_18_19 = object : Migration(18, 19) {
     }
 }
 
+val MIGRATION_20_21 = object : Migration(20, 21) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE activity_log ADD COLUMN readingMs INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE activity_log ADD COLUMN watchingMs INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 val MIGRATION_19_20 = object : Migration(19, 20) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE texts ADD COLUMN level TEXT")
@@ -369,7 +376,7 @@ val TEXT_SEARCH_CALLBACK = object : RoomDatabase.Callback() {
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
     MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
-    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
+    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21
 )
 
 @Database(
@@ -398,7 +405,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shadowAttemptDao(): ShadowAttemptDao
 
     companion object {
-        const val SCHEMA_VERSION = 20
+        const val SCHEMA_VERSION = 21
 
         @Volatile private var INSTANCE: AppDatabase? = null
 

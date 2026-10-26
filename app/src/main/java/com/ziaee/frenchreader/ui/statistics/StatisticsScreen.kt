@@ -41,6 +41,12 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
     var loading by mutableStateOf(true)
         private set
 
+    init {
+        viewModelScope.launch {
+            observeActivityStreak(app, db).collect { uiState = uiState.copy(streakDays = it.days) }
+        }
+    }
+
     fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -63,12 +69,7 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
             val weeklyListening = monthlyListening.takeLast(7)
             val reviewLogs = db.reviewLogDao().getAll()
 
-            val activeDates = loadActiveDates(
-                reviewLogDates = { db.reviewLogDao().distinctActiveDates() },
-                activityLogDates = {
-                    db.activityLogDao().activeDates() + db.shadowAttemptDao().distinctActiveDates()
-                }
-            )
+            val activity = loadActivityStreak(getApplication(), db, today)
 
             uiState = composeStatisticsState(
                 texts = texts,
@@ -79,10 +80,11 @@ class StatisticsViewModel(app: Application) : AndroidViewModel(app) {
                 knewCount = knewCount,
                 totalReviewCount = totalReviewCount,
                 weeklyListening = weeklyListening,
-                activeDates = activeDates,
+                activeDates = emptySet(),
                 today = today,
                 reviewLogs = reviewLogs,
-                monthlyListening = monthlyListening
+                monthlyListening = monthlyListening,
+                streakDays = activity.days
             )
             val shadowRecent = db.shadowAttemptDao().getSince(today.minusDays(6).startOfDayMs())
             uiState = uiState.copy(
