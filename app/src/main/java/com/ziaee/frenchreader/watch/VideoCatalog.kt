@@ -107,9 +107,10 @@ fun parseYoutubeChannelPage(html: String, today: LocalDate): List<ChannelVideo> 
         when (node) {
             is JSONObject -> node.keys().forEach { key ->
                 val value = node.opt(key)
-                if (key.endsWith("ideoRenderer") && value is JSONObject && value.has("videoId")) {
+                // videoRenderer / compactVideoRenderer / videoWithContextRenderer, depending on which page YouTube serves.
+                if (key.endsWith("Renderer") && value is JSONObject && value.has("videoId")) {
                     val id = value.optString("videoId")
-                    if (Regex("[A-Za-z0-9_-]{11}").matches(id)) videos += ChannelVideo(id, text(value.opt("title")),
+                    if (Regex("[A-Za-z0-9_-]{11}").matches(id)) videos += ChannelVideo(id, text(value.opt("title")).ifBlank { text(value.opt("headline")) },
                         relativeDay(text(value.opt("publishedTimeText")), today)?.toString().orEmpty(),
                         "https://i.ytimg.com/vi/$id/mqdefault.jpg")
                 } else if (key == "lockupViewModel" && value is JSONObject) {

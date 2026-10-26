@@ -10,11 +10,13 @@ class ChannelPageFallbackTest {
     private val json = """{"contents":{"richGridRenderer":{"contents":[
         {"richItemRenderer":{"content":{"compactVideoRenderer":{"videoId":"--vNiuWF8N4","title":{"runs":[{"text":"Tintin & "},{"text":"Le Lotus"}]},"publishedTimeText":{"runs":[{"text":"5 hours ago"}]}}}}},
         {"richItemRenderer":{"content":{"videoRenderer":{"videoId":"roQgPYL06_4","title":{"simpleText":"GeoGuessr"},"publishedTimeText":{"simpleText":"2 weeks ago"}}}}},
-        {"richItemRenderer":{"content":{"videoRenderer":{"videoId":"roQgPYL06_4","title":{"simpleText":"duplicate"}}}}}]}}}"""
+        {"richItemRenderer":{"content":{"videoRenderer":{"videoId":"roQgPYL06_4","title":{"simpleText":"duplicate"}}}}},
+        {"itemSectionRenderer":{"contents":[{"videoWithContextRenderer":{"videoId":"qIzM5nZd5Wc","headline":{"runs":[{"text":"Phone page"}]},"publishedTimeText":{"runs":[{"text":"1 day ago"}]},"navigationEndpoint":{"watchEndpoint":{"videoId":"qIzM5nZd5Wc"}}}}]}}]}}}"""
 
     @Test fun readsTheJsonScriptElement() {
         val videos = parseYoutubeChannelPage("""<script id="yt-initial-data" type="application/json">$json</script>""", today)
-        assertEquals(listOf("--vNiuWF8N4", "roQgPYL06_4"), videos.map { it.videoId })
+        assertEquals(listOf("--vNiuWF8N4", "roQgPYL06_4", "qIzM5nZd5Wc"), videos.map { it.videoId })
+        assertEquals("Phone page", videos[2].title)
         assertEquals("Tintin & Le Lotus", videos[0].title)
         assertEquals("2026-10-27", videos[0].published)
         assertEquals("2026-10-13", videos[1].published)
@@ -23,11 +25,11 @@ class ChannelPageFallbackTest {
     @Test fun readsTheMobileStringLiteral() {
         val escaped = json.map { if (it == '{' || it == '}' || it == '"') "\\x%02x".format(it.code) else it.toString() }.joinToString("")
         val videos = parseYoutubeChannelPage("<script>var ytInitialData = '$escaped';</script>", today)
-        assertEquals(2, videos.size)
+        assertEquals(3, videos.size)
     }
 
     @Test fun readsTheDesktopObjectLiteral() {
-        assertEquals(2, parseYoutubeChannelPage("<script>var ytInitialData = $json;</script>", today).size)
+        assertEquals(3, parseYoutubeChannelPage("<script>var ytInitialData = $json;</script>", today).size)
     }
 
     @Test fun pageWithoutDataGivesNothing() {
