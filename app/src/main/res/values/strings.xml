@@ -1013,4 +1013,6 @@
     <string name="study_log_home_summary">Today %1$s · This week %2$s</string>
     <string name="study_log_home_card">Track your study time</string>
     <string name="study_log_home_summary_empty">Nothing logged this week yet</string>
+    <string name="home_minutes_week">min this week</string>
+    <string name="home_goal_caption">Today %1$s/%2$s min</string>
 </resources>

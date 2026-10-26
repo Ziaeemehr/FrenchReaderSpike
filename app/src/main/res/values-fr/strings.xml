@@ -1013,4 +1013,6 @@
     <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string>
     <string name="study_log_home_card">Suivez votre temps d’étude</string>
     <string name="study_log_home_summary_empty">Rien d’enregistré cette semaine</string>
+    <string name="home_minutes_week">min cette semaine</string>
+    <string name="home_goal_caption">Aujourd’hui %1$s/%2$s min</string>
 </resources>

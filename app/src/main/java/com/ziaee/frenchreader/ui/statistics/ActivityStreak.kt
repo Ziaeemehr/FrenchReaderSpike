@@ -9,7 +9,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 
-internal data class ActivityStreak(val days: Int = 0, val todayMinutes: Double = 0.0, val goalMinutes: Int = 5)
+internal data class ActivityStreak(val days: Int = 0, val todayMinutes: Double = 0.0, val goalMinutes: Int = 5, val weekMinutes: Double = 0.0)
 
 internal suspend fun loadActivityStreak(context: Context, db: AppDatabase, today: LocalDate = LocalDate.now()): ActivityStreak {
     val cutover = ActivityStreakPrefs.cutover(context, today)
@@ -17,7 +17,8 @@ internal suspend fun loadActivityStreak(context: Context, db: AppDatabase, today
     val rows = db.activityLogDao().dailyActivity()
     val minutes = dailyActivityMinutes(rows)
     val legacy = rows.filter { it.legacyActive }.map { LocalDate.parse(it.date) }.toSet()
-    return ActivityStreak(computeActivityStreak(minutes, legacy, cutover, goal, today), minutes[today] ?: 0.0, goal)
+    val week = (0L..6L).sumOf { minutes[today.minusDays(it)] ?: 0.0 }
+    return ActivityStreak(computeActivityStreak(minutes, legacy, cutover, goal, today), minutes[today] ?: 0.0, goal, week)
 }
 
 internal fun observeActivityStreak(context: Context, db: AppDatabase) = combine(

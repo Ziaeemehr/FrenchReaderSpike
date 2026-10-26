@@ -41,6 +41,7 @@ data class HomeUiState(
     val dueReviewCount: Int = 0,
     val streakDays: Int = 0,
     val todayActivityMinutes: Double = 0.0,
+    val weekActivityMinutes: Double = 0.0,
     val activityGoalMinutes: Int = 5
 ) {
     /** One source failed but there's still something to show -- a
@@ -80,6 +81,7 @@ internal fun composeHomeState(
     dueReviewCount = reviewableCount(vocabEntries, nowMs, remainingNewCards),
     streakDays = activityStreak?.days ?: computeStreak(activeDates, today),
     todayActivityMinutes = activityStreak?.todayMinutes ?: 0.0,
+    weekActivityMinutes = activityStreak?.weekMinutes ?: 0.0,
     activityGoalMinutes = activityStreak?.goalMinutes ?: 5
 )
 

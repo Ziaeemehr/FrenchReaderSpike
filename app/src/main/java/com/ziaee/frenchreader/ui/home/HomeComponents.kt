@@ -92,9 +92,9 @@ fun ProgressCard(
             Row(Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 ProgressStat(Icons.Default.LocalFireDepartment, Color(0xFFF2994A), numbers.format(state.streakDays),
                     pluralStringResource(R.plurals.home_streak_days, state.streakDays), Modifier.weight(1f))
-                ProgressStat(Icons.Default.Timer, colors.primary,
-                    stringResource(R.string.home_minutes_ratio, numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
-                    stringResource(R.string.home_minutes_today), Modifier.weight(1f))
+                // The week's total keeps growing; today's goal is the bar below.
+                ProgressStat(Icons.Default.Timer, colors.primary, numbers.format(state.weekActivityMinutes.toInt()),
+                    stringResource(R.string.home_minutes_week), Modifier.weight(1f))
                 // Learned out of saved: saving is one tap, learning is the progress that matters.
                 ProgressStat(Icons.Default.School, colors.tertiary,
                     stringResource(R.string.home_minutes_ratio, numbers.format(state.learnedWordCount), numbers.format(state.savedWordCount)),
@@ -110,6 +110,10 @@ fun ProgressCard(
                 )
                 if (goalReached) Icon(Icons.Default.CheckCircle, stringResource(R.string.activity_goal_done),
                     tint = colors.tertiary, modifier = Modifier.padding(start = 8.dp).size(16.dp))
+                else Text(stringResource(R.string.home_goal_caption,
+                    numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
+                    style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
+                    maxLines = 1, modifier = Modifier.padding(start = 8.dp))
                 IconButton(onClick = onAdd, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.AddCircleOutline, stringResource(R.string.study_log_add_time),
                         tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
