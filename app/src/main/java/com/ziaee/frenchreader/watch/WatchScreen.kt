@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.text.Placeholder
@@ -167,6 +168,7 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
         }
     }
     val context = LocalContext.current
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
     var exportOpen by remember(videoId) { mutableStateOf(false) }
     val exportTitle = state.title.ifBlank { "YouTube $videoId" }
     val srtPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/x-subrip")) { uri ->
@@ -239,6 +241,9 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
     var freeze by remember(videoId) { mutableStateOf(PlaybackFreeze()) }
     val frozenCueTime = freeze.cueTimeMs
     var cueGestureActive by remember(videoId) { mutableStateOf(false) }
+    // Watching (not shadowing) when a touch reached the transcript; a lookup from that touch resumes on close.
+    var playingBeforeTouch by remember(videoId) { mutableStateOf(false) }
+    var resumeAfterDictionary by remember(videoId) { mutableStateOf(false) }
     val latestTime by rememberUpdatedState(state.currentTimeMs)
     // Moving the player between compact/full containers preserves the WebView and playback.
     val movePlayer = remember(videoId) {
@@ -398,6 +403,13 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
     }
     fun closeDictionary() {
         dictionaryOpen = false
+        if (resumeAfterDictionary && !shadowing) {
+            recordRequest = null
+            freeze = freeze.resume()
+            cueGestureActive = false
+            controller.play()
+        }
+        resumeAfterDictionary = false
         vm.dismissLookup()
         following = true
         lastTouch = 0L
@@ -559,6 +571,8 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                     }.pointerInput(videoId) {
                                     awaitEachGesture {
                                         awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                        playingBeforeTouch = vm.uiState.value.playerState == 1 && freeze.cueTimeMs == null &&
+                                            !videoShadowing.state.value.playingUnit
                                         cueGestureActive = true
                                         lastTouch = SystemClock.uptimeMillis()
                                         freeze = PlaybackFreeze(freeze.cueTimeMs ?: latestTime, lastTouch)
@@ -604,24 +618,49 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                         .heightIn(max = itemHeight)
                                         .onSizeChanged { sentenceHeights[itemIndex] = it.height; innerHeight = it.height }
                                         .verticalScroll(innerScroll)) {
-                                        TranscriptSentence(
-                                            text = sentence.text,
-                                            highlighter = vocabHighlighter,
-                                            textStyle = subtitleStyle,
-                                            current = isCurrent,
-                                            activeRange = if (isCurrent) activeRange else null,
-                                            matchIdioms = vm::matchIdioms,
-                                            onLayout = { activeLayout = it },
-                                            onSeek = { seek(itemIndex) },
-                                            onWord = { word, gloss ->
-                                                videoShadowing.cancel()
-                                                recordRequest = null
-                                                controller.pause()
-                                                dictionarySentence = sentence.text
-                                                dictionaryOpen = true
-                                                vm.lookup(word, sentence.text, fallbackTitle, gloss)
+                                        val lookup: (String, String?) -> Unit = { query, gloss ->
+                                            resumeAfterDictionary = playingBeforeTouch
+                                            playingBeforeTouch = false
+                                            videoShadowing.cancel()
+                                            recordRequest = null
+                                            controller.pause()
+                                            dictionarySentence = sentence.text
+                                            dictionaryOpen = true
+                                            vm.lookup(query, sentence.text, fallbackTitle, gloss)
+                                        }
+                                        // The copy button sits beside the French line so it is not read as copying the translation.
+                                        Row(verticalAlignment = Alignment.Top) {
+                                            Box(Modifier.weight(1f)) { TranscriptSentence(
+                                                text = sentence.text,
+                                                highlighter = vocabHighlighter,
+                                                textStyle = subtitleStyle,
+                                                current = isCurrent,
+                                                activeRange = if (isCurrent) activeRange else null,
+                                                matchIdioms = vm::matchIdioms,
+                                                onLayout = { activeLayout = it },
+                                                onPhrase = { lookup(it, null) },
+                                                onWord = lookup
+                                            ) }
+                                            if (isCurrent) {
+                                                IconButton(onClick = {
+                                                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(sentence.text))
+                                                    // Touching the transcript paused playback; copying alone should not stop the video.
+                                                    if (playingBeforeTouch && !shadowing) {
+                                                        freeze = freeze.resume()
+                                                        cueGestureActive = false
+                                                        controller.play()
+                                                    }
+                                                    playingBeforeTouch = false
+                                                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+                                                        android.widget.Toast.makeText(context, R.string.sentence_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }, modifier = Modifier.size(32.dp)) {
+                                                    Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_sentence),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                                        modifier = Modifier.size(16.dp))
+                                                }
                                             }
-                                        )
+                                        }
                                         if (isCurrent && state.translationEnabled) {
                                             val failed = sentence.text in state.failedTranslations
                                             val translated = state.translations[sentence.text]
@@ -820,7 +859,7 @@ private fun savedSubtitleText(text: String, highlighter: VocabHighlighter): andr
     }
 }
 
-/** Each lazy item owns its cached text and a tap detector that survives playback ticks. */
+/** Each lazy item owns its cached text and a gesture detector that survives playback ticks. */
 @Composable
 private fun TranscriptSentence(
     text: String,
@@ -831,8 +870,8 @@ private fun TranscriptSentence(
     matchIdioms: suspend (String) -> List<IdiomMatch>,
     maxLines: Int = Int.MAX_VALUE,
     onLayout: (TextLayoutResult) -> Unit = {},
-    onSeek: () -> Unit,
-    onWord: (String, String?) -> Unit
+    onWord: (String, String?) -> Unit,
+    onPhrase: (String) -> Unit = { onWord(it, null) }
 ) {
     val idioms by produceState(emptyList<IdiomMatch>(), text) {
         try { value = matchIdioms(text) }
@@ -864,27 +903,93 @@ private fun TranscriptSentence(
         if (idiom != null) onWord(idiom.expression, idiom.gloss)
         else annotated.getStringAnnotations("word", offset, offset).firstOrNull()?.let { onWord(it.item, null) }
     })
-    val onClick = remember { { offset: Int -> latestClick(offset) } }
-    val latestSeek by rememberUpdatedState(onSeek)
+    val latestPhrase by rememberUpdatedState(onPhrase)
+    val latestText by rememberUpdatedState(text)
+    val words = remember(text) {
+        annotated.getStringAnnotations("word", 0, text.length).map { it.start until it.end }
+    }
+    val latestWords by rememberUpdatedState(words)
+    var selection by remember { mutableStateOf<IntRange?>(null) }
+    val selectionColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+    val displayed = remember(annotated, selection, selectionColor) {
+        buildAnnotatedString {
+            append(annotated)
+            selection?.let { addStyle(SpanStyle(background = selectionColor), it.first, it.last + 1) }
+        }
+    }
     var textLayout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
     BasicText(
-        text = annotated,
+        text = displayed,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
         style = textStyle.copy(color = ink, textDirection = TextDirection.Ltr),
-        modifier = Modifier.fillMaxWidth().alpha(if (current) 1f else 0.45f)
+        modifier = Modifier.fillMaxWidth().alpha(if (current || selection != null) 1f else 0.45f)
             .pointerInput(Unit) {
-                // One stable detector owns both gestures; playback ticks cannot drop a tap,
-                // and a long press cannot also dispatch a word lookup.
-                detectTapGestures(onLongPress = { latestSeek() }, onTap = { position ->
-                    textLayout?.let { layout ->
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    fun offsetAt(position: androidx.compose.ui.geometry.Offset, inside: Boolean): Int? {
+                        val layout = textLayout ?: return null
                         val line = layout.getLineForVerticalPosition(position.y)
-                        if (position.y >= 0 && position.y < layout.size.height &&
-                            position.x >= layout.getLineLeft(line) && position.x < layout.getLineRight(line)) {
-                            onClick(layout.getOffsetForPosition(position))
+                        if (inside && (position.y < 0 || position.y >= layout.size.height ||
+                                position.x < layout.getLineLeft(line) || position.x >= layout.getLineRight(line))) return null
+                        return layout.getOffsetForPosition(position)
+                    }
+                    var multiTouch = false
+                    val longPress = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id }
+                            if (event.changes.size > 1) { multiTouch = true; break }
+                            if (change == null || change.isConsumed ||
+                                (change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                                break
+                            }
+                            if (!change.pressed) {
+                                offsetAt(change.position, true)?.let { latestClick(it) }
+                                break
+                            }
+                            val final = awaitPointerEvent(PointerEventPass.Final)
+                            if (final.changes.any { it.isConsumed }) {
+                                break
+                            }
+                        }
+                        false
+                    } == null
+                    if (longPress && !multiTouch) {
+                        val gestureText = latestText
+                        val gestureWords = latestWords
+                        val anchorOffset = offsetAt(down.position, true)
+                        val anchor = gestureWords.indexOfFirst { anchorOffset != null && anchorOffset in it }
+                        var target = anchor
+                        // Once the drag reaches another word, release looks up the selection, even back on the anchor.
+                        var dragged = false
+                        if (anchor >= 0) selection = gestureWords[anchor]
+                        try {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                // A second finger cancels: no lookup or seek from an unfinished multi-touch.
+                                if (change.isConsumed || latestText != gestureText || event.changes.count { it.pressed } > 1) break
+                                if (anchor >= 0) {
+                                    val offset = offsetAt(change.position, false)
+                                    val word = gestureWords.indexOfFirst { offset != null && offset in it }
+                                    if (word >= 0) target = word
+                                    if (target != anchor) dragged = true
+                                    selection = transcriptSelectionRange(gestureWords, anchor, target)
+                                }
+                                event.changes.forEach { it.consume() }
+                                if (!change.pressed) {
+                                    if (anchor >= 0 && dragged) {
+                                        selection?.let { latestPhrase(gestureText.substring(it).trim()) }
+                                    } else anchorOffset?.let { latestClick(it) }
+                                    break
+                                }
+                            }
+                        } finally {
+                            selection = null
                         }
                     }
-                })
+                }
             },
         onTextLayout = { textLayout = it; onLayout(it) }
     )

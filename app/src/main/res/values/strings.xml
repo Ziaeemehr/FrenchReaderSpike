@@ -989,4 +989,6 @@
     <string name="prepare_included">%1$d included with the app</string>
     <string name="reading_play_from_page">Play from this page</string>
     <string name="reading_play_from_here">Play from here</string>
+    <string name="copy_sentence">Copy sentence</string>
+    <string name="sentence_copied">Sentence copied</string>
 </resources>

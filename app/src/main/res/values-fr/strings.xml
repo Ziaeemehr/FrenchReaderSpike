@@ -989,4 +989,6 @@
     <string name="prepare_included">%1$d traductions incluses dans l’application</string>
     <string name="reading_play_from_page">Lire à partir de cette page</string>
     <string name="reading_play_from_here">Lire à partir d’ici</string>
+    <string name="copy_sentence">Copier la phrase</string>
+    <string name="sentence_copied">Phrase copiée</string>
 </resources>

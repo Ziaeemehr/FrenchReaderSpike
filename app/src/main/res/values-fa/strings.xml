@@ -986,4 +986,6 @@
     <string name="prepare_included">%1$d ترجمه همراه برنامه</string>
     <string name="reading_play_from_page">پخش از این صفحه</string>
     <string name="reading_play_from_here">پخش از اینجا</string>
+    <string name="copy_sentence">کپی جمله</string>
+    <string name="sentence_copied">جمله کپی شد</string>
 </resources>
