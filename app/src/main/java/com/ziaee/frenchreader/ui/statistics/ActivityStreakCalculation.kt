@@ -9,12 +9,11 @@ internal fun computeActivityStreak(
     dailyMinutes: Map<LocalDate, Double>,
     legacyActiveDates: Set<LocalDate>,
     cutover: LocalDate,
-    goalMinutes: Int,
+    goalFor: (LocalDate) -> Int,
     today: LocalDate
 ): Int {
-    require(goalMinutes > 0)
     fun active(day: LocalDate) = if (day < cutover) day in legacyActiveDates
-        else (dailyMinutes[day] ?: 0.0) >= goalMinutes
+        else (dailyMinutes[day] ?: 0.0) >= goalFor(day)
     var day = if (active(today)) today else today.minusDays(1)
     var streak = 0
     while (active(day)) {

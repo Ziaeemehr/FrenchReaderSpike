@@ -33,7 +33,7 @@ fun NewsScreen(onBack: () -> Unit, onOpenText: (Long) -> Unit) {
         Box(Modifier.fillMaxSize().padding(padding).nestedScroll(refresh.nestedScrollConnection)) {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
                 item { NewsStatus(state.hasPartialError, state.isEmptyError, { vm.refresh(force = true) }) }
-                items(state.headlines.sortedByDescending { it.publishedAtMs ?: 0L }, key = { it.sourceId + it.externalId }) { headline ->
+                items(state.headlines, key = { it.sourceId + it.externalId }) { headline ->
                     NewsHeadlineRow(headline, onClick = { vm.selectHeadline(headline) })
                 }
             }

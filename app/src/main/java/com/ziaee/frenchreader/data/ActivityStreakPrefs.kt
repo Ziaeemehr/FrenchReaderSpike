@@ -12,9 +12,19 @@ object ActivityStreakPrefs {
 
     fun goal(context: Context): Int = prefs(context).getInt("goal_minutes", 5).takeIf { it in goals } ?: 5
 
+    fun goalHistory(context: Context): Map<LocalDate, Int> = prefs(context).all.mapNotNull { (key, value) ->
+        if (!key.startsWith("goal_on_") || value !is Int || value !in goals) null
+        else runCatching { LocalDate.parse(key.removePrefix("goal_on_")) to value }.getOrNull()
+    }.toMap()
+
+    @Synchronized
     fun setGoal(context: Context, minutes: Int) {
         require(minutes in goals)
-        prefs(context).edit().putInt("goal_minutes", minutes).apply()
+        if (goal(context) == minutes) return
+        prefs(context).edit()
+            .putInt("goal_on_${LocalDate.now()}", minutes)
+            .putInt("goal_minutes", minutes)
+            .apply()
     }
 
     @Synchronized

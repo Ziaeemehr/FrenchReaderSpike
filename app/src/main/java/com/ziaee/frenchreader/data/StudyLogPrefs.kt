@@ -1,7 +1,10 @@
 package com.ziaee.frenchreader.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import java.time.DayOfWeek
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 
 object StudyLogPrefs {
     const val PREFS_NAME = "study_log_prefs"
@@ -16,6 +19,16 @@ object StudyLogPrefs {
 
     fun setFirstDayOfWeek(context: Context, value: DayOfWeek) {
         prefs(context).edit().putString(KEY_FIRST_DAY, value.name).apply()
+    }
+
+    fun observeFirstDayOfWeek(context: Context) = callbackFlow {
+        val prefs = prefs(context)
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_FIRST_DAY) trySend(getFirstDayOfWeek(context))
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        trySend(getFirstDayOfWeek(context))
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
     fun getLastSkill(context: Context): StudySkill =

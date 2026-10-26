@@ -84,7 +84,7 @@ internal fun last7Days(today: LocalDate): List<LocalDate> =
  * if today has no activity logged yet, so the streak doesn't drop to zero
  * first thing in the morning before the user has done anything today. */
 internal fun computeStreak(activeDates: Set<LocalDate>, today: LocalDate): Int =
-    computeActivityStreak(emptyMap(), activeDates, today.plusDays(1), 5, today)
+    computeActivityStreak(emptyMap(), activeDates, today.plusDays(1), { 5 }, today)
 
 /** Shared by Statistics and Home so both derive the exact same "any
  * activity" date set from `review_log` + `activity_log` without duplicating
