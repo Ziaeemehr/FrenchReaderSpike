@@ -74,8 +74,13 @@ class ActivityLogDaoTest {
             matched = 1, total = 1, engine = "android", timestampMs = timestamp))
         db.studyLogDao().insertSession(StudySession(date = day.toEpochDay(), durationMin = 1, skill = StudySkill.CE))
         dao.addReading(day.minusDays(1).toString(), 60_000)
+        val shadowDay = day.minusDays(2)
+        val shadowTimestamp = shadowDay.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        db.shadowAttemptDao().insert(ShadowAttempt(textId = 1, chunkIndex = 0, sentenceIndex = 0,
+            matched = 1, total = 1, engine = "android", timestampMs = shadowTimestamp))
         val rows = dao.dailyActivity().associateBy { it.date }
         assertEquals(DailyActivityRow(day.toString(), 300_000, true), rows[day.toString()])
+        assertEquals(DailyActivityRow(shadowDay.toString(), 20_000, true), rows[shadowDay.toString()])
         assertEquals(DailyActivityRow(day.minusDays(1).toString(), 60_000, false), rows[day.minusDays(1).toString()])
     }
 }

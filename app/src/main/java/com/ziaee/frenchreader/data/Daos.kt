@@ -347,7 +347,7 @@ interface ActivityLogDao {
             SELECT date(timestampMs / 1000, 'unixepoch', 'localtime'), COUNT(*) * 10000, 1
                 FROM review_log GROUP BY date(timestampMs / 1000, 'unixepoch', 'localtime')
             UNION ALL
-            SELECT date(timestampMs / 1000, 'unixepoch', 'localtime'), COUNT(*) * 20000, 0
+            SELECT date(timestampMs / 1000, 'unixepoch', 'localtime'), COUNT(*) * 20000, 1
                 FROM shadow_attempts GROUP BY date(timestampMs / 1000, 'unixepoch', 'localtime')
             UNION ALL
             SELECT date(date * 86400, 'unixepoch'), SUM(duration_min) * 60000, 0

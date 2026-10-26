@@ -94,9 +94,8 @@ fun ProgressCard(
                 // The week's total keeps growing; today's goal is the bar below.
                 ProgressStat(Icons.Default.Timer, colors.primary, numbers.format(state.weekActivityMinutes.toInt()),
                     stringResource(R.string.home_minutes_week), Modifier.weight(1f))
-                // Learned out of saved: saving is one tap, learning is the progress that matters.
-                ProgressStat(Icons.Default.School, colors.tertiary,
-                    stringResource(R.string.home_minutes_ratio, numbers.format(state.learnedWordCount), numbers.format(state.savedWordCount)),
+                // Learned words only: saving is one tap, learning is the progress that matters.
+                ProgressStat(Icons.Default.School, colors.tertiary, numbers.format(state.learnedWordCount),
                     stringResource(R.string.review_learned_words),
                     Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable(onClick = onSavedWords))
             }

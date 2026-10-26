@@ -1,6 +1,8 @@
 package com.ziaee.frenchreader.ui.statistics
 
 import com.ziaee.frenchreader.data.DailyActivityRow
+import com.ziaee.frenchreader.studylog.weekStart
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 internal fun computeActivityStreak(
@@ -25,3 +27,10 @@ internal fun computeActivityStreak(
 internal fun dailyActivityMinutes(rows: List<DailyActivityRow>): Map<LocalDate, Double> =
     rows.groupBy { LocalDate.parse(it.date) }.mapValues { (_, rows) -> rows.sumOf { it.activityMs } / 60_000.0 }
 
+internal fun activityWeekMinutes(
+    dailyMinutes: Map<LocalDate, Double>,
+    today: LocalDate,
+    firstDayOfWeek: DayOfWeek
+): Double = (weekStart(today.toEpochDay(), firstDayOfWeek)..today.toEpochDay()).sumOf {
+    dailyMinutes[LocalDate.ofEpochDay(it)] ?: 0.0
+}

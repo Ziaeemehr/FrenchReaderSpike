@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui.statistics
 
 import com.ziaee.frenchreader.data.DailyActivityRow
+import java.time.DayOfWeek
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -40,5 +41,11 @@ class ActivityStreakTest {
         assertEquals(5.0, minutes.getValue(today), 0.00001)
         assertEquals(1.0 / 6, minutes.getValue(today.minusDays(1)), 0.00001)
         assertEquals(1, computeActivityStreak(minutes, emptySet(), today, 5, today))
+    }
+
+    @Test fun `week minutes respect configured start and exclude future days`() {
+        val minutes = mapOf(today.minusDays(1) to 10.0, today to 5.5, today.plusDays(1) to 20.0)
+        assertEquals(5.5, activityWeekMinutes(minutes, today, DayOfWeek.MONDAY), 0.00001)
+        assertEquals(15.5, activityWeekMinutes(minutes, today, DayOfWeek.SATURDAY), 0.00001)
     }
 }

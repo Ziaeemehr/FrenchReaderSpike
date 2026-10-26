@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.invalidationTrackerFlow
 import com.ziaee.frenchreader.data.ActivityStreakPrefs
 import com.ziaee.frenchreader.data.AppDatabase
+import com.ziaee.frenchreader.data.StudyLogPrefs
 import com.ziaee.frenchreader.studylog.localEpochDayFlow
 import java.time.LocalDate
 import kotlinx.coroutines.flow.combine
@@ -17,7 +18,7 @@ internal suspend fun loadActivityStreak(context: Context, db: AppDatabase, today
     val rows = db.activityLogDao().dailyActivity()
     val minutes = dailyActivityMinutes(rows)
     val legacy = rows.filter { it.legacyActive }.map { LocalDate.parse(it.date) }.toSet()
-    val week = (0L..6L).sumOf { minutes[today.minusDays(it)] ?: 0.0 }
+    val week = activityWeekMinutes(minutes, today, StudyLogPrefs.getFirstDayOfWeek(context))
     return ActivityStreak(computeActivityStreak(minutes, legacy, cutover, goal, today), minutes[today] ?: 0.0, goal, week)
 }
 
