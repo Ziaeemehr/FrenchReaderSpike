@@ -997,4 +997,20 @@
         <item quantity="one">%1$s titre disponible</item>
         <item quantity="other">%1$s titres disponibles</item>
     </plurals>
+    <string name="home_section_my_texts">Mes textes</string>
+    <string name="home_action_see_all">Tout voir</string>
+    <string name="home_recent_empty">Aucun texte pour l’instant. Ajoutez-en un pour commencer.</string>
+    <string name="home_summary_learned">%1$d appris</string>
+    <string name="home_summary_saved_words">%1$d mots enregistrés</string>
+    <string name="home_summary_saved_texts">%1$d textes</string>
+    <string name="home_summary_streak_days">%1$d jours d\'affilée</string>
+    <string name="home_action_resume">Reprendre</string>
+    <string name="home_progress_percent">%1$d %% terminé</string>
+    <string name="home_remaining_minutes">Environ %1$d min restantes</string>
+    <string name="home_reading_complete">Lecture terminée</string>
+    <string name="home_estimated_minutes">Lecture de %1$d min</string>
+    <string name="home_action_statistics">Statistiques d\'apprentissage</string>
+    <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string>
+    <string name="study_log_home_card">Suivez votre temps d’étude</string>
+    <string name="study_log_home_summary_empty">Rien d’enregistré cette semaine</string>
 </resources>

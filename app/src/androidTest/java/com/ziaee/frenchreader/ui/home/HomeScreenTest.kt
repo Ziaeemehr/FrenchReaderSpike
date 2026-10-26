@@ -60,7 +60,10 @@ class HomeScreenTest {
         onOpenGradedReaders: () -> Unit = {},
         onSearchClick: () -> Unit = {},
         onOpenDictionary: () -> Unit = {},
-        onStartReview: () -> Unit = {}
+        onStartReview: () -> Unit = {},
+        onOpenText: (Long) -> Unit = {},
+        continueWatching: com.ziaee.frenchreader.watch.RecentVideo? = null,
+        onContinueWatching: (com.ziaee.frenchreader.watch.RecentVideo) -> Unit = {}
     ) {
         composeTestRule.setContent {
             FrenchReaderTheme(ThemeMode.LIGHT) {
@@ -84,7 +87,10 @@ class HomeScreenTest {
                     onPullRefresh = {},
                     onDownloadOrOpen = {},
                     onDismissPreview = {},
-                    onStartReview = onStartReview
+                    onStartReview = onStartReview,
+                    onOpenText = onOpenText,
+                    continueWatching = continueWatching,
+                    onContinueWatching = onContinueWatching
                 )
             }
         }
@@ -105,9 +111,37 @@ class HomeScreenTest {
             .performScrollToNode(hasText(string(R.string.home_section_today_news)))
         composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).assertExists()
         composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertDoesNotExist()
-        composeTestRule.onNodeWithText("En cours de lecture").assertDoesNotExist()
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText("En cours de lecture"))
+        composeTestRule.onNodeWithText("En cours de lecture").assertExists()
+        composeTestRule.onNodeWithText(string(R.string.home_section_my_texts)).assertDoesNotExist()
         composeTestRule.onNodeWithText("Mon texte").assertDoesNotExist()
 
+    }
+
+    @Test
+    fun bothContinueCardsResumeTheirOwnContentWithoutASectionHeader() {
+        val document = TextDocument(id = 42L, title = "Latest reading", rawText = "Texte")
+        val video = com.ziaee.frenchreader.watch.RecentVideo("abcdefghijk", "Latest video", "Channel", 65000L)
+        var openedText: Long? = null
+        var openedVideo: com.ziaee.frenchreader.watch.RecentVideo? = null
+        setHomeContent(
+            state = HomeUiState(continueReading = document, bodyByTextId = mapOf(document.id to "Texte")),
+            onOpenText = { openedText = it },
+            continueWatching = video,
+            onContinueWatching = { openedVideo = it }
+        )
+
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(document.title))
+        composeTestRule.onNodeWithText(document.title).performClick()
+        assertEquals(document.id, openedText)
+        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
+            .performScrollToNode(hasText(video.title))
+        composeTestRule.onNodeWithText(video.title).performClick()
+        assertEquals(video, openedVideo)
+        composeTestRule.onNodeWithText("Pick up where you left off").assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.home_section_my_texts)).assertDoesNotExist()
     }
 
     @Test

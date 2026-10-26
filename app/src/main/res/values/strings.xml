@@ -997,4 +997,20 @@
         <item quantity="one">%1$s headline available</item>
         <item quantity="other">%1$s headlines available</item>
     </plurals>
+    <string name="home_section_my_texts">My Texts</string>
+    <string name="home_action_see_all">See All</string>
+    <string name="home_recent_empty">No texts yet. Add one to get started.</string>
+    <string name="home_summary_learned">%1$d learned</string>
+    <string name="home_summary_saved_words">%1$d saved words</string>
+    <string name="home_summary_saved_texts">%1$d texts</string>
+    <string name="home_summary_streak_days">%1$d-day streak</string>
+    <string name="home_action_resume">Resume</string>
+    <string name="home_progress_percent">%1$d%% complete</string>
+    <string name="home_remaining_minutes">About %1$d min left</string>
+    <string name="home_reading_complete">Reading complete</string>
+    <string name="home_estimated_minutes">%1$d min read</string>
+    <string name="home_action_statistics">Learning statistics</string>
+    <string name="study_log_home_summary">Today %1$s · This week %2$s</string>
+    <string name="study_log_home_card">Track your study time</string>
+    <string name="study_log_home_summary_empty">Nothing logged this week yet</string>
 </resources>

@@ -207,6 +207,7 @@ fun HomeScreen(
         onOpenDataset = onOpenDataset,
         onOpenGrammar = onOpenGrammar,
         onOpenVideos = onOpenVideos,
+        onOpenText = onOpenText,
         continueWatching = vm.continueWatching,
         onContinueWatching = onContinueWatching,
         onOpenExams = { onOpenExams(vm.examRoute) },
@@ -280,6 +281,7 @@ fun HomeContent(
     onOpenDataset: () -> Unit = {},
     onOpenGrammar: () -> Unit = {},
     onOpenVideos: () -> Unit = {},
+    onOpenText: (Long) -> Unit = {},
     continueWatching: com.ziaee.frenchreader.watch.RecentVideo? = null,
     onContinueWatching: (com.ziaee.frenchreader.watch.RecentVideo) -> Unit = {},
     onOpenExams: () -> Unit = {},
@@ -355,6 +357,16 @@ fun HomeContent(
                         onSavedWords = onOpenVocab,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                     )
+                }
+                state.continueReading?.let { doc ->
+                    item {
+                        ContinueReadingCard(
+                            doc = doc,
+                            body = state.bodyByTextId[doc.id].orEmpty(),
+                            onClick = { onOpenText(doc.id) },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
                 }
                 continueWatching?.let { video ->
                     item {

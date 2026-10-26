@@ -1,6 +1,8 @@
 package com.ziaee.frenchreader.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
+import com.ziaee.frenchreader.ui.TextLevelBadge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +63,8 @@ import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.data.HeadlineEntity
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.news.RFI_FACILE_SOURCE_ID
+import com.ziaee.frenchreader.ui.components.EditorialProgressIndicator
+import com.ziaee.frenchreader.watch.RecentVideo
 import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
@@ -427,28 +431,105 @@ fun WatchVideosCard(onOpen: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun ContinueReadingCard(
+    doc: TextDocument,
+    body: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val metrics = remember(doc.id, body, doc.lastChunkIndex) { homeReadingMetrics(doc, body) }
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            DocumentThumbnail(doc, modifier = Modifier.size(FrenchReaderDesign.sizes.thumbnailMedium))
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        doc.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    doc.sourceName?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Spacer(Modifier.width(FrenchReaderDesign.spacing.half))
+                    }
+                    doc.level?.let { TextLevelBadge(it) }
+                }
+                Spacer(Modifier.height(FrenchReaderDesign.spacing.half))
+                EditorialProgressIndicator(
+                    progress = metrics.progressFraction,
+                    label = stringResource(R.string.home_progress_percent, metrics.progressPercent)
+                )
+                Text(
+                    text = if (metrics.estimatedRemainingMinutes > 0) {
+                        stringResource(R.string.home_remaining_minutes, metrics.estimatedRemainingMinutes)
+                    } else {
+                        stringResource(R.string.home_reading_complete)
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
+        }
+    }
+}
+
+@Composable
 fun ContinueWatchingCard(
-    video: com.ziaee.frenchreader.watch.RecentVideo,
+    video: RecentVideo,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(onClick = onClick, modifier = modifier) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.videos_continue),
-                style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AsyncImage(model = "https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg", contentDescription = null,
-                    contentScale = ContentScale.Crop, modifier = Modifier.size(80.dp, 45.dp).clip(MaterialTheme.shapes.small))
-                Column(Modifier.weight(1f)) {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        Text(video.title.ifBlank { video.videoId }, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.titleSmall)
-                    }
-                    val seconds = video.positionMs / 1000
-                    Text(stringResource(R.string.videos_progress, seconds / 60, seconds % 60),
-                        style = MaterialTheme.typography.labelSmall)
+    val seconds = video.positionMs / 1000
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = "https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg",
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                // Same rounded, tinted frame as DocumentThumbnail while the thumbnail loads or when offline.
+                modifier = Modifier.width(FrenchReaderDesign.sizes.thumbnailMedium).aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        video.title.ifBlank { video.videoId },
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
+                Text(
+                    text = stringResource(R.string.videos_progress, seconds / 60, seconds % 60) +
+                        video.channel.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            EditorialPrimaryButton(text = stringResource(R.string.home_action_resume), onClick = onClick)
         }
     }
 }

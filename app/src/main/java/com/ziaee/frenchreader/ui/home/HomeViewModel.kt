@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -114,6 +115,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private var headlineLookupJob: Job? = null
     private var searchJob: Job? = null
 
+    private val continueWithBody = db.textDao().observeMostRecentlyAccessed().mapLatest { document ->
+        document to document?.let { bodyStore.read(it) }
+    }
+
     private val activityStreak = observeActivityStreak(app, db)
 
     /** Minutes studied today and this week (study log), shown on the Home progress card. */
@@ -137,10 +142,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         sourceErrors,
         importingKey,
         activityStreak,
-        timeRefresh
+        timeRefresh,
+        continueWithBody
     ) { values ->
         @Suppress("UNCHECKED_CAST")
         val texts = values[1] as List<TextDocument>
+        val continuing = values[8] as Pair<TextDocument?, String?>
         composeHomeState(
             headlines = personalizeHeadlines(
                 values[0] as List<HeadlineEntity>,
@@ -149,7 +156,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             ),
             allTexts = texts,
             vocabEntries = values[2] as List<VocabEntry>,
-            continueReading = null,
+            continueReading = continuing.first,
+            bodyByTextId = continuing.first?.let { doc ->
+                mapOf(doc.id to continuing.second.orEmpty())
+            }.orEmpty(),
             isRefreshing = values[3] as Boolean,
             sourceErrors = values[4] as List<String>,
             importingKey = values[5] as String?,
