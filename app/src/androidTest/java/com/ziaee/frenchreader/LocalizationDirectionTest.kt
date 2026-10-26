@@ -92,8 +92,6 @@ class LocalizationDirectionTest {
                         onOpenLibrary = {},
                         onAddTextClick = {},
                         onOpenGradedReaders = {},
-                        onSelectHeadline = {},
-                        onRetryNews = {},
                         onPullRefresh = {},
                         onDownloadOrOpen = {},
                         onDismissPreview = {},

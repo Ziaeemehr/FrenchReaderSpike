@@ -357,9 +357,6 @@
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>
     <string name="home_search_hint">جست‌وجوی موضوع، واژه یا مقاله…</string>
-    <string name="home_summary_learned">%1$d واژه آموخته</string>
-    <string name="home_summary_saved_words">%1$d واژه ذخیره</string>
-    <string name="home_summary_streak_days">%1$d روز پیاپی</string>
     <string name="home_section_daily_review">مرور امروز</string>
     <string name="home_review_due">%1$d واژه آمادهٔ مرور است</string>
     <string name="home_review_due_support">یک مرور کوتاه واژگان را فعال نگه می‌دارد.</string>
@@ -684,7 +681,6 @@
     <string name="study_log_more">بیشتر</string>
     <string name="study_log_no_study">بدون مطالعه</string>
     <string name="study_log_year_summary">%1$s در %2$d · %3$d روز فعال · طولانی‌ترین روند %4$d روز</string>
-    <string name="study_log_home_summary">امروز %1$s · این هفته %2$s</string>
     <string name="grammar_title">مرجع دستور زبان</string>
     <string name="grammar_entry_description">یادداشت‌های درون برنامه با مثال فرانسوی و توضیح فارسی</string>
     <string name="grammar_empty">یادداشت دستوری موجود نیست</string>
@@ -982,5 +978,20 @@
     <string name="progress_title">پیشرفت</string>
     <string name="progress_overview">نمای کلی</string>
     <string name="progress_study_time">زمان مطالعه</string>
-    <string name="news_all_count">همه (%1$d)</string>
+    <string name="home_minutes_ratio">%1$s/%2$s</string>
+    <string name="home_minutes_today">دقیقه امروز</string>
+    <string name="home_today_percent">امروز %1$s</string>
+    <string name="home_news_description">تازه‌ترین اخبار را به فرانسوی بخوانید</string>
+    <plurals name="home_streak_days">
+        <item quantity="one">روز پیاپی</item>
+        <item quantity="other">روز پیاپی</item>
+    </plurals>
+    <plurals name="home_saved_words">
+        <item quantity="one">واژهٔ ذخیره‌شده</item>
+        <item quantity="other">واژهٔ ذخیره‌شده</item>
+    </plurals>
+    <plurals name="home_news_headlines">
+        <item quantity="one">%1$s خبر در دسترس</item>
+        <item quantity="other">%1$s خبر در دسترس</item>
+    </plurals>
 </resources>

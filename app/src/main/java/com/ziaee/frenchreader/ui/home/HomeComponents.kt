@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,19 +13,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Newspaper
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,10 +43,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -58,48 +65,76 @@ import com.ziaee.frenchreader.ui.components.EditorialPrimaryButton
 import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
 import com.ziaee.frenchreader.ui.theme.LocalGrammarColors
 import java.io.File
+import java.text.NumberFormat
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProgressCard(
     state: HomeUiState,
-    studyLogMinutes: Pair<Int, Int>,
     onOpen: () -> Unit,
     onAdd: () -> Unit,
     onSavedWords: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val locale = LocalConfiguration.current.locales[0]
+    val numbers = remember(locale) { NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false } }
+    val progress = (state.todayActivityMinutes / state.activityGoalMinutes.coerceAtLeast(1)).toFloat().coerceIn(0f, 1f)
+    val goalReached = progress >= 1f
+    val colors = MaterialTheme.colorScheme
     Card(onClick = onOpen, modifier = modifier) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.progress_title), Modifier.weight(1f),
                     style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
-                IconButton(onClick = onAdd) {
-                    Icon(Icons.Default.Add, stringResource(R.string.study_log_add_time))
+                FilledTonalIconButton(onClick = onAdd) {
+                    Icon(Icons.Default.Add, stringResource(R.string.study_log_add_time), Modifier.size(20.dp))
                 }
             }
-            Text(stringResource(R.string.home_summary_streak_days, state.streakDays), style = MaterialTheme.typography.titleSmall)
-            Text(stringResource(R.string.activity_goal_progress, state.todayActivityMinutes.toInt(), state.activityGoalMinutes))
-            if (state.todayActivityMinutes >= state.activityGoalMinutes) {
-                Text(stringResource(R.string.activity_goal_done), color = MaterialTheme.colorScheme.primary)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProgressTile(Icons.Default.LocalFireDepartment, numbers.format(state.streakDays),
+                    pluralStringResource(R.plurals.home_streak_days, state.streakDays),
+                    colors.tertiaryContainer, colors.onTertiaryContainer, Modifier.weight(1f))
+                ProgressTile(Icons.Default.Timer,
+                    stringResource(R.string.home_minutes_ratio, numbers.format(state.todayActivityMinutes.toInt()), numbers.format(state.activityGoalMinutes)),
+                    stringResource(R.string.home_minutes_today),
+                    colors.primaryContainer, colors.onPrimaryContainer, Modifier.weight(1f))
+                ProgressTile(Icons.Default.Bookmark, numbers.format(state.savedWordCount),
+                    pluralStringResource(R.plurals.home_saved_words, state.savedWordCount),
+                    colors.secondaryContainer, colors.onSecondaryContainer,
+                    Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).clickable(onClick = onSavedWords))
             }
             LinearProgressIndicator(
-                progress = (state.todayActivityMinutes / state.activityGoalMinutes.coerceAtLeast(1)).toFloat().coerceIn(0f, 1f),
-                modifier = Modifier.fillMaxWidth().height(4.dp)
+                progress = progress,
+                color = if (goalReached) colors.tertiary else colors.primary,
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp))
             )
-            Text(stringResource(R.string.study_log_title), style = MaterialTheme.typography.labelMedium)
-            Text(stringResource(R.string.study_log_home_summary,
-                com.ziaee.frenchreader.studylog.formatMinutes(studyLogMinutes.first),
-                com.ziaee.frenchreader.studylog.formatMinutes(studyLogMinutes.second)),
-                style = MaterialTheme.typography.bodySmall)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.home_summary_learned, state.learnedWordCount),
-                    modifier = Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.labelLarge)
-                TextButton(onClick = onSavedWords) {
-                    Text(stringResource(R.string.home_summary_saved_words, state.savedWordCount))
-                }
-            }
+            Text(
+                if (goalReached) stringResource(R.string.activity_goal_done)
+                else stringResource(R.string.home_today_percent, NumberFormat.getPercentInstance(locale).format(progress.toDouble())),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (goalReached) colors.tertiary else colors.onSurfaceVariant
+            )
         }
+    }
+}
+
+@Composable
+private fun ProgressTile(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier.clip(RoundedCornerShape(14.dp)).background(containerColor).padding(horizontal = 8.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(20.dp))
+        Text(value, color = contentColor, style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, color = contentColor, style = MaterialTheme.typography.labelSmall,
+            maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -254,29 +289,29 @@ fun ExamsCard(onOpen: () -> Unit, modifier: Modifier = Modifier, practiceCounts:
 }
 
 @Composable
-fun TodayNewsSection(
-    headlines: List<HeadlineEntity>,
-    hasPartialError: Boolean,
-    isEmptyError: Boolean,
-    onSelect: (HeadlineEntity) -> Unit,
-    onRetry: () -> Unit,
-    onSeeAll: () -> Unit,
+fun TodayNewsCard(
+    headlineCount: Int,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.home_section_today_news), Modifier.weight(1f),
+    val locale = LocalConfiguration.current.locales[0]
+    Card(onClick = onOpen, modifier = modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(FrenchReaderDesign.spacing.small), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Newspaper, contentDescription = null, tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(FrenchReaderDesign.sizes.touchTarget))
+            Spacer(Modifier.width(FrenchReaderDesign.spacing.xSmall))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_section_today_news),
                     style = FrenchReaderDesign.editorialTypography.sectionTitle.copy(fontSize = 20.sp, lineHeight = 24.sp))
-                TextButton(onClick = onSeeAll) {
-                    Text(stringResource(R.string.news_all_count, headlines.size))
-                    Icon(Icons.Default.ChevronRight, contentDescription = null)
-                }
+                Text(
+                    if (headlineCount > 0) pluralStringResource(R.plurals.home_news_headlines, headlineCount,
+                        NumberFormat.getIntegerInstance(locale).format(headlineCount))
+                    else stringResource(R.string.home_news_description),
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis
+                )
             }
-            NewsStatus(hasPartialError, isEmptyError, onRetry)
-            headlines.sortedByDescending { it.publishedAtMs ?: 0L }.take(3).forEach { headline ->
-                NewsHeadlineRow(headline, onClick = { onSelect(headline) })
-            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
         }
     }
 }

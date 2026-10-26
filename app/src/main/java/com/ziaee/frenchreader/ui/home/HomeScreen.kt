@@ -69,8 +69,7 @@ import com.ziaee.frenchreader.ui.theme.FrenchReaderDesign
  * items) -- see [HomeScreenTest]. */
 internal const val HOME_LAZY_COLUMN_TEST_TAG = "home_lazy_column"
 
-/** Home dashboard with activity progress, study shortcuts, and cached news.
- * Opening a headline preview never downloads the article body. */
+/** Home dashboard with activity progress and shortcuts to study and news. */
 @Composable
 fun HomeScreen(
     onOpenText: (Long) -> Unit,
@@ -93,7 +92,6 @@ fun HomeScreen(
 ) {
     val vm: HomeViewModel = viewModel()
     val state by vm.uiState.collectAsState()
-    val studyLogMinutes by vm.studyLogMinutes.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, vm) {
@@ -202,8 +200,6 @@ fun HomeScreen(
         onAddTextClick = { showAddSourceSheet = true },
         onOpenGradedReaders = onOpenResources,
         onOpenAbout = onOpenAbout,
-        onSelectHeadline = { vm.selectHeadline(it) },
-        onRetryNews = { vm.refresh(force = true) },
         onPullRefresh = { vm.refresh(force = true) },
         onDownloadOrOpen = { vm.importSelected { id -> onOpenText(id) } },
         onDismissPreview = { vm.dismissPreview() },
@@ -215,8 +211,7 @@ fun HomeScreen(
         onContinueWatching = onContinueWatching,
         onOpenExams = { onOpenExams(vm.examRoute) },
         examPracticeCounts = vm.examPracticeCounts,
-        onAddStudyLog = onAddStudyLog,
-        studyLogMinutes = studyLogMinutes
+        onAddStudyLog = onAddStudyLog
     )
 
     AddTextHost(
@@ -278,8 +273,6 @@ fun HomeContent(
     onAddTextClick: () -> Unit,
     onOpenGradedReaders: () -> Unit,
     onOpenAbout: () -> Unit = {},
-    onSelectHeadline: (HeadlineEntity) -> Unit,
-    onRetryNews: () -> Unit,
     onPullRefresh: () -> Unit,
     onDownloadOrOpen: () -> Unit,
     onDismissPreview: () -> Unit,
@@ -291,8 +284,7 @@ fun HomeContent(
     onContinueWatching: (com.ziaee.frenchreader.watch.RecentVideo) -> Unit = {},
     onOpenExams: () -> Unit = {},
     onAddStudyLog: () -> Unit = {},
-    examPracticeCounts: Pair<Int, Int>? = null,
-    studyLogMinutes: Pair<Int, Int> = 0 to 0
+    examPracticeCounts: Pair<Int, Int>? = null
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -358,7 +350,6 @@ fun HomeContent(
                 item {
                     ProgressCard(
                         state = state,
-                        studyLogMinutes = studyLogMinutes,
                         onOpen = onOpenProgress,
                         onAdd = onAddStudyLog,
                         onSavedWords = onOpenVocab,
@@ -388,13 +379,9 @@ fun HomeContent(
                     )
                 }
                 item {
-                    TodayNewsSection(
-                        headlines = state.headlines,
-                        hasPartialError = state.hasPartialError,
-                        isEmptyError = state.isEmptyError,
-                        onSelect = onSelectHeadline,
-                        onRetry = onRetryNews,
-                        onSeeAll = onOpenNews,
+                    TodayNewsCard(
+                        headlineCount = state.headlines.size,
+                        onOpen = onOpenNews,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }

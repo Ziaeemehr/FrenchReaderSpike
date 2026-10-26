@@ -1,10 +1,7 @@
 package com.ziaee.frenchreader.ui.home
 
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
@@ -54,7 +51,6 @@ class HomeScreenTest {
     private fun setHomeContent(
         state: HomeUiState,
         selectedHeadline: HeadlineEntity? = null,
-        onSelectHeadline: (HeadlineEntity) -> Unit = {},
         onOpenVocab: () -> Unit = {},
         onOpenProgress: () -> Unit = {},
         onOpenNews: () -> Unit = {},
@@ -85,8 +81,6 @@ class HomeScreenTest {
                     onOpenLibrary = onOpenLibrary,
                     onAddTextClick = onAddTextClick,
                     onOpenGradedReaders = onOpenGradedReaders,
-                    onSelectHeadline = onSelectHeadline,
-                    onRetryNews = {},
                     onPullRefresh = {},
                     onDownloadOrOpen = {},
                     onDismissPreview = {},
@@ -110,47 +104,16 @@ class HomeScreenTest {
         composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
             .performScrollToNode(hasText(string(R.string.home_section_today_news)))
         composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).assertExists()
-        composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).assertDoesNotExist()
         composeTestRule.onNodeWithText("En cours de lecture").assertDoesNotExist()
         composeTestRule.onNodeWithText("Mon texte").assertDoesNotExist()
 
     }
 
     @Test
-    fun selectingAHeadlineShowsTheDownloadAction() {
+    fun selectedHeadlinePreviewStillShowsTheDownloadAction() {
         val sampleHeadline = headline()
-        val state = HomeUiState(headlines = listOf(sampleHeadline))
-
-        composeTestRule.setContent {
-            var selected by remember { mutableStateOf<HeadlineEntity?>(null) }
-            FrenchReaderTheme(ThemeMode.LIGHT) {
-                HomeContent(
-                    state = state,
-                    selectedHeadline = selected,
-                    isPreviewImporting = false,
-                    previewHasError = false,
-                    isPreviewAlreadyDownloaded = false,
-                    snackbarHostState = remember { SnackbarHostState() },
-                    onSearchClick = {},
-                    onOpenVocab = {},
-                    onOpenProgress = {},
-                    onOpenSettings = {},
-                    onOpenLibrary = {},
-                    onAddTextClick = {},
-                    onOpenGradedReaders = {},
-                    onSelectHeadline = { selected = it },
-                    onRetryNews = {},
-                    onPullRefresh = {},
-                    onDownloadOrOpen = {},
-                    onDismissPreview = {},
-                    onStartReview = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
-            .performScrollToNode(hasText(sampleHeadline.title))
-        composeTestRule.onNodeWithText(sampleHeadline.title, substring = true, useUnmergedTree = true).performClick()
+        setHomeContent(HomeUiState(headlines = listOf(sampleHeadline)), selectedHeadline = sampleHeadline)
         composeTestRule.onNodeWithText(string(R.string.preview_action_download_read)).assertExists()
     }
 
@@ -170,18 +133,16 @@ class HomeScreenTest {
     }
 
     @Test
-    fun compactNewsShowsLatestThreeAndAllOpensNews() {
+    fun newsEntryOpensNewsWithoutShowingHeadlines() {
         val headlines = (1..4).map { index ->
             headline("guid-$index").copy(title = "Headline $index", publishedAtMs = index.toLong())
         }
         var clicks = 0
         setHomeContent(HomeUiState(headlines = headlines), onOpenNews = { clicks++ })
-        composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG).performScrollToNode(hasText("Headline 2"))
-        composeTestRule.onNodeWithText("Headline 1").assertDoesNotExist()
-        composeTestRule.onNodeWithText("Headline 2").assertExists()
         composeTestRule.onNodeWithTag(HOME_LAZY_COLUMN_TEST_TAG)
-            .performScrollToNode(hasText(string(R.string.news_all_count, 4)))
-        composeTestRule.onNodeWithText(string(R.string.news_all_count, 4)).performClick()
+            .performScrollToNode(hasText(string(R.string.home_section_today_news)))
+        headlines.forEach { composeTestRule.onNodeWithText(it.title).assertDoesNotExist() }
+        composeTestRule.onNodeWithText(string(R.string.home_section_today_news)).performClick()
         assertEquals(1, clicks)
     }
 
@@ -223,7 +184,7 @@ class HomeScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText(string(R.string.home_summary_saved_words, 7))
+            .onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(R.plurals.home_saved_words, 7))
             .assertHasClickAction()
             .performClick()
 

@@ -359,9 +359,6 @@
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>
     <string name="home_search_hint">Search a topic, word, or article…</string>
-    <string name="home_summary_learned">%1$d learned</string>
-    <string name="home_summary_saved_words">%1$d saved words</string>
-    <string name="home_summary_streak_days">%1$d-day streak</string>
     <string name="home_section_daily_review">Today\'s Review</string>
     <string name="home_review_due">%1$d words are ready</string>
     <string name="home_review_due_support">A short review keeps your vocabulary active.</string>
@@ -686,7 +683,6 @@
     <string name="study_log_more">More</string>
     <string name="study_log_no_study">No study</string>
     <string name="study_log_year_summary">%1$s in %2$d · %3$d active days · longest streak %4$d days</string>
-    <string name="study_log_home_summary">Today %1$s · This week %2$s</string>
     <string name="grammar_title">Grammar reference</string>
     <string name="grammar_entry_description">In-app notes with French examples and Persian explanations</string>
     <string name="grammar_empty">No grammar notes available</string>
@@ -985,5 +981,20 @@
     <string name="progress_title">Progress</string>
     <string name="progress_overview">Overview</string>
     <string name="progress_study_time">Study time</string>
-    <string name="news_all_count">All (%1$d)</string>
+    <string name="home_minutes_ratio">%1$s/%2$s</string>
+    <string name="home_minutes_today">min today</string>
+    <string name="home_today_percent">Today %1$s</string>
+    <string name="home_news_description">Read the latest news in French</string>
+    <plurals name="home_streak_days">
+        <item quantity="one">day in a row</item>
+        <item quantity="other">days in a row</item>
+    </plurals>
+    <plurals name="home_saved_words">
+        <item quantity="one">saved word</item>
+        <item quantity="other">saved words</item>
+    </plurals>
+    <plurals name="home_news_headlines">
+        <item quantity="one">%1$s headline available</item>
+        <item quantity="other">%1$s headlines available</item>
+    </plurals>
 </resources>

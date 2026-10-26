@@ -359,9 +359,6 @@
     <!-- Phase 1 UI redesign: Home (docs/superpowers/plans/2026-09-17-ui-redesign-phase1-home.md) -->
     <string name="home_brand_title">Lire en français</string>
     <string name="home_search_hint">Rechercher un sujet, un mot ou un article…</string>
-    <string name="home_summary_learned">%1$d appris</string>
-    <string name="home_summary_saved_words">%1$d mots enregistrés</string>
-    <string name="home_summary_streak_days">%1$d jours d\'affilée</string>
     <string name="home_section_daily_review">Révision du jour</string>
     <string name="home_review_due">%1$d mots sont prêts</string>
     <string name="home_review_due_support">Une courte révision entretient votre vocabulaire.</string>
@@ -686,7 +683,6 @@
     <string name="study_log_more">Plus</string>
     <string name="study_log_no_study">Aucune étude</string>
     <string name="study_log_year_summary">%1$s en %2$d · %3$d jours actifs · plus longue série : %4$d jours</string>
-    <string name="study_log_home_summary">Aujourd’hui %1$s · Cette semaine %2$s</string>
     <string name="grammar_title">Référence grammaticale</string>
     <string name="grammar_entry_description">Notes avec exemples français et explications en persan</string>
     <string name="grammar_empty">Aucune note disponible</string>
@@ -985,5 +981,20 @@
     <string name="progress_title">Progrès</string>
     <string name="progress_overview">Vue d’ensemble</string>
     <string name="progress_study_time">Temps d’étude</string>
-    <string name="news_all_count">Tout (%1$d)</string>
+    <string name="home_minutes_ratio">%1$s/%2$s</string>
+    <string name="home_minutes_today">min aujourd’hui</string>
+    <string name="home_today_percent">Aujourd’hui %1$s</string>
+    <string name="home_news_description">Lisez les dernières actualités en français</string>
+    <plurals name="home_streak_days">
+        <item quantity="one">jour d’affilée</item>
+        <item quantity="other">jours d’affilée</item>
+    </plurals>
+    <plurals name="home_saved_words">
+        <item quantity="one">mot enregistré</item>
+        <item quantity="other">mots enregistrés</item>
+    </plurals>
+    <plurals name="home_news_headlines">
+        <item quantity="one">%1$s titre disponible</item>
+        <item quantity="other">%1$s titres disponibles</item>
+    </plurals>
 </resources>
