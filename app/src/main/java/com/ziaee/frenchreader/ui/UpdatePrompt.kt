@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ziaee.frenchreader.R
+import com.ziaee.frenchreader.update.isStoreManagedInstall
 import com.ziaee.frenchreader.update.ReleaseInfo
 import com.ziaee.frenchreader.update.UPDATE_DOWNLOAD_URL
 import com.ziaee.frenchreader.update.UpdatePrefs
@@ -36,6 +37,7 @@ import com.ziaee.frenchreader.update.shouldPrompt
 @Composable
 fun AutoUpdatePrompt() {
     val context = LocalContext.current
+    if (remember(context) { isStoreManagedInstall(context) }) return
     var release by remember { mutableStateOf<ReleaseInfo?>(null) }
     LaunchedEffect(Unit) {
         val now = System.currentTimeMillis()
@@ -55,6 +57,7 @@ fun AutoUpdatePrompt() {
 @Composable
 fun UpdateDialog(release: ReleaseInfo, onDismiss: () -> Unit, showSkip: Boolean = true) {
     val context = LocalContext.current
+    if (remember(context) { isStoreManagedInstall(context) }) return
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.update_available_title, release.version)) },
