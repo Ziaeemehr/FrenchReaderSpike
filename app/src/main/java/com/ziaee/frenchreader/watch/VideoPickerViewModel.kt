@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -83,23 +84,12 @@ class VideoPickerViewModel(application: Application) : AndroidViewModel(applicat
                     val cached = readCache(id)
                     if (!force && age in 0 until SIX_HOURS && cached != null) cached
                     else {
-                        val connection = URL("https://www.youtube.com/feeds/videos.xml?channel_id=$id").openConnection() as HttpURLConnection
-                        val xml = try {
-                            connection.connectTimeout = 15_000
-                            connection.readTimeout = 15_000
-                            check(connection.responseCode in 200..299)
-                            connection.inputStream.bufferedReader().use { reader ->
-                                val text = StringBuilder()
-                                val buffer = CharArray(8192)
-                                while (true) {
-                                    val count = reader.read(buffer)
-                                    if (count < 0) break
-                                    text.append(buffer, 0, count)
-                                    check(text.length <= 2 * 1024 * 1024)
-                                }
-                                text.toString()
-                            }
-                        } finally { connection.disconnect() }
+                        // YouTube's RSS feed returns 404 for many channels at times; the channel's Videos page lists the same uploads.
+                        val rss = try { download("https://www.youtube.com/feeds/videos.xml?channel_id=$id") }
+                            catch (error: CancellationException) { throw error } catch (_: Exception) { null }
+                        val xml = rss?.takeIf { runCatching { parseYoutubeFeed(it) }.isSuccess }
+                            ?: youtubeFeedXml(parseYoutubeChannelPage(download("https://www.youtube.com/channel/$id/videos?hl=en"), LocalDate.now())
+                                .also { check(it.isNotEmpty()) })
                         parseYoutubeFeed(xml).also {
                             // A failed cache write must not discard a successfully downloaded feed.
                             currentCoroutineContext().ensureActive()
@@ -126,6 +116,27 @@ class VideoPickerViewModel(application: Application) : AndroidViewModel(applicat
                     feeds = if (cached == null) it.feeds else it.feeds + (id to cached)) }
             }
         }
+    }
+
+    private fun download(url: String): String {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        return try {
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 15_000
+            connection.setRequestProperty("Accept-Language", "en")
+            check(connection.responseCode in 200..299)
+            connection.inputStream.bufferedReader().use { reader ->
+                val text = StringBuilder()
+                val buffer = CharArray(8192)
+                while (true) {
+                    val count = reader.read(buffer)
+                    if (count < 0) break
+                    text.append(buffer, 0, count)
+                    check(text.length <= 2 * 1024 * 1024)
+                }
+                text.toString()
+            }
+        } finally { connection.disconnect() }
     }
 
     private fun cacheFile(id: String) = File(directory, "$id.xml")
