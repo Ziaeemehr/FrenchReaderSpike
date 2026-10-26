@@ -71,7 +71,7 @@
 
 - ↕️ Transcription → parcourir les sous-titres
 - 👆 Mot des sous-titres français → dictionnaire
-- ✋ Sous-titre → aller à la phrase
+- ↔️ Appui long et glisser sur des mots → dictionnaire de l’expression
 - 👆 Traduction → aller à la phrase ; échec → réessayer
 - ✋ Traduction disponible → modifier la correction
 
@@ -126,7 +126,7 @@
 
 - ↕️ متن زیرنویس ← پیمایش زیرنویس‌ها
 - 👆 واژهٔ زیرنویس فرانسوی ← دیکشنری
-- ✋ زیرنویس ← رفتن به جمله
+- ↔️ نگه داشتن و کشیدن روی واژه‌ها ← دیکشنری عبارت
 - 👆 خط ترجمه ← رفتن به جمله؛ ترجمهٔ ناموفق ← تلاش دوباره
 - ✋ ترجمهٔ موجود ← ویرایش اصلاحیه
 
