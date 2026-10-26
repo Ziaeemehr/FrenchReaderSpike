@@ -614,6 +614,7 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                             }
                                         }
                                     }
+                                    Box {
                                     Column(Modifier
                                         .heightIn(max = itemHeight)
                                         .onSizeChanged { sentenceHeights[itemIndex] = it.height; innerHeight = it.height }
@@ -641,25 +642,8 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                                 onPhrase = { lookup(it, null) },
                                                 onWord = lookup
                                             ) }
-                                            if (isCurrent) {
-                                                IconButton(onClick = {
-                                                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(sentence.text))
-                                                    // Touching the transcript paused playback; copying alone should not stop the video.
-                                                    if (playingBeforeTouch && !shadowing) {
-                                                        freeze = freeze.resume()
-                                                        cueGestureActive = false
-                                                        controller.play()
-                                                    }
-                                                    playingBeforeTouch = false
-                                                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
-                                                        android.widget.Toast.makeText(context, R.string.sentence_copied, android.widget.Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }, modifier = Modifier.size(32.dp)) {
-                                                    Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_sentence),
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                                        modifier = Modifier.size(16.dp))
-                                                }
-                                            }
+                                            // Room for the copy button, which stays outside the scrolling sentence.
+                                            if (isCurrent) Spacer(Modifier.width(32.dp))
                                         }
                                         if (isCurrent && state.translationEnabled) {
                                             val failed = sentence.text in state.failedTranslations
@@ -699,6 +683,26 @@ fun WatchScreen(videoId: String, onBack: () -> Unit, onOpenText: (Long) -> Unit)
                                                 }
                                             }
                                         }
+                                    }
+                                    if (isCurrent) {
+                                        IconButton(onClick = {
+                                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(sentence.text))
+                                            // Touching the transcript paused playback; copying alone should not stop the video.
+                                            if (playingBeforeTouch && !shadowing) {
+                                                freeze = freeze.resume()
+                                                cueGestureActive = false
+                                                controller.play()
+                                            }
+                                            playingBeforeTouch = false
+                                            if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+                                                android.widget.Toast.makeText(context, R.string.sentence_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                            }
+                                        }, modifier = Modifier.align(Alignment.TopEnd).size(32.dp)) {
+                                            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_sentence),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                                modifier = Modifier.size(16.dp))
+                                        }
+                                    }
                                     }
                                 }
                                 if (sentences.isEmpty()) item { Text(stringResource(R.string.watch_no_current_cue)) }
