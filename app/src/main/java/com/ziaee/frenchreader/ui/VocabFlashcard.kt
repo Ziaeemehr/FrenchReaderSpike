@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -147,7 +148,7 @@ internal fun EntryFlashcard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             onDictionary?.let { callback ->
                                 TextButton(onClick = callback, enabled = interactive) {
-                                    Icon(Icons.Default.Translate, null)
+                                    Icon(Icons.Default.Search, null)
                                     Spacer(Modifier.width(6.dp))
                                     Text(stringResource(R.string.vocab_open_dictionary))
                                 }
