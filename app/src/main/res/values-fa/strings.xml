@@ -1072,4 +1072,9 @@
     <string name="home_goal_caption">امروز %1$s از %2$s دقیقه</string>
     <string name="home_continue_reading">ادامهٔ خواندن</string>
     <string name="home_continue_watching">ادامهٔ تماشا</string>
+    <string name="example_source_model">ترجمه با مدل</string>
+    <string name="example_source_google">ترجمه با گوگل</string>
+    <string name="example_source_bundled">ترجمهٔ همراه برنامه</string>
+    <string name="example_model_unavailable">مدل در دسترس نبود: %1$s</string>
+    <string name="example_retry_model">دوباره با مدل</string>
 </resources>
