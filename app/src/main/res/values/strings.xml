@@ -1075,4 +1075,9 @@
     <string name="home_goal_caption">Today %1$s/%2$s min</string>
     <string name="home_continue_reading">Continue reading</string>
     <string name="home_continue_watching">Continue watching</string>
+    <string name="example_source_model">Translated by the model</string>
+    <string name="example_source_google">Translated by Google</string>
+    <string name="example_source_bundled">Included translation</string>
+    <string name="example_model_unavailable">Model unavailable: %1$s</string>
+    <string name="example_retry_model">Retry with model</string>
 </resources>
