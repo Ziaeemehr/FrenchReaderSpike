@@ -114,7 +114,8 @@ fun SelectionToolbarContent(
     onDeleteHighlight: (() -> Unit)?,
     onMore: () -> Unit,
     onTranslate: (() -> Unit)? = null,
-    showReadingActions: Boolean = true
+    showReadingActions: Boolean = true,
+    showListen: Boolean = showReadingActions
 ) {
     Surface(
         shape = RoundedCornerShape(8.dp),
@@ -153,7 +154,7 @@ fun SelectionToolbarContent(
                 Icon(Icons.Default.BookmarkAdd, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_save))
             }
-            if (showReadingActions) TextButton(onClick = onListen) {
+            if (showListen) TextButton(onClick = onListen) {
                 Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_listen))
             }

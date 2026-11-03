@@ -365,14 +365,14 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
             SelectionToolbarContent(
                 onCopy = { clipboard.setText(AnnotatedString(selected.text)); selection = null },
                 onSave = { dictionary = selected.text to selected.sentence; selection = null },
-                onListen = {}, onHighlight = {}, onChooseHighlightColor = {}, onDeleteHighlight = null, onMore = {},
+                onListen = { vm.speak(selected.text, document.voice, document.ratePercent); selection = null }, onHighlight = {}, onChooseHighlightColor = {}, onDeleteHighlight = null, onMore = {},
                 onTranslate = {
                     val start = minOf(selected.first, selected.last)
                     val end = maxOf(selected.first, selected.last)
                     val before = selected.words.take(start).takeLast(40).joinToString(" ") { it.text }.ifBlank { null }
                     val after = selected.words.drop(end + 1).take(40).joinToString(" ") { it.text }.ifBlank { null }
                     translate(selected.text, before, after)
-                }, showReadingActions = false)
+                }, showReadingActions = false, showListen = true)
         }
     }
     translationSource?.let { source ->

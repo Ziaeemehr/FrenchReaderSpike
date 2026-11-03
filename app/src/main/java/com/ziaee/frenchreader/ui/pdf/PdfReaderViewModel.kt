@@ -9,6 +9,10 @@ import com.ziaee.frenchreader.content.pdf.PdfPageOcr
 import com.ziaee.frenchreader.content.pdf.PdfPageRenderer
 import com.ziaee.frenchreader.content.pdf.PdfWordLayout
 import com.ziaee.frenchreader.translate.TranslationRepository
+import com.ziaee.frenchreader.text.sanitizeForSpeech
+import com.ziaee.frenchreader.tts.TtsChunkRepository
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +93,27 @@ class PdfReaderViewModel(app: Application) : AndroidViewModel(app) {
             results[text]
         }
 
+    private val tts = TtsChunkRepository(app)
+    private val player = ExoPlayer.Builder(app).build()
+    private var speakJob: kotlinx.coroutines.Job? = null
+
+    /** Plays a selected word or phrase with the text's own voice and speed. */
+    fun speak(text: String, voice: String, ratePercent: Int) {
+        speakJob?.cancel()
+        player.stop()
+        val spoken = sanitizeForSpeech(text)
+        if (spoken.isBlank()) return
+        speakJob = viewModelScope.launch {
+            tts.getOrSynthesize(spoken, voice, ratePercent).onSuccess { synth ->
+                player.setMediaItem(MediaItem.fromUri(synth.audioFile.toURI().toString()))
+                player.prepare()
+                player.play()
+            }
+        }
+    }
+
     override fun onCleared() {
+        player.release()
         val current = _renderer.value
         // close must complete even though the ViewModel scope has just been cancelled.
         viewModelScope.launch(NonCancellable + Dispatchers.IO) { current?.close() }
