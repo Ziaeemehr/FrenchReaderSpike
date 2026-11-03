@@ -34,10 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ziaee.frenchreader.translate.ExampleTranslation
+import com.ziaee.frenchreader.translate.exampleModelError
 import com.ziaee.frenchreader.R
 import com.ziaee.frenchreader.content.AnkiImportRepository
 import com.ziaee.frenchreader.content.AnkiImportResult
@@ -98,12 +101,19 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     var previewSentenceAudioError by mutableStateOf(false); private set
     var previewWordAudioLoading by mutableStateOf(false); private set
     var previewWordAudioError by mutableStateOf(false); private set
-    var previewSentenceTranslation by mutableStateOf<String?>(null); private set
+    var previewSentenceTranslation by mutableStateOf<ExampleTranslation?>(null); private set
     var previewSentenceTranslationLoading by mutableStateOf(false); private set
     var previewSentenceTranslationError by mutableStateOf(false); private set
 
     init {
-        viewModelScope.launch { db.vocabDao().observeAll().collect { _entries.value = it } }
+        viewModelScope.launch { db.vocabDao().observeAll().collect { updated ->
+            val old = _entries.value.firstOrNull { it.id == previewEntryId }
+            val next = updated.firstOrNull { it.id == previewEntryId }
+            if (old != null && old.sentence != next?.sentence) {
+                if (next == null) closePreview() else startPreview(next)
+            }
+            _entries.value = updated
+        } }
         viewModelScope.launch { db.vocabListDao().observeAll().collect { _lists.value = it } }
     }
 
@@ -114,7 +124,10 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { db.vocabDao().update(updated) }
     }
 
+    private var previewTranslationRequest = 0
+
     fun startPreview(entry: VocabEntry) {
+        previewTranslationRequest++
         stopPreviewMedia()
         previewEntryId = entry.id
         previewSentenceTranslation = null
@@ -123,6 +136,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun closePreview() {
+        previewTranslationRequest++
         previewEntryId = null
         stopPreviewMedia()
         previewSentenceTranslation = null
@@ -183,24 +197,35 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun translatePreviewSentence(entry: VocabEntry) {
+    fun translatePreviewSentence(entry: VocabEntry, forceModel: Boolean = false) {
+        if (previewEntryId != entry.id || (forceModel && previewSentenceTranslationLoading)) return
         val text = flashcardSentenceAudioText(entry) ?: return
+        val request = ++previewTranslationRequest
         viewModelScope.launch {
-            previewSentenceTranslation = null
+            if (request != previewTranslationRequest || previewEntryId != entry.id) return@launch
+            if (!forceModel) previewSentenceTranslation = null
             previewSentenceTranslationError = false
             previewSentenceTranslationLoading = true
-            val result = translationRepositoryResult(text)
-            if (previewEntryId != entry.id) return@launch
-            result.fold(
-                onSuccess = { previewSentenceTranslation = it },
-                onFailure = { previewSentenceTranslationError = true }
-            )
-            previewSentenceTranslationLoading = false
+            try {
+                val result = translationRepositoryResult(text, forceModel)
+                if (previewEntryId != entry.id || request != previewTranslationRequest ||
+                    _entries.value.firstOrNull { it.id == entry.id }?.sentence != entry.sentence) return@launch
+                result.fold(
+                    onSuccess = { previewSentenceTranslation = it },
+                    onFailure = { error ->
+                        if (forceModel && previewSentenceTranslation != null) {
+                            previewSentenceTranslation = previewSentenceTranslation?.copy(modelError = exampleModelError(error))
+                        } else previewSentenceTranslationError = true
+                    }
+                )
+            } finally {
+                if (request == previewTranslationRequest) previewSentenceTranslationLoading = false
+            }
         }
     }
 
-    private suspend fun translationRepositoryResult(text: String) =
-        translationRepo.getOrTranslateExample(text, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)))
+    private suspend fun translationRepositoryResult(text: String, forceModel: Boolean) =
+        translationRepo.getOrTranslateExample(text, meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context)), forceModel)
 
     private fun stopPreviewMedia() {
         previewAudioJob?.cancel()
@@ -213,6 +238,7 @@ class VocabListViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun edit(entry: VocabEntry, word: String, meaning: String?, sentence: String) {
+        if (previewEntryId == entry.id && entry.sentence != sentence) startPreview(entry)
         viewModelScope.launch { db.vocabDao().updateText(entry.id, word, meaning, sentence) }
     }
 
@@ -748,7 +774,7 @@ fun VocabListScreen(
     val previewEntry = previewEntryId?.let { id -> entries.firstOrNull { it.id == id } }
     previewEntry?.let { entry ->
         var revealed by remember(entry.id) { mutableStateOf(false) }
-        LaunchedEffect(revealed, entry.id) {
+        LaunchedEffect(revealed, entry.id, entry.sentence) {
             val autoplay = VocabPrefs.getAudioAutoplay(context)
             if (revealed && entry.sentence.isNotBlank()) {
                 vm.translatePreviewSentence(entry)
@@ -782,6 +808,7 @@ fun VocabListScreen(
                         sentenceAudioLoading = vm.previewSentenceAudioLoading,
                         sentenceAudioError = vm.previewSentenceAudioError,
                         sentenceTranslation = vm.previewSentenceTranslation,
+                        onRetryModel = { vm.translatePreviewSentence(entry, forceModel = true) },
                         sentenceTranslationLoading = vm.previewSentenceTranslationLoading,
                         sentenceTranslationError = vm.previewSentenceTranslationError,
                         onWordTap = { word ->
@@ -1054,7 +1081,7 @@ private fun VocabRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         entry.word,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium.copy(textDirection = TextDirection.Ltr),
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f, fill = false)
                     )
@@ -1077,7 +1104,7 @@ private fun VocabRow(
                 Spacer(Modifier.height(4.dp))
                 Text(
                     entry.sentence,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(textDirection = TextDirection.Ltr),
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

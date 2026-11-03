@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
+import com.ziaee.frenchreader.translate.ExampleTranslation
+import com.ziaee.frenchreader.translate.exampleModelError
 import com.ziaee.frenchreader.shadowing.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedContent
@@ -183,14 +185,21 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
     private var slot by mutableStateOf<CardSlot?>(null)
     internal val currentSlot: CardSlot? get() = slot
     val current: VocabEntry? get() = slot?.entry
+    private var translationRequest = 0
+
+    private fun resetSentenceTranslation() {
+        translationRequest++
+        sentenceTranslation = null
+        sentenceTranslationLoading = false
+        sentenceTranslationError = false
+    }
+
     private fun show(entry: VocabEntry?) {
         meaningOptionsJob?.cancel()
         meaningOptions = emptyList()
         shadowingController.cancel()
         entry?.let(::setShadowTarget)
-        sentenceTranslation = null
-        sentenceTranslationLoading = false
-        sentenceTranslationError = false
+        resetSentenceTranslation()
         wordAudioLoading = false
         wordAudioError = false
         slot = entry?.let { CardSlot(it) }
@@ -228,7 +237,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var wordAudioError by mutableStateOf(false)
         private set
-    var sentenceTranslation by mutableStateOf<String?>(null); private set
+    var sentenceTranslation by mutableStateOf<ExampleTranslation?>(null); private set
     var sentenceTranslationLoading by mutableStateOf(false); private set
     var sentenceTranslationError by mutableStateOf(false); private set
 
@@ -436,6 +445,7 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
             meaningOptionsCache.keys.removeAll { it.first == old.id }
             meaningOptions = emptyList()
         }
+        if (old.sentence != sentence) resetSentenceTranslation()
         val edited = old.copy(word = word, meaning = meaning, sentence = sentence)
         slot.entry = edited
         setShadowTarget(edited)
@@ -531,20 +541,30 @@ class VocabReviewViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    suspend fun translateSentence() {
+    suspend fun translateSentence(forceModel: Boolean = false) {
+        if (forceModel && sentenceTranslationLoading) return
         val entry = current ?: return
         if (entry.sentence.isBlank()) return
-        sentenceTranslation = null
+        val request = ++translationRequest
+        val requestSlot = currentSlot
+        if (!forceModel) sentenceTranslation = null
         sentenceTranslationError = false
         sentenceTranslationLoading = true
         val targetLang = meaningTargetLanguage(VocabPrefs.getMeaningLanguage(context))
-        val result = translationRepo.getOrTranslateExample(entry.sentence, targetLang)
-        if (current !== entry) return
-        result.fold(
-            onSuccess = { sentenceTranslation = it },
-            onFailure = { sentenceTranslationError = true }
-        )
-        sentenceTranslationLoading = false
+        try {
+            val result = translationRepo.getOrTranslateExample(entry.sentence, targetLang, forceModel)
+            if (request != translationRequest || currentSlot !== requestSlot || current?.sentence != entry.sentence) return
+            result.fold(
+                onSuccess = { sentenceTranslation = it },
+                onFailure = { error ->
+                    if (forceModel && sentenceTranslation != null) {
+                        sentenceTranslation = sentenceTranslation?.copy(modelError = exampleModelError(error))
+                    } else sentenceTranslationError = true
+                }
+            )
+        } finally {
+            if (request == translationRequest) sentenceTranslationLoading = false
+        }
     }
 
     private fun scoped(all: List<VocabEntry>, scope: Long = scopeId) = when (scope) {
@@ -861,6 +881,8 @@ private fun ReviewCard(
     onMeaningSelected: (String) -> Unit,
     modifier: Modifier
 ) {
+    val uiScope = rememberCoroutineScope()
+    val displayedSlot = vm.currentSlot
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         val cornerLabel = listOfNotNull(vm.listNameFor(entry), entry.lessonNumber()?.let { stringResource(R.string.review_lesson_short, it) }).joinToString(" · ")
         if (cornerLabel.isNotEmpty()) {
@@ -883,6 +905,11 @@ private fun ReviewCard(
             sentenceAudioLoading = vm.sentenceAudioLoading,
             sentenceAudioError = vm.sentenceAudioError,
             sentenceTranslation = vm.sentenceTranslation,
+            onRetryModel = { uiScope.launch {
+                if (vm.currentSlot === displayedSlot && vm.current?.id == entry.id && vm.current?.sentence == entry.sentence) {
+                    vm.translateSentence(forceModel = true)
+                }
+            } },
             sentenceTranslationLoading = vm.sentenceTranslationLoading,
             sentenceTranslationError = vm.sentenceTranslationError,
             onWordTap = onWordTap,

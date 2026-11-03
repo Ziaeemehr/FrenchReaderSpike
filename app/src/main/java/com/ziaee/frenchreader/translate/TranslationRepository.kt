@@ -18,33 +18,31 @@ class TranslationRepository(private val context: Context) {
     private val overrides = TranslationOverrides(context)
 
     /** Only flashcard examples consult bundled translations; reader/meaning paths stay separate. */
-    suspend fun getOrTranslateExample(text: String, targetLang: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun getOrTranslateExample(text: String, targetLang: String, forceModel: Boolean = false): Result<ExampleTranslation> = withContext(Dispatchers.IO) {
         try {
             val bundled by lazy { com.ziaee.frenchreader.content.BundledSentenceTranslations.forContext(context).get(text, targetLang) }
-            val translator by lazy {
-                try { LlmTranslator.forContext(context) }
+            val translatorResult by lazy {
+                try { Result.success(LlmTranslator.forContext(context)) }
                 catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { null }
+                catch (error: Exception) { Result.failure(error) }
             }
             Result.success(resolveExampleTranslation(
                 override = { overrides.getOverride(text, targetLang) },
                 bundled = { bundled },
-                personal = { translator?.let { llmCache.getRegenerated(text, targetLang, it.cacheId) } },
+                personal = { translatorResult.getOrNull()?.let { llmCache.getRegenerated(text, targetLang, it.cacheId) } },
                 live = {
-                    try {
-                        translator?.let { model ->
-                            // Ordinary live cache must never displace an included translation.
-                            llmCache.get(text, targetLang, model.cacheId)
-                                ?: model.translateLines(listOf(text), null, null, targetLang).single().also {
-                                    llmCache.put(text, targetLang, model.cacheId, it)
-                                }
-                        }
-                    } catch (cancelled: CancellationException) { throw cancelled
-                    } catch (_: Exception) { null }
+                    translatorResult.getOrThrow()?.let { model ->
+                        (if (forceModel) null else llmCache.get(text, targetLang, model.cacheId))
+                            ?: model.translateLines(listOf(text), null, null, targetLang).single().also {
+                                if (forceModel) llmCache.putRegenerated(text, targetLang, model.cacheId, it)
+                                else llmCache.put(text, targetLang, model.cacheId, it)
+                            }
+                    }
                 },
                 google = { cache.get(text, targetLang) ?: TranslationService.translate(text, targetLang).also {
                     cache.put(text, targetLang, it)
-                } }
+                } },
+                forceModel = forceModel
             ))
         } catch (cancelled: CancellationException) { throw cancelled
         } catch (error: Exception) { Result.failure(error) }

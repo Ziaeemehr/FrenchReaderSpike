@@ -1101,4 +1101,9 @@
     <string name="pdf_ocr_show_original">Afficher l’original</string>
     <string name="pdf_ocr_show_corrected">Afficher le texte corrigé</string>
     <string name="pdf_ocr_fix_ai">Corriger avec l’IA</string>
+    <string name="example_source_model">Traduit par le modèle</string>
+    <string name="example_source_google">Traduit par Google</string>
+    <string name="example_source_bundled">Traduction incluse</string>
+    <string name="example_model_unavailable">Modèle indisponible : %1$s</string>
+    <string name="example_retry_model">Réessayer avec le modèle</string>
 </resources>

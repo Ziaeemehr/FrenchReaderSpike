@@ -183,16 +183,7 @@ internal fun TranslationEngineSettings(context: Context, scope: CoroutineScope, 
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                val reason = context.getString(when ((error as? LlmError)?.kind) {
-                    LlmError.Kind.MISSING_KEY -> R.string.translation_error_missing_key
-                    LlmError.Kind.UNAUTHORIZED -> R.string.translation_error_key
-                    LlmError.Kind.PAYMENT -> R.string.translation_error_payment
-                    LlmError.Kind.FORBIDDEN -> R.string.translation_error_forbidden
-                    LlmError.Kind.NOT_FOUND -> R.string.translation_error_model
-                    LlmError.Kind.RATE_LIMIT -> R.string.translation_error_rate
-                    LlmError.Kind.UNREACHABLE -> R.string.translation_error_unreachable
-                    else -> R.string.translation_error_response
-                })
+                val reason = context.getString(translationErrorReason((error as? LlmError)?.kind))
                 // The provider's own words help with region, credit and model problems.
                 (error as? LlmError)?.detail?.let { "$reason\n$it" } ?: reason
             } finally {
