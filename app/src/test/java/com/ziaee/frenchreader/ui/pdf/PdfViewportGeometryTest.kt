@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui.pdf
 
+import androidx.compose.ui.geometry.Offset
+
 import com.ziaee.frenchreader.content.pdf.PdfReadingProgress
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,28 +33,37 @@ class PdfViewportGeometryTest {
     }
 }
 
-class PdfPinchStepTest {
-    private fun content(scale: Float, offset: androidx.compose.ui.geometry.Offset, screen: androidx.compose.ui.geometry.Offset) = (screen - offset) / scale
+class PdfPinchTargetTest {
+    private val width = 1000f
+    private fun height(page: Int, zoom: Float) = width * zoom * 1.4f + 20f
+    // Content position (unzoomed px) of a screen point: sideways and down from the top of page 0.
+    private fun content(t: PdfPinchTarget, screen: Offset) =
+        Offset((t.horizontal + screen.x) / t.zoom, ((0 until t.page).sumOf { height(it, t.zoom).toDouble() }.toFloat() + t.pageOffset + screen.y) / t.zoom)
 
-    @org.junit.Test fun pointUnderFingersFollowsThemWhileZoomingAndPanning() {
-        var state = 1f to androidx.compose.ui.geometry.Offset.Zero
-        var fingers = androidx.compose.ui.geometry.Offset(300f, 500f)
-        val held = content(state.first, state.second, fingers)
-        repeat(5) {
-            val pan = androidx.compose.ui.geometry.Offset(-40f, -60f)
-            state = pinchStep(state.first, state.second, 1.2f, fingers, pan, .25f, 4f)
+    @org.junit.Test fun pointUnderFingersFollowsThemAcrossFrames() {
+        var t = PdfPinchTarget(1.5f, 2, 300f, 200f)
+        var fingers = Offset(400f, 600f)
+        val held = content(t, fingers)
+        repeat(6) {
+            val pan = Offset(-30f, -45f)
+            t = pinchTarget(t, 1.1f, fingers, pan, width, 10, ::height)
             fingers += pan
-            val now = content(state.first, state.second, fingers)
-            org.junit.Assert.assertEquals(held.x, now.x, .01f)
-            org.junit.Assert.assertEquals(held.y, now.y, .01f)
+            val now = content(t, fingers)
+            // The fixed 20 px gap does not scale, so allow a few px of drift per page boundary.
+            org.junit.Assert.assertEquals(held.x, now.x, .5f)
+            org.junit.Assert.assertEquals(held.y, now.y, 40f)
         }
-        org.junit.Assert.assertEquals(1.2f * 1.2f * 1.2f * 1.2f * 1.2f, state.first, .001f)
+        org.junit.Assert.assertEquals(1.5f * Math.pow(1.1, 6.0).toFloat(), t.zoom, .01f)
     }
 
-    @org.junit.Test fun scaleIsClampedButPanStillApplies() {
-        val (scale, offset) = pinchStep(4f, androidx.compose.ui.geometry.Offset.Zero, 2f,
-            androidx.compose.ui.geometry.Offset(100f, 100f), androidx.compose.ui.geometry.Offset(10f, 20f), .25f, 4f)
-        org.junit.Assert.assertEquals(4f, scale)
-        org.junit.Assert.assertEquals(androidx.compose.ui.geometry.Offset(10f, 20f), offset)
+    @org.junit.Test fun panAtMaxZoomStillMovesAndStaysInBounds() {
+        val t = pinchTarget(PdfPinchTarget(4f, 0, 0f, 0f), 2f, Offset(100f, 100f), Offset(50f, 80f), width, 3, ::height)
+        org.junit.Assert.assertEquals(4f, t.zoom)
+        org.junit.Assert.assertEquals(0f, t.horizontal) // cannot scroll left of the page
+        org.junit.Assert.assertEquals(0f, t.pageOffset) // nor above the first page
+        val down = pinchTarget(PdfPinchTarget(2f, 0, 2700f, 500f), 1f, Offset(0f, 0f), Offset(-100f, -200f), width, 3, ::height)
+        org.junit.Assert.assertEquals(1, down.page) // moved past page 0 (height 2820)
+        org.junit.Assert.assertEquals(80f, down.pageOffset, .01f)
+        org.junit.Assert.assertEquals(600f, down.horizontal, .01f)
     }
 }

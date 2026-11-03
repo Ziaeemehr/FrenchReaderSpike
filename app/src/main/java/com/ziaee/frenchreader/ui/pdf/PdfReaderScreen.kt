@@ -13,6 +13,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,7 +44,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -233,39 +234,36 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         zoom = next
         selection = null
     }
-    // During a pinch only the current image is scaled and moved; the pages are laid out again once at the end.
-    var pinchScale by remember { mutableStateOf(1f) }
-    var pinchOffset by remember { mutableStateOf(Offset.Zero) }
+    // A pinch accumulates into its own target; the laid-out list catches up a few frames later.
+    var pinch by remember { mutableStateOf<PdfPinchTarget?>(null) }
     fun pinchBy(factor: Float, centroid: Offset, pan: Offset) {
-        val (scale, offset) = pinchStep(pinchScale, pinchOffset, factor, centroid, pan, 1f / zoom, 4f / zoom)
-        pinchScale = scale
-        pinchOffset = offset
-    }
-    fun commitPinch() {
-        val scale = pinchScale
-        val topLeft = -pinchOffset / scale // viewport top-left in the current layout
-        val page = listState.layoutInfo.visibleItemsInfo.let { items ->
-            items.firstOrNull { topLeft.y >= it.offset && topLeft.y < it.offset + it.size } ?: items.minByOrNull { kotlin.math.abs(it.offset - topLeft.y) }
+        val pages = renderer ?: return
+        val start = pinch ?: PdfPinchTarget(zoom, listState.firstVisibleItemIndex,
+            listState.firstVisibleItemScrollOffset.toFloat(), horizontalState.value.toFloat())
+        val gap = with(density) { 8.dp.toPx() }
+        val next = pinchTarget(start, factor, centroid, pan, viewportWidth.toFloat(), pages.pageCount) { page, z ->
+            viewportWidth * z * pages.pageAspects[page] + gap
         }
-        if (page == null) { pinchScale = 1f; pinchOffset = Offset.Zero; return }
-        zoomAnchor = PdfZoomAnchor(page.index, (topLeft.y - page.offset) * scale, (horizontalState.value + topLeft.x) * scale)
-        zoom = (zoom * scale).coerceIn(1f, 4f)
+        pinch = next
+        zoomAnchor = PdfZoomAnchor(next.page, next.pageOffset, next.horizontal)
+        zoom = next.zoom
         selection = null
     }
     val pinchByLatest by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { f, c, p -> pinchBy(f, c, p) }
-    val commitPinchLatest by rememberUpdatedState({ commitPinch() })
+    val endPinch by rememberUpdatedState({ pinch = null })
     val zoomAtPoint by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { value, point, pan -> changeZoom(value, point, pan) }
     val latestZoom by rememberUpdatedState(zoom)
-    LaunchedEffect(zoomAnchor) {
-        val anchor = zoomAnchor ?: return@LaunchedEffect
-        // Wait for layout to use the new width before clamping the pan range.
-        withFrameNanos { }
-        withFrameNanos { }
-        horizontalState.scrollTo(anchor.horizontal.toInt().coerceAtLeast(0))
-        listState.scrollToItem(anchor.page, anchor.pageScrollOffset.toInt())
-        pinchScale = 1f
-        pinchOffset = Offset.Zero
-        zoomAnchor = null
+    LaunchedEffect(Unit) {
+        // Conflated, not restarted per anchor: a continuous pinch emits anchors every frame, and a
+        // restarting effect never got past its frame wait, so the view only moved after the pinch.
+        snapshotFlow { zoomAnchor }.filterNotNull().conflate().collect { anchor ->
+            // Wait for layout to use the new width before clamping the pan range.
+            withFrameNanos { }
+            withFrameNanos { }
+            horizontalState.scrollTo(anchor.horizontal.toInt().coerceAtLeast(0))
+            listState.scrollToItem(anchor.page, anchor.pageScrollOffset.toInt())
+            if (zoomAnchor === anchor) zoomAnchor = null
+        }
     }
     LaunchedEffect(listState.isScrollInProgress) {
         if (listState.isScrollInProgress) selection = null
@@ -339,14 +337,10 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                     // Once pinching, the remaining finger must not scroll the list underneath.
                                     if (pinching) event.changes.forEach { it.consume() }
                                 } while (event.changes.any { it.pressed })
-                                if (pinching) commitPinchLatest()
+                                if (pinching) endPinch()
                             }
                         }) {
-                    Box(Modifier.fillMaxSize().graphicsLayer {
-                        scaleX = pinchScale; scaleY = pinchScale
-                        translationX = pinchOffset.x; translationY = pinchOffset.y
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
-                    }.horizontalScroll(horizontalState, enabled = zoom > 1f && !lassoMode)) {
+                    Box(Modifier.fillMaxSize().horizontalScroll(horizontalState, enabled = zoom > 1f && !lassoMode)) {
                     LazyColumn(state = listState, userScrollEnabled = !lassoMode,
                         modifier = Modifier.width(with(density) { (viewportWidth * zoom).toDp() }).fillMaxHeight(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
