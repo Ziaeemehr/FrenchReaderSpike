@@ -112,4 +112,19 @@ class LibraryReadingStatusTest {
         assertEquals(READ_MARK_NOT_FINISHED, readMarkToStore(READ_MARK_NOT_FINISHED, completedAutomatically = true))
         assertEquals(READ_MARK_AUTOMATIC, readMarkToStore(READ_MARK_NOT_FINISHED, completedAutomatically = false))
     }
+
+    @Test
+    fun `pdf texts finish from either view but never from a scanned placeholder`() = runTest {
+        val placeholder = "Scanned PDF. Switch to PDF view to read the pages."
+        val scanned = TextDocument(id = 10L, title = "Scan", rawText = placeholder, lastAccessedAtMs = 1L, pdfPath = "pdfs/a.pdf")
+        val textRead = TextDocument(id = 11L, title = "Read", rawText = "Une phrase.", lastAccessedAtMs = 1L, pdfPath = "pdfs/b.pdf")
+        val pdfRead = TextDocument(id = 12L, title = "Pages", rawText = placeholder, lastAccessedAtMs = 1L, pdfPath = "pdfs/c.pdf")
+        val plain = TextDocument(id = 13L, title = "Plain", rawText = "Une phrase.", lastAccessedAtMs = 1L)
+        val progress = mapOf(12L to com.ziaee.frenchreader.content.pdf.PdfReadingProgress(page = 3, pageCount = 4))
+        val result = LibraryCompletionCache().completionFor(listOf(scanned, textRead, pdfRead, plain), { it.rawText }) { progress[it] }
+        assertEquals(false, result[10L])
+        assertEquals(com.ziaee.frenchreader.ui.statistics.isTextCompleted(plain, plain.rawText), result[11L])
+        assertEquals(true, result[12L])
+        assertEquals(com.ziaee.frenchreader.ui.statistics.isTextCompleted(plain, plain.rawText), result[13L])
+    }
 }

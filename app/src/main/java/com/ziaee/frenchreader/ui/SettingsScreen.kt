@@ -1015,6 +1015,11 @@ private fun LocalBackupSection(
     snackbarHostState: SnackbarHostState
 ) {
     var restoreUri by remember { mutableStateOf<Uri?>(null) }
+    var backUpPdfs by remember { mutableStateOf(BackupPrefs.backUpPdfFiles(context)) }
+    val pdfBytes by produceState(0L, context) {
+        value = withContext(Dispatchers.IO) { com.ziaee.frenchreader.content.pdf.PdfFileStore.sizeBytes(context) }
+    }
+
 
     fun showMessage(text: String) {
         scope.launch { snackbarHostState.showSnackbar(text) }
@@ -1046,6 +1051,16 @@ private fun LocalBackupSection(
         style = MaterialTheme.typography.labelMedium,
         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
     )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.backup_pdf_files))
+            Text(android.text.format.Formatter.formatFileSize(context, pdfBytes), style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = backUpPdfs, onCheckedChange = {
+            backUpPdfs = it
+            BackupPrefs.setBackUpPdfFiles(context, it)
+        })
+    }
     OutlinedButton(onClick = {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date())
         exportLauncher.launch("french_reader_backup_$timestamp.zip")

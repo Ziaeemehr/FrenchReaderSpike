@@ -25,7 +25,6 @@ import org.json.JSONObject
 private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 private const val DATABASE_ENTRY = "database/french_reader.db"
 private const val SETTINGS_ENTRY = "prefs/settings.json"
-private val FILE_DIRECTORIES = listOf("text_bodies", "text_images")
 internal val PREFERENCE_FILES = listOf(
     "vocab_prefs", "appearance_prefs", "locale_prefs", "news_prefs",
     "highlight_prefs", "tts_cache_prefs", "xtts_prefs", "study_log_prefs", "grammar_prefs", "activity_streak"
@@ -111,7 +110,8 @@ object LocalBackup {
             ZipOutputStream(FileOutputStream(archive)).use { zip ->
                 addFile(zip, databaseSource, DATABASE_ENTRY)
                 addText(zip, serializeSettings(readSettings(context)), SETTINGS_ENTRY)
-                FILE_DIRECTORIES.forEach { name -> addDirectory(zip, File(context.filesDir, name), name) }
+                REQUIRED_FILE_DIRECTORIES.forEach { name -> addDirectory(zip, File(context.filesDir, name), name) }
+                if (BackupPrefs.backUpPdfFiles(context)) addDirectory(zip, File(context.filesDir, "pdfs"), "pdfs")
             }
             if (archive.length() > MAX_BACKUP_ARCHIVE_BYTES) throw IOException("Backup archive is too large")
             archive
@@ -165,7 +165,7 @@ object LocalBackup {
                 archive.copyTo(candidateDb, overwrite = true)
             }
             if (!validateDatabase(candidateDb)) return false
-            if (includesFiles) FILE_DIRECTORIES.forEach { File(stagingRoot, it).mkdirs() }
+            if (includesFiles) REQUIRED_FILE_DIRECTORIES.forEach { File(stagingRoot, it).mkdirs() }
             // Best effort: when the current data cannot even be read (the case a restore is for),
             // there is nothing to set aside and the restore must still go through.
             runCatching { AutoBackup.protectCurrentState(context) }
@@ -192,14 +192,7 @@ object LocalBackup {
         File(dbFile.path + "-wal").delete()
         File(dbFile.path + "-shm").delete()
         try {
-            if (includesFiles) FILE_DIRECTORIES.forEach { name ->
-                val live = File(context.filesDir, name)
-                val old = File(context.filesDir, ".$name.restore-old")
-                old.deleteRecursively()
-                if (live.exists() && !live.renameTo(old)) throw IOException("Unable to stage existing $name")
-                directoryBackups += live to old
-                if (!File(stagingRoot, name).renameTo(live)) throw IOException("Unable to restore $name")
-            }
+            if (includesFiles) stageBackupDirectories(context.filesDir, stagingRoot, directoryBackups)
             if (dbFile.exists() && !dbFile.renameTo(dbOld)) throw IOException("Unable to stage existing database")
             if (!dbNew.renameTo(dbFile)) throw IOException("Unable to restore database")
             dbOld.delete()
@@ -263,7 +256,7 @@ object LocalBackup {
                 val output = File(canonicalRoot, entry.name).canonicalFile
                 val allowed = output == File(canonicalRoot, DATABASE_ENTRY).canonicalFile ||
                     output == File(canonicalRoot, SETTINGS_ENTRY).canonicalFile ||
-                    FILE_DIRECTORIES.any { name ->
+                    (REQUIRED_FILE_DIRECTORIES + "pdfs").any { name ->
                         val directory = File(canonicalRoot, name).canonicalFile
                         output == directory || output.path.startsWith(directory.path + File.separator)
                     }

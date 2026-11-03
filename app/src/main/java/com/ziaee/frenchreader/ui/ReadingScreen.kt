@@ -399,6 +399,25 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
             }
     }
 
+    val pdfPreferences = remember(settingsContext) { settingsContext.getSharedPreferences("pdf_reader", android.content.Context.MODE_PRIVATE) }
+    var preferPdf by remember(textId) { mutableStateOf(pdfPreferences.getBoolean("view_$textId", true)) }
+    val pdfPath = state.textDoc?.pdfPath
+    val pdfFile = remember(pdfPath) { pdfPath?.let { com.ziaee.frenchreader.content.pdf.PdfFileStore.resolve(settingsContext, it) } }
+    LaunchedEffect(textId, pdfPath, pdfFile) {
+        if (pdfPath != null && pdfFile == null) {
+            android.widget.Toast.makeText(settingsContext, R.string.pdf_file_missing, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+    if (preferPdf && pdfFile != null) {
+        state.textDoc?.let { document ->
+            com.ziaee.frenchreader.ui.pdf.PdfReaderScreen(document, onBack, onTextView = {
+                preferPdf = false
+                pdfPreferences.edit().putBoolean("view_$textId", false).apply()
+            }, onInteraction = { activityTimer.interact() }, onBodyUpdated = { vm.load(textId) })
+        }
+        return
+    }
+
     androidx.compose.runtime.CompositionLocalProvider(LocalTextToolbar provides selectionToolbarController, LocalReadingViewport provides readingViewport) {
         Scaffold(
             modifier = Modifier.pointerInput(activityTimer) {
@@ -441,6 +460,12 @@ fun ReadingScreen(textId: Long, onBack: () -> Unit, onOpenVocab: () -> Unit, ini
                             }
                         },
                         actions = {
+                            if (pdfFile != null) IconButton(onClick = {
+                                preferPdf = true
+                                vm.player.pause()
+                                vm.stopSelectionPlayback()
+                                pdfPreferences.edit().putBoolean("view_$textId", true).apply()
+                            }) { Icon(Icons.Default.PictureAsPdf, stringResource(R.string.pdf_view)) }
                             IconButton(onClick = onOpenGestureGuide) {
                                 Icon(Icons.Default.HelpOutline, stringResource(R.string.gesture_guide_title))
                             }

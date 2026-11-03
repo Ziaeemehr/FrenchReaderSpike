@@ -28,7 +28,8 @@ class ArticleImportRepository(
     private val sources: List<ContentSource>,
     private val imageStore: ArticleImageStorage,
     private val bodyStore: TextBodyStorage,
-    private val libraryOrganizerDao: LibraryOrganizerDao? = null
+    private val libraryOrganizerDao: LibraryOrganizerDao? = null,
+    private val deletePdf: suspend (String) -> Unit = {}
 ) {
     /** Returns null if no registered source matches the headline or the
      * source fails to fetch the full article; the headline preview stays
@@ -96,6 +97,7 @@ class ArticleImportRepository(
         }
         libraryOrganizerDao?.deleteRefsForText(doc.id)
         textDao.delete(doc)
+        doc.pdfPath?.let { deletePdf(it) }
         bodyStore.delete(doc)
     }
 }

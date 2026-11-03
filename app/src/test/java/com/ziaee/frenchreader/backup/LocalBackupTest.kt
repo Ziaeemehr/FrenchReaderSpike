@@ -6,6 +6,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LocalBackupTest {
+    @Test fun `restore without PDFs preserves live PDFs`() {
+        assertEquals(listOf("text_bodies", "text_images"), restoreFileDirectories(false))
+        assertEquals(listOf("text_bodies", "text_images", "pdfs"), restoreFileDirectories(true))
+    }
+
     @Test fun `grammar preferences are backed up`() {
         assertTrue("grammar_prefs" in PREFERENCE_FILES)
     }

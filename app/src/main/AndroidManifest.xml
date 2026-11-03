@@ -31,10 +31,6 @@
         android:theme="@style/Theme.FrenchReader"
         android:usesCleartextTraffic="true">
 
-        <meta-data
-            android:name="com.google.mlkit.vision.DEPENDENCIES"
-            android:value="ocr" />
-
         <!-- Hands exported notes (Markdown, PDF) to other apps from cache/shared. -->
         <provider
             android:name="androidx.core.content.FileProvider"

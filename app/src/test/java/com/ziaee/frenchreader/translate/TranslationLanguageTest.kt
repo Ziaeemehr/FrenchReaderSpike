@@ -6,6 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TranslationLanguageTest {
+    @Test fun rtlTargetsIncludeRegionalLanguageTags() {
+        listOf("fa-IR", "AR", "he_IL", "ur-PK").forEach { assertTrue(isRtlTarget(it)) }
+        listOf("fr", "en-US").forEach { assertFalse(isRtlTarget(it)) }
+    }
+
     @Test
     fun `base language drops the region`() {
         assertEquals("fa", TranslationService.baseLanguage("fa-IR"))

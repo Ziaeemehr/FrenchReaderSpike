@@ -142,7 +142,12 @@ object AutoBackup {
     private suspend fun backUpIfChanged(context: Context) {
         val startedAt = System.currentTimeMillis()
         val lastAt = BackupPrefs.getLastAutoBackupAtMs(context) ?: 0L
-        if (databaseModifiedAt(context) <= lastAt) return
+        val pdfModifiedAt = if (BackupPrefs.backUpPdfFiles(context)) {
+            val directory = File(context.filesDir, "pdfs")
+            maxOf(directory.lastModified(), directory.listFiles().orEmpty()
+                .filter { it.isFile && it.extension == "pdf" }.maxOfOrNull { it.lastModified() } ?: 0L)
+        } else 0L
+        if (maxOf(databaseModifiedAt(context), pdfModifiedAt, BackupPrefs.pdfBackupChangedAt(context)) <= lastAt) return
         // Never let an empty database (fresh install, failed migration) push the
         // good backups out of the rotation.
         if (!hasUserData(context)) return

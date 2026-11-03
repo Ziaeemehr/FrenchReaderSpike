@@ -17,6 +17,22 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ArticleImportRepositoryTest {
+    @Test fun `PDF cleanup runs after row deletion while preserving other references`() = runBlocking {
+        val path = "pdfs/shared.pdf"
+        val first = TextDocument(id = 1, title = "One", rawText = "Body", pdfPath = path)
+        val second = first.copy(id = 2, title = "Two")
+        val dao = FakeTextDao(mutableListOf(first, second))
+        val referenceCounts = mutableListOf<Int>()
+        val repository = ArticleImportRepository(dao, emptyList(), FakeImageStorage(), FakeBodyStorage(),
+            deletePdf = { pdfPath ->
+                assertEquals(path, pdfPath)
+                referenceCounts += dao.countWithPdfPath(pdfPath)
+            })
+        repository.deleteWithImage(first)
+        repository.deleteWithImage(second)
+        assertEquals(listOf(1, 0), referenceCounts)
+    }
+
     @Test
     fun `an already-imported headline reopens the existing document without fetching again`() = runBlocking {
         val headline = headline()
@@ -146,6 +162,9 @@ class ArticleImportRepositoryTest {
         initial: MutableList<TextDocument>,
         private val failImagePathUpdate: Boolean = false
     ) : TextDao {
+        override suspend fun findByPdfPath(path: String): TextDocument? = getAllOnce().firstOrNull { it.pdfPath == path }
+        override suspend fun countWithPdfPath(path: String): Int = getAllOnce().count { it.pdfPath == path }
+
         val documents = initial
         val inserted = mutableListOf<TextDocument>()
         val imagePaths = mutableMapOf<Long, String>()

@@ -22,7 +22,7 @@ class PdfTextExtractor(private val context: Context) {
                         "PDF exceeds the $MAX_PDF_PAGES page limit"
                     }
                     val stripper = PDFTextStripper().apply {
-                        sortByPosition = true
+                        sortByPosition = false
                         addMoreFormatting = true
                         // Default paragraph markers are empty, which makes
                         // paragraph breaks indistinguishable from line wraps.

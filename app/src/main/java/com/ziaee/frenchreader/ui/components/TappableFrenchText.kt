@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,15 +35,19 @@ fun TappableFrenchText(
     style: TextStyle = LocalTextStyle.current,
     fontStyle: FontStyle? = null,
     textAlign: TextAlign? = null,
-    selectable: Boolean = false
+    selectable: Boolean = false,
+    annotatedText: AnnotatedString? = null,
+    onOffsetTap: ((Int) -> Boolean)? = null
 ) {
+    val offsetTap by rememberUpdatedState(onOffsetTap)
+    val wordTap by rememberUpdatedState(onWordTap)
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
     // Bumped on every word tap so a leftover selection (and its handles) is dropped
     // instead of floating over the dictionary sheet.
     var selectionResets by remember { mutableIntStateOf(0) }
     val content: @Composable (Modifier) -> Unit = { textModifier ->
         Text(
-            text,
+            annotatedText ?: AnnotatedString(text),
             modifier = textModifier.pointerInput(text, selectable) {
                 if (selectable) {
                     awaitEachGesture {
@@ -61,10 +67,13 @@ fun TappableFrenchText(
                                 if (isTap) {
                                     val result = layout
                                     if (result != null) {
-                                        val word = extractWordAt(text, result.getOffsetForPosition(change.position))
+                                        val offset = result.getOffsetForPosition(change.position)
+                                        val handled = offsetTap?.invoke(offset) == true
+                                        if (handled) selectionResets++
+                                        val word = if (handled) "" else extractWordAt(text, offset)
                                         if (word.isNotBlank()) {
                                             selectionResets++
-                                            onWordTap(word)
+                                            wordTap(word)
                                         }
                                     }
                                 }
@@ -75,8 +84,9 @@ fun TappableFrenchText(
                 } else {
                     detectTapGestures { pos ->
                         val result = layout ?: return@detectTapGestures
-                        val word = extractWordAt(text, result.getOffsetForPosition(pos))
-                        if (word.isNotBlank()) onWordTap(word)
+                        val offset = result.getOffsetForPosition(pos)
+                        val word = if (offsetTap?.invoke(offset) == true) "" else extractWordAt(text, offset)
+                        if (word.isNotBlank()) wordTap(word)
                     }
                 }
             },

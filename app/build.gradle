@@ -111,7 +111,8 @@ dependencies {
     implementation "com.google.android.gms:play-services-auth:21.2.0"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1"
     implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.1'
+    // Bundled model: OCR works offline and on phones without Google Play services (Bazaar users).
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     // Keep the pre-1.3 pull-to-refresh/bottom-sheet APIs while UI/Foundation use 1.7.x.

@@ -3,6 +3,7 @@ package com.ziaee.frenchreader.comprehension
 import java.util.Locale
 
 interface FrenchLemmaLexicon {
+    val wordForms: Set<String> get() = emptySet()
     val commonLemmas: Set<String>
 
     fun lemmas(form: String): Set<String>
@@ -11,7 +12,8 @@ interface FrenchLemmaLexicon {
 
 class InMemoryLemmaLexicon(
     private val forms: Map<String, Set<String>>,
-    override val commonLemmas: Set<String>
+    override val commonLemmas: Set<String>,
+    override val wordForms: Set<String> = forms.keys
 ) : FrenchLemmaLexicon {
     override fun lemmas(form: String): Set<String> = forms[form] ?: setOf(form)
     override fun containsForm(form: String): Boolean = form in forms

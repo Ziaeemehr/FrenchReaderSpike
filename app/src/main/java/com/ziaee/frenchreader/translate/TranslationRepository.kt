@@ -339,8 +339,6 @@ class TranslationRepository(private val context: Context) {
         }
     }
 
-    private fun isRtlTarget(targetLang: String) =
-        TranslationService.baseLanguage(targetLang) in setOf("fa", "ar", "he", "iw", "ur", "ps")
 }
 
 data class MeaningOption(val text: String, val gloss: String?, val partOfSpeech: String?)
@@ -433,3 +431,6 @@ internal fun englishSenseHeadWord(englishSense: String): String? =
     englishSense.trim().split(Regex("\\s+")).firstOrNull {
         it.isNotBlank() && it.lowercase(java.util.Locale.ROOT) !in setOf("to", "be", "a", "an", "the")
     }
+
+internal fun isRtlTarget(targetLang: String) =
+    TranslationService.baseLanguage(targetLang) in setOf("fa", "ar", "he", "iw", "ur", "ps")

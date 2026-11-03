@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
@@ -97,7 +101,10 @@ class SelectionRectPositionProvider(
     ): IntOffset {
         val maxX = (windowSize.width - popupContentSize.width).toFloat().coerceAtLeast(0f)
         val x = (rect.left + rect.width / 2f - popupContentSize.width / 2f).coerceIn(0f, maxX)
-        val y = (rect.top - popupContentSize.height - marginPx).coerceAtLeast(0f)
+        val above = rect.top - popupContentSize.height - marginPx
+        val below = rect.bottom + marginPx
+        // Prefer above; go below when above would be clipped and below fits, so the selection stays visible.
+        val y = if (above >= 0f || below + popupContentSize.height > windowSize.height) above.coerceAtLeast(0f) else below
         return IntOffset(x.roundToInt(), y.roundToInt())
     }
 }
@@ -112,52 +119,84 @@ fun SelectionToolbarContent(
     onHighlight: () -> Unit,
     onChooseHighlightColor: () -> Unit,
     onDeleteHighlight: (() -> Unit)?,
-    onMore: () -> Unit
+    onMore: () -> Unit,
+    onTranslate: (() -> Unit)? = null,
+    showReadingActions: Boolean = true,
+    showListen: Boolean = showReadingActions
 ) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 6.dp,
-        shadowElevation = 6.dp,
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        // Wraps onto a second line instead of scrolling sideways (owner's rule).
-        FlowRow(
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            TextButton(onClick = onHighlight) {
-                Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_highlight))
+    val actions = buildList {
+        if (showReadingActions) {
+            add(ToolbarItem(Icons.Default.FormatColorFill, stringResource(R.string.selection_action_highlight), onHighlight))
+            add(ToolbarItem(Icons.Default.Palette, stringResource(R.string.highlight_choose_color), onChooseHighlightColor))
+            onDeleteHighlight?.let { add(ToolbarItem(Icons.Default.Delete, stringResource(R.string.highlight_delete), it)) }
+        }
+        add(ToolbarItem(Icons.Default.ContentCopy, stringResource(R.string.selection_action_copy), onCopy))
+        add(ToolbarItem(Icons.Default.BookmarkAdd, stringResource(R.string.selection_action_save), onSave))
+        if (showListen) add(ToolbarItem(Icons.Default.VolumeUp, stringResource(R.string.selection_action_listen), onListen))
+        onTranslate?.let { add(ToolbarItem(Icons.Default.Translate, stringResource(R.string.pdf_translate), it)) }
+        if (showReadingActions) add(ToolbarItem(Icons.Default.MoreVert, stringResource(R.string.selection_action_more), onMore))
+    }
+    // Icon-only buttons on one continuous half ring whose open side faces the selection,
+    // so no selected text is covered.
+    androidx.compose.ui.layout.Layout(content = {
+        Surface(shape = HalfRingShape, tonalElevation = 2.dp, shadowElevation = 3.dp,
+            color = MaterialTheme.colorScheme.surface) {}
+        actions.forEach { action ->
+            IconButton(onClick = action.onClick, modifier = Modifier.size(40.dp).semantics { contentDescription = action.label }) {
+                Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             }
-            IconButton(onClick = onChooseHighlightColor) {
-                Icon(
-                    Icons.Default.Palette,
-                    contentDescription = stringResource(R.string.highlight_choose_color)
-                )
-            }
-            onDeleteHighlight?.let { delete ->
-                TextButton(onClick = delete) {
-                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text(stringResource(R.string.highlight_delete))
-                }
-            }
-            TextButton(onClick = onCopy) {
-                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_copy))
-            }
-            TextButton(onClick = onSave) {
-                Icon(Icons.Default.BookmarkAdd, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_save))
-            }
-            TextButton(onClick = onListen) {
-                Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_listen))
-            }
-            IconButton(onClick = onMore) {
-                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.selection_action_more))
+        }
+    }) { measurables, _ ->
+        val button = 40.dp.toPx()
+        val band = 48.dp.toPx()
+        val radius = semicircleRadius(actions.size, 42.dp.toPx())
+        val width = (2 * radius + band).toInt()
+        val height = (radius + band).toInt()
+        val background = measurables.first().measure(androidx.compose.ui.unit.Constraints.fixed(width, height))
+        val buttons = measurables.drop(1).map { it.measure(androidx.compose.ui.unit.Constraints()) }
+        layout(width, height) {
+            background.place(0, 0)
+            buttons.forEachIndexed { index, placeable ->
+                val (x, y) = semicirclePosition(index, buttons.size, radius)
+                // semicirclePosition is relative to a radius-sized box; centre each button on the band.
+                placeable.place((x + band / 2 - button / 2).toInt(), (y + band / 2 - button / 2).toInt())
             }
         }
     }
+}
+
+/** Half annulus with round ends; the band is 48 dp thick and the shape fills its box. */
+private val HalfRingShape = androidx.compose.foundation.shape.GenericShape { size, _ ->
+    // The layout makes width = 2r + band and height = r + band, so this is band / 2.
+    val half = size.height - size.width / 2f
+    val band = 2f * half
+    val radius = size.width / 2f - half
+    val cx = size.width / 2f
+    val cy = size.height - half
+    val outer = androidx.compose.ui.geometry.Rect(cx - radius - half, cy - radius - half, cx + radius + half, cy + radius + half)
+    val ring = androidx.compose.ui.graphics.Path().apply {
+        arcTo(outer, 180f, 180f, true)
+        if (radius > half) arcTo(androidx.compose.ui.geometry.Rect(cx - radius + half, cy - radius + half, cx + radius - half, cy + radius - half), 0f, -180f, false)
+        close()
+    }
+    val caps = androidx.compose.ui.graphics.Path().apply {
+        addOval(androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset(cx - radius, cy), band / 2f))
+        addOval(androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset(cx + radius, cy), band / 2f))
+    }
+    op(ring, caps, androidx.compose.ui.graphics.PathOperation.Union)
+}
+
+private class ToolbarItem(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String, val onClick: () -> Unit)
+
+/** Smallest radius that keeps neighbouring button centres [spacing] apart along the arc. */
+internal fun semicircleRadius(count: Int, spacing: Float): Float =
+    if (count < 2) 0f else spacing / (2f * kotlin.math.sin(kotlin.math.PI.toFloat() / (2f * (count - 1))))
+
+/** Top-left offset of button [index] on the upper half circle, left to right. */
+internal fun semicirclePosition(index: Int, count: Int, radius: Float): Pair<Float, Float> {
+    if (count < 2) return 0f to 0f
+    val angle = kotlin.math.PI.toFloat() * (1f - index.toFloat() / (count - 1))
+    return radius + radius * kotlin.math.cos(angle) to radius - radius * kotlin.math.sin(angle)
 }
 
 @Composable
