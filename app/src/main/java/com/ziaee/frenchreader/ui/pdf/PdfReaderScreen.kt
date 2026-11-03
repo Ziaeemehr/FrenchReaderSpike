@@ -591,8 +591,12 @@ private fun PdfPage(
                         val hit = hitTestWord(list, at.x / size.width, at.y / size.height, .015f) ?: return
                         val end = list.indexOf(hit)
                         if (start < 0) start = end
-                        val anchor = coordinates?.takeIf { it.isAttached }?.localToWindow(at) ?: return
-                        onSelection(PdfSelection(list, start, end, Rect(anchor, Size(1f, 1f))))
+                        val layout = coordinates?.takeIf { it.isAttached } ?: return
+                        // Anchor to the selected words, not the finger, so the toolbar clears every selected line.
+                        val chosen = list.subList(minOf(start, end), maxOf(start, end) + 1)
+                        val topLeft = layout.localToWindow(Offset(chosen.minOf { it.bounds.left } * size.width, chosen.minOf { it.bounds.top } * size.height))
+                        val bottomRight = layout.localToWindow(Offset(chosen.maxOf { it.bounds.right } * size.width, chosen.maxOf { it.bounds.bottom } * size.height))
+                        onSelection(PdfSelection(list, start, end, Rect(topLeft, bottomRight)))
                     }
                     detectDragGesturesAfterLongPress(
                         onDragStart = { start = -1; position = it; select(it) },
