@@ -143,7 +143,7 @@
     <string name="add_source_folder_title">وارد کردن پوشه</string>
     <string name="add_source_folder_subtitle">فایل‌های پشتیبانی‌شدهٔ یک پوشه را وارد کنید</string>
     <string name="add_source_pdf_title">وارد کردن PDF</string>
-    <string name="add_source_pdf_subtitle">متن قابل انتخاب را از PDF استخراج کنید</string>
+    <string name="add_source_pdf_subtitle">خود پی‌دی‌اف با همان ظاهر اصلی، به‌همراه نمای متنی</string>
     <string name="add_source_image_title">وارد کردن از تصویر</string>
     <string name="add_source_image_subtitle">متن حداکثر ۱۰ عکس را تشخیص دهید</string>
     <string name="text_import_extracting">در حال استخراج متن…</string>

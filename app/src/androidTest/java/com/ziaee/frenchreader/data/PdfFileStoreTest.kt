@@ -70,4 +70,15 @@ class PdfFileStoreTest {
         PdfFileStore.deleteIfUnreferenced(context, path, dao)
         assertNull(PdfFileStore.resolve(context, path))
     }
+
+    @Test fun sweepDeletesOnlyUnreferencedReleasedFiles() = runBlocking {
+        val kept = store()
+        val dao = database.textDao()
+        dao.insert(TextDocument(title = "Kept", rawText = "Body", pdfPath = kept))
+        release(kept)
+        val cancelled = File(root, "pdfs/" + "a".repeat(64) + ".pdf").apply { writeText("x") }
+        PdfFileStore.deleteUnreferenced(context, dao)
+        assertNotNull(PdfFileStore.resolve(context, kept))
+        assertEquals(false, cancelled.exists())
+    }
 }

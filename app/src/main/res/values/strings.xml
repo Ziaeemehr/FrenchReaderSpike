@@ -143,7 +143,7 @@
     <string name="add_source_folder_title">Import folder</string>
     <string name="add_source_folder_subtitle">Import supported files from a folder</string>
     <string name="add_source_pdf_title">Import PDF</string>
-    <string name="add_source_pdf_subtitle">Extract selectable text from a PDF</string>
+    <string name="add_source_pdf_subtitle">Read the PDF in its original layout, with a text view</string>
     <string name="add_source_image_title">Import from image</string>
     <string name="add_source_image_subtitle">Recognize text in up to 10 photos</string>
     <string name="text_import_extracting">Extracting text…</string>

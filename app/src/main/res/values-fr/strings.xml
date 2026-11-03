@@ -143,7 +143,7 @@
     <string name="add_source_folder_title">Importer un dossier</string>
     <string name="add_source_folder_subtitle">Importer les fichiers compatibles d’un dossier</string>
     <string name="add_source_pdf_title">Importer un PDF</string>
-    <string name="add_source_pdf_subtitle">Extraire le texte sélectionnable d’un PDF</string>
+    <string name="add_source_pdf_subtitle">Lire le PDF dans sa mise en page d’origine, avec une vue texte</string>
     <string name="add_source_image_title">Importer depuis une image</string>
     <string name="add_source_image_subtitle">Reconnaître le texte de 10 photos maximum</string>
     <string name="text_import_extracting">Extraction du texte…</string>

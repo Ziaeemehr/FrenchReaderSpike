@@ -376,7 +376,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         }
     }
     translationSource?.let { source ->
-        ModalBottomSheet(onDismissRequest = { translationRequest++; translationSource = null }) {
+        ModalBottomSheet(sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), onDismissRequest = { translationRequest++; translationSource = null }) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp).navigationBarsPadding()) {
                 Text(source, style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(16.dp))
@@ -409,7 +409,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         }
     }
     if (recognizing || ocrFailed || recognizedText != null) {
-        ModalBottomSheet(onDismissRequest = { if (!recognizing && !addingText) { ocrRequest++; recognizedText = null; ocrFailed = false; fixingOcr = false; correctionMenu = null } }) {
+        ModalBottomSheet(sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), onDismissRequest = { if (!recognizing && !addingText) { ocrRequest++; recognizedText = null; ocrFailed = false; fixingOcr = false; correctionMenu = null } }) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp).navigationBarsPadding()) {
                 Text(stringResource(R.string.pdf_recognized_text), style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(12.dp))

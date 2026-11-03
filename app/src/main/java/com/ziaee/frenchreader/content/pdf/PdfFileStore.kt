@@ -68,6 +68,11 @@ object PdfFileStore {
         }
     }
 
+    suspend fun deleteUnreferenced(context: Context, dao: TextDao) = withContext(Dispatchers.IO) {
+        File(context.filesDir, "pdfs").listFiles { file -> file.extension == "pdf" }.orEmpty()
+            .forEach { deleteIfUnreferenced(context, "pdfs/${it.name}", dao) }
+    }
+
     fun sizeBytes(context: Context): Long = File(context.filesDir, "pdfs")
         .walkTopDown().filter { it.isFile && it.extension == "pdf" }.sumOf { it.length() }
 }

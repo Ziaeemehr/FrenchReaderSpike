@@ -190,6 +190,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         refresh(force = false)
+        // Cancelled imports leave their app-owned copy behind.
+        viewModelScope.launch { com.ziaee.frenchreader.content.pdf.PdfFileStore.deleteUnreferenced(app, db.textDao()) }
     }
 
 
