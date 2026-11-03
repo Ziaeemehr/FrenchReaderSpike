@@ -45,6 +45,41 @@ class PdfPageRenderer(file: File) {
         }
     }
 
+    /**
+     * Renders only [left, top, right, bottom] (page-normalised) of a page as if the whole page
+     * were [pageWidth] pixels wide. Caller owns the uncached bitmap; memory is the region's,
+     * not the page's, so OCR can use high detail on any phone.
+     */
+    suspend fun renderRegionForOcr(page: Int, region: PdfRect, pageWidth: Int): Bitmap = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            check(!closed)
+            renderer.openPage(page).use { opened ->
+                val scale = pageWidth.coerceIn(1, 8192).toFloat() / opened.width
+                val fullWidth = opened.width * scale
+                val fullHeight = opened.height * scale
+                val left = kotlin.math.floor(region.left * fullWidth)
+                val top = kotlin.math.floor(region.top * fullHeight)
+                var width = (kotlin.math.ceil(region.right * fullWidth) - left).toInt().coerceAtLeast(1)
+                var height = (kotlin.math.ceil(region.bottom * fullHeight) - top).toInt().coerceAtLeast(1)
+                // Hard cap of ~6 MP (24 MB) for very large lassos.
+                val shrink = minOf(1.0, kotlin.math.sqrt(6_000_000.0 / (width.toDouble() * height)))
+                val finalScale = (scale * shrink).toFloat()
+                width = (width * shrink).toInt().coerceAtLeast(1)
+                height = (height * shrink).toInt().coerceAtLeast(1)
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+                    try {
+                        it.eraseColor(Color.WHITE)
+                        val matrix = android.graphics.Matrix().apply {
+                            setScale(finalScale, finalScale)
+                            postTranslate((-left * shrink).toFloat(), (-top * shrink).toFloat())
+                        }
+                        opened.render(it, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    } catch (error: Throwable) { it.recycle(); throw error }
+                }
+            }
+        }
+    }
+
     suspend fun close() = withContext(Dispatchers.IO) {
         mutex.withLock {
             if (!closed) {

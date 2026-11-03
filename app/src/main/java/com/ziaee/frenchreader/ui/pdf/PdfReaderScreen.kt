@@ -68,6 +68,12 @@ import com.ziaee.frenchreader.ui.SelectionRectPositionProvider
 import com.ziaee.frenchreader.ui.SelectionToolbarContent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.ziaee.frenchreader.translate.llm.LlmError
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 
 private data class PdfSelection(val words: List<PdfWord>, val first: Int, val last: Int, val anchor: Rect) {
     val selected: List<PdfWord> get() = words.subList(minOf(first, last), maxOf(first, last) + 1)
@@ -136,8 +142,21 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
     var translationFailed by remember { mutableStateOf(false) }
     var translationRequest by remember { mutableIntStateOf(0) }
     var lassoMode by remember { mutableStateOf(false) }
+    // Build the OCR spelling index in the background as soon as a PDF is open: it takes a few
+    // seconds once per process, and doing it after the lasso is drawn made the first OCR slow.
+    LaunchedEffect(Unit) {
+        runCatching { com.ziaee.frenchreader.comprehension.LemmaLexicon.get(context).getOcrCorrector() }
+    }
     var recognizing by remember { mutableStateOf(false) }
     var recognizedText by remember { mutableStateOf<String?>(null) }
+    var ocrCorrection by remember { mutableStateOf<OcrCorrection?>(null) }
+    var showOriginalOcr by remember { mutableStateOf(false) }
+    var correctionMenu by remember { mutableStateOf<OcrChange?>(null) }
+    var fixingOcr by remember { mutableStateOf(false) }
+    var fixOcrError by remember { mutableStateOf<String?>(null) }
+    var ocrRequest by remember { mutableIntStateOf(0) }
+    // Construction reads configuration only. Network calls happen inside the button action.
+    val ocrAi = LlmTranslator.forContext(context)
     var ocrFailed by remember { mutableStateOf(false) }
     var addingText by remember { mutableStateOf(false) }
     var addFailed by remember { mutableStateOf(false) }
@@ -300,9 +319,19 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                     ocrFailed = false
                                     addFailed = false
                                     recognizedText = null
+                                    ocrCorrection = null
+                                    showOriginalOcr = false
+                                    correctionMenu = null
+                                    fixOcrError = null
+                                    fixingOcr = false
+                                    val request = ++ocrRequest
                                     scope.launch {
                                         try {
-                                            recognizedText = ocr.extract(current, page, width, path)
+                                            val result = ocr.extractRegion(current, page, width, path)
+                                            if (request == ocrRequest) {
+                                                recognizedText = result.original
+                                                ocrCorrection = result.corrected
+                                            }
                                         } catch (cancelled: CancellationException) { throw cancelled
                                         } catch (_: Exception) { ocrFailed = true
                                         } finally { recognizing = false }
@@ -380,7 +409,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         }
     }
     if (recognizing || ocrFailed || recognizedText != null) {
-        ModalBottomSheet(onDismissRequest = { if (!recognizing && !addingText) { recognizedText = null; ocrFailed = false } }) {
+        ModalBottomSheet(onDismissRequest = { if (!recognizing && !addingText) { ocrRequest++; recognizedText = null; ocrFailed = false; fixingOcr = false; correctionMenu = null } }) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp).navigationBarsPadding()) {
                 Text(stringResource(R.string.pdf_recognized_text), style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(12.dp))
@@ -388,13 +417,67 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                     recognizing -> CircularProgressIndicator()
                     ocrFailed -> Text(stringResource(R.string.pdf_ocr_failed), color = MaterialTheme.colorScheme.error)
                     else -> {
-                        val text = recognizedText.orEmpty()
+                        val text = if (showOriginalOcr) recognizedText.orEmpty() else ocrCorrection?.text ?: recognizedText.orEmpty()
+                        val changes = if (showOriginalOcr) emptyList() else ocrCorrection?.changes.orEmpty()
                         if (text.isBlank()) Text(stringResource(R.string.pdf_ocr_empty))
                         else {
-                            TappableFrenchText(text, onWordTap = { word ->
-                                dictionary = word to text
-                            }, selectable = true)
+                            Box {
+                                val annotated = buildAnnotatedString {
+                                    append(text)
+                                    for (change in changes) addStyle(SpanStyle(textDecoration = TextDecoration.Underline), change.start, change.end)
+                                }
+                                TappableFrenchText(text, onWordTap = { word -> dictionary = word to text },
+                                    selectable = true, annotatedText = annotated, onOffsetTap = { offset ->
+                                        val change = if (fixingOcr) null else changes.firstOrNull { offset >= it.start && offset < it.end }
+                                        correctionMenu = change
+                                        change != null
+                                    })
+                                DropdownMenu(expanded = correctionMenu != null, onDismissRequest = { correctionMenu = null }) {
+                                    correctionMenu?.let { change ->
+                                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_ocr_original_word, change.original)) },
+                                            onClick = {}, enabled = false)
+                                        DropdownMenuItem(enabled = !fixingOcr, text = { Text(stringResource(R.string.pdf_ocr_use_original)) }, onClick = {
+                                            ocrCorrection = ocrCorrection?.revert(change)
+                                            correctionMenu = null
+                                        })
+                                    }
+                                }
+                            }
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                TextButton(enabled = !fixingOcr, onClick = { showOriginalOcr = !showOriginalOcr; correctionMenu = null }) {
+                                    Text(stringResource(if (showOriginalOcr) R.string.pdf_ocr_show_corrected else R.string.pdf_ocr_show_original))
+                                }
+                                if (ocrAi != null) TextButton(enabled = !fixingOcr && !addingText, onClick = {
+                                    fixingOcr = true
+                                    fixOcrError = null
+                                    correctionMenu = null
+                                    val request = ocrRequest
+                                    scope.launch {
+                                        try {
+                                            val fixed = withContext(Dispatchers.IO) { ocrAi.fixOcr(text) }
+                                            val correction = withContext(Dispatchers.Default) { ocrWordDiff(text, fixed) }
+                                            if (request == ocrRequest && recognizedText != null) {
+                                                ocrCorrection = correction
+                                                showOriginalOcr = false
+                                            }
+                                        } catch (cancelled: CancellationException) { throw cancelled
+                                        } catch (error: Exception) {
+                                            if (request == ocrRequest && recognizedText != null) {
+                                                val reason = context.getString(when ((error as? LlmError)?.kind) {
+                                                    LlmError.Kind.MISSING_KEY -> R.string.translation_error_missing_key
+                                                    LlmError.Kind.UNAUTHORIZED -> R.string.translation_error_key
+                                                    LlmError.Kind.PAYMENT -> R.string.translation_error_payment
+                                                    LlmError.Kind.FORBIDDEN -> R.string.translation_error_forbidden
+                                                    LlmError.Kind.NOT_FOUND -> R.string.translation_error_model
+                                                    LlmError.Kind.RATE_LIMIT -> R.string.translation_error_rate
+                                                    LlmError.Kind.UNREACHABLE -> R.string.translation_error_unreachable
+                                                    else -> R.string.translation_error_response
+                                                })
+                                                fixOcrError = (error as? LlmError)?.detail?.let { "$reason\n$it" } ?: reason
+                                            }
+                                        } finally { if (request == ocrRequest) fixingOcr = false }
+                                    }
+                                }) { Text(stringResource(R.string.pdf_ocr_fix_ai)) }
                                 TextButton(onClick = { clipboard.setText(AnnotatedString(text)) }) {
                                     Text(stringResource(R.string.selection_action_copy))
                                 }
@@ -406,7 +489,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                         Text(stringResource(R.string.pdf_save_phrase))
                                     }
                                 }
-                                TextButton(enabled = !addingText, onClick = {
+                                TextButton(enabled = !addingText && !fixingOcr, onClick = {
                                     addingText = true
                                     addFailed = false
                                     scope.launch {
@@ -420,7 +503,8 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                     }
                                 }) { Text(stringResource(R.string.pdf_add_to_text)) }
                             }
-                            if (addingText) CircularProgressIndicator()
+                            if (fixingOcr || addingText) CircularProgressIndicator()
+                            fixOcrError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                             if (addFailed) Text(stringResource(R.string.pdf_add_failed), color = MaterialTheme.colorScheme.error)
                         }
                     }

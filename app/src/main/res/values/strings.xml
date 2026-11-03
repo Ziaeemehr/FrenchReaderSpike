@@ -1096,4 +1096,9 @@
     <string name="pdf_ocr_failed">Could not recognize this area. Select an area to try again.</string>
     <string name="pdf_ocr_empty">No text recognized. Try selecting a different area.</string>
     <string name="pdf_add_failed">Could not add the text. Try again.</string>
+    <string name="pdf_ocr_original_word">OCR: %1$s</string>
+    <string name="pdf_ocr_use_original">Use original</string>
+    <string name="pdf_ocr_show_original">Show original</string>
+    <string name="pdf_ocr_show_corrected">Show corrected</string>
+    <string name="pdf_ocr_fix_ai">Fix with AI</string>
 </resources>

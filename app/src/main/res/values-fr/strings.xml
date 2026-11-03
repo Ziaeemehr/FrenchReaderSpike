@@ -1096,4 +1096,9 @@
     <string name="pdf_ocr_failed">Impossible de reconnaître cette zone. Sélectionnez une zone pour réessayer.</string>
     <string name="pdf_ocr_empty">Aucun texte reconnu. Essayez une autre zone.</string>
     <string name="pdf_add_failed">Impossible d’ajouter le texte. Réessayez.</string>
+    <string name="pdf_ocr_original_word">OCR : %1$s</string>
+    <string name="pdf_ocr_use_original">Utiliser l’original</string>
+    <string name="pdf_ocr_show_original">Afficher l’original</string>
+    <string name="pdf_ocr_show_corrected">Afficher le texte corrigé</string>
+    <string name="pdf_ocr_fix_ai">Corriger avec l’IA</string>
 </resources>

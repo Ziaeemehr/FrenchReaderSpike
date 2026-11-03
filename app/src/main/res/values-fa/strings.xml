@@ -1093,4 +1093,9 @@
     <string name="pdf_ocr_failed">شناسایی این ناحیه انجام نشد. ناحیه‌ای را دوباره انتخاب کنید.</string>
     <string name="pdf_ocr_empty">متنی شناسایی نشد. ناحیهٔ دیگری را انتخاب کنید.</string>
     <string name="pdf_add_failed">افزودن متن انجام نشد. دوباره تلاش کنید.</string>
+    <string name="pdf_ocr_original_word">متن تشخیص‌داده‌شده: %1$s</string>
+    <string name="pdf_ocr_use_original">استفاده از متن اصلی</string>
+    <string name="pdf_ocr_show_original">نمایش متن اصلی</string>
+    <string name="pdf_ocr_show_corrected">نمایش متن اصلاح‌شده</string>
+    <string name="pdf_ocr_fix_ai">اصلاح با هوش مصنوعی</string>
 </resources>
