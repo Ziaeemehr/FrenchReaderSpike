@@ -42,6 +42,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -431,9 +433,11 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                     textDirection = if (rtl) TextDirection.Rtl else TextDirection.Ltr))
                         }
                         Spacer(Modifier.height(8.dp))
-                        Text(translationEngine?.let { stringResource(R.string.pdf_ai_model, it) }
-                            ?: stringResource(R.string.translation_engine_google),
-                            style = MaterialTheme.typography.labelSmall)
+                        // Only an icon for the source; the full model name stays available to screen readers.
+                        Icon(if (translationEngine != null) Icons.Default.AutoAwesome else Icons.Default.Translate,
+                            contentDescription = translationEngine?.let { stringResource(R.string.pdf_ai_model, it) }
+                                ?: stringResource(R.string.translation_engine_google),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                     }
                 }
             }
