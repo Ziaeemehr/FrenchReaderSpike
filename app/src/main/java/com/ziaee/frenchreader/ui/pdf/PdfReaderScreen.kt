@@ -42,6 +42,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -268,20 +271,32 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
             }
         }
     }, topBar = {
-        TopAppBar(
-            title = { Text(document.title, maxLines = 1) },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back)) } },
-            actions = {
-                IconButton(enabled = renderer != null && !recognizing, onClick = {
+        // Slim bar: the file name added nothing; only the page counter and a few actions remain.
+        Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 2.dp) {
+            Row(Modifier.fillMaxWidth().statusBarsPadding().height(40.dp).padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.accessibility_back), Modifier.size(20.dp))
+                }
+                renderer?.let { pages ->
+                    Text(stringResource(R.string.pdf_page_short, (currentPage + 1).coerceAtMost(pages.pageCount), pages.pageCount),
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.semantics { contentDescription = context.getString(R.string.pdf_page_indicator,
+                            (currentPage + 1).coerceAtMost(pages.pageCount), pages.pageCount) })
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(enabled = renderer != null && !recognizing, modifier = Modifier.size(40.dp), onClick = {
                     lassoMode = !lassoMode
                     selection = null
                 }) {
-                    Icon(Icons.Default.Gesture, stringResource(R.string.pdf_select_area),
+                    Icon(Icons.Default.Gesture, stringResource(R.string.pdf_select_area), Modifier.size(20.dp),
                         tint = if (lassoMode) MaterialTheme.colorScheme.primary else LocalContentColor.current)
                 }
-                TextButton(onClick = onTextView) { Text(stringResource(R.string.pdf_text_view)) }
+                IconButton(onClick = onTextView, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.AutoMirrored.Filled.Article, stringResource(R.string.pdf_text_view), Modifier.size(20.dp))
+                }
                 Box {
-                    IconButton(onClick = { overflow = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.selection_action_more)) }
+                    IconButton(onClick = { overflow = true }, modifier = Modifier.size(40.dp)) { Icon(Icons.Default.MoreVert, stringResource(R.string.selection_action_more), Modifier.size(20.dp)) }
                     DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.pdf_share)) }, onClick = {
                             overflow = false
@@ -303,7 +318,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                     }
                 }
             }
-        )
+        }
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             val current = renderer
@@ -311,8 +326,6 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                 failed -> Text(stringResource(R.string.pdf_open_failed), Modifier.padding(16.dp))
                 current == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 else -> {
-                    Text(stringResource(R.string.pdf_page_indicator,
-                        (currentPage + 1).coerceAtMost(current.pageCount), current.pageCount), Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                     Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { viewportWidth = it.width; viewportHeight = it.height }
                         .pointerInput(lassoMode) {
                             if (lassoMode) return@pointerInput

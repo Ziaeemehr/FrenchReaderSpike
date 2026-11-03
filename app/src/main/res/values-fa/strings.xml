@@ -1081,6 +1081,7 @@
     <string name="pdf_page_failed">بارگذاری این صفحهٔ پی‌دی‌اف ممکن نیست.</string>
     <string name="pdf_open_failed">باز کردن پی‌دی‌اف ممکن نیست. نمای متن را باز کنید یا فایل را دوباره وارد کنید.</string>
     <string name="pdf_page_indicator">صفحهٔ %1$d از %2$d</string>
+    <string name="pdf_page_short">%1$d / %2$d</string>
     <string name="pdf_translate">ترجمه</string>
     <string name="pdf_translate_sentence">ترجمهٔ جملهٔ لمس‌شده</string>
     <string name="pdf_ocr_coming">این صفحه کلمهٔ قابل انتخاب ندارد. برای شناسایی متن از «انتخاب ناحیه» استفاده کنید.</string>

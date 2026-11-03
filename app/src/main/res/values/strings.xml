@@ -1084,6 +1084,7 @@
     <string name="pdf_page_failed">Unable to load this PDF page.</string>
     <string name="pdf_open_failed">Unable to open PDF. Use text view or import the file again.</string>
     <string name="pdf_page_indicator">Page %1$d of %2$d</string>
+    <string name="pdf_page_short">%1$d / %2$d</string>
     <string name="pdf_translate">Translate</string>
     <string name="pdf_translate_sentence">Translate tapped sentence</string>
     <string name="pdf_ocr_coming">No selectable words on this page. Use “Select area” to recognize text.</string>
