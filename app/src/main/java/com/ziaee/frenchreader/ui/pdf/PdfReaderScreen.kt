@@ -42,6 +42,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -232,6 +233,27 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         zoom = next
         selection = null
     }
+    // During a pinch only the current image is scaled and moved; the pages are laid out again once at the end.
+    var pinchScale by remember { mutableStateOf(1f) }
+    var pinchOffset by remember { mutableStateOf(Offset.Zero) }
+    fun pinchBy(factor: Float, centroid: Offset, pan: Offset) {
+        val (scale, offset) = pinchStep(pinchScale, pinchOffset, factor, centroid, pan, 1f / zoom, 4f / zoom)
+        pinchScale = scale
+        pinchOffset = offset
+    }
+    fun commitPinch() {
+        val scale = pinchScale
+        val topLeft = -pinchOffset / scale // viewport top-left in the current layout
+        val page = listState.layoutInfo.visibleItemsInfo.let { items ->
+            items.firstOrNull { topLeft.y >= it.offset && topLeft.y < it.offset + it.size } ?: items.minByOrNull { kotlin.math.abs(it.offset - topLeft.y) }
+        }
+        if (page == null) { pinchScale = 1f; pinchOffset = Offset.Zero; return }
+        zoomAnchor = PdfZoomAnchor(page.index, (topLeft.y - page.offset) * scale, (horizontalState.value + topLeft.x) * scale)
+        zoom = (zoom * scale).coerceIn(1f, 4f)
+        selection = null
+    }
+    val pinchByLatest by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { f, c, p -> pinchBy(f, c, p) }
+    val commitPinchLatest by rememberUpdatedState({ commitPinch() })
     val zoomAtPoint by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { value, point, pan -> changeZoom(value, point, pan) }
     val latestZoom by rememberUpdatedState(zoom)
     LaunchedEffect(zoomAnchor) {
@@ -241,6 +263,8 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         withFrameNanos { }
         horizontalState.scrollTo(anchor.horizontal.toInt().coerceAtLeast(0))
         listState.scrollToItem(anchor.page, anchor.pageScrollOffset.toInt())
+        pinchScale = 1f
+        pinchOffset = Offset.Zero
         zoomAnchor = null
     }
     LaunchedEffect(listState.isScrollInProgress) {
@@ -304,17 +328,25 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                             if (lassoMode) return@pointerInput
                             awaitEachGesture {
                                 awaitFirstDown(requireUnconsumed = false)
+                                var pinching = false
                                 do {
                                     val event = awaitPointerEvent(PointerEventPass.Initial)
                                     if (event.changes.count { it.pressed } >= 2) {
+                                        pinching = true
                                         val factor = event.calculateZoom()
-                                        if (factor.isFinite()) zoomAtPoint(latestZoom * factor, event.calculateCentroid(useCurrent = false), event.calculatePan())
-                                        event.changes.forEach { it.consume() }
+                                        if (factor.isFinite()) pinchByLatest(factor, event.calculateCentroid(useCurrent = false), event.calculatePan())
                                     }
+                                    // Once pinching, the remaining finger must not scroll the list underneath.
+                                    if (pinching) event.changes.forEach { it.consume() }
                                 } while (event.changes.any { it.pressed })
+                                if (pinching) commitPinchLatest()
                             }
                         }) {
-                    Box(Modifier.fillMaxSize().horizontalScroll(horizontalState, enabled = zoom > 1f && !lassoMode)) {
+                    Box(Modifier.fillMaxSize().graphicsLayer {
+                        scaleX = pinchScale; scaleY = pinchScale
+                        translationX = pinchOffset.x; translationY = pinchOffset.y
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                    }.horizontalScroll(horizontalState, enabled = zoom > 1f && !lassoMode)) {
                     LazyColumn(state = listState, userScrollEnabled = !lassoMode,
                         modifier = Modifier.width(with(density) { (viewportWidth * zoom).toDp() }).fillMaxHeight(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {

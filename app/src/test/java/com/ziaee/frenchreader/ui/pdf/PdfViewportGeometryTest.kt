@@ -30,3 +30,29 @@ class PdfViewportGeometryTest {
         assertFalse(PdfReadingProgress(page = -1, pageCount = 5).finished)
     }
 }
+
+class PdfPinchStepTest {
+    private fun content(scale: Float, offset: androidx.compose.ui.geometry.Offset, screen: androidx.compose.ui.geometry.Offset) = (screen - offset) / scale
+
+    @org.junit.Test fun pointUnderFingersFollowsThemWhileZoomingAndPanning() {
+        var state = 1f to androidx.compose.ui.geometry.Offset.Zero
+        var fingers = androidx.compose.ui.geometry.Offset(300f, 500f)
+        val held = content(state.first, state.second, fingers)
+        repeat(5) {
+            val pan = androidx.compose.ui.geometry.Offset(-40f, -60f)
+            state = pinchStep(state.first, state.second, 1.2f, fingers, pan, .25f, 4f)
+            fingers += pan
+            val now = content(state.first, state.second, fingers)
+            org.junit.Assert.assertEquals(held.x, now.x, .01f)
+            org.junit.Assert.assertEquals(held.y, now.y, .01f)
+        }
+        org.junit.Assert.assertEquals(1.2f * 1.2f * 1.2f * 1.2f * 1.2f, state.first, .001f)
+    }
+
+    @org.junit.Test fun scaleIsClampedButPanStillApplies() {
+        val (scale, offset) = pinchStep(4f, androidx.compose.ui.geometry.Offset.Zero, 2f,
+            androidx.compose.ui.geometry.Offset(100f, 100f), androidx.compose.ui.geometry.Offset(10f, 20f), .25f, 4f)
+        org.junit.Assert.assertEquals(4f, scale)
+        org.junit.Assert.assertEquals(androidx.compose.ui.geometry.Offset(10f, 20f), offset)
+    }
+}

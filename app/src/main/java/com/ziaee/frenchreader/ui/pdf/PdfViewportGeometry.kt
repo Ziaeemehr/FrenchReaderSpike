@@ -23,3 +23,16 @@ internal fun pageAtCentre(pages: List<PdfVisiblePage>, viewportStart: Int, viewp
         }
     }?.index
 }
+
+/**
+ * One pinch event applied to a scale + translation (origin top-left): the content point under the
+ * previous centroid ends up under the moved centroid, so the page follows the fingers.
+ */
+internal fun pinchStep(
+    scale: Float, offset: androidx.compose.ui.geometry.Offset, factor: Float,
+    centroid: androidx.compose.ui.geometry.Offset, pan: androidx.compose.ui.geometry.Offset,
+    minScale: Float, maxScale: Float
+): Pair<Float, androidx.compose.ui.geometry.Offset> {
+    val next = (scale * factor).coerceIn(minScale, maxScale)
+    return next to (centroid + pan - (centroid - offset) * (next / scale))
+}
