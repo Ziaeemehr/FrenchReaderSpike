@@ -12,7 +12,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /** Reads one page lazily. No PDFBox document is retained after extraction. */
-class PdfWordLayout(private val context: Context, private val file: File) {
+class PdfWordLayout(
+    private val context: Context, private val file: File,
+    /** Words for a page with no text layer (a scan), e.g. from OCR. */
+    private val scannedPageWords: (suspend (Int) -> List<PdfWord>)? = null
+) {
     private val mutex = Mutex()
     private val cache = object : LinkedHashMap<Int, List<PdfWord>>(16, .75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Int, List<PdfWord>>?): Boolean = size > 12
@@ -20,7 +24,7 @@ class PdfWordLayout(private val context: Context, private val file: File) {
 
     suspend fun words(pageIndex: Int): List<PdfWord> = withContext(Dispatchers.IO) {
         mutex.withLock {
-            cache[pageIndex] ?: extract(pageIndex).also { cache[pageIndex] = it }
+            cache[pageIndex] ?: extract(pageIndex).ifEmpty { scannedPageWords?.invoke(pageIndex).orEmpty() }.also { cache[pageIndex] = it }
         }
     }
 

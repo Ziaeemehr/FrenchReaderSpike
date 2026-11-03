@@ -27,18 +27,10 @@ class PdfRegionOcr(context: Context) {
             // Only the region is rendered; map crop pixels back to page-normalised coordinates.
             val source = renderer.renderRegionForOcr(page, bounds, width)
             try {
-                val cropped = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+                val cropped = ocrReadyCopy(source)
                 val regionWidth = bounds.right - bounds.left
                 val regionHeight = bounds.bottom - bounds.top
                 try {
-                    val grayscale = ColorMatrix().apply { setSaturation(0f) }
-                    val contrast = ColorMatrix(floatArrayOf(
-                        1.12f,0f,0f,0f,-15f, 0f,1.12f,0f,0f,-15f,
-                        0f,0f,1.12f,0f,-15f, 0f,0f,0f,1f,0f))
-                    contrast.postConcat(grayscale)
-                    Canvas(cropped).drawBitmap(source, 0f, 0f, Paint().apply {
-                        colorFilter = ColorMatrixColorFilter(contrast)
-                    })
                     fun pageBox(box: PdfRect?) = box?.let {
                         PdfRect(bounds.left + it.left / source.width * regionWidth, bounds.top + it.top / source.height * regionHeight,
                             bounds.left + it.right / source.width * regionWidth, bounds.top + it.bottom / source.height * regionHeight)
@@ -80,4 +72,16 @@ class PdfRegionOcr(context: Context) {
                 } finally { cropped.recycle() }
             } finally { source.recycle() }
         }
+}
+
+/** Grayscale, mildly contrast-stretched copy of a rendered page area: ML Kit reads it more reliably. */
+internal fun ocrReadyCopy(source: Bitmap): Bitmap {
+    val copy = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+    val grayscale = ColorMatrix().apply { setSaturation(0f) }
+    val contrast = ColorMatrix(floatArrayOf(
+        1.12f,0f,0f,0f,-15f, 0f,1.12f,0f,0f,-15f,
+        0f,0f,1.12f,0f,-15f, 0f,0f,0f,1f,0f))
+    contrast.postConcat(grayscale)
+    Canvas(copy).drawBitmap(source, 0f, 0f, Paint().apply { colorFilter = ColorMatrixColorFilter(contrast) })
+    return copy
 }

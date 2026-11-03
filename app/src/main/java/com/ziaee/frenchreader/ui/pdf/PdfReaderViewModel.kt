@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ziaee.frenchreader.content.pdf.PdfFileStore
+import com.ziaee.frenchreader.content.pdf.PdfPageOcr
 import com.ziaee.frenchreader.content.pdf.PdfPageRenderer
 import com.ziaee.frenchreader.content.pdf.PdfWordLayout
 import com.ziaee.frenchreader.translate.TranslationRepository
@@ -39,8 +40,13 @@ class PdfReaderViewModel(app: Application) : AndroidViewModel(app) {
                 val file = withContext(Dispatchers.IO) {
                     PdfFileStore.resolve(getApplication(), path) ?: error("Missing PDF")
                 }
-                withContext(Dispatchers.IO) { pending = PdfPageRenderer(file) }
-                layout = PdfWordLayout(getApplication(), file)
+                val opened = withContext(Dispatchers.IO) { PdfPageRenderer(file) }
+                pending = opened
+                val pageOcr = PdfPageOcr(getApplication(), opened, file)
+                layout = PdfWordLayout(getApplication(), file) { page ->
+                    // A failed page OCR leaves the "use Select area" hint instead of a page error.
+                    try { pageOcr.words(page) } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { emptyList() }
+                }
                 _renderer.value = pending
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
