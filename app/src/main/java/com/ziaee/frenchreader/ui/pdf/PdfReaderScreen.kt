@@ -13,8 +13,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -44,6 +42,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -98,24 +101,25 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
     val listState = rememberLazyListState()
     var restoredPage by rememberSaveable(document.id) { mutableStateOf(false) }
     var zoom by rememberSaveable(document.id) { mutableFloatStateOf(1f) }
-    val horizontalState = rememberScrollState()
+    // Screen px the zoomed drawing is moved by (see PdfView).
+    var panX by rememberSaveable(document.id) { mutableFloatStateOf(0f) }
+    var panY by rememberSaveable(document.id) { mutableFloatStateOf(0f) }
     var viewportWidth by remember { mutableIntStateOf(0) }
+    var viewportHeight by remember { mutableIntStateOf(0) }
     val currentPage by remember { derivedStateOf {
         val info = listState.layoutInfo
         pageAtCentre(info.visibleItemsInfo.map { PdfVisiblePage(it.index, it.offset, it.size) },
             info.viewportStartOffset, info.viewportEndOffset) ?: listState.firstVisibleItemIndex
     } }
-    // A pending anchor is applied after the new page width has been measured.
-    var zoomAnchor by remember { mutableStateOf<PdfZoomAnchor?>(null) }
     // Reading position as [page, fraction of page height, fraction of horizontal pan, viewport width]:
     // pixel offsets are meaningless once rotation changes the page width.
     var widthAnchor by rememberSaveable(document.id) { mutableStateOf<List<Float>?>(null) }
     LaunchedEffect(listState, viewportWidth) {
         snapshotFlow {
             val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()
-            if (first == null || viewportWidth == 0 || zoomAnchor != null) null
+            if (first == null || viewportWidth == 0) null
             else listOf(first.index.toFloat(), -first.offset.toFloat() / first.size.coerceAtLeast(1),
-                if (horizontalState.maxValue > 0) horizontalState.value.toFloat() / horizontalState.maxValue else 0f,
+                if (zoom > 1f) -panX / ((zoom - 1f) * viewportWidth) else 0f,
                 viewportWidth.toFloat())
         }.collect { anchor ->
             // Until a width change has been restored, the old anchor is the reading position.
@@ -128,11 +132,12 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
         val anchor = widthAnchor ?: return@LaunchedEffect
         if (viewportWidth == 0 || anchor[3] == viewportWidth.toFloat()) return@LaunchedEffect
         val page = anchor[0].toInt().coerceIn(0, current.pageCount - 1)
-        val pageHeight = viewportWidth * zoom * current.pageAspects[page]
+        val pageHeight = viewportWidth * current.pageAspects[page]
         withFrameNanos { }
         withFrameNanos { }
         listState.scrollToItem(page, (anchor[1] * pageHeight).toInt().coerceAtLeast(0))
-        horizontalState.scrollTo((anchor[2] * horizontalState.maxValue).toInt())
+        panX = -anchor[2] * (zoom - 1f) * viewportWidth
+        panY = panY.coerceIn(-(zoom - 1f) * viewportHeight, 0f)
         widthAnchor = anchor.toMutableList().also { it[3] = viewportWidth.toFloat() }
     }
     var selection by remember { mutableStateOf<PdfSelection?>(null) }
@@ -214,57 +219,42 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
     DisposableEffect(document.id) {
         onDispose { latestRenderer?.let { vm.savePage(document.id, latestPage, it.pageCount) } }
     }
-    fun changeZoom(requested: Float, focal: Offset, pan: Offset = Offset.Zero) {
-        val next = requested.coerceIn(1f, 4f)
-        if (next == zoom) {
-            // Two-finger move without a scale change pans the zoomed page.
-            val pending = zoomAnchor
-            if (pending != null) zoomAnchor = pending.copy(pageScrollOffset = pending.pageScrollOffset - pan.y, horizontal = pending.horizontal - pan.x)
-            else { horizontalState.dispatchRawDelta(-pan.x); listState.dispatchRawDelta(-pan.y) }
-            return
-        }
-        val info = listState.layoutInfo
-        val focalPage = info.visibleItemsInfo.firstOrNull { focal.y >= it.offset && focal.y < it.offset + it.size }
-            ?: info.visibleItemsInfo.minByOrNull { kotlin.math.abs(it.offset - focal.y) }
-            ?: return
-        zoomAnchor = PdfZoomAnchor(focalPage.index,
-            // The point under the fingers follows them: keep it fixed, then shift by the pinch's pan.
-            focalPageZoomOffset(focalPage.offset.toFloat(), focal.y, zoom, next) - pan.y,
-            focalScrollOffset(horizontalState.value.toFloat(), focal.x, zoom, next) - pan.x)
-        zoom = next
+    var pinchActive by remember { mutableStateOf(false) }
+    // Pages are rendered for this zoom; it follows zoom only when a gesture ends, so a pinch does not
+    // re-render every frame (the scaled old bitmap is shown meanwhile).
+    var renderZoom by rememberSaveable(document.id) { mutableFloatStateOf(zoom) }
+    fun changeView(factor: Float, centroid: Offset, move: Offset) {
+        val (view, overflowY) = pinchView(PdfView(zoom, Offset(panX, panY)), factor, centroid, move,
+            Size(viewportWidth.toFloat(), viewportHeight.toFloat()))
+        zoom = view.zoom
+        panX = view.pan.x
+        panY = view.pan.y
+        // Moving past the zoomed band scrolls the page list itself (layout px = screen px / zoom).
+        if (overflowY != 0f) listState.dispatchRawDelta(-overflowY / zoom)
         selection = null
     }
-    // A pinch accumulates into its own target; the laid-out list catches up a few frames later.
-    var pinch by remember { mutableStateOf<PdfPinchTarget?>(null) }
-    fun pinchBy(factor: Float, centroid: Offset, pan: Offset) {
-        val pages = renderer ?: return
-        val start = pinch ?: PdfPinchTarget(zoom, listState.firstVisibleItemIndex,
-            listState.firstVisibleItemScrollOffset.toFloat(), horizontalState.value.toFloat())
-        val gap = with(density) { 8.dp.toPx() }
-        val next = pinchTarget(start, factor, centroid, pan, viewportWidth.toFloat(), pages.pageCount) { page, z ->
-            viewportWidth * z * pages.pageAspects[page] + gap
-        }
-        pinch = next
-        zoomAnchor = PdfZoomAnchor(next.page, next.pageOffset, next.horizontal)
-        zoom = next.zoom
-        selection = null
+    val pinchByLatest by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { f, c, m -> pinchActive = true; changeView(f, c, m) }
+    val endPinch by rememberUpdatedState({ pinchActive = false; renderZoom = zoom })
+    val zoomAtPoint by rememberUpdatedState<(Float, Offset) -> Unit> { target, point ->
+        changeView(target / zoom, point, Offset.Zero)
+        renderZoom = zoom
     }
-    val pinchByLatest by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { f, c, p -> pinchBy(f, c, p) }
-    val endPinch by rememberUpdatedState({ pinch = null })
-    val zoomAtPoint by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { value, point, pan -> changeZoom(value, point, pan) }
     val latestZoom by rememberUpdatedState(zoom)
-    LaunchedEffect(Unit) {
-        // Conflated, not restarted per anchor: a continuous pinch emits anchors every frame, and a
-        // restarting effect never got past its frame wait, so the view only moved after the pinch.
-        snapshotFlow { zoomAnchor }.filterNotNull().conflate().collect { anchor ->
-            // Wait for layout to use the new width before clamping the pan range.
-            withFrameNanos { }
-            withFrameNanos { }
-            horizontalState.scrollTo(anchor.horizontal.toInt().coerceAtLeast(0))
-            listState.scrollToItem(anchor.page, anchor.pageScrollOffset.toInt())
-            if (zoomAnchor === anchor) zoomAnchor = null
-        }
+    // One-finger panning of the zoomed drawing: sideways via scrollable, up/down via what the list
+    // cannot scroll (at its ends), so every part of a zoomed page is reachable.
+    val horizontalPan = rememberScrollableState { delta ->
+        val before = panX
+        panX = (panX + delta).coerceIn(-(zoom - 1f) * viewportWidth, 0f)
+        panX - before
     }
+    val verticalPan = remember { object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+        override fun onPostScroll(consumed: Offset, available: Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): Offset {
+            if (available.y == 0f) return Offset.Zero
+            val before = panY
+            panY = (panY + available.y * zoom).coerceIn(-(zoom - 1f) * viewportHeight, 0f)
+            return Offset(0f, (panY - before) / zoom)
+        }
+    } }
     LaunchedEffect(listState.isScrollInProgress) {
         if (listState.isScrollInProgress) selection = null
     }
@@ -321,7 +311,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                 else -> {
                     Text(stringResource(R.string.pdf_page_indicator,
                         (currentPage + 1).coerceAtMost(current.pageCount), current.pageCount), Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                    Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { viewportWidth = it.width }
+                    Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { viewportWidth = it.width; viewportHeight = it.height }
                         .pointerInput(lassoMode) {
                             if (lassoMode) return@pointerInput
                             awaitEachGesture {
@@ -340,12 +330,18 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                 if (pinching) endPinch()
                             }
                         }) {
-                    Box(Modifier.fillMaxSize().horizontalScroll(horizontalState, enabled = zoom > 1f && !lassoMode)) {
+                    Box(Modifier.fillMaxSize().clipToBounds()
+                        .scrollable(horizontalPan, androidx.compose.foundation.gestures.Orientation.Horizontal, enabled = zoom > 1f && !lassoMode)
+                        .nestedScroll(verticalPan)) {
                     LazyColumn(state = listState, userScrollEnabled = !lassoMode,
-                        modifier = Modifier.width(with(density) { (viewportWidth * zoom).toDp() }).fillMaxHeight(),
+                        modifier = Modifier.fillMaxSize().graphicsLayer {
+                            scaleX = zoom; scaleY = zoom
+                            translationX = panX; translationY = panY
+                            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                        },
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items((0 until current.pageCount).toList(), key = { it }) { page ->
-                            PdfPage(current, vm.layout, page,
+                            PdfPage(current, vm.layout, page, renderZoom,
                                 lassoMode = lassoMode,
                                 onRegion = { path, width ->
                                     lassoMode = false
@@ -373,8 +369,9 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                 },
                                 onDoubleTap = { point ->
                                     val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == page }
+                                    // Page point to screen point through the zoom transform.
                                     if (item != null) zoomAtPoint(if (latestZoom > 1f) 1f else 2.5f,
-                                        Offset(point.x - horizontalState.value, point.y + item.offset), Offset.Zero)
+                                        Offset(point.x * latestZoom + panX, (point.y + item.offset) * latestZoom + panY))
                                 },
                                 selection = selection,
                                 onSelection = { selection = it },
@@ -554,7 +551,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun PdfPage(
-    renderer: PdfPageRenderer, layout: PdfWordLayout?, page: Int,
+    renderer: PdfPageRenderer, layout: PdfWordLayout?, page: Int, renderZoom: Float,
     lassoMode: Boolean, onRegion: (List<PdfPoint>, Int) -> Unit,
     onDoubleTap: (Offset) -> Unit, selection: PdfSelection?, onSelection: (PdfSelection?) -> Unit,
     onWord: (List<PdfWord>, Int) -> Unit, onError: () -> Unit
@@ -572,8 +569,8 @@ private fun PdfPage(
     }
     BoxWithConstraints(Modifier.fillMaxWidth().background(Color.White)) {
         val widthPx = with(LocalDensity.current) { maxWidth.roundToPx() }
-        val rendered by produceState<android.graphics.Bitmap?>(null, renderer, page, widthPx) {
-            try { value = renderer.render(page, widthPx.coerceAtMost(4096)); renderFailed = false }
+        val rendered by produceState<android.graphics.Bitmap?>(null, renderer, page, widthPx, renderZoom) {
+            try { value = renderer.render(page, (widthPx * renderZoom).toInt().coerceAtMost(4096)); renderFailed = false }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { renderFailed = true; onError() }
         }
