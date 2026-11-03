@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.layout.onSizeChanged
@@ -75,7 +76,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 
-private data class PdfSelection(val words: List<PdfWord>, val first: Int, val last: Int, val anchor: Rect) {
+private data class PdfSelection(val words: List<PdfWord>, val first: Int, val last: Int, val anchor: Rect, val released: Boolean = false) {
     val selected: List<PdfWord> get() = words.subList(minOf(first, last), maxOf(first, last) + 1)
     val text: String get() = selected.joinToString(" ") { it.text }
     val sentence: String get() = sentenceAround(words, minOf(first, last))
@@ -211,20 +212,27 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
     DisposableEffect(document.id) {
         onDispose { latestRenderer?.let { vm.savePage(document.id, latestPage, it.pageCount) } }
     }
-    fun changeZoom(requested: Float, focal: Offset) {
+    fun changeZoom(requested: Float, focal: Offset, pan: Offset = Offset.Zero) {
         val next = requested.coerceIn(1f, 4f)
-        if (next == zoom) return
+        if (next == zoom) {
+            // Two-finger move without a scale change pans the zoomed page.
+            val pending = zoomAnchor
+            if (pending != null) zoomAnchor = pending.copy(pageScrollOffset = pending.pageScrollOffset - pan.y, horizontal = pending.horizontal - pan.x)
+            else { horizontalState.dispatchRawDelta(-pan.x); listState.dispatchRawDelta(-pan.y) }
+            return
+        }
         val info = listState.layoutInfo
         val focalPage = info.visibleItemsInfo.firstOrNull { focal.y >= it.offset && focal.y < it.offset + it.size }
             ?: info.visibleItemsInfo.minByOrNull { kotlin.math.abs(it.offset - focal.y) }
             ?: return
         zoomAnchor = PdfZoomAnchor(focalPage.index,
-            focalPageZoomOffset(focalPage.offset.toFloat(), focal.y, zoom, next),
-            focalScrollOffset(horizontalState.value.toFloat(), focal.x, zoom, next))
+            // The point under the fingers follows them: keep it fixed, then shift by the pinch's pan.
+            focalPageZoomOffset(focalPage.offset.toFloat(), focal.y, zoom, next) - pan.y,
+            focalScrollOffset(horizontalState.value.toFloat(), focal.x, zoom, next) - pan.x)
         zoom = next
         selection = null
     }
-    val zoomAtPoint by rememberUpdatedState<(Float, Offset) -> Unit> { value, point -> changeZoom(value, point) }
+    val zoomAtPoint by rememberUpdatedState<(Float, Offset, Offset) -> Unit> { value, point, pan -> changeZoom(value, point, pan) }
     val latestZoom by rememberUpdatedState(zoom)
     LaunchedEffect(zoomAnchor) {
         val anchor = zoomAnchor ?: return@LaunchedEffect
@@ -300,7 +308,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                     val event = awaitPointerEvent(PointerEventPass.Initial)
                                     if (event.changes.count { it.pressed } >= 2) {
                                         val factor = event.calculateZoom()
-                                        if (factor.isFinite()) zoomAtPoint(latestZoom * factor, event.calculateCentroid(useCurrent = false))
+                                        if (factor.isFinite()) zoomAtPoint(latestZoom * factor, event.calculateCentroid(useCurrent = false), event.calculatePan())
                                         event.changes.forEach { it.consume() }
                                     }
                                 } while (event.changes.any { it.pressed })
@@ -340,7 +348,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
                                 onDoubleTap = { point ->
                                     val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == page }
                                     if (item != null) zoomAtPoint(if (latestZoom > 1f) 1f else 2.5f,
-                                        Offset(point.x - horizontalState.value, point.y + item.offset))
+                                        Offset(point.x - horizontalState.value, point.y + item.offset), Offset.Zero)
                                 },
                                 selection = selection,
                                 onSelection = { selection = it },
@@ -359,7 +367,7 @@ fun PdfReaderScreen(document: TextDocument, onBack: () -> Unit, onTextView: () -
             }
         }
     }
-    selection?.let { selected ->
+    selection?.takeIf { it.released }?.let { selected ->
         Popup(popupPositionProvider = SelectionRectPositionProvider(selected.anchor, with(density) { 8.dp.toPx() }),
             onDismissRequest = { selection = null }) {
             SelectionToolbarContent(
@@ -586,6 +594,8 @@ private fun PdfPage(
                     if (lassoMode) return@pointerInput
                     var start = -1
                     var position = Offset.Zero
+                    // Shown (released = true) only once the finger lifts.
+                    var dragged: PdfSelection? = null
                     fun select(at: Offset) {
                         val list = words.orEmpty()
                         val hit = hitTestWord(list, at.x / size.width, at.y / size.height, .015f) ?: return
@@ -596,12 +606,13 @@ private fun PdfPage(
                         val chosen = list.subList(minOf(start, end), maxOf(start, end) + 1)
                         val topLeft = layout.localToWindow(Offset(chosen.minOf { it.bounds.left } * size.width, chosen.minOf { it.bounds.top } * size.height))
                         val bottomRight = layout.localToWindow(Offset(chosen.maxOf { it.bounds.right } * size.width, chosen.maxOf { it.bounds.bottom } * size.height))
-                        onSelection(PdfSelection(list, start, end, Rect(topLeft, bottomRight)))
+                        dragged = PdfSelection(list, start, end, Rect(topLeft, bottomRight))
+                        onSelection(dragged)
                     }
                     detectDragGesturesAfterLongPress(
-                        onDragStart = { start = -1; position = it; select(it) },
+                        onDragStart = { start = -1; dragged = null; position = it; select(it) },
                         onDrag = { change, delta -> change.consume(); position += delta; select(position) },
-                        onDragEnd = { start = -1 }, onDragCancel = { start = -1 })
+                        onDragEnd = { start = -1; dragged?.let { onSelection(it.copy(released = true)) } }, onDragCancel = { start = -1 })
                 }) {
                 Image(bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
                 Canvas(Modifier.matchParentSize()) {

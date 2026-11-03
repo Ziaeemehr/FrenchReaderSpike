@@ -136,30 +136,54 @@ fun SelectionToolbarContent(
         onTranslate?.let { add(ToolbarItem(Icons.Default.Translate, stringResource(R.string.pdf_translate), it)) }
         if (showReadingActions) add(ToolbarItem(Icons.Default.MoreVert, stringResource(R.string.selection_action_more), onMore))
     }
-    // Icon-only buttons on a half circle whose open side faces the selection, so no text is covered.
+    // Icon-only buttons on one continuous half ring whose open side faces the selection,
+    // so no selected text is covered.
     androidx.compose.ui.layout.Layout(content = {
+        Surface(shape = HalfRingShape, tonalElevation = 2.dp, shadowElevation = 3.dp,
+            color = MaterialTheme.colorScheme.surface) {}
         actions.forEach { action ->
-            Surface(onClick = action.onClick, shape = androidx.compose.foundation.shape.CircleShape,
-                tonalElevation = 2.dp, shadowElevation = 3.dp, color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.size(40.dp).semantics { contentDescription = action.label }) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                }
+            IconButton(onClick = action.onClick, modifier = Modifier.size(40.dp).semantics { contentDescription = action.label }) {
+                Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             }
         }
-    }) { measurables, constraints ->
-        val placeables = measurables.map { it.measure(androidx.compose.ui.unit.Constraints()) }
-        val button = placeables.maxOfOrNull { it.width } ?: 0
-        val radius = semicircleRadius(placeables.size, 52.dp.toPx())
-        val width = (2 * radius).toInt() + button
-        val height = radius.toInt() + button
+    }) { measurables, _ ->
+        val button = 40.dp.toPx()
+        val band = 48.dp.toPx()
+        val radius = semicircleRadius(actions.size, 42.dp.toPx())
+        val width = (2 * radius + band).toInt()
+        val height = (radius + band).toInt()
+        val background = measurables.first().measure(androidx.compose.ui.unit.Constraints.fixed(width, height))
+        val buttons = measurables.drop(1).map { it.measure(androidx.compose.ui.unit.Constraints()) }
         layout(width, height) {
-            placeables.forEachIndexed { index, placeable ->
-                val (x, y) = semicirclePosition(index, placeables.size, radius)
-                placeable.place(x.toInt(), y.toInt())
+            background.place(0, 0)
+            buttons.forEachIndexed { index, placeable ->
+                val (x, y) = semicirclePosition(index, buttons.size, radius)
+                // semicirclePosition is relative to a radius-sized box; centre each button on the band.
+                placeable.place((x + band / 2 - button / 2).toInt(), (y + band / 2 - button / 2).toInt())
             }
         }
     }
+}
+
+/** Half annulus with round ends; the band is 48 dp thick and the shape fills its box. */
+private val HalfRingShape = androidx.compose.foundation.shape.GenericShape { size, _ ->
+    // The layout makes width = 2r + band and height = r + band, so this is band / 2.
+    val half = size.height - size.width / 2f
+    val band = 2f * half
+    val radius = size.width / 2f - half
+    val cx = size.width / 2f
+    val cy = size.height - half
+    val outer = androidx.compose.ui.geometry.Rect(cx - radius - half, cy - radius - half, cx + radius + half, cy + radius + half)
+    val ring = androidx.compose.ui.graphics.Path().apply {
+        arcTo(outer, 180f, 180f, true)
+        if (radius > half) arcTo(androidx.compose.ui.geometry.Rect(cx - radius + half, cy - radius + half, cx + radius - half, cy + radius - half), 0f, -180f, false)
+        close()
+    }
+    val caps = androidx.compose.ui.graphics.Path().apply {
+        addOval(androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset(cx - radius, cy), band / 2f))
+        addOval(androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset(cx + radius, cy), band / 2f))
+    }
+    op(ring, caps, androidx.compose.ui.graphics.PathOperation.Union)
 }
 
 private class ToolbarItem(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String, val onClick: () -> Unit)
