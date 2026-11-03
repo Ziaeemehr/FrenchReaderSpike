@@ -1075,4 +1075,25 @@
     <string name="home_goal_caption">Aujourd’hui %1$s/%2$s min</string>
     <string name="home_continue_reading">Reprendre la lecture</string>
     <string name="home_continue_watching">Reprendre la vidéo</string>
+    <string name="pdf_scanned_placeholder">PDF numérisé. Passez à la vue PDF pour lire les pages.</string>
+    <string name="pdf_file_missing">Fichier PDF indisponible, importez-le à nouveau</string>
+    <string name="pdf_view">Vue PDF</string>
+    <string name="pdf_text_view">Vue texte</string>
+    <string name="pdf_share">Partager le PDF</string>
+    <string name="pdf_share_failed">Impossible de partager le PDF.</string>
+    <string name="pdf_page_failed">Impossible de charger cette page PDF.</string>
+    <string name="pdf_open_failed">Impossible d’ouvrir le PDF. Utilisez la vue texte ou importez à nouveau le fichier.</string>
+    <string name="pdf_page_indicator">Page %1$d sur %2$d</string>
+    <string name="pdf_translate">Traduire</string>
+    <string name="pdf_translate_sentence">Traduire la phrase touchée</string>
+    <string name="pdf_ocr_coming">Aucun mot sélectionnable sur cette page. Utilisez « Sélectionner une zone » pour reconnaître le texte.</string>
+    <string name="backup_pdf_files">Sauvegarder les fichiers PDF</string>
+    <string name="pdf_select_area">Sélectionner une zone</string>
+    <string name="pdf_recognized_text">Texte reconnu</string>
+    <string name="pdf_save_phrase">Enregistrer la phrase</string>
+    <string name="pdf_add_to_text">Ajouter au texte</string>
+    <string name="pdf_ai_model">Modèle IA : %1$s</string>
+    <string name="pdf_ocr_failed">Impossible de reconnaître cette zone. Sélectionnez une zone pour réessayer.</string>
+    <string name="pdf_ocr_empty">Aucun texte reconnu. Essayez une autre zone.</string>
+    <string name="pdf_add_failed">Impossible d’ajouter le texte. Réessayez.</string>
 </resources>

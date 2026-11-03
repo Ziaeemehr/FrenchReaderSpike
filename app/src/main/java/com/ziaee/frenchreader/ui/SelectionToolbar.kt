@@ -112,7 +112,9 @@ fun SelectionToolbarContent(
     onHighlight: () -> Unit,
     onChooseHighlightColor: () -> Unit,
     onDeleteHighlight: (() -> Unit)?,
-    onMore: () -> Unit
+    onMore: () -> Unit,
+    onTranslate: (() -> Unit)? = null,
+    showReadingActions: Boolean = true
 ) {
     Surface(
         shape = RoundedCornerShape(8.dp),
@@ -125,20 +127,22 @@ fun SelectionToolbarContent(
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            TextButton(onClick = onHighlight) {
-                Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text(stringResource(R.string.selection_action_highlight))
-            }
-            IconButton(onClick = onChooseHighlightColor) {
-                Icon(
-                    Icons.Default.Palette,
-                    contentDescription = stringResource(R.string.highlight_choose_color)
-                )
-            }
-            onDeleteHighlight?.let { delete ->
-                TextButton(onClick = delete) {
-                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text(stringResource(R.string.highlight_delete))
+            if (showReadingActions) {
+                TextButton(onClick = onHighlight) {
+                    Icon(Icons.Default.FormatColorFill, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                    Text(stringResource(R.string.selection_action_highlight))
+                }
+                IconButton(onClick = onChooseHighlightColor) {
+                    Icon(
+                        Icons.Default.Palette,
+                        contentDescription = stringResource(R.string.highlight_choose_color)
+                    )
+                }
+                onDeleteHighlight?.let { delete ->
+                    TextButton(onClick = delete) {
+                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                        Text(stringResource(R.string.highlight_delete))
+                    }
                 }
             }
             TextButton(onClick = onCopy) {
@@ -149,11 +153,14 @@ fun SelectionToolbarContent(
                 Icon(Icons.Default.BookmarkAdd, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_save))
             }
-            TextButton(onClick = onListen) {
+            if (showReadingActions) TextButton(onClick = onListen) {
                 Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                 Text(stringResource(R.string.selection_action_listen))
             }
-            IconButton(onClick = onMore) {
+            onTranslate?.let { translate ->
+                TextButton(onClick = translate) { Text(stringResource(R.string.pdf_translate)) }
+            }
+            if (showReadingActions) IconButton(onClick = onMore) {
                 Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.selection_action_more))
             }
         }

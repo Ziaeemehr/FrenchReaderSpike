@@ -223,8 +223,8 @@ fun HomeScreen(
         onEpub = importEpub,
         onPdf = extractionImporter.importPdf,
         onImages = extractionImporter.importImages
-    ) { title, body, level ->
-        vm.pasteText(title.ifBlank { untitledFallback }, body, level) { id -> onOpenText(id) }
+    ) { title, body, level, pdfPath ->
+        vm.pasteText(title.ifBlank { untitledFallback }, body, level, pdfPath) { id -> onOpenText(id) }
     }
 
     AddSourceSheet(

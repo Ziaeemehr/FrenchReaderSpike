@@ -1,5 +1,7 @@
 package com.ziaee.frenchreader.ui.library
 
+import com.ziaee.frenchreader.content.pdf.PdfReadingProgress
+import com.ziaee.frenchreader.content.pdf.isScannedPdfPlaceholder
 import com.ziaee.frenchreader.data.TextDocument
 import com.ziaee.frenchreader.data.READ_MARK_AUTOMATIC
 import com.ziaee.frenchreader.data.READ_MARK_FINISHED
@@ -40,12 +42,15 @@ internal class LibraryCompletionCache {
 
     suspend fun completionFor(
         documents: List<TextDocument>,
-        readBody: suspend (TextDocument) -> String
+        readBody: suspend (TextDocument) -> String,
+        pdfProgress: (Long) -> PdfReadingProgress? = { null }
     ): Map<Long, Boolean> {
         val liveIds = documents.mapTo(mutableSetOf()) { it.id }
         entries.keys.retainAll(liveIds)
         return documents.associate { document ->
-            if (isTextNotStarted(document)) {
+            if (document.pdfPath != null && pdfProgress(document.id)?.finished == true) {
+                document.id to true
+            } else if (isTextNotStarted(document)) {
                 entries.remove(document.id)
                 document.id to false
             } else {
@@ -56,7 +61,11 @@ internal class LibraryCompletionCache {
                     lastChunkIndex = document.lastChunkIndex
                 )
                 val cached = entries[document.id]?.takeIf { it.key == key }
-                val completed = cached?.completed ?: isTextCompleted(document, readBody(document)).also {
+                // A PDF-backed text finishes from either view, but a scanned PDF's one-line
+                // placeholder body says nothing about reading progress.
+                val completed = cached?.completed ?: readBody(document).let { body ->
+                    !(document.pdfPath != null && isScannedPdfPlaceholder(body)) && isTextCompleted(document, body)
+                }.also {
                     entries[document.id] = Entry(key, it)
                 }
                 document.id to completed

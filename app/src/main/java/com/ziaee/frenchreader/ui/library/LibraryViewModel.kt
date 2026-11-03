@@ -2,6 +2,7 @@ package com.ziaee.frenchreader.ui.library
 
 import com.ziaee.frenchreader.text.levelFromFolderNames
 import com.ziaee.frenchreader.text.normalizeTextLevel
+import androidx.room.withTransaction
 import android.app.Application
 import android.net.Uri
 import android.util.Log
@@ -23,6 +24,9 @@ import com.ziaee.frenchreader.data.insertTextDocument
 import com.ziaee.frenchreader.data.updateTextDocumentBody
 import com.ziaee.frenchreader.images.ArticleImageStore
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import com.ziaee.frenchreader.content.pdf.PdfReadingProgress
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +56,8 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     // ContentSource needs to be registered here.
     private val organizerDao = db.libraryOrganizerDao()
     private val importRepository = ArticleImportRepository(
-        db.textDao(), emptyList(), ArticleImageStore(app), bodyStore, organizerDao
+        db.textDao(), emptyList(), ArticleImageStore(app), bodyStore, organizerDao,
+        { path -> com.ziaee.frenchreader.content.pdf.PdfFileStore.deleteIfUnreferenced(app, path, db.textDao()) }
     )
 
     private val query = MutableStateFlow("")
@@ -95,12 +100,27 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     private val completionCache = LibraryCompletionCache()
 
-    private val documentsWithCompletion = db.textDao().observeAll().mapLatest { documents ->
-        DocumentsWithCompletion(
-            documents,
-            completionCache.completionFor(documents, bodyStore::read)
-        )
+    private val pdfPreferences = app.getSharedPreferences("pdf_reader", android.content.Context.MODE_PRIVATE)
+    private val pdfProgressChanges = callbackFlow {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == null || key.startsWith("page_") || key.startsWith("pageCount_")) trySend(Unit)
+        }
+        pdfPreferences.registerOnSharedPreferenceChangeListener(listener)
+        trySend(Unit)
+        awaitClose { pdfPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
     }
+
+    private val documentsWithCompletion = combine(db.textDao().observeAll(), pdfProgressChanges) { documents, _ -> documents }
+        .mapLatest { documents ->
+            DocumentsWithCompletion(
+                documents,
+                completionCache.completionFor(documents, bodyStore::read) { id ->
+                    val count = pdfPreferences.getInt("pageCount_$id", 0)
+                    if (pdfPreferences.contains("page_$id")) PdfReadingProgress(pdfPreferences.getInt("page_$id", -1), count)
+                    else null
+                }
+            )
+        }
 
     private data class FilterSettings(
         val query: String,
@@ -433,10 +453,19 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Persists a pasted/file-imported/shared text -- Library's Add Text
      * entry point mirrors Home's (see [com.ziaee.frenchreader.ui.home.HomeViewModel.pasteText]). */
-    fun pasteText(title: String, body: String, level: String? = importLevel(), onDone: (Long) -> Unit) {
+    fun pasteText(title: String, body: String, level: String? = importLevel(), pdfPath: String? = null, onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = "", level = normalizeTextLevel(level), folderId = importFolderId()), body)
-            onDone(id)
+            try {
+                val id = db.withTransaction {
+                    pdfPath?.let { path -> db.textDao().findByPdfPath(path)?.let { return@withTransaction it.id } }
+                    insertTextDocument(db.textDao(), bodyStore,
+                        TextDocument(title = title, rawText = "", pdfPath = pdfPath,
+                            level = normalizeTextLevel(level), folderId = importFolderId()), body)
+                }
+                onDone(id)
+            } finally {
+                pdfPath?.let { com.ziaee.frenchreader.content.pdf.PdfFileStore.releaseImport(it) }
+            }
         }
     }
 
@@ -470,7 +499,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun extractPdf(uri: Uri, onDone: (Result<String>) -> Unit) {
+    fun extractPdf(uri: Uri, onDone: (Result<com.ziaee.frenchreader.content.PdfImport>) -> Unit) {
         viewModelScope.launch { onDone(textExtraction.extractPdf(uri)) }
     }
 

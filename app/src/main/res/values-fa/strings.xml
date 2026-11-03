@@ -1072,4 +1072,25 @@
     <string name="home_goal_caption">امروز %1$s از %2$s دقیقه</string>
     <string name="home_continue_reading">ادامهٔ خواندن</string>
     <string name="home_continue_watching">ادامهٔ تماشا</string>
+    <string name="pdf_scanned_placeholder">پی‌دی‌اف اسکن‌شده. برای خواندن صفحه‌ها نمای پی‌دی‌اف را باز کنید.</string>
+    <string name="pdf_file_missing">فایل پی‌دی‌اف در دسترس نیست، دوباره وارد کنید</string>
+    <string name="pdf_view">نمای پی‌دی‌اف</string>
+    <string name="pdf_text_view">نمای متن</string>
+    <string name="pdf_share">اشتراک پی‌دی‌اف</string>
+    <string name="pdf_share_failed">اشتراک پی‌دی‌اف ممکن نیست.</string>
+    <string name="pdf_page_failed">بارگذاری این صفحهٔ پی‌دی‌اف ممکن نیست.</string>
+    <string name="pdf_open_failed">باز کردن پی‌دی‌اف ممکن نیست. نمای متن را باز کنید یا فایل را دوباره وارد کنید.</string>
+    <string name="pdf_page_indicator">صفحهٔ %1$d از %2$d</string>
+    <string name="pdf_translate">ترجمه</string>
+    <string name="pdf_translate_sentence">ترجمهٔ جملهٔ لمس‌شده</string>
+    <string name="pdf_ocr_coming">این صفحه کلمهٔ قابل انتخاب ندارد. برای شناسایی متن از «انتخاب ناحیه» استفاده کنید.</string>
+    <string name="backup_pdf_files">پشتیبان از فایل‌های پی‌دی‌اف</string>
+    <string name="pdf_select_area">انتخاب ناحیه</string>
+    <string name="pdf_recognized_text">متن شناسایی‌شده</string>
+    <string name="pdf_save_phrase">ذخیرهٔ عبارت</string>
+    <string name="pdf_add_to_text">افزودن به متن</string>
+    <string name="pdf_ai_model">مدل هوش مصنوعی: %1$s</string>
+    <string name="pdf_ocr_failed">شناسایی این ناحیه انجام نشد. ناحیه‌ای را دوباره انتخاب کنید.</string>
+    <string name="pdf_ocr_empty">متنی شناسایی نشد. ناحیهٔ دیگری را انتخاب کنید.</string>
+    <string name="pdf_add_failed">افزودن متن انجام نشد. دوباره تلاش کنید.</string>
 </resources>

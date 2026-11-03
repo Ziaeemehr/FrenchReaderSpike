@@ -1075,4 +1075,25 @@
     <string name="home_goal_caption">Today %1$s/%2$s min</string>
     <string name="home_continue_reading">Continue reading</string>
     <string name="home_continue_watching">Continue watching</string>
+    <string name="pdf_scanned_placeholder">Scanned PDF. Switch to PDF view to read the pages.</string>
+    <string name="pdf_file_missing">PDF file not available, import it again</string>
+    <string name="pdf_view">PDF view</string>
+    <string name="pdf_text_view">Text view</string>
+    <string name="pdf_share">Share PDF</string>
+    <string name="pdf_share_failed">Unable to share PDF.</string>
+    <string name="pdf_page_failed">Unable to load this PDF page.</string>
+    <string name="pdf_open_failed">Unable to open PDF. Use text view or import the file again.</string>
+    <string name="pdf_page_indicator">Page %1$d of %2$d</string>
+    <string name="pdf_translate">Translate</string>
+    <string name="pdf_translate_sentence">Translate tapped sentence</string>
+    <string name="pdf_ocr_coming">No selectable words on this page. Use “Select area” to recognize text.</string>
+    <string name="backup_pdf_files">Back up PDF files</string>
+    <string name="pdf_select_area">Select area</string>
+    <string name="pdf_recognized_text">Recognized text</string>
+    <string name="pdf_save_phrase">Save phrase</string>
+    <string name="pdf_add_to_text">Add to text</string>
+    <string name="pdf_ai_model">AI model: %1$s</string>
+    <string name="pdf_ocr_failed">Could not recognize this area. Select an area to try again.</string>
+    <string name="pdf_ocr_empty">No text recognized. Try selecting a different area.</string>
+    <string name="pdf_add_failed">Could not add the text. Try again.</string>
 </resources>

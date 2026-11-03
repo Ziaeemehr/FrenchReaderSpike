@@ -8,6 +8,12 @@ const val SQL_ID_CHUNK = 500
 
 @Dao
 interface TextDao {
+    @Query("SELECT * FROM texts WHERE pdfPath = :path LIMIT 1")
+    suspend fun findByPdfPath(path: String): TextDocument?
+
+    @Query("SELECT COUNT(*) FROM texts WHERE pdfPath = :path")
+    suspend fun countWithPdfPath(path: String): Int
+
     @Query("SELECT * FROM texts ORDER BY createdAtMs DESC")
     fun observeAll(): Flow<List<TextDocument>>
 

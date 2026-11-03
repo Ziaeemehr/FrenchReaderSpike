@@ -208,8 +208,8 @@ fun LibraryScreen(
         onPdf = extractionImporter.importPdf,
         onImages = extractionImporter.importImages,
         initialLevel = vm.importLevel()
-    ) { title, body, level ->
-        vm.pasteText(title.ifBlank { untitledFallback }, body, level) { id -> onOpenText(id) }
+    ) { title, body, level, pdfPath ->
+        vm.pasteText(title.ifBlank { untitledFallback }, body, level, pdfPath) { id -> onOpenText(id) }
     }
     AddSourceSheet(
         visible = showAddSourceSheet,

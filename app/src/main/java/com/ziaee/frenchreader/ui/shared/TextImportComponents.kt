@@ -125,30 +125,48 @@ sealed class ContentSearchUiState {
 class AddTextUiState {
     var showDialog by mutableStateOf(false)
         private set
+    var prefillPdfPath by mutableStateOf<String?>(null)
+        private set
     var prefillTitle by mutableStateOf("")
         private set
     var prefillBody by mutableStateOf("")
         private set
 
     fun openBlank() {
+        releasePdfImport()
         prefillTitle = ""
         prefillBody = ""
         showDialog = true
     }
 
-    fun openWithPrefill(title: String, body: String) {
+    fun openWithPrefill(title: String, body: String, pdfPath: String? = null) {
+        releasePdfImport()
+        prefillPdfPath = pdfPath
         prefillTitle = title
         prefillBody = body
         showDialog = true
     }
 
+    /** Transfers the pending file lease to the save coroutine. */
+    fun takePdfPathForSave(): String? = prefillPdfPath.also { prefillPdfPath = null }
+
+    private fun releasePdfImport() {
+        prefillPdfPath?.let { com.ziaee.frenchreader.content.pdf.PdfFileStore.releaseImport(it) }
+        prefillPdfPath = null
+    }
+
     fun dismiss() {
+        releasePdfImport()
         showDialog = false
     }
 }
 
 @Composable
-fun rememberAddTextUiState(): AddTextUiState = remember { AddTextUiState() }
+fun rememberAddTextUiState(): AddTextUiState {
+    val state = remember { AddTextUiState() }
+    androidx.compose.runtime.DisposableEffect(state) { onDispose { state.dismiss() } }
+    return state
+}
 
 private const val MAX_EDITABLE_PREFILL_CHARS = 30_000
 
@@ -248,7 +266,7 @@ fun AddTextHost(
     onPdf: (Uri) -> Unit = {},
     onImages: (List<Uri>) -> Unit = {},
     initialLevel: String? = null,
-    onSave: (title: String, body: String, level: String?) -> Unit
+    onSave: (title: String, body: String, level: String?, pdfPath: String?) -> Unit
 ) {
     val incomingShare by SharedTextHolder.pending.collectAsState()
     LaunchedEffect(incomingShare) {
@@ -274,8 +292,9 @@ fun AddTextHost(
             bodyEditable = state.prefillBody.length <= MAX_EDITABLE_PREFILL_CHARS,
             onDismiss = { state.dismiss() },
             onSave = { title, body ->
+                val pdfPath = state.takePdfPathForSave()
                 state.dismiss()
-                onSave(title, body, level)
+                onSave(title, body, level, pdfPath)
             }
         )
     }
@@ -316,12 +335,12 @@ private class OpenDocumentAt : ActivityResultContract<OpenDocumentAt.Input, Uri?
 @Composable
 fun rememberTextExtractionImporter(
     state: AddTextUiState,
-    extractPdf: (Uri, (Result<String>) -> Unit) -> Unit,
+    extractPdf: (Uri, (Result<com.ziaee.frenchreader.content.PdfImport>) -> Unit) -> Unit,
     extractImages: (List<Uri>, (Result<String>) -> Unit) -> Unit
 ): TextExtractionImporter {
     val context = LocalContext.current
     val untitledFallback = stringResource(R.string.text_untitled)
-    val pdfNoText = stringResource(R.string.pdf_import_no_text)
+    val pdfPlaceholder = stringResource(R.string.pdf_scanned_placeholder)
     val imageNoText = stringResource(R.string.image_import_no_text)
     val pdfFailed = stringResource(R.string.pdf_import_failed)
     val imageFailed = stringResource(R.string.image_import_failed)
@@ -329,9 +348,9 @@ fun rememberTextExtractionImporter(
 
     val importPdf: (Uri) -> Unit = { uri ->
         extractPdf(uri) { result ->
-            result.onSuccess { text ->
-                if (text.isBlank()) Toast.makeText(context, pdfNoText, Toast.LENGTH_LONG).show()
-                else state.openWithPrefill(queryDisplayName(context, uri) ?: untitledFallback, text)
+            result.onSuccess { imported ->
+                state.openWithPrefill(queryDisplayName(context, uri) ?: untitledFallback,
+                    imported.text.ifBlank { pdfPlaceholder }, imported.pdfPath)
             }.onFailure { Toast.makeText(context, pdfFailed, Toast.LENGTH_LONG).show() }
         }
     }

@@ -1,6 +1,7 @@
 package com.ziaee.frenchreader.ui.home
 
 import com.ziaee.frenchreader.text.normalizeTextLevel
+import androidx.room.withTransaction
 import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -98,7 +99,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         listOf(RfiFacileContentSource, FranceInfoContentSource),
         ArticleImageStore(app),
         bodyStore,
-        db.libraryOrganizerDao()
+        db.libraryOrganizerDao(),
+        { path -> com.ziaee.frenchreader.content.pdf.PdfFileStore.deleteIfUnreferenced(app, path, db.textDao()) }
     )
 
     var contentSearchState by mutableStateOf<ContentSearchUiState>(ContentSearchUiState.Idle)
@@ -250,10 +252,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Persists a pasted/file-imported/shared text as-is -- the Add Text
      * flow, unrelated to headline or topic-search imports. */
-    fun pasteText(title: String, body: String, level: String? = null, onDone: (Long) -> Unit) {
+    fun pasteText(title: String, body: String, level: String? = null, pdfPath: String? = null, onDone: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = insertTextDocument(db.textDao(), bodyStore, TextDocument(title = title, rawText = "", level = normalizeTextLevel(level)), body)
-            onDone(id)
+            try {
+                val id = db.withTransaction {
+                    pdfPath?.let { path -> db.textDao().findByPdfPath(path)?.let { return@withTransaction it.id } }
+                    insertTextDocument(db.textDao(), bodyStore,
+                        TextDocument(title = title, rawText = "", pdfPath = pdfPath,
+                            level = normalizeTextLevel(level)), body)
+                }
+                onDone(id)
+            } finally {
+                pdfPath?.let { com.ziaee.frenchreader.content.pdf.PdfFileStore.releaseImport(it) }
+            }
         }
     }
 
@@ -286,7 +297,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun extractPdf(uri: Uri, onDone: (Result<String>) -> Unit) {
+    fun extractPdf(uri: Uri, onDone: (Result<com.ziaee.frenchreader.content.PdfImport>) -> Unit) {
         viewModelScope.launch { onDone(textExtraction.extractPdf(uri)) }
     }
 

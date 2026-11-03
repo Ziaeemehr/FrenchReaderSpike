@@ -47,6 +47,7 @@ data class TextDocument(
     val folderId: Long? = null,
     val level: String? = null,
     val bodyPath: String? = null,
+    val pdfPath: String? = null,
     val pinned: Boolean = false,
     @ColumnInfo(defaultValue = "0") val readMark: Int = READ_MARK_AUTOMATIC
 )

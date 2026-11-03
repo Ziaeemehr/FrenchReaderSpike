@@ -14,6 +14,14 @@ private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
 private const val KEY_LAST_AUTO_BACKUP_AT_MS = "last_auto_backup_at_ms"
 
 object BackupPrefs {
+    fun backUpPdfFiles(context: Context): Boolean = prefs(context).getBoolean("backup_pdfs", true)
+    fun setBackUpPdfFiles(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("backup_pdfs", enabled)
+            .putLong("pdf_backup_changed_at", System.currentTimeMillis()).apply()
+    }
+
+    internal fun pdfBackupChangedAt(context: Context): Long = prefs(context).getLong("pdf_backup_changed_at", 0L)
+
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
