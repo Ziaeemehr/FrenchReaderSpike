@@ -4,6 +4,14 @@
 
 # French Reader
 
+> [!IMPORTANT]
+> **French Reader is no longer actively maintained.** Development and new updates have moved to **[Zabankhan](https://github.com/Ziaeemehr/zabankhan)**, the newer language-learning app with more features.
+>
+> **Keep your learning progress:** Before switching, create a backup of your French Reader data. You can import your backup into Zabankhan to continue learning with your existing content and progress. Keep the original backup until you have verified the import.
+>
+> [Get Zabankhan](https://github.com/Ziaeemehr/zabankhan) · [Latest release](https://github.com/Ziaeemehr/zabankhan/releases/latest)
+
+
 An Android app for learning French by reading: read real French texts, listen to them, look up words, and review the words you save.
 
 ## ⬇️ Download
