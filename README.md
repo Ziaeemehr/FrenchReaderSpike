@@ -7,7 +7,11 @@
 > [!IMPORTANT]
 > **French Reader is no longer actively maintained.** Development and new updates have moved to **[Zabankhan](https://github.com/Ziaeemehr/zabankhan)**, the newer language-learning app with more features.
 >
-> **Keep your learning progress:** Before switching, create a backup of your French Reader data. You can import your backup into Zabankhan to continue learning with your existing content and progress. Keep the original backup until you have verified the import.
+> **How to migrate:**
+> 1. In French Reader, open **Settings → Backup** and export a local backup as a `.zip` file. Include PDFs if you want to transfer them.
+> 2. Install and open **Zabankhan**. In **Settings**, find the dedicated **Import from French Reader** action (not the regular Restore option).
+> 3. Select the exported ZIP and wait for the import summary. Check your texts, vocabulary and review progress.
+> 4. Keep the original ZIP until you've verified the transfer. Some app preferences may need to be configured again.
 >
 > [Get Zabankhan](https://github.com/Ziaeemehr/zabankhan) · [Latest release](https://github.com/Ziaeemehr/zabankhan/releases/latest)
 
